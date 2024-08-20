@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import { emit } from "process";
-import { defineProps, ref, computed, PropType, defineEmits } from "vue";
+import { ref, computed, PropType } from "vue";
 
 const props = defineProps({
     size: {

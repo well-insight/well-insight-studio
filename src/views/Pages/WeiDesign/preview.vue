@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang='ts'>
-import { ref, reactive, defineProps, PropType } from 'vue';
+import { ref, reactive, PropType } from 'vue';
 import { useRouter } from 'vue-router';
 import Dialog from '@/components/Dialog/index.vue';
 import { PageConfig } from '@/type';
