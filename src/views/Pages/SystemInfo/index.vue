@@ -1,127 +1,126 @@
-<template>
-    <div class="index-container">
-
-        <div class="one-container">
-            <div class="one-block">
-                <el-card class="horse-race-lamp " :body-style='{ height: "100px" }'>
-                    <template #header>
-                        <div style="display: flex; align-items: center;">
-                            <svg-icon
-                                name="aichong"
-                                size="1.25em"
-                                class="aichong2"
-                                :color="getRandomColor()"
-                            ></svg-icon>
-                            <span style="margin: 0 5px">每日一句</span>
-                            <svg-icon
-                                name="aichong2"
-                                size="1.25em"
-                                class="aichong2"
-                                :color="getRandomColor()"
-                            ></svg-icon>
-                        </div>
-                    </template>
-                    <HorseRaceLamp></HorseRaceLamp>
-                </el-card>
-                <div class="one-block-preview">
-                    <el-card class='' header="系统统计信息">
-                        <div class='chart-box' ref="chartRef">
-                            <Echarts v-if="chartWidth" :options='systemInfomationData()'></Echarts>
-                        </div>
-                    </el-card>
-                    <el-card class='' header="使用者增长量">
-                        <div class='chart-box'>
-                            <Echarts v-if="chartWidth" :options='growData()'></Echarts>
-                        </div>
-                    </el-card>
-                </div>
-            </div>
-            <div class="two-block">
-                <el-card header="产品生态" :body-style='{ flex: 1 }'>
-                    <div class='chart-box'>
-                        <Echarts v-if="chartWidth" :options='systemUserData()'></Echarts>
-                    </div>
-                </el-card>
-            </div>
-        </div>
-        <!-- <div class='system-preview'>
-
-        </div> -->
-        <div class="two-container">
-            <el-card class="quick-links" header="快捷链接">
-                <QuickLinks></QuickLinks>
-            </el-card>
-            <el-card class='' header="使用者增速" :body-style='{ flex: 1 }'>
-                <div class='chart-box'>
-                    <Echarts v-if="chartWidth" :options='growRoateData()'></Echarts>
-                </div>
-            </el-card>
-        </div>
-        <el-card class="dependence-info-box" header="依赖信息">
-            <DependenceInfo></DependenceInfo>
-        </el-card>
-        <el-card class="history-log" header="历史记录">
-            <el-timeline>
-                <el-timeline-item v-for='item in systemLog' :key='item.time' center :timestamp='item.time' placement='top' :color='getRandomColor()'>
-                    <el-card>
-                        <h4>{{ item.title }}</h4>
-                        <p>{{ item.content }}</p>
-                    </el-card>
-                </el-timeline-item>
-            </el-timeline>
-        </el-card>
-    </div>
-</template>
-
 <script setup lang="ts">
-import { ref, onMounted, nextTick, reactive } from 'vue';
-import HorseRaceLamp from './components/HorseRaceLamp/index.vue';
-import QuickLinks from './components/QuickLinks/index.vue';
+import { nextTick, onMounted, reactive, ref } from 'vue'
+import { getRandomColor } from '@/utils'
+import { growData, growRoateData, systemInfomationData, systemUserData } from '@/views/Pages/SystemInfo/chartConfig'
 import DependenceInfo from './components/DependenceInfo/index.vue'
 
-import { getRandomColor } from '@/utils'
+import HorseRaceLamp from './components/HorseRaceLamp/index.vue'
 
-import { systemInfomationData, systemUserData, growData, growRoateData } from '@/views/Pages/SystemInfo/chartConfig';
+import QuickLinks from './components/QuickLinks/index.vue'
 
-let chartRef = ref<HTMLElement>();
-const chartWidth = ref<string | number>(0);
+const chartRef = ref<HTMLElement>()
+const chartWidth = ref<string | number>(0)
 onMounted(() => {
-    nextTick(() => {
-        setTimeout(() => {
-            chartWidth.value = (chartRef.value?.clientWidth || 0) *0.8 + 'px';
-        });
+  nextTick(() => {
+    setTimeout(() => {
+      chartWidth.value = `${(chartRef.value?.clientWidth || 0) * 0.8}px`
     })
-});
+  })
+})
 
 const systemLog = reactive<{
-    time: string;
-    title: string;
-    content: string;
+  time: string
+  title: string
+  content: string
 }[]>([
-    {
-        time: '2022年2月10日 GMT+8 14:55:45',
-        title: '第一次开发提交',
-        content: '最初的想法是想做一个私有的组件库，就用来存一些自己的小组件，小插件！'
-    },
-    {
-        time: '2022年3月 - 2022年9月',
-        title: '项目暂停',
-        content: '.....'
-    },
-    {
-        time: '2022年9月19日 GMT+8 00:28:06',
-        title: '继续开发',
-        content: '一段时间耽搁了，空闲时间又将这个项目重新捡起来，开始不断完善中。'
-    },
-    {
-        time: '2022年11月5日 GMT+8 22:39:01',
-        title: '第一个Start',
-        content: '感谢来自Github名为daweedkob的小伙伴的第一个start！'
-    }
+  {
+    time: '2022年2月10日 GMT+8 14:55:45',
+    title: '第一次开发提交',
+    content: '最初的想法是想做一个私有的组件库，就用来存一些自己的小组件，小插件！',
+  },
+  {
+    time: '2022年3月 - 2022年9月',
+    title: '项目暂停',
+    content: '.....',
+  },
+  {
+    time: '2022年9月19日 GMT+8 00:28:06',
+    title: '继续开发',
+    content: '一段时间耽搁了，空闲时间又将这个项目重新捡起来，开始不断完善中。',
+  },
+  {
+    time: '2022年11月5日 GMT+8 22:39:01',
+    title: '第一个Start',
+    content: '感谢来自Github名为daweedkob的小伙伴的第一个start！',
+  },
 ])
 
 // 系统统计信息
 </script>
+
+<template>
+  <div class="index-container">
+    <div class="one-container">
+      <div class="one-block">
+        <el-card class="horse-race-lamp " :body-style="{ height: &quot;100px&quot; }">
+          <template #header>
+            <div style="display: flex; align-items: center;">
+              <svg-icon
+                name="aichong"
+                size="1.25em"
+                class="aichong2"
+                :color="getRandomColor()"
+              />
+              <span style="margin: 0 5px">每日一句</span>
+              <svg-icon
+                name="aichong2"
+                size="1.25em"
+                class="aichong2"
+                :color="getRandomColor()"
+              />
+            </div>
+          </template>
+          <HorseRaceLamp />
+        </el-card>
+        <div class="one-block-preview">
+          <el-card class="" header="系统统计信息">
+            <div ref="chartRef" class="chart-box">
+              <Echarts v-if="chartWidth" :options="systemInfomationData()" />
+            </div>
+          </el-card>
+          <el-card class="" header="使用者增长量">
+            <div class="chart-box">
+              <Echarts v-if="chartWidth" :options="growData()" />
+            </div>
+          </el-card>
+        </div>
+      </div>
+      <div class="two-block">
+        <el-card header="产品生态" :body-style="{ flex: 1 }">
+          <div class="chart-box">
+            <Echarts v-if="chartWidth" :options="systemUserData()" />
+          </div>
+        </el-card>
+      </div>
+    </div>
+    <!-- <div class='system-preview'>
+
+        </div> -->
+    <div class="two-container">
+      <el-card class="quick-links" header="快捷链接">
+        <QuickLinks />
+      </el-card>
+      <el-card class="" header="使用者增速" :body-style="{ flex: 1 }">
+        <div class="chart-box">
+          <Echarts v-if="chartWidth" :options="growRoateData()" />
+        </div>
+      </el-card>
+    </div>
+    <el-card class="dependence-info-box" header="依赖信息">
+      <DependenceInfo />
+    </el-card>
+    <el-card class="history-log" header="历史记录">
+      <el-timeline>
+        <el-timeline-item v-for="item in systemLog" :key="item.time" center :timestamp="item.time" placement="top" :color="getRandomColor()">
+          <el-card>
+            <h4>{{ item.title }}</h4>
+            <p>{{ item.content }}</p>
+          </el-card>
+        </el-timeline-item>
+      </el-timeline>
+    </el-card>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 $chartWidth: v-bind(chartWidth);
@@ -176,7 +175,6 @@ $chartWidth: v-bind(chartWidth);
             }
 
         }
-
 
     }
 

@@ -1,65 +1,63 @@
-<template>
-    <el-card class="item-card">
-        <template #header>
-            <div class="item-header">
-                <div class="item-left">
-                    <slot name="headerLeft">
-                        <span v-if="includesBtn('cancel')" class="red-btn btn" @click="cancel">
-                            <svg-icon name="cancel" color="#1d2129" size="8px"></svg-icon>
-                        </span>
-                        <span v-if="includesBtn('reduce')" class="yellow-btn btn" @click="reduce">
-                            <svg-icon name="reduce" color="#1d2129" size="8px"></svg-icon>
-                        </span>
-                        <span v-if="includesBtn('enLarge')" class="green-btn btn" @click="enLarge">
-                            <svg-icon name="enLarge" color="#1d2129" size="8px"></svg-icon>
-                        </span>
-                    </slot>
-                </div>
-                <div class="item-right">
-                    <slot name="headerRight">
-
-                    </slot>
-                </div>
-            </div>
-        </template>
-
-        <!-- body -->
-        <slot></slot>
-    </el-card>
-</template>
-
 <script setup lang="ts">
-import { PropType } from 'vue';
+import type { PropType } from 'vue'
 
-type btnType = 'cancel' | 'enLarge' | 'reduce';
-
-const emits = defineEmits(['cancel', 'enLarge', 'reduce']);
+type btnType = 'cancel' | 'enLarge' | 'reduce'
 
 const props = defineProps({
-    btns: {
-        type: Array as PropType<btnType[]>,
-        default: () => {
-            return ['cancel', 'enLarge']
-        }
-    }
+  btns: {
+    type: Array as PropType<btnType[]>,
+    default: () => {
+      return ['cancel', 'enLarge']
+    },
+  },
 })
 
-const includesBtn = (btn: btnType) => {
-    return props.btns.includes(btn);
-};
+const emits = defineEmits(['cancel', 'enLarge', 'reduce'])
 
-const cancel = () => {
-    emits('cancel', true)
-};
+function includesBtn(btn: btnType) {
+  return props.btns.includes(btn)
+}
 
-const enLarge = () => {
-    emits('enLarge', true)
-};
+function cancel() {
+  emits('cancel', true)
+}
 
-const reduce = () => {
-    emits('reduce', true)
-};
+function enLarge() {
+  emits('enLarge', true)
+}
+
+function reduce() {
+  emits('reduce', true)
+}
 </script>
+
+<template>
+  <el-card class="item-card">
+    <template #header>
+      <div class="item-header">
+        <div class="item-left">
+          <slot name="headerLeft">
+            <span v-if="includesBtn('cancel')" class="red-btn btn" @click="cancel">
+              <svg-icon name="cancel" color="#1d2129" size="8px" />
+            </span>
+            <span v-if="includesBtn('reduce')" class="yellow-btn btn" @click="reduce">
+              <svg-icon name="reduce" color="#1d2129" size="8px" />
+            </span>
+            <span v-if="includesBtn('enLarge')" class="green-btn btn" @click="enLarge">
+              <svg-icon name="enLarge" color="#1d2129" size="8px" />
+            </span>
+          </slot>
+        </div>
+        <div class="item-right">
+          <slot name="headerRight" />
+        </div>
+      </div>
+    </template>
+
+    <!-- body -->
+    <slot />
+  </el-card>
+</template>
 
 <style lang="scss" scoped>
 .item-card {

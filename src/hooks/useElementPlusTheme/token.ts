@@ -8,4 +8,4 @@ const WHITE = '#ffffff'
 /** 黑色 */
 const BLACK = '#000000'
 
-export { PRE, PRE_LIGHT, PRE_DARK, WHITE, BLACK }
+export { BLACK, PRE, PRE_DARK, PRE_LIGHT, WHITE }

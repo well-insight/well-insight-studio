@@ -1,67 +1,68 @@
-<template>
-    <el-dialog ref="dialogRef" class="dialog-container-box animated">
-        <template #header>
-            <slot name="header">
-                <div class="item-header">
-                    <div class="item-left">
-                        <span v-if="includesBtn('cancel')" class="red-btn btn" @click="cancel">
-                            <svg-icon name="cancel" color="#1d2129" size="8px"></svg-icon>
-                        </span>
-                        <span v-if="includesBtn('reduce')" class="yellow-btn btn" @click="reduce">
-                            <svg-icon name="reduce" color="#1d2129" size="8px"></svg-icon>
-                        </span>
-                        <span v-if="includesBtn('enLarge')" class="green-btn btn" @click="enLarge">
-                            <svg-icon name="enLarge" color="#1d2129" size="8px"></svg-icon>
-                        </span>
-                    </div>
-                </div>
-            </slot>
-        </template>
-        <template #default>
-            <slot name="default"></slot>
-        </template>
-        <template #footer>
-            <slot name="footer"></slot>
-        </template>
-    </el-dialog>
-</template>
-
 <script setup lang="ts">
-import { PropType, ref } from 'vue';
+import type { PropType } from 'vue'
+import { ref } from 'vue'
 
-type btnType = 'cancel' | 'enLarge' | 'reduce';
-
-const emits = defineEmits(['cancel', 'enLarge', 'reduce']);
-
-const dialogRef = ref<HTMLElement | null>(null);
+type btnType = 'cancel' | 'enLarge' | 'reduce'
 
 const props = defineProps({
-    btns: {
-        type: Array as PropType<btnType[]>,
-        default: () => {
-            return ['cancel', 'enLarge']
-        }
-    }
+  btns: {
+    type: Array as PropType<btnType[]>,
+    default: () => {
+      return ['cancel', 'enLarge']
+    },
+  },
 })
 
-const includesBtn = (btn: btnType) => {
-    return props.btns.includes(btn);
-};
+const emits = defineEmits(['cancel', 'enLarge', 'reduce'])
 
-const cancel = () => {
-    emits('cancel', true)
-};
+const dialogRef = ref<HTMLElement | null>(null)
 
-const enLarge = () => {
-    emits('enLarge', true)
-};
+function includesBtn(btn: btnType) {
+  return props.btns.includes(btn)
+}
 
-const reduce = () => {
-    emits('reduce', true)
-};
+function cancel() {
+  emits('cancel', true)
+}
 
-defineExpose({dialogRef})
+function enLarge() {
+  emits('enLarge', true)
+}
+
+function reduce() {
+  emits('reduce', true)
+}
+
+defineExpose({ dialogRef })
 </script>
+
+<template>
+  <el-dialog ref="dialogRef" class="dialog-container-box animated">
+    <template #header>
+      <slot name="header">
+        <div class="item-header">
+          <div class="item-left">
+            <span v-if="includesBtn('cancel')" class="red-btn btn" @click="cancel">
+              <svg-icon name="cancel" color="#1d2129" size="8px" />
+            </span>
+            <span v-if="includesBtn('reduce')" class="yellow-btn btn" @click="reduce">
+              <svg-icon name="reduce" color="#1d2129" size="8px" />
+            </span>
+            <span v-if="includesBtn('enLarge')" class="green-btn btn" @click="enLarge">
+              <svg-icon name="enLarge" color="#1d2129" size="8px" />
+            </span>
+          </div>
+        </div>
+      </slot>
+    </template>
+    <template #default>
+      <slot name="default" />
+    </template>
+    <template #footer>
+      <slot name="footer" />
+    </template>
+  </el-dialog>
+</template>
 
 <style lang="scss" scoped>
 .dialog-container-box {
@@ -128,4 +129,3 @@ defineExpose({dialogRef})
 //     }
 // }
 </style>
-

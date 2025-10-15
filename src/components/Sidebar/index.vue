@@ -1,132 +1,135 @@
-<template>
-    <div class="sidebar-container" :class="isCollapse? 'arrow': 'expand'" :style="{ width: !isCollapse ? '200px' : '70px' }">
-        <div class="logo" title="weiDesign" @click="router.push('/')">
-            <svg-icon name="lightning" size="2.5em" color="#0ca296"></svg-icon>
-            <span class="title" v-if="!isCollapse">WEI-DESIGN</span>
-        </div>
-        <div class="sidebar-list">
-            <el-menu :default-active="route.path" ref="elMenu" :router="true" class="el-menu-vertical"
-                :unique-opened="true" :collapse="isCollapse" :collapse-transition="false" @open="handleOpen"
-                @close="handleClose" @select="selectMenu" v-loading="!menuList">
-                <template v-for="(item, i) in menuList" :key="item.id + i">
-                    <el-menu-item :index="item.router">
-                        <div class="item-container">
-                            <el-icon>
-                                <svg-icon :name="item.icon" color=""></svg-icon>
-                            </el-icon>
-                            <span v-if="!isCollapse">{{ item.showName }}</span>
-                        </div>
-                        <template v-if="isCollapse" #title>{{ item.showName }}</template>
-                    </el-menu-item>
-                </template>
-            </el-menu>
-        </div>
-        <div class="switch-list" :style="{ display: !isCollapse ? 'flex' : 'inline-block' }">
-            <div class="switch-item">
-                <el-icon v-if="isCollapse" title="收拢" @click="handle.arrow">
-                    <arrow-right-bold />
-                </el-icon>
-                <el-icon v-else title="收拢" @click="handle.arrow">
-                    <arrow-left-bold />
-                </el-icon>
-            </div>
-            <div class="switch-item">
-                <el-icon title="浮动" @click="handle.float">
-                    <paperclip />
-                </el-icon>
-            </div>
-            <div class="switch-item">
-                <el-icon title="大事记" @click="handle.bigThing">
-                    <info-filled />
-                </el-icon>
-            </div>
-        </div>
-    </div>
-</template>
-
 <script lang="ts">
-import { defineComponent, ref, reactive, onMounted, computed, PropType } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { defineComponent, onMounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useSystemStore } from '@/stores/system'
 
 // type
-import { menuListType } from '@/type';
 export default defineComponent({
-    name: 'Sidebar', // 侧边栏
-    props: {
-        // 标题logo
-        logo: {
-            type: String,
-            default: '../../assets/Sidebar/logo.png',
-        },
+  name: 'Sidebar', // 侧边栏
+  props: {
+    // 标题logo
+    logo: {
+      type: String,
+      default: '../../assets/Sidebar/logo.png',
     },
-    async setup(props, context) {
-        const num = ref(100);
-        const { logo } = props;
-        const elMenu = ref(); // ref Menu元素
-        const router = useRouter();
-        const route = useRoute();
-        const store= useSystemStore();
+  },
+  async setup(props, context) {
+    const num = ref(100)
+    const { logo } = props
+    const elMenu = ref() // ref Menu元素
+    const router = useRouter()
+    const route = useRoute()
+    const store = useSystemStore()
 
-        const data = reactive({
-            selectSign: 0,
-        });
+    const data = reactive({
+      selectSign: 0,
+    })
 
-        // 菜单收拢状态
-        const isCollapse = ref(false);
+    // 菜单收拢状态
+    const isCollapse = ref(false)
 
-        const handle = reactive({
-            // 收拢
-            arrow: () => {
-                console.log('点击收拢');
-                isCollapse.value = !isCollapse.value;
-                context.emit("arrow", isCollapse.value);
-            },
-            // 浮动
-            float: () => {
-                console.log('点击浮动');
-                context.emit('arrow', '点击浮动');
-            },
-            // 大事记
-            bigThing: () => {
-                console.log('大事记');
-                context.emit('arrow', '大事记');
-            },
-        });
+    const handle = reactive({
+      // 收拢
+      arrow: () => {
+        console.log('点击收拢')
+        isCollapse.value = !isCollapse.value
+        context.emit('arrow', isCollapse.value)
+      },
+      // 浮动
+      float: () => {
+        console.log('点击浮动')
+        context.emit('arrow', '点击浮动')
+      },
+      // 大事记
+      bigThing: () => {
+        console.log('大事记')
+        context.emit('arrow', '大事记')
+      },
+    })
 
-        const handleOpen = (key: string, keyPath: string[]) => {
-            // debugger
-        };
-        const handleClose = (key: string, keyPath: string[]) => {
-            // debugger
-        };
-        const selectMenu = (key: string, keyPath: string[]) => {
-            // debugger
-        };
+    const handleOpen = (key: string, keyPath: string[]) => {
+      // debugger
+    }
+    const handleClose = (key: string, keyPath: string[]) => {
+      // debugger
+    }
+    const selectMenu = (key: string, keyPath: string[]) => {
+      // debugger
+    }
 
-        // 菜单
-        await store.fetchMenuList();
-        const menuList = store.menuList;
+    // 菜单
+    await store.fetchMenuList()
+    const menuList = store.menuList
 
-        onMounted(() => { });
+    onMounted(() => { })
 
-        return {
-            num,
-            data,
-            logo,
-            handle,
-            isCollapse,
-            handleOpen,
-            handleClose,
-            menuList,
-            elMenu,
-            selectMenu,
-            route,
-            router
-        };
-    },
-});
+    return {
+      num,
+      data,
+      logo,
+      handle,
+      isCollapse,
+      handleOpen,
+      handleClose,
+      menuList,
+      elMenu,
+      selectMenu,
+      route,
+      router,
+    }
+  },
+})
 </script>
+
+<template>
+  <div class="sidebar-container" :class="isCollapse ? 'arrow' : 'expand'" :style="{ width: !isCollapse ? '200px' : '70px' }">
+    <div class="logo" title="weiDesign" @click="router.push('/')">
+      <svg-icon name="lightning" size="2.5em" color="#0ca296" />
+      <span v-if="!isCollapse" class="title">WEI-DESIGN</span>
+    </div>
+    <div class="sidebar-list">
+      <el-menu
+        ref="elMenu" :default-active="route.path" v-loading="!menuList" :router="true"
+        class="el-menu-vertical" :unique-opened="true" :collapse="isCollapse" :collapse-transition="false"
+        @open="handleOpen" @close="handleClose" @select="selectMenu"
+      >
+        <template v-for="(item, i) in menuList" :key="item.id + i">
+          <el-menu-item :index="item.router">
+            <div class="item-container">
+              <el-icon>
+                <svg-icon :name="item.icon" color="" />
+              </el-icon>
+              <span v-if="!isCollapse">{{ item.showName }}</span>
+            </div>
+            <template v-if="isCollapse" #title>
+              {{ item.showName }}
+            </template>
+          </el-menu-item>
+        </template>
+      </el-menu>
+    </div>
+    <div class="switch-list" :style="{ display: !isCollapse ? 'flex' : 'inline-block' }">
+      <div class="switch-item">
+        <el-icon v-if="isCollapse" title="收拢" @click="handle.arrow">
+          <arrow-right-bold />
+        </el-icon>
+        <el-icon v-else title="收拢" @click="handle.arrow">
+          <arrow-left-bold />
+        </el-icon>
+      </div>
+      <div class="switch-item">
+        <el-icon title="浮动" @click="handle.float">
+          <paperclip />
+        </el-icon>
+      </div>
+      <div class="switch-item">
+        <el-icon title="大事记" @click="handle.bigThing">
+          <info-filled />
+        </el-icon>
+      </div>
+    </div>
+  </div>
+</template>
 
 <style lang="scss">
 html:root {

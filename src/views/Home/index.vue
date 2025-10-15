@@ -1,37 +1,12 @@
-<template>
-  <div class="component-box">
-    <el-container>
-      <el-aside :style="{width: !isCollapse ? '200px': '70px'}">
-        <suspense>
-          <Sidebar @arrow="arrowSide"></Sidebar>
-        </suspense>
-      </el-aside>
-      <el-container>
-        <el-header style="padding: 0">
-          <design-header></design-header>
-        </el-header>
-        <div class="tabBar">
-          <TabBar></TabBar>
-        </div>
-        <el-main style="padding: 0; height: calc(100% - 100px);">
-            <suspense>
-                <router-view></router-view>
-            </suspense>
-        </el-main>
-      </el-container>
-    </el-container>
-  </div>
-</template>
-
 <script lang="ts">
-import { defineComponent, ref, inject } from 'vue';
+import { defineComponent, inject, ref } from 'vue'
 
-import Sidebar from '../../components/Sidebar/index.vue';
-import Submenu from '../../components/Submenu/index.vue';
-import Row from '../../components/Layout/Row/index.vue';
-import Col from '../../components/Layout/Col/index.vue';
-import DesignHeader from '../../components/Header/index.vue';
-import TabBar from '../../components/TabBar/index.vue';
+import DesignHeader from '../../components/Header/index.vue'
+import Col from '../../components/Layout/Col/index.vue'
+import Row from '../../components/Layout/Row/index.vue'
+import Sidebar from '../../components/Sidebar/index.vue'
+import Submenu from '../../components/Submenu/index.vue'
+import TabBar from '../../components/TabBar/index.vue'
 
 export default defineComponent({
   name: 'Home',
@@ -46,12 +21,12 @@ export default defineComponent({
   props: {},
   setup(props) {
     // 获取全局对象`
-    const global: any = inject('global');
+    const global: any = inject('global')
 
-    const isCollapse = ref(false);
+    const isCollapse = ref(false)
 
     const arrowSide = (isClose: boolean) => {
-        isCollapse.value = isClose;
+      isCollapse.value = isClose
     }
 
     // global.$api.Get('api/weiDesign/getUsers', {}).then((res: any) => {
@@ -59,12 +34,37 @@ export default defineComponent({
     // });
 
     return {
-        arrowSide,
-        isCollapse
+      arrowSide,
+      isCollapse,
     }
   },
-});
+})
 </script>
+
+<template>
+  <div class="component-box">
+    <el-container>
+      <el-aside :style="{ width: !isCollapse ? '200px' : '70px' }">
+        <suspense>
+          <Sidebar @arrow="arrowSide" />
+        </suspense>
+      </el-aside>
+      <el-container>
+        <el-header style="padding: 0">
+          <DesignHeader />
+        </el-header>
+        <div class="tabBar">
+          <TabBar />
+        </div>
+        <el-main style="padding: 0; height: calc(100% - 100px);">
+          <suspense>
+            <router-view />
+          </suspense>
+        </el-main>
+      </el-container>
+    </el-container>
+  </div>
+</template>
 
 <style lang="scss">
 .component-box {

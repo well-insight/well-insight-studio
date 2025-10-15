@@ -1,91 +1,103 @@
-<template>
-    <div class="canvas-attr-list-container">
-        <div class="title">
-            <span>页面配置</span>
-            <svg-icon name="预览" size="1.15em"></svg-icon>
-        </div>
-        <div class="size-config config-item">
-            <span class="size-width">
-                <label for="canvas-size-width">宽度</label>
-                <el-input-number id="canvas-size-width" size="small" v-model="pageConfig.width" :min="1" />
-            </span>
-            <span class="size-height">
-                <label for="canvas-size-height">长度</label>
-                <el-input-number id="canvas-size-height" size="small" v-model="pageConfig.height" :min="1" />
-            </span>
-        </div>
-        <div class="config-item background-img-config">
-            <!--<label>背景图片</label>-->
-            <el-upload
-                style="width: 100%"
-                drag
-                action="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15"
-                multiple
-            >
-                <el-icon class="el-icon--upload" size="100px"><PictureFilled /></el-icon>
-                <div class="el-upload__text">
-                    背景图需小于 5M ，格式为 png/jpg/gif 的文件
-                </div>
-            </el-upload>
-        </div>
-        <div class="config-item color-config">
-            <label>背景颜色</label>
-            <el-color-picker label="1111" color-format="hex" popper-class="color-popper-container" v-model="pageConfig.backgroundColor" show-alpha @active-change="changePageBgColor" />
-            <!--<span class="color-pick-value">{{ pageConfig.backgroundColor }}</span>-->
-        </div>
-        <div class="config-item">
-            <label>背景控制</label>
-            <el-button size="small">清除背景</el-button>
-            <el-button size="small">清除颜色</el-button>
-        </div>
-        <div class="config-item">
-            <label>适配方式</label>
-            <el-radio-group size="small" v-model="pageConfig.adapter">
-                <el-radio-button size="small" label="auto" >自适应</el-radio-button>
-                <el-radio-button size="small" label="XPro" >X轴铺满</el-radio-button>
-                <el-radio-button size="small" label="YPro" >Y轴铺满</el-radio-button>
-                <el-radio-button size="small" label="XYPro" >四周铺满</el-radio-button>
-            </el-radio-group>
-        </div>
-        <div class="title">
-            <span>主题颜色</span>
-            <svg-icon name="调色板" size="1.15em"></svg-icon>
-        </div>
-        <div class="config-item theme-config">
-            <div v-for="(item, key) in themeColor" :style="{borderTop: `2px solid ${showThemeBorderColor(key)}`}" :key="item.name" :class="[`color-line theme-color-${key}`, pageConfig.theme === key ? 'active': '']" @click="selectThemeColor(key)">
-                <label>{{ item.name }}</label>
-                <div class="color-item-box">
-                    <span v-for="color in item.colors" :key="color" class="color-item" :style="{backgroundColor: color}"></span>
-                </div>
-            </div>
-        </div>
-    </div>
-</template>
-
 <script lang="ts" setup>
-import { computed, watch } from 'vue';
-import { useDesignStore } from '@/stores/design';
+import { computed } from 'vue'
 import { themeColor } from '@/hooks/useEchartTheme'
+import { useDesignStore } from '@/stores/design'
 
-const store = useDesignStore();
+const store = useDesignStore()
 
-const pageConfig = computed(() => store.$state.pageConfig);
+const pageConfig = computed(() => store.$state.pageConfig)
 
-const selectThemeColor = (key: string) => {
-    pageConfig.value.theme = key || 'light'
+function selectThemeColor(key: string) {
+  pageConfig.value.theme = key || 'light'
 }
 
-const showThemeBorderColor = (key: string | number) => {
-    const isSel = key === pageConfig.value.theme;
-    return isSel ? (themeColor as any)[key].colors[0] : 'transparent';
+function showThemeBorderColor(key: string | number) {
+  const isSel = key === pageConfig.value.theme
+  return isSel ? (themeColor as any)[key].colors[0] : 'transparent'
 }
 
-const changePageBgColor = (e: string) => {
-    store.setPageConfigByKey("backgroundColor", e);
+function changePageBgColor(e: string) {
+  store.setPageConfigByKey('backgroundColor', e)
 }
-
-
 </script>
+
+<template>
+  <div class="canvas-attr-list-container">
+    <div class="title">
+      <span>页面配置</span>
+      <svg-icon name="预览" size="1.15em" />
+    </div>
+    <div class="size-config config-item">
+      <span class="size-width">
+        <label for="canvas-size-width">宽度</label>
+        <el-input-number id="canvas-size-width" v-model="pageConfig.width" size="small" :min="1" />
+      </span>
+      <span class="size-height">
+        <label for="canvas-size-height">长度</label>
+        <el-input-number id="canvas-size-height" v-model="pageConfig.height" size="small" :min="1" />
+      </span>
+    </div>
+    <div class="config-item background-img-config">
+      <!-- <label>背景图片</label> -->
+      <el-upload
+        style="width: 100%"
+        drag
+        action="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15"
+        multiple
+      >
+        <el-icon class="el-icon--upload" size="100px">
+          <PictureFilled />
+        </el-icon>
+        <div class="el-upload__text">
+          背景图需小于 5M ，格式为 png/jpg/gif 的文件
+        </div>
+      </el-upload>
+    </div>
+    <div class="config-item color-config">
+      <label>背景颜色</label>
+      <el-color-picker v-model="pageConfig.backgroundColor" label="1111" color-format="hex" popper-class="color-popper-container" show-alpha @active-change="changePageBgColor" />
+      <!-- <span class="color-pick-value">{{ pageConfig.backgroundColor }}</span> -->
+    </div>
+    <div class="config-item">
+      <label>背景控制</label>
+      <el-button size="small">
+        清除背景
+      </el-button>
+      <el-button size="small">
+        清除颜色
+      </el-button>
+    </div>
+    <div class="config-item">
+      <label>适配方式</label>
+      <el-radio-group v-model="pageConfig.adapter" size="small">
+        <el-radio-button size="small" label="auto">
+          自适应
+        </el-radio-button>
+        <el-radio-button size="small" label="XPro">
+          X轴铺满
+        </el-radio-button>
+        <el-radio-button size="small" label="YPro">
+          Y轴铺满
+        </el-radio-button>
+        <el-radio-button size="small" label="XYPro">
+          四周铺满
+        </el-radio-button>
+      </el-radio-group>
+    </div>
+    <div class="title">
+      <span>主题颜色</span>
+      <svg-icon name="调色板" size="1.15em" />
+    </div>
+    <div class="config-item theme-config">
+      <div v-for="(item, key) in themeColor" :key="item.name" :style="{ borderTop: `2px solid ${showThemeBorderColor(key)}` }" :class="[`color-line theme-color-${key}`, pageConfig.theme === key ? 'active' : '']" @click="selectThemeColor(key)">
+        <label>{{ item.name }}</label>
+        <div class="color-item-box">
+          <span v-for="color in item.colors" :key="color" class="color-item" :style="{ backgroundColor: color }" />
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 $themeColor: v-bind(themeColor);
@@ -209,7 +221,6 @@ $themeColor: v-bind(themeColor);
 
             }
 
-
         }
     }
 }
@@ -229,6 +240,4 @@ $themeColor: v-bind(themeColor);
 .color-popper-container .el-color-dropdown__btns button {
     display: none;
 }
-
 </style>
-

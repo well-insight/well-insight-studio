@@ -1,21 +1,22 @@
-<template>
-    <el-button ref="compRef">{{ propValue }}</el-button>
-</template>
-
 <script lang='ts' setup>
-import { ref } from 'vue';
+import { ref } from 'vue'
 
-const compRef = ref();
 defineProps({
-    propValue: {
-        type: String,
-        default: '这是button'
-    }
+  propValue: {
+    type: String,
+    default: '这是button',
+  },
 })
-
+const compRef = ref()
 defineExpose({
-    compRef
+  compRef,
 })
 </script>
+
+<template>
+  <el-button ref="compRef">
+    {{ propValue }}
+  </el-button>
+</template>
 
 <style lang='scss' scoped src="./index.scss"></style>

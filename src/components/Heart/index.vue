@@ -1,40 +1,37 @@
-<template>
-    <span class="heart-container">
-    </span>
-</template>
-
 <script setup lang="ts">
 const props: any = defineProps({
-    size: {
-        type: String,
-        default: '1em'
+  size: {
+    type: String,
+    default: '1em',
+  },
+  type: {
+    type: String,
+    validator(value: string) {
+      return ['warn', 'success'].includes(value)
     },
-    type: {
-        type: String,
-        validator(value: string) {
-            return ['warn', 'success'].includes(value)
-        },
-        default: 'warn'
-    },
-    ms: {
-        type: String,
-        default: '1s'
-    },
-    large: {
-        type: Number,
-        default: 1.1
-    }
+    default: 'warn',
+  },
+  ms: {
+    type: String,
+    default: '1s',
+  },
+  large: {
+    type: Number,
+    default: 1.1,
+  },
 })
 
 const HEART_COLOR: any = {
-    success: '#34c749',
-    warn: '#fcbc40'
+  success: '#34c749',
+  warn: '#fcbc40',
 }
-
 </script>
 
-<style lang="scss" scoped>
+<template>
+  <span class="heart-container" />
+</template>
 
+<style lang="scss" scoped>
 .heart-container {
     display: inline-block;
     height: v-bind(size);

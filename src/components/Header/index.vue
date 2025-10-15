@@ -1,16 +1,137 @@
+<script lang="ts">
+import type { menuListType, userInfoType } from '@/type'
+import { ArrowRight } from '@element-plus/icons-vue'
+import { defineComponent, reactive, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useStorage } from '@/hooks/useStorage'
+import { useSystemStore } from '@/stores/system'
+import { getItem } from '@/utils'
+
+interface goUrlType {
+  name: string
+  icon: string
+  path: string
+}
+
+const { remove } = useStorage('session')
+
+export default defineComponent({
+  name: 'DesignHeader',
+  setup() {
+    const route = useRoute()
+    const router = useRouter()
+    const store = useSystemStore()
+    const data = reactive({
+      selectIndex: 0,
+      moveIndex: -1,
+    })
+
+    const menuList = store.menuList
+
+    const crumbs: {
+      name: any
+      icon: string
+    }[] = reactive([
+      {
+        name: '首页',
+        icon: 'index',
+      },
+      {
+        name: '首页',
+        icon: 'index',
+      },
+    ])
+
+    // userInfo
+    const userInfo = reactive<userInfoType>({
+      username: 'admin',
+      avator: 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png',
+    })
+
+    const loginContent = getItem('loginContent')
+
+    userInfo.username = loginContent ? loginContent.showname : ''
+
+    // userInfo 用户信息跳转
+    const goUrl: goUrlType[] = reactive([
+      {
+        name: 'GitHub',
+        icon: 'github',
+        path: 'https://github.com/Wayne1308/weiDesign',
+      },
+      {
+        name: '退出登录',
+        icon: 'exit',
+        path: 'exit',
+      },
+    ])
+
+    const goTo = (item: goUrlType) => {
+      switch (item.path) {
+        case 'exit':
+          remove('design.token')
+          router.push('/login')
+          break
+
+        default:
+          window.open(item.path)
+          break
+      }
+    }
+
+    const refresh = () => {
+      window.location.reload()
+    }
+
+    const initCrumbs = (routeData: any) => {
+      crumbs.length > 1 && crumbs.splice(1)
+      const path = routeData.path.split('/').filter((o: any) => o)
+      let list = [...menuList]
+      while (path.length > 0) {
+        const item: menuListType | undefined = list.find((o: menuListType) => o.icon === path[0])
+        crumbs.push({
+          name: item?.showName || routeData.name,
+          icon: item?.icon || '',
+        })
+        if (item && item.children) {
+          list = item.children
+        }
+        path.shift()
+      }
+    }
+
+    initCrumbs(route)
+
+    watch(route, (newV, oldV) => {
+      initCrumbs(newV)
+    })
+
+    return {
+      ArrowRight,
+      data,
+      crumbs,
+      userInfo,
+      goUrl,
+      goTo,
+      refresh,
+    }
+  },
+})
+</script>
+
 <template>
   <div class="header-container">
     <div class="info-container">
       <div class="crumbs">
         <el-breadcrumb :separator-icon="ArrowRight">
           <el-breadcrumb-item
-            :to="i === 0 ? { path: '/' } : ''"
             v-for="(item, i) in crumbs"
             :key="i"
+            :to="i === 0 ? { path: '/' } : ''"
           >
             <div class="crumbs-item">
               <el-icon>
-                <svg-icon :name="item.icon"></svg-icon>
+                <svg-icon :name="item.icon" />
               </el-icon>
               <span class="crumbs-name">{{ item.name }}</span>
             </div>
@@ -23,7 +144,9 @@
         <el-icon><full-screen /></el-icon>
         <el-icon><magic-stick /></el-icon>
         <el-icon><folder-opened /></el-icon>
-        <el-icon @click="refresh" title="刷新"><refresh /></el-icon>
+        <el-icon title="刷新" @click="refresh">
+          <refresh />
+        </el-icon>
         <div class="">
           <el-dropdown>
             <span class="user-info">
@@ -38,7 +161,7 @@
                   :key="i + item.name"
                   @click="goTo(item)"
                 >
-                  <svg-icon :name="item.icon" color="#0ca296"></svg-icon>
+                  <svg-icon :name="item.icon" color="#0ca296" />
                   <span class="item-class">{{ item.name }}</span>
                 </el-dropdown-item>
               </el-dropdown-menu>
@@ -49,129 +172,6 @@
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import { defineComponent, PropType, reactive, watch, computed } from 'vue';
-import { ArrowRight } from '@element-plus/icons-vue';
-import { useRoute, useRouter } from 'vue-router';
-import { menuListType, userInfoType } from '@/type';
-import { getItem, removeItem, clearCookie, deepCopy } from '@/utils';
-import { useStorage } from '@/hooks/useStorage';
-import { useSystemStore } from '@/stores/system';
-
-type goUrlType = {
-  name: string;
-  icon: string;
-  path: string;
-};
-
-const { remove } = useStorage('session');
-
-
-export default defineComponent({
-  name: 'DesignHeader',
-  setup() {
-    const route = useRoute();
-    const router = useRouter();
-    const store= useSystemStore();
-    const data = reactive({
-      selectIndex: 0,
-      moveIndex: -1,
-    });
-
-
-    const menuList = store.menuList;
-
-    const crumbs: {
-      name: any;
-        icon: string;
-    }[] = reactive([
-      {
-        name: '首页',
-        icon: 'index',
-      },
-      {
-        name: '首页',
-        icon: 'index',
-      },
-    ]);
-
-    // userInfo
-    const userInfo = reactive<userInfoType>({
-      username: 'admin',
-      avator: 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png',
-    });
-
-    const loginContent = getItem('loginContent');
-
-    userInfo.username = loginContent ? loginContent.showname : '';
-
-    // userInfo 用户信息跳转
-    const goUrl: goUrlType[] = reactive([
-      {
-        name: 'GitHub',
-        icon: 'github',
-        path: 'https://github.com/Wayne1308/weiDesign',
-      },
-      {
-        name: '退出登录',
-        icon: 'exit',
-        path: 'exit',
-      },
-    ]);
-
-    const goTo = (item: goUrlType) => {
-      switch (item.path) {
-        case 'exit':
-          remove('design.token');
-          router.push('/login');
-          break;
-
-        default:
-          window.open(item.path);
-          break;
-      }
-    };
-
-    const refresh = () => {
-      window.location.reload();
-    };
-
-    const initCrumbs = (routeData: any) => {
-      crumbs.length > 1 && crumbs.splice(1);
-      const path = routeData.path.split('/').filter((o: any) => o);
-      let list = [...menuList];
-      while (path.length > 0) {
-        const item: menuListType | undefined = list.find((o: menuListType) => o.icon === path[0]);
-        crumbs.push({
-          name: item?.showName || routeData.name,
-          icon: item?.icon || '',
-        });
-        if (item && item.children) {
-          list = item.children;
-        }
-        path.shift();
-            }
-    };
-
-    initCrumbs(route);
-
-    watch(route, (newV, oldV) => {
-      initCrumbs(newV);
-    });
-
-    return {
-      ArrowRight,
-      data,
-      crumbs,
-      userInfo,
-      goUrl,
-      goTo,
-      refresh,
-    };
-  },
-});
-</script>
 
 <style lang="scss" scoped>
 .header-container {

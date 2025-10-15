@@ -1,45 +1,46 @@
-<template>
-    <div class="horse-race-lamp-container" ref="conRef">
-        <div class="line" ref="lineRef">
-            <div class="content">
-                <span v-for="(item, i) in horseTextList" style='color: #909399' class="line-item" :key="i">{{ item.title }}</span>
-            </div>
-            <div style="position: absolute; bottom: 0; width: 100%" dir="rtl">{{ oneSentenceData.origin }}—— </div>
-        </div>
-    </div>
-</template>
-
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue';
-import { INDEX_API } from '@/api/service/index';
+import { onMounted, ref } from 'vue'
+import { INDEX_API } from '@/api/service/index'
 import { getRandomColor } from '@/utils'
 
-let horseTextList= ref<{title: string; color: string}[]>([]);
-let oneSentenceData = ref<any>({});
+const horseTextList = ref<{ title: string, color: string }[]>([])
+const oneSentenceData = ref<any>({})
 INDEX_API.goodDailySentences().then((res: any) => {
-    if(res) {
-        oneSentenceData.value = res.data;
-        horseTextList.value = (res.data.content || '').split('').map((o: string) => {
-        return {
-            title: o,
-            color: getRandomColor()
-        }
-    });
-    }
+  if (res) {
+    oneSentenceData.value = res.data
+    horseTextList.value = (res.data.content || '').split('').map((o: string) => {
+      return {
+        title: o,
+        color: getRandomColor(),
+      }
+    })
+  }
 })
 
 // 文本长度
-const conRef: any = ref(null);
-const lineRef: any = ref(null);
-let conWidth = ref<number | string>(0);
-let lineW = ref<number | string>(0);
+const conRef: any = ref(null)
+const lineRef: any = ref(null)
+const conWidth = ref<number | string>(0)
+const lineW = ref<number | string>(0)
 
 onMounted(() => {
-    conWidth.value = (conRef.value ? conRef.value.offsetWidth: 0) - 80 + 'px';
-    lineW.value = (lineRef.value ? lineRef.value.offsetWidth: 0) * -1 + 'px';
-});
-
+  conWidth.value = `${(conRef.value ? conRef.value.offsetWidth : 0) - 80}px`
+  lineW.value = `${(lineRef.value ? lineRef.value.offsetWidth : 0) * -1}px`
+})
 </script>
+
+<template>
+  <div ref="conRef" class="horse-race-lamp-container">
+    <div ref="lineRef" class="line">
+      <div class="content">
+        <span v-for="(item, i) in horseTextList" :key="i" style="color: #909399" class="line-item">{{ item.title }}</span>
+      </div>
+      <div style="position: absolute; bottom: 0; width: 100%" dir="rtl">
+        {{ oneSentenceData.origin }}——
+      </div>
+    </div>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 @conwidth: v-bind(conWidth);

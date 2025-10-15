@@ -1,93 +1,94 @@
-<template>
-    <div class="tabBar-container">
-        <el-tag
-            class=""
-            :disable-transitions="true"
-            :effect="activeIndex === i ? 'dark': 'light'"
-            v-for="(item, i) in tagList"
-            :key="i + item.title"
-            @click="clickTag(item, i)"
-            @close="closeTag(i)"
-            size="large"
-            :type="item.type"
-            :closable="true"
-            >{{ item.title }}</el-tag
-        >
-    </div>
-</template>
-
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { randomNum } from "@/utils/number";
-import { tagType } from '@/type';
-const route = useRoute();
-const router = useRouter();
+import type { tagType } from '@/type'
+import { reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { randomNum } from '@/utils/number'
+
+const route = useRoute()
+const router = useRouter()
 const tagList: tagType[] = reactive([
   {
     title: '首页',
     path: '/weiDesign',
-    type: getTagColor()
-  }
-]);
+    type: getTagColor(),
+  },
+])
 
-let activeIndex = ref<number>(0);  // 当前高亮tag
+const activeIndex = ref<number>(0) // 当前高亮tag
 
-initTab(route);
+initTab(route)
 watch(route, (v, o) => {
-  initTab(v);
-});
+  initTab(v)
+})
 
 // 点击标签
-const clickTag = (item: tagType, i: number) => {
-  activeIndex.value = i;
-  router.push(item.path);
+function clickTag(item: tagType, i: number) {
+  activeIndex.value = i
+  router.push(item.path)
 }
 
 // 关闭标签
-const closeTag = (i: number) => {
-  if(i === 0) {
+function closeTag(i: number) {
+  if (i === 0) {
     return
   };
 
-  tagList.splice(i, 1);
+  tagList.splice(i, 1)
 
-  if(activeIndex.value === i) {
-    activeIndex.value = 0;
-    clickTag(tagList[0], 0);
+  if (activeIndex.value === i) {
+    activeIndex.value = 0
+    clickTag(tagList[0], 0)
   };
 
-  if(activeIndex.value > i) {
-    activeIndex.value -= 1;
+  if (activeIndex.value > i) {
+    activeIndex.value -= 1
   }
-
-};
+}
 
 /**
  * initTab 渲染tab
  * @param routeData
  */
 function initTab(routeData: any) {
-  const index = tagList.findIndex(m => {
-    return m.title === routeData.name && m.path === routeData.path;
-  });
-  activeIndex.value = index >= 0? index : tagList.length;
-  if(index < 0) {
+  const index = tagList.findIndex((m) => {
+    return m.title === routeData.name && m.path === routeData.path
+  })
+  activeIndex.value = index >= 0 ? index : tagList.length
+  if (index < 0) {
     tagList.push({
       title: routeData.name,
       path: routeData.path,
-      type: getTagColor()
+      type: getTagColor(),
     })
   }
 }
 
 // 随机 tag 类型
-function getTagColor () {
-  const type = ['success','info','warning','danger'];
-  const index = randomNum(0, type.length - 1);
-  return type[index];
+function getTagColor() {
+  const type = ['success', 'info', 'warning', 'danger']
+  const index = randomNum(0, type.length - 1)
+  return type[index]
 }
 </script>
+
+<template>
+  <div class="tabBar-container">
+    <el-tag
+      v-for="(item, i) in tagList"
+      :key="i + item.title"
+      class=""
+      :disable-transitions="true"
+      :effect="activeIndex === i ? 'dark' : 'light'"
+      size="large"
+      :type="item.type"
+      :closable="true"
+      @click="clickTag(item, i)"
+      @close="closeTag(i)"
+    >
+      {{ item.title }}
+    </el-tag>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 .tabBar-container {

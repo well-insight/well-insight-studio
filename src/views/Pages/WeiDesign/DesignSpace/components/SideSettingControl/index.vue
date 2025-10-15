@@ -1,23 +1,19 @@
-<template>
-    <div class="side-setting-container">
-        <canvas-attr-list v-if="currentIndex === -1"></canvas-attr-list>
-        <component-attr-list v-else></component-attr-list>
-    </div>
-</template>
-
 <script lang="ts" setup>
-import ComponentAttrList from '@/components/Editor/ComponentAttrList.vue';
-import CanvasAttrList from '@/components/Editor/CanvasAttrList.vue';
-import { useDesignStore } from '@/stores/design';
-import { computed } from 'vue';
+import { computed } from 'vue'
+import CanvasAttrList from '@/components/Editor/CanvasAttrList.vue'
+import ComponentAttrList from '@/components/Editor/ComponentAttrList.vue'
+import { useDesignStore } from '@/stores/design'
 
-const store = useDesignStore();
+const store = useDesignStore()
 
-const currentIndex = computed(() => store.$state.curComponentIndex);
-
-
-
-
+const currentIndex = computed(() => store.$state.curComponentIndex)
 </script>
+
+<template>
+  <div class="side-setting-container">
+    <CanvasAttrList v-if="currentIndex === -1" />
+    <ComponentAttrList v-else />
+  </div>
+</template>
 
 <style scoped lang="scss" src='./index.scss'></style>

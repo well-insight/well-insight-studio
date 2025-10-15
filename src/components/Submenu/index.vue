@@ -1,81 +1,84 @@
-<template>
-    <div class="submenu-container">
-        <div class="submenu-title">
-            <span>weiDesign</span>
-        </div>
-        <div class="select-title">
-            <div class="line"></div>
-            <span>{{ title }}</span>
-            <div class="line"></div>
-        </div>
-        <div class="menu-list">
-            <ul>
-                <li class="menu-list-item" :class="data.selectMenuIndex === i? 'selectMenuStyle': ''" v-for="(item, i) in menuList" @click="handle.selectMenu(i)" :key="i">
-                    <el-icon :size="16" color=""><folder-checked /></el-icon>
-                    <span class="menu-title">{{item.title}}</span>
-                </li>
-            </ul>
-        </div>
-    </div>
-</template>
-
 <script lang="ts">
-import { defineComponent, PropType, reactive } from "vue";
+import type { PropType } from 'vue'
+import { defineComponent, reactive } from 'vue'
 
 interface menuListType {
-    title: string,
-    icon: string
+  title: string
+  icon: string
 }
 
 export default defineComponent({
-    name: 'Submenu',  // 子菜单
-    props: {
-        title: {
-            type: String,
-            default: '菜单'
-        },
-        menuList: {
-            type: Array as PropType<menuListType[]>,
-            default: [
-                {
-                    title: '子菜单1',
-                    icon: ''
-                },
-                {
-                    title: '子菜单2',
-                    icon: ''
-                },
-                {
-                    title: '子菜单3',
-                    icon: ''
-                },
-            ]
-
-        }
+  name: 'Submenu', // 子菜单
+  props: {
+    title: {
+      type: String,
+      default: '菜单',
     },
-    setup(props, context) {
-        const { title, menuList} = props
+    menuList: {
+      type: Array as PropType<menuListType[]>,
+      default: [
+        {
+          title: '子菜单1',
+          icon: '',
+        },
+        {
+          title: '子菜单2',
+          icon: '',
+        },
+        {
+          title: '子菜单3',
+          icon: '',
+        },
+      ],
 
-        const data = reactive({
-            selectMenuIndex: 0
-        })
+    },
+  },
+  setup(props, context) {
+    const { title, menuList } = props
 
-        const handle = reactive({
-            selectMenu: (index: number): void => {
-                data.selectMenuIndex = index
-                context.emit('selectMenuIndex', index)
-            }
-        })
-        return {
-            data,
-            title,
-            menuList,
-            handle
-        }
+    const data = reactive({
+      selectMenuIndex: 0,
+    })
+
+    const handle = reactive({
+      selectMenu: (index: number): void => {
+        data.selectMenuIndex = index
+        context.emit('selectMenuIndex', index)
+      },
+    })
+    return {
+      data,
+      title,
+      menuList,
+      handle,
     }
+  },
 
 })
 </script>
+
+<template>
+  <div class="submenu-container">
+    <div class="submenu-title">
+      <span>weiDesign</span>
+    </div>
+    <div class="select-title">
+      <div class="line" />
+      <span>{{ title }}</span>
+      <div class="line" />
+    </div>
+    <div class="menu-list">
+      <ul>
+        <li v-for="(item, i) in menuList" :key="i" class="menu-list-item" :class="data.selectMenuIndex === i ? 'selectMenuStyle' : ''" @click="handle.selectMenu(i)">
+          <el-icon :size="16" color="">
+            <folder-checked />
+          </el-icon>
+          <span class="menu-title">{{ item.title }}</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 .submenu-container {

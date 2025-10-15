@@ -1,91 +1,94 @@
-<template>
-    <div
-        class="line"
-        v-show="showLine"
-        :style="[offset, borderCursor]"
-        @mousedown="handleDown">
-        <div class="action" :style="actionStyle">
-            <span class="del" @click="this.handleRemove">&times;</span>
-            <span class="value">{{startValue}}</span>
-        </div>
-    </div>
-</template>
 <script>
 export default {
-    name: 'LineRuler',
-    data() {
-        return {
-            startValue: 0,
-            showLine: true,
-        }
-    },
-    props: {
-        index: Number,
-        start: Number,
-        vertical: Boolean,
-        scale: Number,
-        value: Number,
-        palette: Object,
-        isShowReferLine: Boolean,
-        thick: Number,
-    },
-    computed: {
-        offset() {
-            const offset = (this.startValue - this.start) * this.scale;
-            if (offset < 0) {
-                this.showLine = false;
-            } else {
-                this.showLine = true;
-            }
-            const positionValue = offset + 'px';
-            const position = this.vertical ? { top: positionValue } : { left: positionValue };
-            return position;
-        },
-        borderCursor() {
-            const borderValue = `1px solid ${this.palette.lineColor}`
-            const border = this.vertical ? { borderTop:  borderValue } : { borderLeft: borderValue };
-
-            const cursorValue = this.isShowReferLine ? this.vertical ? 'ns-resize' : 'ew-resize' : 'none';
-            return {
-                cursor: cursorValue,
-                ...border,
-            }
-        },
-        actionStyle() {
-            const actionStyle = this.vertical ? { left: this.thick + 'px'} : { top: this.thick + 'px'};
-            return actionStyle;
-        }
-    },
-    methods: {
-        handleDown(e) {
-            const startD = this.vertical ? e.clientY : e.clientX;
-            const initValue = this.startValue;
-            this.$emit('onMouseDown');
-            const onMove = (e) => {
-                const currentD = this.vertical ? e.clientY : e.clientX
-                const newValue = Math.round(initValue + (currentD - startD) / this.scale)
-                this.startValue = newValue;
-            }
-            const onEnd = () => {
-                this.$emit('onRelease', this.startValue, this.index);
-                document.removeEventListener('mousemove', onMove)
-                document.removeEventListener('mouseup', onEnd)
-            }
-            document.addEventListener('mousemove', onMove)
-            document.addEventListener('mouseup', onEnd)
-        },
-        handleRemove() {
-            this.$emit('onRemove', this.index);
-        },
-        initStartValue() {
-            this.startValue = this.value;
-        }
-    },
-    mounted() {
-        this.initStartValue();
+  name: 'LineRuler',
+  props: {
+    index: Number,
+    start: Number,
+    vertical: Boolean,
+    scale: Number,
+    value: Number,
+    palette: Object,
+    isShowReferLine: Boolean,
+    thick: Number,
+  },
+  data() {
+    return {
+      startValue: 0,
+      showLine: true,
     }
+  },
+  computed: {
+    offset() {
+      const offset = (this.startValue - this.start) * this.scale
+      if (offset < 0) {
+        this.showLine = false
+      }
+      else {
+        this.showLine = true
+      }
+      const positionValue = `${offset}px`
+      const position = this.vertical ? { top: positionValue } : { left: positionValue }
+      return position
+    },
+    borderCursor() {
+      const borderValue = `1px solid ${this.palette.lineColor}`
+      const border = this.vertical ? { borderTop: borderValue } : { borderLeft: borderValue }
+
+      const cursorValue = this.isShowReferLine ? this.vertical ? 'ns-resize' : 'ew-resize' : 'none'
+      return {
+        cursor: cursorValue,
+        ...border,
+      }
+    },
+    actionStyle() {
+      const actionStyle = this.vertical ? { left: `${this.thick}px` } : { top: `${this.thick}px` }
+      return actionStyle
+    },
+  },
+  mounted() {
+    this.initStartValue()
+  },
+  methods: {
+    handleDown(e) {
+      const startD = this.vertical ? e.clientY : e.clientX
+      const initValue = this.startValue
+      this.$emit('onMouseDown')
+      const onMove = (e) => {
+        const currentD = this.vertical ? e.clientY : e.clientX
+        const newValue = Math.round(initValue + (currentD - startD) / this.scale)
+        this.startValue = newValue
+      }
+      const onEnd = () => {
+        this.$emit('onRelease', this.startValue, this.index)
+        document.removeEventListener('mousemove', onMove)
+        document.removeEventListener('mouseup', onEnd)
+      }
+      document.addEventListener('mousemove', onMove)
+      document.addEventListener('mouseup', onEnd)
+    },
+    handleRemove() {
+      this.$emit('onRemove', this.index)
+    },
+    initStartValue() {
+      this.startValue = this.value
+    },
+  },
 }
 </script>
+
+<template>
+  <div
+    v-show="showLine"
+    class="line"
+    :style="[offset, borderCursor]"
+    @mousedown="handleDown"
+  >
+    <div class="action" :style="actionStyle">
+      <span class="del" @click="handleRemove">&times;</span>
+      <span class="value">{{ startValue }}</span>
+    </div>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 .line {

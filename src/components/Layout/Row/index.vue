@@ -1,51 +1,51 @@
-<template>
-  <div class="row-container">
-    <slot></slot>
-  </div>
-</template>
-
 <script lang="ts">
-import { defineComponent, reactive } from "vue";
+import { defineComponent, reactive } from 'vue'
 
 export default defineComponent({
-  name: "Row",
+  name: 'Row',
   props: {
     // flex-direction
     direction: {
       type: String,
-      default: "row",
+      default: 'row',
     },
     // align-items
     align: {
       type: String,
-      default: "center",
+      default: 'center',
     },
     // justify-content
     justify: {
       type: String,
-      default: "center",
+      default: 'center',
     },
     // padding
     gutter: {
       type: [Number, String],
-      default: '20px'
-    }
+      default: '20px',
+    },
   },
   setup(props, context) {
-    const { direction, align, justify, gutter } = props;
+    const { direction, align, justify, gutter } = props
 
     const rowStyle = reactive({
       direction,
       align,
       justify,
-      gutter
-    });
+      gutter,
+    })
     return {
       rowStyle,
-    };
+    }
   },
-});
+})
 </script>
+
+<template>
+  <div class="row-container">
+    <slot />
+  </div>
+</template>
 
 <style lang="scss"  scoped>
 .row-container {

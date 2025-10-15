@@ -1,164 +1,158 @@
-<template>
-    <div class="popper-menu-container">
-        <div class="menu-content">
-            <!-- 菜单展示圆 -->
-            <div class="menu-show-content" :class="[isActive? 'active': '']" @mouseenter="mouseenterContent" @mouseleave="mouseleaveContent" @click="selectContent">
-                <div class="content">
-                    <slot name="content">
-                        菜单
-                    </slot>
-                </div>
-            </div>
-            <!-- 菜单 -->
-            <div class="menu-item" :style="menuItemStyle[i]" v-for="(item, i) in menuList" @click="selectMenuItem(item)" :class="item.display === 'none'?'hide': ''" :key="item.title + i">
-                <span>{{ item.title }}</span>
-                <svg-icon :name="item.icon" color="#FFF"></svg-icon>
-            </div>
-        </div>
-    </div>
-</template>
-
 <script setup lang="ts">
-import { emit } from "process";
-import { ref, computed, PropType } from "vue";
+import type { PropType } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = defineProps({
-    size: {
-        type: [String, Number],
-        default: 80
+  size: {
+    type: [String, Number],
+    default: 80,
+  },
+  menuList: {
+    type: Array as PropType<any[]>,
+    validator(list: any[]) {
+      return list.length <= 6
     },
-    menuList: {
-        type: Array as PropType<any[]>,
-        validator(list: any[]) {
-            return list.length <= 6
+    default: () => {
+      return [
+        {
+          title: 'menu1',
+          icon: '发布',
         },
-        default: () => {
-            return [
-            {
-                    title: 'menu1',
-                    icon: '发布'
-                }
-            ]
-        }
+      ]
     },
-    position: {
-        validator(value: string) {
-            // The value must match one of these strings
-            return ['tl', 'bl', 'tr', 'br'].includes(value)
-        },
-        default: 'tr'
-    }
+  },
+  position: {
+    validator(value: string) {
+      // The value must match one of these strings
+      return ['tl', 'bl', 'tr', 'br'].includes(value)
+    },
+    default: 'tr',
+  },
 })
 
-const emits = defineEmits(['selectMenuItem']);
-
+const emits = defineEmits(['selectMenuItem'])
 
 // 每个元素的移动位置
 
-let r = ref(0);  // 菜单半径
-let opacity = ref(0);
-r.value = typeof props.size === 'number' ? props.size : parseInt(props.size); // 半径
-
+const r = ref(0) // 菜单半径
+const opacity = ref(0)
+r.value = typeof props.size === 'number' ? props.size : Number.parseInt(props.size) // 半径
 
 // 圆 方程
 function getcycle(x: number, r: number) {
-    return Math.sqrt(r * r - x * x)
+  return Math.sqrt(r * r - x * x)
 }
 
-
-let deg = 90 / (props.menuList.length);  // 角度
+const deg = 90 / (props.menuList.length) // 角度
 
 const menuItemStyle = computed(() => {
-    return props.menuList.map((o: any, i: number) => {
-
-        // 每一行最多放 行数 * 6
-        const degs = deg * i + (45 / props.menuList.length); // 角度
-        const sinDeg = Math.abs(Math.sin(degs * (Math.PI / 180))); // sin 值
-        const y = getcycle(sinDeg * r.value, r.value + 20);
-        return {
-            transform: `translate(-${y}px, ${sinDeg * r.value}px)`,
-            opacity: opacity.value
-        }
-
-    })
+  return props.menuList.map((o: any, i: number) => {
+    // 每一行最多放 行数 * 6
+    const degs = deg * i + (45 / props.menuList.length) // 角度
+    const sinDeg = Math.abs(Math.sin(degs * (Math.PI / 180))) // sin 值
+    const y = getcycle(sinDeg * r.value, r.value + 20)
+    return {
+      transform: `translate(-${y}px, ${sinDeg * r.value}px)`,
+      opacity: opacity.value,
+    }
+  })
 })
 
-const isActive = ref(false); // 当前选中放大菜单
+const isActive = ref(false) // 当前选中放大菜单
 
-const mouseenterContent = () => {
-    r.value = Number(props.size) * 1.8;
-    opacity.value = 1;
+function mouseenterContent() {
+  r.value = Number(props.size) * 1.8
+  opacity.value = 1
 }
 
-const mouseleaveContent = () => {
-    // 当前选中菜单后菜单 item 不消失
-    if(isActive.value) {
-        return
-    }
-    r.value = Number(props.size) / 1.8;
-    opacity.value = 0;
+function mouseleaveContent() {
+  // 当前选中菜单后菜单 item 不消失
+  if (isActive.value) {
+    return
+  }
+  r.value = Number(props.size) / 1.8
+  opacity.value = 0
 }
 
-const shrinkPropMenu = () => {
-    isActive.value = false;
-    r.value = Number(props.size) / 1.8;
-    opacity.value = 0;
+function shrinkPropMenu() {
+  isActive.value = false
+  r.value = Number(props.size) / 1.8
+  opacity.value = 0
 }
 
-const selectContent = (e: MouseEvent) => {
-    isActive.value = true;
-    r.value = Number(props.size) * 1.8;
-    opacity.value = 1;
+function selectContent(e: MouseEvent) {
+  isActive.value = true
+  r.value = Number(props.size) * 1.8
+  opacity.value = 1
 
-    window.document.addEventListener('click', shrinkPropMenu);
+  window.document.addEventListener('click', shrinkPropMenu)
 
-    // 阻止向父组件冒泡
-    e.stopPropagation();
-    e.preventDefault();
+  // 阻止向父组件冒泡
+  e.stopPropagation()
+  e.preventDefault()
 }
-
-
 
 // 弹出菜单样式
 
 const properStyle = computed(() => {
-    const size = (typeof props.size === 'number' ? props.size : parseInt(props.size)) * 2;
-    return {
-        size: `${size}px`,
-        positionSize: `-${size / 2}px`
-    }
+  const size = (typeof props.size === 'number' ? props.size : Number.parseInt(props.size)) * 2
+  return {
+    size: `${size}px`,
+    positionSize: `-${size / 2}px`,
+  }
 })
 
 const contentStyle = computed(() => {
-    const size = -(typeof props.size === 'number' ? props.size : parseInt(props.size));
-    let top = `${size}px`;
-    let bottom = `${size}px`;
-    let left = `${size}px`;
-    let right = `${size}px`;
-    // 左边
-    if(props.position.includes('l')) {
-        right = 'auto'
-    }else {
-        left = 'auto'
-    }
-    if(props.position.includes('t')) {
-        bottom = 'auto'
-    }else {
-        top = 'auto'
-    }
-    return {
-        top,
-        bottom,
-        right,
-        left
-    }
+  const size = -(typeof props.size === 'number' ? props.size : Number.parseInt(props.size))
+  let top = `${size}px`
+  let bottom = `${size}px`
+  let left = `${size}px`
+  let right = `${size}px`
+  // 左边
+  if (props.position.includes('l')) {
+    right = 'auto'
+  }
+  else {
+    left = 'auto'
+  }
+  if (props.position.includes('t')) {
+    bottom = 'auto'
+  }
+  else {
+    top = 'auto'
+  }
+  return {
+    top,
+    bottom,
+    right,
+    left,
+  }
 })
 
-const selectMenuItem = (item: any) => {
-    emits('selectMenuItem', item)
+function selectMenuItem(item: any) {
+  emits('selectMenuItem', item)
 }
-
 </script>
+
+<template>
+  <div class="popper-menu-container">
+    <div class="menu-content">
+      <!-- 菜单展示圆 -->
+      <div class="menu-show-content" :class="[isActive ? 'active' : '']" @mouseenter="mouseenterContent" @mouseleave="mouseleaveContent" @click="selectContent">
+        <div class="content">
+          <slot name="content">
+            菜单
+          </slot>
+        </div>
+      </div>
+      <!-- 菜单 -->
+      <div v-for="(item, i) in menuList" :key="item.title + i" class="menu-item" :style="menuItemStyle[i]" :class="item.display === 'none' ? 'hide' : ''" @click="selectMenuItem(item)">
+        <span>{{ item.title }}</span>
+        <svg-icon :name="item.icon" color="#FFF" />
+      </div>
+    </div>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 .popper-menu-container {
@@ -225,7 +219,7 @@ const selectMenuItem = (item: any) => {
             cursor: pointer;
             border-radius: 50%;
             color: #fff;
-            background-color: $activeColor-1;
+            background-color: #0ca296;
 
             &.hide {
                 display: none;
@@ -234,4 +228,3 @@ const selectMenuItem = (item: any) => {
     }
 }
 </style>
-

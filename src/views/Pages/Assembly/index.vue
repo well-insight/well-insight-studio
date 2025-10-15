@@ -1,42 +1,46 @@
-<template>
-    <div class="assembly-container">
-        <!--组件：组件包含内置的组件，外部也可以自己上传组件，然后预览介绍，详情接口入参配置等。-->
-        <el-card class='custom-card' shadow='hover' v-for='(item, i) in assemblyList' :key='item.img' data-name='el-card' @click='showAssemblyDetail(item, $event)'>
-            <div class='el-custom-card-body'>
-                <img class='custom-card-img' :src='item.img'
-                     alt=''>
-                <div class='discrible-box'>
-                    <span class='title'>{{ item.title }}</span>
-                    <span class='content'>{{ item.content }}</span>
-                    <span class='time'>{{ item.time }}</span>
-                </div>
-            </div>
-        </el-card>
-
-        <!--组件详情-->
-        <el-card class='show-assembly-box' v-show='detailBoxVisible'>
-            <h1 @click='detailBoxVisible = false'>退出</h1>
-        </el-card>
-    </div>
-</template>
-
 <script setup lang="ts">
-import { assemblyType } from '@/type';
-import { ASSEMBLY_API } from '@/api/service/index';
-import { ref } from 'vue';
+import type { assemblyType } from '@/type'
+import { ref } from 'vue'
+import { ASSEMBLY_API } from '@/api/service/index'
 
-let assemblyList = ref<assemblyType[]>([])
-ASSEMBLY_API.getAssemblyLists().then(res => {
-    if(res) {
-        assemblyList.value = res.data;
-    }
-});
+const assemblyList = ref<assemblyType[]>([])
+ASSEMBLY_API.getAssemblyLists().then((res) => {
+  if (res) {
+    assemblyList.value = res.data
+  }
+})
 
-const detailBoxVisible = ref<boolean>(false);
-const showAssemblyDetail = (item: assemblyType, e: any) => {
-    detailBoxVisible.value = true;
+const detailBoxVisible = ref<boolean>(false)
+function showAssemblyDetail(item: assemblyType, e: any) {
+  detailBoxVisible.value = true
 }
 </script>
+
+<template>
+  <div class="assembly-container">
+    <!-- 组件：组件包含内置的组件，外部也可以自己上传组件，然后预览介绍，详情接口入参配置等。 -->
+    <el-card v-for="(item, i) in assemblyList" :key="item.img" class="custom-card" shadow="hover" data-name="el-card" @click="showAssemblyDetail(item, $event)">
+      <div class="el-custom-card-body">
+        <img
+          class="custom-card-img" :src="item.img"
+          alt=""
+        >
+        <div class="discrible-box">
+          <span class="title">{{ item.title }}</span>
+          <span class="content">{{ item.content }}</span>
+          <span class="time">{{ item.time }}</span>
+        </div>
+      </div>
+    </el-card>
+
+    <!-- 组件详情 -->
+    <el-card v-show="detailBoxVisible" class="show-assembly-box">
+      <h1 @click="detailBoxVisible = false">
+        退出
+      </h1>
+    </el-card>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 .assembly-container {

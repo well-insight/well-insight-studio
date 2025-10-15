@@ -1,30 +1,27 @@
-<template>
-<div class='item-box-container item-box'>
-    <div class='item-header'>
-        <slot name='header'>
-            标题
-        </slot>
-    </div>
-    <div class='item-body'>
-        <slot></slot>
-    </div>
-</div>
-</template>
-
 <script lang='ts' setup>
-
 const props = defineProps({
-    title: {
-        type: String,
-    },
-    headerHeight: {
-        type: String,
-        default: '60px'
-    }
-});
-
-
+  title: {
+    type: String,
+  },
+  headerHeight: {
+    type: String,
+    default: '60px',
+  },
+})
 </script>
+
+<template>
+  <div class="item-box-container item-box">
+    <div class="item-header">
+      <slot name="header">
+        标题
+      </slot>
+    </div>
+    <div class="item-body">
+      <slot />
+    </div>
+  </div>
+</template>
 
 <style scoped lang='scss'>
 .item-box-container {

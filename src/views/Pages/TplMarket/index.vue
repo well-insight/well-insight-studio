@@ -1,21 +1,25 @@
-<template>
-  <div class="container">
-    <transition name="router_animate">
-      <w-button v-if="isVisible">1111</w-button>
-    </transition>
-
-    <w-button @click="click">点击</w-button>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref } from 'vue'
 
 const isVisible = ref(true)
-const click = () => {
+function click() {
   isVisible.value = !isVisible.value
 }
 </script>
+
+<template>
+  <div class="container">
+    <transition name="router_animate">
+      <w-button v-if="isVisible">
+        1111
+      </w-button>
+    </transition>
+
+    <w-button @click="click">
+      点击
+    </w-button>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 .w-button {

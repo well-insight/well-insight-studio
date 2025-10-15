@@ -1,13 +1,12 @@
-<template>
-    <div class="demos-test-container">
-        <proper-menu></proper-menu>
-    </div>
-</template>
-
 <script lang="ts" setup>
-import {onMounted} from "vue";
-import ProperMenu from "@/components/ProperMenu/index.vue";
+import ProperMenu from '@/components/ProperMenu/index.vue'
 </script>
+
+<template>
+  <div class="demos-test-container">
+    <ProperMenu />
+  </div>
+</template>
 
 <style lang="scss" scoped>
 .demos-test-container {
@@ -16,4 +15,3 @@ import ProperMenu from "@/components/ProperMenu/index.vue";
     position: relative;
 }
 </style>
-

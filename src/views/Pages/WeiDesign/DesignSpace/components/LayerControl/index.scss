@@ -66,15 +66,15 @@
                 transition: background-color .4s;
 
                 &:hover {
-                    background-color: $activeColor-3;
+                    background-color: #eaf5f5;
                 }
 
                 &.active {
-                    background-color: $activeColor-2;
-                    border: 1px solid $activeColor-1;
+                    background-color: #86d1cb;
+                    border: 1px solid #0ca296;
 
                     &:hover {
-                        background-color: $activeColor-2;
+                        background-color: #86d1cb;
                     }
                 }
 
