@@ -1,7 +1,7 @@
 import WButton from './WButton/index.vue';
 
 // @ts-ignore
-const charts = import.meta.globEager('./Charts/*/*.vue');
+const charts = import.meta.glob('./Charts/*/*.vue', { eager: true });
 
 let customComponents: {name: string; component: any}[] = [];
 Object.values(charts).forEach((o: any) => {
