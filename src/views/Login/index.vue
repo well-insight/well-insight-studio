@@ -101,7 +101,7 @@ export default defineComponent({
           type="password"
         />
       </div>
-      <el-button type="" color="#0ca296" @click="loginForm.click">
+      <el-button type="primary" @click="loginForm.click">
         登录
       </el-button>
       <div class="goRegister-box">
@@ -119,16 +119,15 @@ export default defineComponent({
   background-size: 100% 100%;
   background-repeat: no-repeat;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   .login-box {
-    width: 30vw;
+    width: 480px;
     background-color: var(--el-color-white);
     color: #fff;
     border-radius: 10px;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    right: 100px;
     padding: 20px;
     display: flex;
     flex-direction: column;
