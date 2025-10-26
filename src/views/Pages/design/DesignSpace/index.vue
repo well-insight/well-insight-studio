@@ -59,7 +59,7 @@ function goPreview() {
     <div class="header">
       <div class="left-box">
         <span class="logo-box">
-          <svg-icon class="logo" name="lightning" width="30px" height="30px" color="#0ca296" />
+          <svg-icon class="logo" name="lightning" width="30px" height="30px" color="var(--el-color-primary)" />
         </span>
         <div class="btn-box">
           <el-tooltip

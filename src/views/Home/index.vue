@@ -29,10 +29,6 @@ export default defineComponent({
       isCollapse.value = isClose
     }
 
-    // global.$api.Get('api/weiDesign/getUsers', {}).then((res: any) => {
-    //   console.log('测试接口', res);
-    // });
-
     return {
       arrowSide,
       isCollapse,

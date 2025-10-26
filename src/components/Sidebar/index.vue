@@ -1,11 +1,13 @@
 <script lang="ts">
+import { ArrowLeftBold, ArrowRightBold, InfoFilled, Paperclip } from '@element-plus/icons-vue'
 import { defineComponent, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSystemStore } from '@/stores/system'
 
 // type
 export default defineComponent({
-  name: 'Sidebar', // 侧边栏
+  name: 'Sidebar',
+  // 侧边栏
   props: {
     // 标题logo
     logo: {
@@ -48,7 +50,7 @@ export default defineComponent({
     })
 
     const handleOpen = (key: string, keyPath: string[]) => {
-      // debugger
+      //
     }
     const handleClose = (key: string, keyPath: string[]) => {
       // debugger
@@ -76,6 +78,10 @@ export default defineComponent({
       selectMenu,
       route,
       router,
+      ArrowLeftBold,
+      ArrowRightBold,
+      Paperclip,
+      InfoFilled,
     }
   },
 })
@@ -84,25 +90,25 @@ export default defineComponent({
 <template>
   <div class="sidebar-container" :class="isCollapse ? 'arrow' : 'expand'" :style="{ width: !isCollapse ? '200px' : '70px' }">
     <div class="logo" title="weiDesign" @click="router.push('/')">
-      <svg-icon name="lightning" size="2.5em" color="#0ca296" />
-      <span v-if="!isCollapse" class="title">WEI-DESIGN</span>
+      <svg-icon name="lightning" size="2em" color="var(--el-color-primary)" />
+      <span v-if="!isCollapse" class="title">DESIGNER</span>
     </div>
     <div class="sidebar-list">
       <el-menu
-        ref="elMenu" :default-active="route.path" v-loading="!menuList" :router="true"
+        ref="elMenu" v-loading="!menuList" :default-active="route.path" :router="true"
         class="el-menu-vertical" :unique-opened="true" :collapse="isCollapse" :collapse-transition="false"
         @open="handleOpen" @close="handleClose" @select="selectMenu"
       >
-        <template v-for="(item, i) in menuList" :key="item.id + i">
+        <template v-for="(item) in menuList" :key="item.router">
           <el-menu-item :index="item.router">
             <div class="item-container">
               <el-icon>
                 <svg-icon :name="item.icon" color="" />
               </el-icon>
-              <span v-if="!isCollapse">{{ item.showName }}</span>
+              <span v-if="!isCollapse">{{ item.title }}</span>
             </div>
             <template v-if="isCollapse" #title>
-              {{ item.showName }}
+              {{ item.title }}
             </template>
           </el-menu-item>
         </template>
@@ -110,22 +116,13 @@ export default defineComponent({
     </div>
     <div class="switch-list" :style="{ display: !isCollapse ? 'flex' : 'inline-block' }">
       <div class="switch-item">
-        <el-icon v-if="isCollapse" title="收拢" @click="handle.arrow">
-          <arrow-right-bold />
-        </el-icon>
-        <el-icon v-else title="收拢" @click="handle.arrow">
-          <arrow-left-bold />
-        </el-icon>
+        <el-button :icon="isCollapse ? ArrowRightBold : ArrowLeftBold" title="收拢" circle @click="handle.arrow" />
       </div>
       <div class="switch-item">
-        <el-icon title="浮动" @click="handle.float">
-          <paperclip />
-        </el-icon>
+        <el-button :icon="Paperclip" circle title="浮动" @click="handle.float" />
       </div>
       <div class="switch-item">
-        <el-icon title="大事记" @click="handle.bigThing">
-          <info-filled />
-        </el-icon>
+        <el-button :icon="InfoFilled" circle title="大事记" @click="handle.bigThing" />
       </div>
     </div>
   </div>
@@ -177,8 +174,8 @@ html:root {
         }
 
         .title {
-            color: #0ca296;
-            font-size: 1.5em;
+            color: var(--el-color-primary);
+            font-size: 2em;
             font-weight: 600;
         }
     }
@@ -213,7 +210,7 @@ html:root {
             transition: background-color 0.2s;
 
             &:hover {
-                background-color: #0ca296;
+                background-color: var(--el-color-primary);
                 // border: 1px solid #0ca296;
                 color: #ffffff;
             }
@@ -228,7 +225,7 @@ html:root {
     }
 
     .switch-list {
-        border-top: 0.5px solid #323741;
+        border-top: 0.5px solid var(--el-border-color);
         width: 100%;
         height: 200px;
         transition: all 0.5s;
@@ -278,16 +275,16 @@ html:root {
 
             width: 100%;
             border-radius: 5px;
-            background-color: #0ca296;
+            background-color: var(--el-color-primary);
             // border: 1px solid #0ca296;
             color: #ffffff !important;
         }
     }
 }
 
-.el-menu--collapse .el-sub-menu.is-active .el-sub-menu__title {
-    color: #0ca296 !important;
-}
+// .el-menu--collapse .el-sub-menu.is-active .el-sub-menu__title {
+//     color: var(--el-color-primary) !important;
+// }
 
 .el-sub-menu {
     width: 100%;

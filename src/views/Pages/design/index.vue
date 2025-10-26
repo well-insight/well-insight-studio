@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import type { designListType } from '@/type'
 import { computed, reactive, ref } from 'vue'
-import { getImg } from '@/api/service/design'
 import Heart from '@/components/Heart/index.vue'
 import ItemCard from '@/components/ItemCard/index.vue'
 import ProperMenu from '@/components/ProperMenu/index.vue'
 import { closeLoading, openLoading } from '@/hooks/useLoading'
 import router from '@/router'
 import { useDesignStore } from '@/stores/design'
-import Preview from './preview.vue'
+import Preview from './Preview.vue'
 
 interface designDropdownListType {
   title: string
@@ -21,7 +20,7 @@ const store = useDesignStore()
 const previewRef = ref<HTMLElement | null>(null)
 
 await store.findDesignList()
-const designList = computed(() => store.$state.designList)
+const designList = computed(() => store.designList)
 
 // 下拉框list
 const designDropdownHandle = reactive<designDropdownListType[]>([
@@ -140,11 +139,11 @@ async function selectMenuItem(e: any) {
       </template>
     </ProperMenu>
 
-    <ItemCard v-for="(item, i) in designList" :key="item.img" shadow="hover" :body-style="{}" @en-large="enLarge(item)" @cancel="cancel(item)">
+    <ItemCard v-for="(item) in designList" :key="item.img" shadow="hover" :body-style="{}" @en-large="enLarge(item)" @cancel="cancel(item)">
       <div class="design-content">
         <div class="design-img" @click="toDesignSpace(item.id)">
           <!-- <svg-icon :name="item.img" style="width: 80%; height: 80%"></svg-icon> -->
-          <img style="width: 100%;height: 100%;" :src="getImg(item.id)" alt="">
+          <el-image style="width: 100%;height: 100%;" :src="item?.img" alt="" />
         </div>
         <div class="design-footer">
           <span class="title">{{ item.title }}</span>
@@ -164,7 +163,7 @@ async function selectMenuItem(e: any) {
               <el-button icon="MoreFilled" plain />
               <template #dropdown>
                 <el-dropdown-menu class="my-design-manager-dropdown">
-                  <el-dropdown-item v-for="(m, i) in designDropdownHandle" :key="item.title" @click="m.click(item)">
+                  <el-dropdown-item v-for="(m) in designDropdownHandle" :key="m.title" @click="m.click(item)">
                     <svg-icon color="" :name="m.icon" />
                     <span>{{ m.title }}</span>
                   </el-dropdown-item>
@@ -188,6 +187,7 @@ async function selectMenuItem(e: any) {
     position: relative;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    height: 250px;
     grid-gap: 20px;
 
     .item-card {
@@ -204,6 +204,7 @@ async function selectMenuItem(e: any) {
             .design-img {
                 display: flex;
                 flex: 1;
+                height: 0;
                 width: 100%;
                 align-items: center;
                 justify-content: center;

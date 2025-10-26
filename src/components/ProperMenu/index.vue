@@ -219,7 +219,7 @@ function selectMenuItem(item: any) {
             cursor: pointer;
             border-radius: 50%;
             color: #fff;
-            background-color: #0ca296;
+            background-color: var(--el-color-primary);
 
             &.hide {
                 display: none;

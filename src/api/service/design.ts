@@ -1,4 +1,5 @@
 import type { reponseType } from '@/type'
+import request from '@/utils/request'
 import api from '../index'
 
 export async function addDesign(userId: string, content: string): Promise<reponseType> {
@@ -21,8 +22,8 @@ export async function updateDesignById(id: string, content: string): Promise<rep
   })
 }
 
-export async function findDesignList(userId: string): Promise<reponseType> {
-  return await api.Get('/design/api/design/findDesignList', {
+export async function findDesignList(userId: string) {
+  return await request.get('/api/design/findDesignList', {
     userId,
   })
 }

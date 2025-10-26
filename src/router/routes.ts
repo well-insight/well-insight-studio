@@ -4,8 +4,6 @@ import Assembly from '@/views/Pages/Assembly/index.vue'
 import Boardsheet from '@/views/Pages/Boardsheet/index.vue'
 import SystemInfo from '@/views/Pages/SystemInfo/index.vue'
 import TplMarket from '@/views/Pages/TplMarket/index.vue'
-import DesignSpace from '@/views/Pages/WeiDesign/DesignSpace/index.vue'
-import Preview from '@/views/Pages/WeiDesign/DesignSpace/preview/index.vue'
 
 export default [
   { path: '/', redirect: '/home' },
@@ -18,7 +16,7 @@ export default [
       {
         path: '/weiDesign',
         name: '界面设计',
-        component: () => import('@/views/Pages/WeiDesign/index.vue'),
+        component: () => import('@/views/Pages/design/index.vue'),
       },
       {
         path: '/tplMarket',
@@ -65,7 +63,7 @@ export default [
   {
     path: '/weiDesign/designSpace',
     name: '工作空间',
-    component: DesignSpace,
+    component: () => import('@/views/Pages/design/DesignSpace/index.vue'),
     meta: {
       title: '工作空间',
     },
@@ -73,7 +71,7 @@ export default [
   {
     path: '/preview',
     name: '预览',
-    component: Preview,
+    component: () => import('@/views/Pages/design/preview.vue'),
   },
   {
     path: '/demos',

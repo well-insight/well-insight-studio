@@ -103,10 +103,10 @@ function dragendItem() {
       <div
         v-for="(item, i) in linkList"
         :key="item.title + item.icon"
+        ref="linkRef"
         class="links-item"
         :title="item.title"
         draggable="true"
-        ref="linkRef"
         :data-index="i"
         @drag="dragItem(i, item, $event)"
         @dragstart="dragstartItem(i, item, $event)"
@@ -151,7 +151,7 @@ function dragendItem() {
 
             .title {
                 display: inline-block;
-                color: #0ca296;
+                color: var(--el-color-primary);
                 margin: 5px 0;
                 white-space: nowrap;
                 font-weight: 700;

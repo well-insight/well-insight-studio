@@ -293,7 +293,7 @@ function isActive() {
 .shape-point {
     position: absolute;
     background: #fff;
-    outline: 2px solid #0ca296;
+    outline: 2px solid var(--el-color-primary);
     z-index: 1;
 }
 
@@ -303,7 +303,7 @@ function isActive() {
     left: 50%;
     transform: translateX(-50%);
     cursor: grab;
-    color: #0ca296;
+    color: var(--el-color-primary);
     font-size: 20px;
     font-weight: 600;
 

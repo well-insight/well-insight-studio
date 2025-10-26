@@ -71,10 +71,8 @@ export const useDesignStore = defineStore('design', {
     async findDesignList() {
       const { id: userId } = getItem('loginContent') || ''
       const res = await findDesignList(userId)
-      if (res.status === 'success') {
-        this.designList = res.data.map((o: any) => {
-          return { ...JSON.parse(o.content || '{}').pageConfig, id: o.id }
-        })
+      if (res) {
+        this.designList = res
         return this.designList
       };
       return []
@@ -82,6 +80,7 @@ export const useDesignStore = defineStore('design', {
     async deleteDesign(id: string) {
       const res = await deleteDesign(id)
       if (res.status === 'success') {
+        //
       };
     },
   },

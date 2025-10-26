@@ -3,7 +3,7 @@ import { Avatar, Lock } from '@element-plus/icons-vue'
 import { ElMessage, ElNotification } from 'element-plus'
 import { defineComponent, onMounted, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { system, testApi } from '@/api/service'
+import { getUsers, login } from '@/api/service'
 import logoImg from '@/assets/logo.png'
 import { closeLoading, openLoading } from '@/hooks/useLoading'
 import { useStorage } from '@/hooks/useStorage'
@@ -23,11 +23,6 @@ export default defineComponent({
       password: string
       click: () => void
     }
-
-    testApi().then((res) => {
-      debugger
-    })
-
     const loginForm: loginType = reactive({
       username: 'admin',
       password: '123456',
@@ -35,21 +30,23 @@ export default defineComponent({
         if (loginForm.username !== '' && loginForm.password !== '') {
           const { username, password } = loginForm
           openLoading()
-          const res = await system.login({ username, password })
-          if (res && res.status === 'success') {
+
+          login({ username, password }).then((res) => {
+            if (res) {
             // 登录成功
-            setItem('loginContent', res.data.user) // 存用户信息
-            set('design.token', res.data.token) // 存token
-            closeLoading()
-            router.push({ path: '/home' })
-            ElNotification({
-              title: '登录成功！',
-              message: '欢迎登录weiDesign设计系统！',
-              type: 'success',
-              offset: 50,
-              duration: 2000,
-            })
-          }
+              setItem('loginContent', res?.user) // 存用户信息
+              set('design.token', res?.token) // 存token
+              closeLoading()
+              router.push({ path: '/home' })
+              ElNotification({
+                title: '登录成功！',
+                message: '欢迎登录weiDesign设计系统！',
+                type: 'success',
+                offset: 50,
+                duration: 2000,
+              })
+            }
+          })
         }
         else {
           ElMessage({

@@ -7,7 +7,7 @@ import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import Components from 'unplugin-vue-components/vite'
 import { defineConfig } from 'vite'
 
-import { viteMockServe } from 'vite-plugin-mock'
+import { mockDevServerPlugin } from 'vite-plugin-mock-dev-server'
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons' // svg
 
 // https://vite.dev/config/
@@ -36,11 +36,12 @@ export default defineConfig(({ command }) => {
         // 指定symbolId格式
         symbolId: 'icon-[dir]-[name]',
       }),
+      mockDevServerPlugin(),
       // viteMockServe 不生效 - 待解决
-      viteMockServe({
-        mockPath: 'mock', // mock文件夹路径
-        enable: command === 'serve', // 只有开发环境才开启mock
-      }),
+      // viteMockServe({
+      //   mockPath: 'mock', // mock文件夹路径
+      //   enable: command === 'serve', // 只有开发环境才开启mock
+      // }),
     ],
     css: {
       preprocessorOptions: {
@@ -53,6 +54,15 @@ export default defineConfig(({ command }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),
+      },
+    },
+    server: {
+      port: 8999,
+      proxy: {
+        '^/api': {
+          target: 'http://dummy-target-for-mock.com',
+          changeOrigin: true,
+        },
       },
     },
   })

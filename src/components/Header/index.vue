@@ -90,7 +90,7 @@ export default defineComponent({
       while (path.length > 0) {
         const item: menuListType | undefined = list.find((o: menuListType) => o.icon === path[0])
         crumbs.push({
-          name: item?.showName || routeData.name,
+          name: item?.title || routeData.name,
           icon: item?.icon || '',
         })
         if (item && item.children) {
@@ -161,7 +161,7 @@ export default defineComponent({
                   :key="i + item.name"
                   @click="goTo(item)"
                 >
-                  <svg-icon :name="item.icon" color="#0ca296" />
+                  <svg-icon :name="item.icon" />
                   <span class="item-class">{{ item.name }}</span>
                 </el-dropdown-item>
               </el-dropdown-menu>
@@ -198,11 +198,11 @@ export default defineComponent({
           margin-left: 5px;
         }
 
-        .el-icon {
-          &:hover {
-            color: #0ca296;
-          }
-        }
+        // .el-icon {
+        //   &:hover {
+        //     color: #0ca296;
+        //   }
+        // }
       }
     }
 
@@ -214,9 +214,9 @@ export default defineComponent({
         margin: 0 10px;
         cursor: pointer;
 
-        &:hover {
-          color: #0ca296;
-        }
+        // &:hover {
+        //   color: #0ca296;
+        // }
       }
 
       .user-info {
@@ -235,17 +235,17 @@ export default defineComponent({
 </style>
 
 <style lang="scss">
-.el-breadcrumb__inner a:hover,
-.el-breadcrumb__inner.is-link:hover {
-  color: #0ca296 !important;
-}
-.el-breadcrumb__inner .el-icon:hover {
-  color: #0ca296;
-}
-.el-dropdown-menu__item:hover {
-  color: #0ca296 !important;
-  background-color: #ecf8f3 !important;
-}
+// .el-breadcrumb__inner a:hover,
+// .el-breadcrumb__inner.is-link:hover {
+//   color: #0ca296 !important;
+// }
+// .el-breadcrumb__inner .el-icon:hover {
+//   color: #0ca296;
+// }
+// .el-dropdown-menu__item:hover {
+//   color: #0ca296 !important;
+//   background-color: #ecf8f3 !important;
+// }
 .el-dropdown-menu__item {
   .item-class {
     display: inline-block;

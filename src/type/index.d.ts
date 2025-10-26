@@ -2,7 +2,7 @@ export interface menuListType {
   id: string
   icon: string
   pid: string
-  showName: string
+  title: string
   ranking: string | null
   router: string
   createDate: string
