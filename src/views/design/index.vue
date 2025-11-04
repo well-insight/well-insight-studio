@@ -96,7 +96,7 @@ function enLarge(item: designListType) {
 // 界面设计
 function toDesignSpace(id?: string) {
   router.push({
-    path: 'weiDesign/designSpace',
+    path: '/design/designSpace',
     query: { key: id },
   })
 

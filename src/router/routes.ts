@@ -3,11 +3,11 @@ export default [
   { path: '/login', component: () => import('../layout/login/Login.vue'), name: 'Login' },
   {
     path: '/home',
-    redirect: '/weiDesign',
+    redirect: '/design',
     component: () => import('@/layout/Layout.vue'),
     children: [
       {
-        path: '/weiDesign',
+        path: '/design',
         name: '界面设计',
         component: () => import('@/views/design/index.vue'),
       },
@@ -54,7 +54,7 @@ export default [
     ],
   },
   {
-    path: '/weiDesign/designSpace',
+    path: '/design/designSpace',
     name: '工作空间',
     component: () => import('@/views/design/DesignSpace/index.vue'),
     meta: {
