@@ -1,5 +1,3 @@
-import Home from '@/views/Home/index.vue'
-import Login from '@/views/Login/index.vue'
 import Assembly from '@/views/Pages/Assembly/index.vue'
 import Boardsheet from '@/views/Pages/Boardsheet/index.vue'
 import SystemInfo from '@/views/Pages/SystemInfo/index.vue'
@@ -7,11 +5,11 @@ import TplMarket from '@/views/Pages/TplMarket/index.vue'
 
 export default [
   { path: '/', redirect: '/home' },
-  { path: '/login', component: Login, name: 'Login' },
+  { path: '/login', component: () => import('../layout/login/Login.vue'), name: 'Login' },
   {
     path: '/home',
     redirect: '/weiDesign',
-    component: Home,
+    component: () => import('@/layout/Layout.vue'),
     children: [
       {
         path: '/weiDesign',
@@ -71,7 +69,7 @@ export default [
   {
     path: '/preview',
     name: '预览',
-    component: () => import('@/views/Pages/design/preview.vue'),
+    component: () => import('@/views/Pages/design/Preview.vue'),
   },
   {
     path: '/demos',

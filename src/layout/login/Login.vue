@@ -2,8 +2,8 @@
 import { Avatar, Lock } from '@element-plus/icons-vue'
 import { ElMessage, ElNotification } from 'element-plus'
 import { defineComponent, onMounted, reactive } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { getUsers, login } from '@/api/service'
+import { useRouter } from 'vue-router'
+import { login } from '@/api/service'
 import logoImg from '@/assets/logo.png'
 import { closeLoading, openLoading } from '@/hooks/useLoading'
 import { useStorage } from '@/hooks/useStorage'
@@ -15,7 +15,6 @@ export default defineComponent({
   setup() {
     // 路由api创建
     const router = useRouter()
-    const route = useRoute()
     const { set } = useStorage('session')
     // 账号密码 + 登录
     interface loginType {
@@ -59,7 +58,7 @@ export default defineComponent({
 
     // 切换至注册
     const goRegister = () => {
-      console.log('转换至注册')
+      // console.log('转换至注册')
     }
 
     onMounted(async () => {})

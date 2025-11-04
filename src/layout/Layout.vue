@@ -1,40 +1,18 @@
-<script lang="ts">
-import { defineComponent, inject, ref } from 'vue'
+<script lang="ts" setup>
+import { ref } from 'vue'
 
-import DesignHeader from '../../components/Header/index.vue'
-import Col from '../../components/Layout/Col/index.vue'
-import Row from '../../components/Layout/Row/index.vue'
-import Sidebar from '../../components/Sidebar/index.vue'
-import Submenu from '../../components/Submenu/index.vue'
-import TabBar from '../../components/TabBar/index.vue'
+import DesignHeader from '@/components/Header/index.vue'
+import Sidebar from '@/components/Sidebar/index.vue'
+import TabBar from '@/components/TabBar/index.vue'
 
-export default defineComponent({
-  name: 'Home',
-  components: {
-    Sidebar,
-    Submenu,
-    Row,
-    Col,
-    DesignHeader,
-    TabBar,
-  },
-  props: {},
-  setup(props) {
-    // 获取全局对象`
-    const global: any = inject('global')
+// 获取全局对象
+// const global = inject('global')
 
-    const isCollapse = ref(false)
+const isCollapse = ref(false)
 
-    const arrowSide = (isClose: boolean) => {
-      isCollapse.value = isClose
-    }
-
-    return {
-      arrowSide,
-      isCollapse,
-    }
-  },
-})
+function arrowSide(isClose: boolean) {
+  isCollapse.value = isClose
+}
 </script>
 
 <template>
