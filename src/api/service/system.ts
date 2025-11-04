@@ -24,3 +24,7 @@ export function login(loginData: {
 }) {
   return request.post('/api/system/login', { username: loginData.username, password: loginData.password })
 }
+
+export async function goodDailySentences() {
+  return await request.get('https://api.xygeng.cn/one', {})
+}

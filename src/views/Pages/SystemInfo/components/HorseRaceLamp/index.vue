@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
-import { INDEX_API } from '@/api/service/index'
+import { goodDailySentences } from '@/api/service'
 import { getRandomColor } from '@/utils'
 
 const horseTextList = ref<{ title: string, color: string }[]>([])
 const oneSentenceData = ref<any>({})
-INDEX_API.goodDailySentences().then((res: any) => {
+goodDailySentences().then((res: any) => {
   if (res) {
     oneSentenceData.value = res.data
     horseTextList.value = (res.data.content || '').split('').map((o: string) => {
