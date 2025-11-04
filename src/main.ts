@@ -8,7 +8,6 @@ import Echarts from '@/components/Echarts/index.vue' // echarts组件
 import WeiCol from '@/components/Layout/Col/index.vue'
 import WeiRow from '@/components/Layout/Row/index.vue'
 import customComponents from '@/custom-components/index'
-import Api from './api/index'
 import App from './App.vue'
 import router from './router/index' // 引入router
 import './styles/element/index.scss'
@@ -38,12 +37,6 @@ for (let i = 0; i < customComponents.length; i++) {
 }
 
 app.use(router).use(pinia)
-// app.config.globalProperties.$api = Api;  // 配置全局数据请求
-
-// 依赖注入配置全局变量 页面中使用 inject 接收
-app.provide('global', {
-  $api: Api,
-})
 
 // 自定义指令
 // 使 v-focus 在所有组件中都可用

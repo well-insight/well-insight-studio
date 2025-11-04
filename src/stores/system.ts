@@ -1,7 +1,7 @@
 import type { menuListType } from '@/type'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { getMenuList } from '@/api/service'
+import { getMenuList } from '@/api'
 import { getItem } from '@/utils'
 
 export const useSystemStore = defineStore('system', () => {

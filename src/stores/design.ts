@@ -2,7 +2,7 @@ import type { DsignStateTypes } from './interface'
 import type { Compnents } from '@/type'
 import { dayjs } from 'element-plus'
 import { defineStore } from 'pinia'
-import { addDesign, deleteDesign, findDesignList, getDesignContentById, updateDesignById } from '@/api/service/design'
+import { addDesign, deleteDesign, findDesignList, getDesignContentById, updateDesignById } from '@/api/design'
 import { getItem } from '@/utils'
 
 export const useDesignStore = defineStore('design', {

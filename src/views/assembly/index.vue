@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import type { assemblyType } from '@/type'
 import { ref } from 'vue'
-import { ASSEMBLY_API } from '@/api/service/index'
+import { getAssemblyLists } from '@/api'
 
 const assemblyList = ref<assemblyType[]>([])
-ASSEMBLY_API.getAssemblyLists().then((res) => {
+getAssemblyLists().then((res) => {
   if (res) {
     assemblyList.value = res.data
   }

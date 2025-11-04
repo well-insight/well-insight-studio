@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
-import { goodDailySentences } from '@/api/service'
+import { goodDailySentences } from '@/api'
 import { getRandomColor } from '@/utils'
 
 const horseTextList = ref<{ title: string, color: string }[]>([])

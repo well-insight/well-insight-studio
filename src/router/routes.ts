@@ -1,8 +1,3 @@
-import Assembly from '@/views/Pages/Assembly/index.vue'
-import Boardsheet from '@/views/Pages/Boardsheet/index.vue'
-import SystemInfo from '@/views/Pages/SystemInfo/index.vue'
-import TplMarket from '@/views/Pages/TplMarket/index.vue'
-
 export default [
   { path: '/', redirect: '/home' },
   { path: '/login', component: () => import('../layout/login/Login.vue'), name: 'Login' },
@@ -14,27 +9,27 @@ export default [
       {
         path: '/weiDesign',
         name: '界面设计',
-        component: () => import('@/views/Pages/design/index.vue'),
+        component: () => import('@/views/design/index.vue'),
       },
       {
         path: '/tplMarket',
         name: '模板市场',
-        component: TplMarket,
+        component: () => import('@/views/market/index.vue'),
       },
       {
         path: '/assembly',
         name: '组件',
-        component: Assembly,
+        component: () => import('@/views/assembly/index.vue'),
       },
       {
         path: '/boardsheet',
         name: '数据集',
-        component: Boardsheet,
+        component: () => import('@/views/boardsheet/index.vue'),
       },
       {
         path: '/systemInfo',
         name: '系统信息',
-        component: SystemInfo,
+        component: () => import('@/views/system-info/index.vue'),
       },
       // {
       //     path: '/manage/userManage',
@@ -61,7 +56,7 @@ export default [
   {
     path: '/weiDesign/designSpace',
     name: '工作空间',
-    component: () => import('@/views/Pages/design/DesignSpace/index.vue'),
+    component: () => import('@/views/design/DesignSpace/index.vue'),
     meta: {
       title: '工作空间',
     },
@@ -69,7 +64,7 @@ export default [
   {
     path: '/preview',
     name: '预览',
-    component: () => import('@/views/Pages/design/Preview.vue'),
+    component: () => import('@/views/design/Preview.vue'),
   },
   {
     path: '/demos',
