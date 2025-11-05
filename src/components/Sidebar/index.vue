@@ -63,8 +63,6 @@ export default defineComponent({
     await store.fetchMenuList()
     const menuList = store.menuList
 
-    onMounted(() => { })
-
     return {
       num,
       data,

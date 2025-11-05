@@ -112,11 +112,9 @@ function goPreview() {
       </div>
       <div class="center-box">
         <div style="display: flex;align-items: center" @click="editName">
-          <svg-icon name="work" color="#9f9f9f" size="1.25em" />
-          <span style="font-weight: bold; margin: 0 5px;">工作空间 — </span>
-          <el-button v-show="!ifShowEditInput" class="name-edit" circle type="">
+          <el-text v-show="!ifShowEditInput">
             {{ webName }}
-          </el-button>
+          </el-text>
           <el-input v-show="ifShowEditInput" ref="webNameRef" v-model="webName" maxlength="20" show-word-limit data-type="input" type="text" />
         </div>
       </div>

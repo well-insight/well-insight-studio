@@ -3,7 +3,6 @@ import type { designListType } from '@/type'
 import { computed, reactive, ref } from 'vue'
 import Heart from '@/components/Heart/index.vue'
 import ItemCard from '@/components/ItemCard/index.vue'
-import ProperMenu from '@/components/ProperMenu/index.vue'
 import { closeLoading, openLoading } from '@/hooks/useLoading'
 import router from '@/router'
 import { useDesignStore } from '@/stores/design'
@@ -19,7 +18,8 @@ const store = useDesignStore()
 
 const previewRef = ref<HTMLElement | null>(null)
 
-await store.findDesignList()
+const designLoading = ref(true)
+
 const designList = computed(() => store.designList)
 
 // 下拉框list
@@ -72,8 +72,7 @@ const designDropdownHandle = reactive<designDropdownListType[]>([
 ])
 
 // 弹窗预览
-const overviewVisible = ref(false)
-let showViewData = reactive<designListType>({
+const showViewData = reactive<designListType>({
   title: '',
   img: '',
   width: 0,
@@ -84,111 +83,83 @@ let showViewData = reactive<designListType>({
   status: '',
   id: '',
 })
-const isDialogFullScreen = ref(false)
-function enLarge(item: designListType) {
-  if (previewRef.value) {
-    (previewRef.value as any).overviewVisible = true
-    showViewData = item;
-    (previewRef.value as any).isDialogFullScreen = false
-  }
-}
 
 // 界面设计
 function toDesignSpace(id?: string) {
   router.push({
-    path: '/design/designSpace',
+    path: '/design/design-space',
     query: { key: id },
   })
 
   // window.open(newUrl.href, "_blank");
 }
 
-function cancel(item: designListType) {
+getDesignList()
 
-}
-
-const menuList = ref([
-  {
-    key: 'add',
-    title: '新增',
-    icon: '发布',
-  },
-])
-// 菜单选择
-async function selectMenuItem(e: any) {
-  // 新增
-  if (e.key === 'add') {
-    openLoading({ text: '操作中' })
-    const res = await store.newDesignContent()
-    closeLoading()
-    if (res.status === 'success') {
-      toDesignSpace(res.data.id)
-    }
-  }
+async function getDesignList() {
+  designLoading.value = true
+  await store.findDesignList()
+  designLoading.value = false
 }
 
 // 封面
 </script>
 
 <template>
-  <div v-loading="!designList" class="my-design-manager-container">
-    <!-- 右上角菜单 -->
-    <ProperMenu :menu-list="menuList" @select-menu-item="selectMenuItem">
-      <template #content>
-        <svg-icon name="弹出" color="#0ca296" size="1.5em" />
-      </template>
-    </ProperMenu>
-
-    <ItemCard v-for="(item) in designList" :key="item.img" shadow="hover" :body-style="{}" @en-large="enLarge(item)" @cancel="cancel(item)">
-      <div class="design-content">
-        <div class="design-img" @click="toDesignSpace(item.id)">
-          <!-- <svg-icon :name="item.img" style="width: 80%; height: 80%"></svg-icon> -->
-          <el-image style="width: 100%;height: 100%;" :src="item?.img" alt="" />
-        </div>
-        <div class="design-footer">
-          <span class="title">{{ item.title }}</span>
-          <div class="right">
-            <span class="status">
-              <Heart style="margin-right: 5px" size=".8em" :type="item.status" />
-              状态
-            </span>
-            <el-tooltip content="编辑" effect="light">
-              <el-button class="edit" plain @click="toDesignSpace(item.id)">
-                <template #icon>
-                  <svg-icon name="hammer" size="1.5em" color="" />
-                </template>
-              </el-button>
-            </el-tooltip>
-            <el-dropdown class="more" :show-timeout="0">
-              <el-button icon="MoreFilled" plain />
-              <template #dropdown>
-                <el-dropdown-menu class="my-design-manager-dropdown">
-                  <el-dropdown-item v-for="(m) in designDropdownHandle" :key="m.title" @click="m.click(item)">
-                    <svg-icon color="" :name="m.icon" />
-                    <span>{{ m.title }}</span>
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+  <div v-loading="designLoading" element-loading-text="数据加载中，请稍等..." class="w-full h-full">
+    <el-scrollbar>
+      <div v-loading="!designList" class="my-design-manager-container">
+        <ItemCard v-for="(item) in designList" :key="item.img" shadow="hover" :body-style="{}">
+          <div class="design-content">
+            <div class="design-img" @click="toDesignSpace(item.id)">
+              <!-- <svg-icon :name="item.img" style="width: 80%; height: 80%"></svg-icon> -->
+              <el-image style="width: 100%;height: 100%;" :src="item?.img" alt="" />
+            </div>
+            <div class="design-footer">
+              <span class="title">{{ item.title }}</span>
+              <div class="right">
+                <span class="status">
+                  <Heart style="margin-right: 5px" size=".8em" :type="item.status" />
+                  状态
+                </span>
+                <el-tooltip content="编辑" effect="light">
+                  <el-button class="edit" plain @click="toDesignSpace(item.id)">
+                    <template #icon>
+                      <svg-icon name="hammer" size="1.5em" color="" />
+                    </template>
+                  </el-button>
+                </el-tooltip>
+                <el-dropdown class="more" :show-timeout="0">
+                  <el-button icon="MoreFilled" plain />
+                  <template #dropdown>
+                    <el-dropdown-menu class="my-design-manager-dropdown">
+                      <el-dropdown-item v-for="(m) in designDropdownHandle" :key="m.title" @click="m.click(item)">
+                        <svg-icon color="" :name="m.icon" />
+                        <span>{{ m.title }}</span>
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </div>
+            </div>
           </div>
-        </div>
+        </ItemCard>
       </div>
-    </ItemCard>
-  </div>
 
-  <!-- 设计预览 -->
-  <Preview ref="previewRef" :show-view-data="showViewData" />
+      <!-- 设计预览 -->
+      <Preview ref="previewRef" :show-view-data="showViewData" />
+    </el-scrollbar>
+  </div>
 </template>
 
 <style lang="scss" scoped>
 .my-design-manager-container {
     height: 100%;
-    padding: 20px;
+    padding: 16px;
     position: relative;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    height: 250px;
-    grid-gap: 20px;
+    grid-gap: 16px;
 
     .item-card {
         // height: auto!important;

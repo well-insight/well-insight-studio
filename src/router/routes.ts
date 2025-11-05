@@ -12,7 +12,7 @@ export default [
         component: () => import('@/views/design/index.vue'),
       },
       {
-        path: '/tplMarket',
+        path: '/market',
         name: '模板市场',
         component: () => import('@/views/market/index.vue'),
       },
@@ -27,7 +27,7 @@ export default [
         component: () => import('@/views/boardsheet/index.vue'),
       },
       {
-        path: '/systemInfo',
+        path: '/system-info',
         name: '系统信息',
         component: () => import('@/views/system-info/index.vue'),
       },
@@ -54,9 +54,9 @@ export default [
     ],
   },
   {
-    path: '/design/designSpace',
+    path: '/design/design-space',
     name: '工作空间',
-    component: () => import('@/views/design/DesignSpace/index.vue'),
+    component: () => import('@/views/design/design-space/index.vue'),
     meta: {
       title: '工作空间',
     },

@@ -47,12 +47,12 @@ export default defineMock([
         {
           title: '我的设计',
           icon: 'myDesign',
-          router: '/weiDesign',
+          router: '/design',
         },
         {
           title: '模板市场',
           icon: 'tplMarket',
-          router: '/tplMarket',
+          router: '/market',
         },
         {
           title: '组件',
@@ -67,7 +67,7 @@ export default defineMock([
         {
           title: '系统信息',
           icon: 'index',
-          router: '/systemInfo',
+          router: '/system-info',
         },
       ]))
     },

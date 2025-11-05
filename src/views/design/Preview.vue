@@ -31,7 +31,7 @@ defineExpose({
 
 function toDesignSpace() {
   const newUrl = router.resolve({
-    path: '/design/designSpace',
+    path: '/design/design-space',
   })
   window.open(newUrl.href, '_blank')
 }

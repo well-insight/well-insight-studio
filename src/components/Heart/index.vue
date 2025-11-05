@@ -1,14 +1,13 @@
 <script setup lang="ts">
-const props: any = defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   size: {
     type: String,
     default: '1em',
   },
   type: {
     type: String,
-    validator(value: string) {
-      return ['warn', 'success'].includes(value)
-    },
     default: 'warn',
   },
   ms: {
@@ -25,6 +24,8 @@ const HEART_COLOR: any = {
   success: '#34c749',
   warn: '#fcbc40',
 }
+
+const getType = computed(() => props.type === 'warn' ? 'warn' : 'success')
 </script>
 
 <template>
@@ -37,7 +38,7 @@ const HEART_COLOR: any = {
     height: v-bind(size);
     width: v-bind(size);
     border-radius: 50%;
-    background-color: v-bind('HEART_COLOR[props.type]');
+    background-color: v-bind('HEART_COLOR[getType]');
     animation: scales v-bind('props.ms') linear infinite;
 }
 

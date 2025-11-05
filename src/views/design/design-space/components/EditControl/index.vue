@@ -3,7 +3,7 @@ import { useResizeObserver } from '@vueuse/core'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 
 import { useRoute } from 'vue-router'
-import { setImg } from '@/api/service/design'
+import { setImg } from '@/api'
 import MarkLine from '@/components/Editor/MarkLine.vue'
 import Shape from '@/components/Editor/Shape.vue'
 import SketchRule from '@/components/Ruler/sketchRuler.vue'
