@@ -1,30 +1,45 @@
-<script setup lang="ts">
+<script setup lang="ts" name="SvgIcon">
+// 引入vue函数
 import { computed } from 'vue'
 
-const props = defineProps({
-  prefix: {
-    type: String,
-    default: 'icon',
+const props = withDefaults(
+  defineProps<{
+    name?: string
+    bgColor?: string
+    strokeColor?: string
+    className?: string
+    fontSize?: string | number
+  }>(),
+  {
+    bgColor: '#2c2c2c',
+    name: '',
+    strokeColor: '',
+    fontSize: 24,
   },
-  name: {
-    type: String,
-    required: true,
-  },
-  color: {
-    type: String,
-    default: '#333',
-  },
-  size: {
-    type: String,
-    default: '1em',
-  },
-})
+)
 
-const symbolId = computed(() => `#${props.prefix}-${props.name}`)
+const symbolId = computed(() => `#icon-${props.name}`)
+const svgClass = computed(() => {
+  if (props.className) {
+    return `svg-icon ${props.className}`
+  }
+  return 'svg-icon'
+})
 </script>
 
 <template>
-  <svg aria-hidden="true" class="svg-icon" :width="props.size" :height="props.size" :style="{ fontSize: props.size }">
-    <use :xlink:href="symbolId" :fill="props.color" />
+  <svg aria-hidden="true" :class="svgClass" :style="{ fontSize }" :color="bgColor" :stroke="strokeColor">
+    <use :xlink:href="symbolId" />
   </svg>
 </template>
+
+<style scoped lang="scss">
+.svg-icon {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  fill: currentColor;
+  overflow: hidden;
+  display: inline-flex;
+}
+</style>

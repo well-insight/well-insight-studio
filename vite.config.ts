@@ -35,6 +35,14 @@ export default defineConfig(({ command }) => {
         iconDirs: [resolve(process.cwd(), 'src/assets/svg/icons')],
         // 指定symbolId格式
         symbolId: 'icon-[dir]-[name]',
+        svgoOptions: {
+          plugins: [
+            {
+              name: 'removeAttrs',
+              params: { attrs: ['fill', 'class', 'data-name', 'stroke'] },
+            },
+          ],
+        },
       }),
       mockDevServerPlugin(),
       // viteMockServe 不生效 - 待解决
