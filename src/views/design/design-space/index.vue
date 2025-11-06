@@ -3,10 +3,10 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDesignStore } from '@/stores/design'
 import { setItem } from '@/utils'
-import ComponentControl from './components/ComponentControl/index.vue'
-import EditControl from './components/EditControl/index.vue'
-import LayerControl from './components/LayerControl/index.vue'
-import SideSettingControl from './components/SideSettingControl/index.vue'
+import ComponentControl from './components/component-control/index.vue'
+import EditControl from './components/edit-control/index.vue'
+import LayerControl from './components/layer-control/index.vue'
+import SideSettingControl from './components/side-setting-control/index.vue'
 
 const router = useRouter()
 const store = useDesignStore()

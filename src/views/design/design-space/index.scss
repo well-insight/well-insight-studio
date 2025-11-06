@@ -12,7 +12,7 @@
         padding: 10px 10px;
         border-bottom: 1px solid #efeff5;
 
-        & > div {
+        &>div {
             width: calc(100% / 3);
         }
 
@@ -20,6 +20,7 @@
             display: flex;
             align-items: center;
             height: 100%;
+
             .logo-box {
                 width: 40px;
                 height: auto;
@@ -89,7 +90,7 @@
         overflow: hidden;
         display: flex;
 
-        & > div {
+        &>div {
             display: inline-block;
             overflow: hidden;
             position: relative;
