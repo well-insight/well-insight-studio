@@ -1,4 +1,3 @@
-// import 'element-plus/dist/index.css'
 import * as ElIcons from '@element-plus/icons-vue'
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
@@ -10,6 +9,7 @@ import WeiRow from '@/components/Layout/Row/index.vue'
 import customComponents from '@/custom-components/index'
 import App from './App.vue'
 import router from './router/index' // 引入router
+// import 'element-plus/dist/index.css'
 import './styles/element/index.scss'
 import 'virtual:svg-icons-register'
 // import waycloudUI from '@waycloud/ui'

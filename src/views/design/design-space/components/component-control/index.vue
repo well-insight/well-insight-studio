@@ -54,46 +54,43 @@ function handleDragStart(e: any, item: Compnents) {
   const itemStr = JSON.stringify(item)
   e.dataTransfer.setData('component', itemStr)
 }
-
-const currentManage = ref('component')
-
-const options = [{ label: '组件', value: 'component' }, { label: '层级', value: 'layer' }]
 </script>
 
 <template>
   <div class="component-control-container" :class="!shrinkComponent ? 'shrinkComponent' : ''">
-    <div class="page-list-container">
-      <el-scrollbar view-style="padding: 16px;">
-        <div v-for="e in 10" :key="e" class="page-wrapper">
-          ee
-        </div>
-      </el-scrollbar>
-    </div>
-    <div class="flex-auto w-0 flex flex-col">
-      <div class="title-wrapper">
-        <el-input
-          v-model="searchValue"
-          placeholder="输入组件名称搜索"
-          :prefix-icon="Search"
-          class="mb-2"
-        />
-        <el-tabs v-model="currentManage" stretch>
-          <el-tab-pane v-for="e in options" :key="e?.value" :label="e?.label" :name="e.value" />
-        </el-tabs>
-      </div>
-      <div class="main-wrapper">
-        <el-scrollbar view-class="main-view-container">
-          <div v-show="currentManage === 'component'">
-            <div v-for="e in 100" :key="e">
-              组件列表
-            </div>
+    <ul v-loading="!componentsList" class="components-list">
+      <li
+        v-for="(item, index) in componentsList" :key="item.title"
+        :class="activeComponentIndex === index ? 'active' : ''" @click="selectComponentList(index)"
+      >
+        <svg-icon :name="item.icon" size="1.2em" />
+        <span class="title">{{ item.title }}</span>
+      </li>
+    </ul>
+    <ul class="layer-list">
+      <li
+        v-for="(item, index) in layerList" :key="item.name" :class="activeLayerIndex === index ? 'active' : ''"
+        @click="selectLayerIndex(index)"
+      >
+        {{ item.name }}
+      </li>
+    </ul>
+    <ul class="chart-list">
+      <li
+        v-for="(item, index) in chartList" :key="index + item.id" draggable="true" :data-index="index"
+        @dragstart="handleDragStart($event, item)"
+      >
+        <ItemCard shadow="never" :btns="['cancel', 'enLarge', 'reduce']">
+          <template #headerRight>
+            <span>{{ item.label }}</span>
+          </template>
+          <div class="layer-content">
+            <Html2Canvas :component-data="item" />
+            <!-- <svg-icon :name="item.icon" style="width: 90%; height: 90%"></svg-icon> -->
           </div>
-          <div v-show="currentManage === 'layer'">
-            层级列表
-          </div>
-        </el-scrollbar>
-      </div>
-    </div>
+        </ItemCard>
+      </li>
+    </ul>
   </div>
 </template>
 
@@ -102,44 +99,6 @@ const options = [{ label: '组件', value: 'component' }, { label: '层级', val
   height: 100%;
   width: 100%;
   display: flex;
-
-  .page-list-container {
-    width: 120px;
-    height: 100%;
-    background: var(--el-color-white);
-    border-right: 1px solid #e7eaee;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    padding-bottom: 4px;
-    user-select: none;
-    z-index: 1;
-
-    .page-wrapper {
-      height: 120px;
-      border: var(--el-border);
-      margin-bottom: 16px;
-
-    }
-  }
-
-  .title-wrapper {
-    padding: 16px 16px 0 16px;
-    font-size: 14px;
-    width: 100%;
-    background-color: var(--el-color-white);
-    cursor: pointer;
-  }
-
-  .main-wrapper {
-    flex: 1;
-    height: 0;
-    background-color: var(--el-color-white);
-
-    :deep(.main-view-container) {
-      padding: 16px;
-    }
-  }
 
   .components-list {
     width: 50px;
@@ -189,7 +148,7 @@ const options = [{ label: '组件', value: 'component' }, { label: '层级', val
     width: 80px;
     height: 100%;
     background-color: #fff;
-    padding: 5px 10px;
+    padding: 12px 0 12px 12px;
     font-weight: 700;
 
     li {
@@ -203,7 +162,7 @@ const options = [{ label: '组件', value: 'component' }, { label: '层级', val
       cursor: pointer;
 
       &.active {
-        background-color: var(--el-color-primary-light-5);
+        background-color: var(--el-color-primary);
         color: var(--el-color-white);
       }
     }
@@ -214,7 +173,7 @@ const options = [{ label: '组件', value: 'component' }, { label: '层级', val
     flex: 1;
     height: 100%;
     background-color: #fff;
-    padding: 10px;
+    padding: 12px;
     overflow-y: auto;
 
     &::-webkit-scrollbar {

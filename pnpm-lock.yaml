@@ -17,9 +17,6 @@ importers:
       '@vueuse/core':
         specifier: ^13.9.0
         version: 13.9.0(vue@3.5.22(typescript@5.9.3))
-      '@waycloud/ui':
-        specifier: 0.0.1-alpha.1
-        version: 0.0.1-alpha.1(vue@3.5.22(typescript@5.9.3))
       animate.css:
         specifier: ^4.1.1
         version: 4.1.1
@@ -1092,11 +1089,6 @@ packages:
 
   '@vueuse/shared@9.13.0':
     resolution: {integrity: sha512-UrnhU+Cnufu4S6JLCPZnkWh0WwZGUp72ktOF2DFptMlOs3TOdVv8xJN53zhHGARmVOsz5KqOls09+J1NR6sBKw==}
-
-  '@waycloud/ui@0.0.1-alpha.1':
-    resolution: {integrity: sha512-lIKeshH0ejhXSS+KUcQF19KYa24vPHkhYz/ClVvDdpOuF6Pp+NeCWIFHQTvnLTqSYNN2bXRiI8ELDVAenZRsWw==}
-    peerDependencies:
-      vue: ^3.2.37
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -4885,13 +4877,6 @@ snapshots:
     transitivePeerDependencies:
       - '@vue/composition-api'
       - vue
-
-  '@waycloud/ui@0.0.1-alpha.1(vue@3.5.22(typescript@5.9.3))':
-    dependencies:
-      element-plus: 2.11.4(vue@3.5.22(typescript@5.9.3))
-      vue: 3.5.22(typescript@5.9.3)
-    transitivePeerDependencies:
-      - '@vue/composition-api'
 
   acorn-jsx@5.3.2(acorn@8.15.0):
     dependencies:

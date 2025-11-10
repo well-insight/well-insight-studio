@@ -3,6 +3,7 @@ import process from 'node:process'
 import vue from '@vitejs/plugin-vue'
 import UnoCSS from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
+import ElementPlus from 'unplugin-element-plus/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import Components from 'unplugin-vue-components/vite'
 import { defineConfig } from 'vite'
@@ -14,24 +15,31 @@ import { createSvgIconsPlugin } from 'vite-plugin-svg-icons' // svg
 export default defineConfig(({ command }) => {
   console.log('運行環境', command)
 
-  return ({
+  return {
     plugins: [
       vue(),
       UnoCSS(),
       AutoImport({
-        resolvers: [ElementPlusResolver({
-        // 关键：使用 Sass 预处理器样式
-          importStyle: 'sass',
-        })],
+        resolvers: [
+          ElementPlusResolver({
+            // 关键：使用 Sass 预处理器样式
+            importStyle: 'sass',
+          }),
+        ],
       }),
       Components({
-        resolvers: [ElementPlusResolver({
-        // 关键：使用 Sass 预处理器样式
-          importStyle: 'sass',
-        })],
+        resolvers: [
+          ElementPlusResolver({
+            // 关键：使用 Sass 预处理器样式
+            importStyle: 'sass',
+          }),
+        ],
+      }),
+      ElementPlus({
+        useSource: true,
       }),
       createSvgIconsPlugin({
-      // 指定需要缓存的图标文件夹
+        // 指定需要缓存的图标文件夹
         iconDirs: [resolve(process.cwd(), 'src/assets/svg/icons')],
         // 指定symbolId格式
         symbolId: 'icon-[dir]-[name]',
@@ -54,7 +62,7 @@ export default defineConfig(({ command }) => {
     css: {
       preprocessorOptions: {
         scss: {
-        // 注意：使用 @use 规则
+          // 注意：使用 @use 规则
           additionalData: `@use "@/styles/element/theme-chalk.scss" as *;`,
         },
       },
@@ -73,5 +81,5 @@ export default defineConfig(({ command }) => {
         },
       },
     },
-  })
+  }
 })

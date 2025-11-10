@@ -1,17 +1,19 @@
 <script lang="ts">
 import { Avatar, Lock } from '@element-plus/icons-vue'
-import { ElMessage, ElNotification } from 'element-plus'
-import { defineComponent, onMounted, reactive } from 'vue'
+import { ElLoading, ElMessage, ElNotification } from 'element-plus'
+
+import { defineComponent, h, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { login } from '@/api'
 import logoImg from '@/assets/logo.png'
-import { closeLoading, openLoading } from '@/hooks/useLoading'
 import { useStorage } from '@/hooks/useStorage'
 import { setItem } from '@/utils/index'
 
 export default defineComponent({
   name: 'Login',
-  components: {},
+  components: {
+
+  },
   setup() {
     // 路由api创建
     const router = useRouter()
@@ -28,22 +30,19 @@ export default defineComponent({
       click: async () => {
         if (loginForm.username !== '' && loginForm.password !== '') {
           const { username, password } = loginForm
-          openLoading()
-
+          const instance = ElLoading.service({ text: '登录中，请稍等...' })
           login({ username, password }).then((res) => {
             if (res) {
             // 登录成功
               setItem('loginContent', res?.user) // 存用户信息
               set('design.token', res?.token) // 存token
-              closeLoading()
-              router.push({ path: '/home' })
+              instance.close()
               ElNotification({
                 title: '登录成功！',
-                message: '欢迎登录weiDesign设计系统！',
-                type: 'success',
-                offset: 50,
-                duration: 2000,
+                message: h('i', { style: 'color: teal' }, '欢迎登录well-design设计系统！'),
+                appendTo: 'body',
               })
+              router.push({ path: '/home' })
             }
           })
         }
@@ -69,6 +68,9 @@ export default defineComponent({
       Avatar,
       Lock,
       logoImg,
+      ElLoading,
+      ElMessage,
+      ElNotification,
     }
   },
 })

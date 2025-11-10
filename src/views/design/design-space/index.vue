@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDesignStore } from '@/stores/design'
 import { setItem } from '@/utils'
-import ComponentControl from './components/component-control/index.vue'
+import BaseControl from './components/base-control/index.vue'
 import EditControl from './components/edit-control/index.vue'
 import LayerControl from './components/layer-control/index.vue'
 import SideSettingControl from './components/side-setting-control/index.vue'
@@ -133,7 +133,7 @@ function goPreview() {
     <div class="content">
       <!-- 组件图层展示区域 -->
       <div class="component-control" :class="showChart ? '' : 'shrink'">
-        <ComponentControl :shrink-component="showChart" />
+        <BaseControl :shrink-component="showChart" />
       </div>
       <div class="layer-control" :class="!showLayer ? 'hideLayer' : ''">
         <LayerControl @shrink="layerShrink" />

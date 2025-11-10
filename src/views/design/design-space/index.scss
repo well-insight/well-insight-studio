@@ -97,13 +97,13 @@
         }
 
         .component-control {
-            width: 450px;
+            width: 420px;
             overflow: hidden;
             z-index: 1;
             transition: all 0.4s;
 
             &.shrink {
-                width: 120px;
+                width: 100px;
             }
         }
 
