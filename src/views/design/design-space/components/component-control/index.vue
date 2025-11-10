@@ -56,6 +56,8 @@ function handleDragStart(e: any, item: Compnents) {
 }
 
 const currentManage = ref('component')
+
+const options = [{ label: '组件', value: 'component' }, { label: '层级', value: 'layer' }]
 </script>
 
 <template>
@@ -67,9 +69,29 @@ const currentManage = ref('component')
         </div>
       </el-scrollbar>
     </div>
-    <div class="flex-auto w-0">
+    <div class="flex-auto w-0 flex flex-col">
       <div class="title-wrapper">
-        <el-segmented v-model="currentManage" :options="[{ label: '组件', value: 'component' }, { label: '层级', value: 'layer' }]" block />
+        <el-input
+          v-model="searchValue"
+          placeholder="输入组件名称搜索"
+          :prefix-icon="Search"
+          class="mb-2"
+        />
+        <el-tabs v-model="currentManage" stretch>
+          <el-tab-pane v-for="e in options" :key="e?.value" :label="e?.label" :name="e.value" />
+        </el-tabs>
+      </div>
+      <div class="main-wrapper">
+        <el-scrollbar view-class="main-view-container">
+          <div v-show="currentManage === 'component'">
+            <div v-for="e in 100" :key="e">
+              组件列表
+            </div>
+          </div>
+          <div v-show="currentManage === 'layer'">
+            层级列表
+          </div>
+        </el-scrollbar>
       </div>
     </div>
   </div>
@@ -78,13 +100,12 @@ const currentManage = ref('component')
 <style lang="scss" scoped>
 .component-control-container {
   height: 100%;
-  width: 330px;
+  width: 100%;
   display: flex;
 
   .page-list-container {
     width: 120px;
     height: 100%;
-    box-shadow: 6px 0 12px -6px rgba(14, 34, 73, .06);
     background: var(--el-color-white);
     border-right: 1px solid #e7eaee;
     display: flex;
@@ -103,13 +124,21 @@ const currentManage = ref('component')
   }
 
   .title-wrapper {
-    padding: 16px;
+    padding: 16px 16px 0 16px;
     font-size: 14px;
-    font-weight: 700;
     width: 100%;
-    background-color: #fff;
+    background-color: var(--el-color-white);
     cursor: pointer;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08);
+  }
+
+  .main-wrapper {
+    flex: 1;
+    height: 0;
+    background-color: var(--el-color-white);
+
+    :deep(.main-view-container) {
+      padding: 16px;
+    }
   }
 
   .components-list {
