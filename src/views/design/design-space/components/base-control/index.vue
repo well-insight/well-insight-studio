@@ -151,7 +151,7 @@ function openAddPage() {
 
   <el-dialog
     v-model="dialogVisible"
-    title="Tips"
+    title="提示"
     append-to-body
     width="500"
   >
@@ -166,10 +166,10 @@ function openAddPage() {
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="dialogVisible = false">
-          Cancel
+          取消
         </el-button>
         <el-button type="primary" @click="dialogVisible = false">
-          Confirm
+          确认
         </el-button>
       </div>
     </template>

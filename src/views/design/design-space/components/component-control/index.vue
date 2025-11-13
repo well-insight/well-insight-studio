@@ -80,15 +80,15 @@ function handleDragStart(e: any, item: Compnents) {
         v-for="(item, index) in chartList" :key="index + item.id" draggable="true" :data-index="index"
         @dragstart="handleDragStart($event, item)"
       >
-        <ItemCard shadow="never" :btns="['cancel', 'enLarge', 'reduce']">
-          <template #headerRight>
-            <span>{{ item.label }}</span>
+        <el-card shadow="never" class="w-full h-full custom-card">
+          <template #header>
+            {{ item.label }}
           </template>
           <div class="layer-content">
             <Html2Canvas :component-data="item" />
             <!-- <svg-icon :name="item.icon" style="width: 90%; height: 90%"></svg-icon> -->
           </div>
-        </ItemCard>
+        </el-card>
       </li>
     </ul>
   </div>
@@ -211,6 +211,18 @@ function handleDragStart(e: any, item: Compnents) {
         }
       }
     }
+  }
+}
+
+.custom-card {
+  display: flex;
+  flex-direction: column;
+
+  --el-card-padding: 12px;
+
+  :deep(.el-card__body) {
+    flex: 1;
+    height: 0;
   }
 }
 </style>

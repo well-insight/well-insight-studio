@@ -47,6 +47,9 @@ importers:
       html2canvas:
         specifier: ^1.4.1
         version: 1.4.1
+      lodash-es:
+        specifier: ^4.17.21
+        version: 4.17.21
       mitt:
         specifier: ^3.0.1
         version: 3.0.1
