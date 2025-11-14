@@ -3,7 +3,6 @@ import type { Compnents } from '@/type'
 import { computed, reactive, watch } from 'vue'
 import { useDesignStore } from '@/stores/design'
 
-const emits = defineEmits(['shrink'])
 const store = useDesignStore()
 // layer 组件数据集合
 const layerControlData = reactive<{ layerList: Compnents[] }>({
@@ -29,39 +28,10 @@ function selectLayer(index: number) {
     curComponentIndex: index,
   })
 }
-
-function shrink() {
-  emits('shrink', true)
-}
 </script>
 
 <template>
   <div class="layer-control-container">
-    <div class="top">
-      <span class="left-box">
-        图层
-        <svg-icon name="layer" />
-      </span>
-      <span class="right-box">
-        <el-button-group size="small">
-          <el-tooltip effect="dark" placement="top" content="缩略图">
-            <el-button type="" plain>
-              <template #icon>
-                <svg-icon name="缩略图" />
-              </template>
-            </el-button>
-          </el-tooltip>
-          <el-tooltip effect="dark" placement="top" content="文本列">
-            <el-button type="" plain>
-              <template #icon>
-                <svg-icon name="列表1" />
-              </template>
-            </el-button>
-          </el-tooltip>
-        </el-button-group>
-        <svg-icon class="prev" title="收起" size="1.1em" name="pre" @click="shrink" />
-      </span>
-    </div>
     <div class="content">
       <ul>
         <li v-for="(item, index) in layerList" :key="item.title || `${index}`" :class="curComponentIndex === index ? 'active' : ''" @click="selectLayer(index)">

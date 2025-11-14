@@ -88,7 +88,7 @@ const showViewData = reactive<designListType>({
 function toDesignSpace(id?: string) {
   router.push({
     path: '/design/design-space',
-    query: { key: id },
+    query: { id },
   })
 
   // window.open(newUrl.href, "_blank");

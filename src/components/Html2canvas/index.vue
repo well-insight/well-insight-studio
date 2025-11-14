@@ -2,7 +2,7 @@
 import type { PropType } from 'vue'
 import type { Compnents } from '@/type'
 import { useElementSize } from '@vueuse/core'
-import { nextTick, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
+import { reactive, ref, useTemplateRef, watch } from 'vue'
 import { getComponentType } from '@/utils/component'
 
 const props = defineProps({
@@ -22,22 +22,13 @@ const chartStyle = reactive({
 
 const { width, height } = useElementSize(containerRef)
 
-watch(width, () => {
-  debugger
-})
-
 // 组件类性
 const componentType = ref('element')
 
-onMounted(() => {
-  nextTick(() => {
-    debugger
-    console.log(containerRef.value)
-
-    if (width.value) {
-      initComponent()
-    }
-  })
+watch(width, () => {
+  if (width.value) {
+    initComponent()
+  }
 })
 
 function initComponent() {
@@ -47,12 +38,13 @@ function initComponent() {
   chartStyle.width = `${width.value / scale}px` // 158
   chartStyle.height = `${height.value / scale}px` // 93
   chartStyle.transform = `scale(${scale})`
-  debugger
 }
 </script>
 
 <template>
   <div ref="containerRef" :class="`component-${componentType}-container show-content`">
+    <!-- Height: {{ height }}
+    Width: {{ width }} -->
     <component :is="componentData.component" v-if="width" ref="componentRef" class="html-2-canvas-component" :style="chartStyle" />
   </div>
 </template>

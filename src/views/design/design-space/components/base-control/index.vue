@@ -4,10 +4,9 @@ import type { Compnents } from '@/type'
 import { Delete, Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, ref } from 'vue'
-import Html2Canvas from '@/components/Html2canvas/index.vue'
-import ItemCard from '@/components/ItemCard/index.vue'
 import List from '@/custom-components/config'
 import ComponentControl from '../component-control/index.vue'
+import LayerControl from '../layer-control/index.vue'
 
 defineProps({
   shrinkComponent: {
@@ -123,12 +122,6 @@ function openAddPage() {
     </div>
     <div class="flex-auto w-0 flex flex-col h-full">
       <div class="title-wrapper">
-        <el-input
-          v-model="searchValue"
-          placeholder="输入组件名称搜索"
-          :prefix-icon="Search"
-          class="mb-2"
-        />
         <el-tabs v-model="currentManage" stretch class="custom-tabs">
           <el-tab-pane
             v-for="e in options"
@@ -142,7 +135,7 @@ function openAddPage() {
         <div class="main-view-container">
           <ComponentControl v-show="currentManage === 'component'" />
           <div v-show="currentManage === 'layer'">
-            层级列表
+            <LayerControl v-show="currentManage === 'layer'" />
           </div>
         </div>
       </div>
@@ -239,8 +232,10 @@ function openAddPage() {
     cursor: pointer;
 
     .custom-tabs {
+      border: var(--el-border);
       :deep(.el-tabs__header) {
         margin-bottom: 0;
+        border-bottom: none;
       }
     }
   }
