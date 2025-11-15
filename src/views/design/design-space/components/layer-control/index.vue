@@ -34,7 +34,12 @@ function selectLayer(index: number) {
   <div class="layer-control-container">
     <div class="content">
       <ul>
-        <li v-for="(item, index) in layerList" :key="item.title || `${index}`" :class="curComponentIndex === index ? 'active' : ''" @click="selectLayer(index)">
+        <li
+          v-for="(item, index) in layerList"
+          :key="item.title || `${index}`"
+          :class="curComponentIndex === index ? 'active' : ''"
+          @click="selectLayer(index)"
+        >
           <svg-icon :name="item.icon" class="img" />
           <span class="title">{{ item.title }}</span>
           <span class="control">
@@ -46,5 +51,3 @@ function selectLayer(index: number) {
     </div>
   </div>
 </template>
-
-<style scoped src='./index.scss' lang="scss"></style>

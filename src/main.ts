@@ -2,7 +2,7 @@ import * as ElIcons from '@element-plus/icons-vue'
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 // import './api/mock/index'
-import svgIcon from '@/assets/svg/index.vue'
+import svgIcon from '@/assets/svgs/index.vue'
 import Echarts from '@/components/Echarts/index.vue' // echarts组件
 import WeiCol from '@/components/Layout/Col/index.vue'
 import WeiRow from '@/components/Layout/Row/index.vue'

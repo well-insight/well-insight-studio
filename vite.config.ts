@@ -40,7 +40,7 @@ export default defineConfig(({ command }) => {
       }),
       createSvgIconsPlugin({
         // 指定需要缓存的图标文件夹
-        iconDirs: [resolve(process.cwd(), 'src/assets/svg/icons')],
+        iconDirs: [resolve(process.cwd(), 'src/assets/svgs/icons')],
         // 指定symbolId格式
         symbolId: 'icon-[dir]-[name]',
         svgoOptions: {

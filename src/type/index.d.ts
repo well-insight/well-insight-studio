@@ -41,8 +41,9 @@ export interface stateType {
 export interface assemblyType {
   img: string
   title: string
-  content: string
+  description: string
   time: string
+  id: string
 }
 
 export interface Compnents {

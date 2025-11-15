@@ -1,3 +1,5 @@
+import type { assemblyType } from '@/type'
+import dayjs from 'dayjs'
 import Mock from 'mockjs'
 import { defineMock } from 'vite-plugin-mock-dev-server'
 
@@ -81,7 +83,7 @@ export default defineMock([
           {
             'id': '@id',
             'title': '@ctitle(6, 12)',
-            'img': '@image("300x200", "#50B347", "#FFF", "Mock")',
+            'img': '@image("300x200", "#8386e6ff", "#FFF", "Mock")',
             'width|1920-3840': 1920,
             'height|1080-2160': 1080,
             'backgroundColor': '@color',
@@ -94,7 +96,22 @@ export default defineMock([
       res.end(requestFormatter(data?.list))
     },
   },
+  {
+    url: '/api/assembly/getAssemblyLists',
+    delay: 100,
+    response(req, res) {
+      res.end(requestFormatter(Mock.mock([{
+        id: 'icon',
+        title: '图标',
+        description: '内置的图标组件',
+        img: '@image("300x200", "#8386e6ff", "#FFF", "Mock")',
+        time: dayjs().format('YYYY-MM-DDTHH:mm:ss'),
 
+      }] as assemblyType[])))
+    },
+  },
+
+  // 旧
   {
     url: '/dev-api/auth/login',
     delay: 1000,

@@ -1,36 +1,59 @@
 <script setup lang="ts">
 import type { assemblyType } from '@/type'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { getAssemblyLists } from '@/api'
+import { Icons } from './components'
 
 const assemblyList = ref<assemblyType[]>([])
-getAssemblyLists().then((res) => {
-  if (res) {
-    assemblyList.value = res.data
-  }
+
+const current = ref('icon')
+
+const assemblyListShow = computed(() => {
+  return assemblyList.value?.map((e) => {
+    return {
+      ...e,
+      label: e?.title,
+    }
+  })
 })
+
+function getList() {
+  getAssemblyLists().then((res) => {
+    if (res) {
+      assemblyList.value = res || []
+    }
+  })
+}
 
 const detailBoxVisible = ref<boolean>(false)
 function showAssemblyDetail(item: assemblyType, e: any) {
   detailBoxVisible.value = true
 }
+
+getList()
 </script>
 
 <template>
-  <div class="assembly-container">
-    <!-- 组件：组件包含内置的组件，外部也可以自己上传组件，然后预览介绍，详情接口入参配置等。 -->
-    <el-card v-for="(item, i) in assemblyList" :key="item.img" class="custom-card" shadow="hover" data-name="el-card" @click="showAssemblyDetail(item, $event)">
-      <div class="el-custom-card-body">
-        <img
-          class="custom-card-img" :src="item.img"
-          alt=""
-        >
-        <div class="discrible-box">
-          <span class="title">{{ item.title }}</span>
-          <span class="content">{{ item.content }}</span>
-          <span class="time">{{ item.time }}</span>
-        </div>
-      </div>
+  <div class="w-full h-full p-4">
+    <el-card shadow="never" class="w-full h-full full-card">
+      <!-- 组件：组件包含内置的组件，外部也可以自己上传组件，然后预览介绍，详情接口入参配置等。 -->
+      <el-container class="w-full h-full">
+        <el-aside width="200px" class="h-full mr-6">
+          <div class="w-full h-full left-menu">
+            <el-tree
+              :data="assemblyListShow"
+              highlight-current
+              node-key="id"
+              current-node-key="icon"
+            />
+          </div>
+        </el-aside>
+        <el-main class="assembly-main">
+          <template v-if="current === 'icon'">
+            <Icons />
+          </template>
+        </el-main>
+      </el-container>
     </el-card>
 
     <!-- 组件详情 -->
@@ -43,74 +66,22 @@ function showAssemblyDetail(item: assemblyType, e: any) {
 </template>
 
 <style lang="scss" scoped>
-.assembly-container {
-    width: 100%;
+.full-card {
+
+  :deep(.el-card__body) {
     height: 100%;
-    padding: 20px;
-    position: relative;
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    grid-gap: 20px 20px;
-
-    .custom-card {
-        height: 280px;
-        cursor: pointer;
-
-        .el-custom-card-body {
-            height: 100%;
-            width: 100%;
-            display: grid;
-            grid-template-columns: 100%;
-            grid-template-rows: 180px 100px;
-
-            .custom-card-img {
-                width: 100%;
-                height: 100%;
-                border-radius: 5px;
-            }
-
-            .discrible-box {
-                width: 100%;
-                padding: 10px;
-                //display: grid;
-                //grid-template-rows: 25px auto 20px;
-                display: flex;
-                flex-direction: column;
-                justify-content: space-evenly;
-
-                .title {
-                    font-size: 16px;
-                    font-weight: 700;
-                }
-
-                .time {
-                    color: rgba(81, 90, 110, .6);
-                }
-            }
-        }
-    }
-
-    .show-assembly-box {
-        position: absolute;
-        background-color: #fff;
-        left: 20px;
-        top: 20px;
-        right: 20px;
-        bottom: 20px;
-
-    }
-
+    width: 100%;
+  }
 }
-</style>
 
-<style lang='scss'>
-.assembly-container {
-    .custom-card {
-        .el-card__body {
-            height: 100%;
-            width: 100%;
-            padding: 0;
-        }
-    }
+.left-menu {
+  border: var(--el-border);
+  border-radius: var(--el-border-radius-base);
+  // padding: 20px;
+}
+
+.assembly-main {
+  border: var(--el-border);
+  border-radius: var(--el-border-radius-base);
 }
 </style>
