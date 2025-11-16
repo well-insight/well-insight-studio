@@ -11,7 +11,7 @@ const svgNames = Object.keys(svgModules).map((filePath) => {
 })
 
 function copyIconName(name: string) {
-  navigator.clipboard.writeText(name)
+  navigator.clipboard.writeText(`<svg-icon name="${name}" />`)
     .then(() => {
       ElMessage.success(`图标名称复制成功：<svg-icon name="${name}" />`)
     })

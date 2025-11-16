@@ -133,10 +133,8 @@ function openAddPage() {
       </div>
       <div class="main-wrapper">
         <div class="main-view-container">
-          <ComponentControl v-show="currentManage === 'component'" />
-          <div v-show="currentManage === 'layer'">
-            <LayerControl v-show="currentManage === 'layer'" />
-          </div>
+          <ComponentControl v-if="currentManage === 'component'" />
+          <LayerControl v-if="currentManage === 'layer'" />
         </div>
       </div>
     </div>
@@ -236,6 +234,10 @@ function openAddPage() {
       :deep(.el-tabs__header) {
         margin-bottom: 0;
         border-bottom: none;
+      }
+
+      :deep(.el-tabs__nav-wrap::after) {
+        height: 1px;
       }
     }
   }

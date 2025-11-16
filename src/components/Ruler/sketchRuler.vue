@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 import RulerWrapper from './rulerWrapper.vue'
 
 const DEFAULTMENU = {

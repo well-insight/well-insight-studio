@@ -1,5 +1,5 @@
 import type { DsignStateTypes } from './interface'
-import type { Compnents } from '@/type'
+import type { Compnents, PageConfig } from '@/type'
 import { dayjs } from 'element-plus'
 import { defineStore } from 'pinia'
 import { addDesign, deleteDesign, findDesignList, getDesignContentById, updateDesignById } from '@/api/design'
@@ -38,14 +38,20 @@ export const useDesignStore = defineStore('design', {
     },
   },
   actions: {
-    changeComponentsInCanvasByIndex(index: number | string, data: any) {
-      this.componentsInCanvas[Number(index)] = data
+    setPageConfig(pageConfig: PageConfig) {
+      this.pageConfig = pageConfig
     },
     setPageConfigByKey(key: string, value: any) {
       this.pageConfig[key] = value
     },
+    changeComponentsInCanvasByIndex(index: number | string, data: any) {
+      this.componentsInCanvas[Number(index)] = data
+    },
     addComponentsInCanvas(component: Compnents) {
       this.componentsInCanvas.push(component)
+    },
+    setComponentsInCanvas(component: Compnents[]) {
+      this.componentsInCanvas = component
     },
     async newDesignContent() {
       const content = JSON.stringify(this.editConfigContent || {})

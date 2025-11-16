@@ -3,7 +3,7 @@ import { useResizeObserver } from '@vueuse/core'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 
 import { useRoute } from 'vue-router'
-import { setImg } from '@/api'
+import { getDesignContentById, setImg } from '@/api'
 import MarkLine from '@/components/Editor/MarkLine.vue'
 import Shape from '@/components/Editor/Shape.vue'
 import SketchRule from '@/components/Ruler/sketchRuler.vue'
@@ -11,8 +11,12 @@ import { useHtml2canvas } from '@/hooks/useDom2image'
 import { useDesignStore } from '@/stores/design'
 import { debounce, deepCopy, uuid } from '@/utils'
 
-const store = useDesignStore()
+const deisgnStore = useDesignStore()
 const route = useRoute()
+
+const canvasId = String(route.query?.key) || ''
+
+const componentLoading = ref(false)
 
 const $wrap = ref<any>()
 const $sketchRule = ref<any>()
@@ -22,7 +26,7 @@ const domeStr = ref<string>('')
 const pageRef = ref()
 
 // 缩放可视区
-const sliderConfig: any = reactive({
+const sliderConfig = reactive<any>({
   scaleValue: 60,
   inputScale: (scale: number) => {
     sliderConfig.scaleValue = scale
@@ -48,6 +52,8 @@ const shadow = reactive({
   width: 0,
   height: 0,
 })
+
+const isEnterSpace = ref(false)
 
 function handleLine(e: any) {
   console.log(e)
@@ -133,7 +139,6 @@ defineExpose({
 })
 
 // 监听键盘按键事件componentData
-const isEnterSpace = ref(false)
 function keyEvent() {
   document.addEventListener('keydown', (e: any) => {
     if (e && e.code === 'Space') {
@@ -155,7 +160,7 @@ onMounted(() => {
 })
 
 // 自定义组件
-const componentData = computed(() => store.$state.componentsInCanvas)
+const componentData = computed(() => deisgnStore.$state.componentsInCanvas)
 
 // 拖拽组件到当前画布
 function handleDrop(e: any) {
@@ -174,7 +179,7 @@ function handleDrop(e: any) {
   component.ifLock = false // 是否锁定
   component.ifShow = true // 是否显示
   component.title = `${component.label}-${componentData.value.length + 1}`
-  store.addComponentsInCanvas(component)
+  deisgnStore.addComponentsInCanvas(component)
 }
 function handleDragOver(e: any) {
   e.preventDefault()
@@ -182,7 +187,7 @@ function handleDragOver(e: any) {
 
 watch(() => sliderConfig.scaleValue, (n) => {
   sliderConfig.scaleValue = n < 10 ? 10 : n
-  store.$patch({
+  deisgnStore.$patch({
     canvasScale: scaleValueReal.value,
   })
 })
@@ -194,7 +199,7 @@ function canvasMousemove() {
 
 // page 配置变动
 const pageConfig = computed(() => {
-  const pageConfig = computed(() => store.$state.pageConfig)
+  const pageConfig = computed(() => deisgnStore.$state.pageConfig)
   return {
     width: `${pageConfig.value.width}px`,
     height: `${pageConfig.value.height}px`,
@@ -203,7 +208,7 @@ const pageConfig = computed(() => {
 })
 
 // 不适用深层监听 性能消耗
-const editConfigContent = computed(() => store.editConfigContent)
+const editConfigContent = computed(() => deisgnStore.editConfigContent)
 
 // 数据变动更新
 async function setComponentsUpdate() {
@@ -211,17 +216,33 @@ async function setComponentsUpdate() {
 
   const res = await useHtml2canvas(canvasRef.value as HTMLElement, {})
   const content = JSON.stringify(editConfigContent.value)
-  await store.updateDesignById(canvasId, content)
+  await deisgnStore.updateDesignById(canvasId, content)
   await setImg(canvasId, res)
 }
 
-const canvasId = String(route.query?.key) || ''
+async function getComponents() {
+  componentLoading.value = true
 
-store.getEditConfigContent(canvasId).then((res) => {
-  watch([componentData, () => store.$state.pageConfig], debounce(async () => {
-    await setComponentsUpdate()
-  }, 1000, false), { deep: true })
-})
+  const res = await getDesignContentById(canvasId)
+  if (res) {
+    componentLoading.value = false
+    const { pageConfig, componentsInCanvas } = JSON.parse(res.data.content)
+
+    if (componentsInCanvas) {
+      deisgnStore.setComponentsInCanvas(componentsInCanvas)
+    }
+    if (pageConfig) {
+      deisgnStore.setPageConfig(pageConfig)
+    }
+    componentLoading.value = false
+  }
+}
+
+getComponents()
+
+watch([componentData, () => deisgnStore.$state.pageConfig], debounce(async () => {
+  await setComponentsUpdate()
+}, 1000, false), { deep: true })
 </script>
 
 <template>
@@ -237,7 +258,7 @@ store.getEditConfigContent(canvasId).then((res) => {
         <div id="content">
           <div
             ref="canvasRef"
-            v-loading="!componentData.length"
+            v-loading="componentLoading"
             class="edit-canvas"
             :style="{ transform: `scale(${scaleValueReal})`, cursor: isEnterSpace ? 'pointer' : 'auto', ...pageConfig }"
             @mousemove="canvasMousemove"

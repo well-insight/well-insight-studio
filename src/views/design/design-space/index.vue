@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+// import { useRouter } from 'vue-router'
 import { useDesignStore } from '@/stores/design'
 import { setItem } from '@/utils'
 import BaseControl from './components/base-control/index.vue'
@@ -8,7 +8,7 @@ import EditControl from './components/edit-control/index.vue'
 import LayerControl from './components/layer-control/index.vue'
 import SideSettingControl from './components/side-setting-control/index.vue'
 
-const router = useRouter()
+// const router = useRouter()
 const store = useDesignStore()
 
 const ifShowEditInput = ref(false)
@@ -42,7 +42,10 @@ function showConfig(show: string, event: any) {
       break
   }
   let target = event.target
-  while (target.nodeName !== 'BUTTON') { target = target.parentNode } target.blur()
+  while (target.nodeName !== 'BUTTON') {
+    target = target.parentNode
+  }
+  target.blur()
 }
 
 // 预览

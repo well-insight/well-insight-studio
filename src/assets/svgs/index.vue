@@ -14,7 +14,7 @@ const props = withDefaults(
     bgColor: '#2c2c2c',
     name: '',
     strokeColor: '',
-    fontSize: 24,
+    fontSize: '1em',
   },
 )
 

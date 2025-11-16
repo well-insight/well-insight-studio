@@ -12,7 +12,7 @@ export async function addDesign(userId: string, content: string) {
 }
 
 export async function getDesignContentById(id: string) {
-  return await request.get('design/api/design/getDesignContentById', {
+  return await request.get('api/design/getDesignContentById', {
     id,
   })
 }
