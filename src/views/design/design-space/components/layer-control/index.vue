@@ -15,7 +15,7 @@ const layerList = computed(() => store.$state.componentsInCanvas)
 // 当前选中组件
 const curComponentIndex = computed(() => store.$state.curComponentIndex)
 
-watch(layerList, (n, o) => {
+watch(layerList, (n) => {
   layerControlData.layerList = (n || []).map((o: Compnents) => {
     o.ifLock = o.ifLock ? o.ifLock : false
     o.ifShow = o.ifShow ? o.ifShow : true
@@ -31,23 +31,20 @@ function selectLayer(index: number) {
 </script>
 
 <template>
-  <div class="layer-control-container">
-    <div class="content">
-      <ul>
-        <li
-          v-for="(item, index) in layerList"
-          :key="item.title || `${index}`"
-          :class="curComponentIndex === index ? 'active' : ''"
-          @click="selectLayer(index)"
-        >
-          <svg-icon :name="item.icon" class="img" />
-          <span class="title">{{ item.title }}</span>
-          <span class="control">
-            <svg-icon class="lock" name="unlock" />
-            <svg-icon class="show" name="show" />
-          </span>
-        </li>
-      </ul>
+  <div class="layer-control-container w-full h-full">
+    <div
+      v-for="(item, index) in layerList"
+      :key="item.title || `${index}`"
+      :class="curComponentIndex === index ? 'active' : ''"
+      class="h-[40px] w-full"
+      @click="selectLayer(index)"
+    >
+      <svg-icon :name="item.icon" class="img" />
+      <span class="title">{{ item.title }}</span>
+      <span class="control">
+        <svg-icon class="lock" name="unlock" />
+        <svg-icon class="show" name="show" />
+      </span>
     </div>
   </div>
 </template>

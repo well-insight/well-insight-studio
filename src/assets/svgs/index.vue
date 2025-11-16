@@ -1,6 +1,6 @@
 <script setup lang="ts" name="SvgIcon">
 // 引入vue函数
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 const props = withDefaults(
   defineProps<{
@@ -18,6 +18,8 @@ const props = withDefaults(
   },
 )
 
+const svgRef = ref<HTMLOrSVGElement>()
+
 const symbolId = computed(() => `#icon-${props.name}`)
 const svgClass = computed(() => {
   if (props.className) {
@@ -25,10 +27,18 @@ const svgClass = computed(() => {
   }
   return 'svg-icon'
 })
+
+onMounted(() => {
+  console.log(svgRef.value)
+})
+
+const iconColor = computed(() => {
+  return svgRef.value
+})
 </script>
 
 <template>
-  <svg aria-hidden="true" :class="svgClass" :style="{ fontSize }" :color="bgColor" :stroke="strokeColor">
+  <svg ref="svgRef" aria-hidden="true" :class="svgClass" :style="{ fontSize }" :color="bgColor" :stroke="strokeColor">
     <use :xlink:href="symbolId" />
   </svg>
 </template>
