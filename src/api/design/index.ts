@@ -1,11 +1,11 @@
 import request from '@/utils/request'
 
 export async function fetchComponentsList() {
-  return await request.post('api/weiDesign/getComponentsList', {})
+  return await request.post('api/design/getComponentsList', {})
 }
 
 export async function addDesign(userId: string, content: string) {
-  return await request.post('design/api/design/addDesign', {
+  return await request.post('api/design/addDesign', {
     userId,
     content,
   })
@@ -18,26 +18,26 @@ export async function getDesignContentById(id: string) {
 }
 
 export async function updateDesignById(id: string, content: string) {
-  return await request.post('design/api/design/updateDesignById', {
+  return await request.post('api/design/updateDesignById', {
     id,
     content,
   })
 }
 
 export async function findDesignList(userId: string) {
-  return await request.get('/api/design/findDesignList', {
+  return await request.get('api/design/findDesignList', {
     userId,
   })
 }
 
 export async function deleteDesign(id: string) {
-  return await request.post('/design/api/design/deleteDesign', {
+  return await request.post('api/design/deleteDesign', {
     id,
   })
 }
 
 export async function setImg(id: string, base64Data: string) {
-  return await request.post('/design/api/design/setImg', {
+  return await request.post('api/design/setImg', {
     id,
     base64Data,
   })

@@ -39,7 +39,9 @@ export const useDesignStore = defineStore('design', {
   },
   actions: {
     setPageConfig(pageConfig: PageConfig) {
-      this.pageConfig = pageConfig
+      Object.entries(pageConfig || {}).forEach(([k, v]) => {
+        this.pageConfig[k] = v
+      })
     },
     setPageConfigByKey(key: string, value: any) {
       this.pageConfig[key] = value
@@ -58,15 +60,6 @@ export const useDesignStore = defineStore('design', {
       const { id: userId } = getItem('loginContent') || ''
 
       const res = await addDesign(userId, content)
-      return res
-    },
-    async getEditConfigContent(id: string) {
-      const res = await getDesignContentById(id)
-      if (res.status === 'success') {
-        const { pageConfig, componentsInCanvas } = JSON.parse(res.data.content)
-        this.pageConfig = pageConfig
-        this.componentsInCanvas = componentsInCanvas
-      }
       return res
     },
     async updateDesignById(id: string, content?: string) {

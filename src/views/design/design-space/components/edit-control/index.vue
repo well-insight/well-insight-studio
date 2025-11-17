@@ -226,16 +226,11 @@ async function getComponents() {
   const res = await getDesignContentById(canvasId)
   if (res) {
     componentLoading.value = false
-    const { pageConfig, componentsInCanvas } = JSON.parse(res.data.content)
-
-    if (componentsInCanvas) {
-      deisgnStore.setComponentsInCanvas(componentsInCanvas)
-    }
-    if (pageConfig) {
-      deisgnStore.setPageConfig(pageConfig)
-    }
-    componentLoading.value = false
+    const { pageConfig = {}, componentsInCanvas = [] } = res
+    deisgnStore.setComponentsInCanvas(componentsInCanvas)
+    deisgnStore.setPageConfig(pageConfig)
   }
+  componentLoading.value = false
 }
 
 getComponents()

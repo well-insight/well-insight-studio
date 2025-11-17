@@ -110,6 +110,17 @@ export default defineMock([
       }] as assemblyType[])))
     },
   },
+  {
+    url: '/api/design/getDesignContentById',
+    delay: 100,
+    method: 'GET',
+    response(req, res) {
+      res.end(requestFormatter(Mock.mock({
+        pageConfig: {},
+        componentsInCanvas: [],
+      })))
+    },
+  },
 
   // 旧
   {
