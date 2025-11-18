@@ -78,18 +78,6 @@ function goPreview() {
           </el-tooltip>
           <el-tooltip
             effect="dark"
-            content="图层控制"
-            placement="bottom"
-          >
-            <el-button :plain="!showLayer" type="primary" @click="showConfig('layer', $event)">
-              <template #icon>
-                <svg-icon name="layer" color="" />
-              </template>
-            </el-button>
-          </el-tooltip>
-
-          <el-tooltip
-            effect="dark"
             content="详情设置"
             placement="bottom"
           >

@@ -1,9 +1,17 @@
-import type { DsignStateTypes } from './interface'
-import type { Compnents, PageConfig } from '@/type'
+import type { Compnents, designListType, PageConfig } from '@/type'
 import { dayjs } from 'element-plus'
 import { defineStore } from 'pinia'
-import { addDesign, deleteDesign, findDesignList, getDesignContentById, updateDesignById } from '@/api/design'
+import { addDesign, deleteDesign, findDesignList, updateDesignById } from '@/api/design'
 import { getItem } from '@/utils'
+
+export interface DsignStateTypes {
+  curComponentIndex: number
+  canvasScale: number
+  componentsInCanvas: any[]
+  pageConfig: PageConfig
+  componentConfig: any
+  designList: designListType[]
+}
 
 export const useDesignStore = defineStore('design', {
   state: (): DsignStateTypes => {
@@ -11,7 +19,7 @@ export const useDesignStore = defineStore('design', {
       curComponentIndex: -1, // 当前选中组件
       canvasScale: 1,
       componentsInCanvas: [], // 当前界面中显示的组件数据
-      editCanvasConfig: {},
+      componentConfig: {},
       pageConfig: {
         // 页面设置数据
         title: `项目-${dayjs(new Date()).format()}`, // 默认项目名称

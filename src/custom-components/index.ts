@@ -1,22 +1,4 @@
-import WButton from './WButton/index.vue'
-
-// @ts-ignore
-const charts = import.meta.glob('./Charts/*/*.vue', { eager: true })
-
-const customComponents: { name: string, component: any }[] = []
-Object.values(charts).forEach((o: any) => {
-  customComponents.push({
-    name: `W${o.default.__name}`,
-    component: o.default,
-  })
-})
-
-const other = [
-  {
-    name: 'WButton',
-    component: WButton,
-  },
-]
+import button from './button'
 
 // 加入基础组件
-export default [...customComponents, ...other]
+export default [...button]

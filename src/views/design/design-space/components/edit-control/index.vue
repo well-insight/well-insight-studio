@@ -235,9 +235,9 @@ async function getComponents() {
 
 getComponents()
 
-watch([componentData, () => deisgnStore.$state.pageConfig], debounce(async () => {
-  await setComponentsUpdate()
-}, 1000, false), { deep: true })
+// watch([componentData, () => deisgnStore.$state.pageConfig], debounce(async () => {
+//   await setComponentsUpdate()
+// }, 1000, false), { deep: true })
 </script>
 
 <template>

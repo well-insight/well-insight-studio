@@ -58,16 +58,7 @@ function changePageBgColor(e: string) {
       <el-color-picker v-model="pageConfig.backgroundColor" label="1111" color-format="hex" popper-class="color-popper-container" show-alpha @active-change="changePageBgColor" />
       <!-- <span class="color-pick-value">{{ pageConfig.backgroundColor }}</span> -->
     </div>
-    <div class="config-item">
-      <label>背景控制</label>
-      <el-button size="small">
-        清除背景
-      </el-button>
-      <el-button size="small">
-        清除颜色
-      </el-button>
-    </div>
-    <div class="config-item">
+    <!-- <div class="config-item">
       <label>适配方式</label>
       <el-radio-group v-model="pageConfig.adapter" size="small">
         <el-radio-button size="small" label="auto">
@@ -83,7 +74,7 @@ function changePageBgColor(e: string) {
           四周铺满
         </el-radio-button>
       </el-radio-group>
-    </div>
+    </div> -->
     <div class="title">
       <span>主题颜色</span>
       <svg-icon name="调色板" size="1.15em" />
