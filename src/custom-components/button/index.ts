@@ -6,6 +6,5 @@ export default [
   {
     name: 'WButton',
     component: Button,
-    default: { type: 'element', component: 'WButton', label: '按钮', configs: { textValue: '这是按钮' } },
   },
-] as ComponentExport<ButtonProps>[]
+]

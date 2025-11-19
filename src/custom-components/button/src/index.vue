@@ -2,9 +2,7 @@
 import type { ButtonProps } from './props'
 import { ref } from 'vue'
 
-withDefaults(defineProps<ButtonProps>(), {
-
-})
+withDefaults(defineProps<ButtonProps>(), {})
 
 const compRef = ref()
 defineExpose({

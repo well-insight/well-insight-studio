@@ -13,9 +13,10 @@ export interface BaseProps {
   configs?: Record<string, any>
 }
 
+export type ComponentType = 'chart' | 'element'
+
 export interface ComponentExport<T = BaseProps> {
   name: string
   component: Component
   default?: T
-
 }
