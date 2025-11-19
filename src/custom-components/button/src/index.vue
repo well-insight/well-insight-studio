@@ -1,12 +1,11 @@
 <script lang='ts' setup>
+import type { ButtonProps } from './props'
 import { ref } from 'vue'
 
-defineProps({
-  propValue: {
-    type: String,
-    default: '这是button',
-  },
+withDefaults(defineProps<ButtonProps>(), {
+
 })
+
 const compRef = ref()
 defineExpose({
   compRef,
@@ -14,8 +13,8 @@ defineExpose({
 </script>
 
 <template>
-  <el-button ref="compRef">
-    {{ propValue }}
+  <el-button v-bind="configs" ref="compRef">
+    {{ configs?.text }}
   </el-button>
 </template>
 

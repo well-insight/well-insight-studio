@@ -103,7 +103,7 @@ function handleDragStart(e: any, item: Compnents) {
   .components-list {
     width: 50px;
     height: 100%;
-    box-shadow: 6px 0 12px -6px rgba(14, 34, 73, .06);
+    // box-shadow: 6px 0 12px -6px rgba(14, 34, 73, .06);
     background: var(--el-color-white);
     border-right: 1px solid #e7eaee;
     display: flex;
