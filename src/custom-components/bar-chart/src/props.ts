@@ -1,10 +1,7 @@
-import type { ButtonProps as ElButtonProps } from 'element-plus'
-import type { CSSProperties } from 'vue'
 import type { BaseProps, ComponentConfig } from '@/custom-components/types'
 import { getComponentConfigs } from '@/custom-components/utils'
 
-export interface ButtonProps extends BaseProps {
-  configs?: Partial<ElButtonProps> & { inputValue?: string }
+export interface IProps extends BaseProps {
 }
 
 export const componentConfig: ComponentConfig[] = getComponentConfigs([

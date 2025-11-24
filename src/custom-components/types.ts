@@ -2,7 +2,7 @@ import type { Component, CSSProperties } from 'vue'
 
 export interface BaseProps {
   id?: string
-  type: 'chart' | 'element' // 元素类性
+  type: ComponentType // 元素类性
   component: string // 组件名称，需要提前注册到 Vue
   label: string // 左侧组件列表中显示的名字
   icon?: string // 左侧组件列表中显示的图标
@@ -19,4 +19,14 @@ export interface ComponentExport<T = BaseProps> {
   name: string
   component: Component
   default?: T
+}
+
+type ConfigType = 'Input' | 'Animations' | 'Events' | 'Style' | 'Radio'
+
+export interface ComponentConfig {
+  key: ConfigType | `_${string}`
+  value: string
+  default?: any
+  props?: any
+  children?: ComponentConfig[]
 }
