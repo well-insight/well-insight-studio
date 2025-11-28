@@ -45,7 +45,12 @@ function initComponent() {
   <div ref="containerRef" :class="`component-${componentType}-container show-content`">
     <!-- Height: {{ height }}
     Width: {{ width }} -->
-    <component :is="componentData.component" v-if="width" ref="componentRef" class="html-2-canvas-component" :style="chartStyle" />
+    <div v-if="componentType === 'chart'" class="component-scale-wrapper" :style="chartStyle">
+      <component :is="componentData.component" v-if="width" ref="componentRef" class="html-2-canvas-component" />
+    </div>
+    <template v-else>
+      <component :is="componentData.component" v-if="width" ref="componentRef" class="html-2-canvas-component" />
+    </template>
   </div>
 </template>
 
@@ -66,6 +71,10 @@ function initComponent() {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+}
+
+.component-scale-wrapper {
+  transform-origin: 0 0;
 }
 </style>
 

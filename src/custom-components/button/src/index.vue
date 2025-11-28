@@ -6,7 +6,11 @@ import { isBoolean, isNull, isNumber, isString, isUndefined } from 'lodash-es'
 import { ref } from 'vue'
 import { withConfig } from './props'
 
-const props = withDefaults(defineProps<ButtonProps>(), {})
+const props = withDefaults(defineProps<ButtonProps>(), {
+  configs: () => ({
+    inputValue: '这是按钮',
+  }),
+})
 
 const compRef = ref()
 defineExpose({

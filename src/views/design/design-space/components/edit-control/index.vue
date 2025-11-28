@@ -166,12 +166,11 @@ const componentData = computed(() => deisgnStore.$state.componentsInCanvas)
 function handleDrop(e: any) {
   e.preventDefault()
   e.stopPropagation()
-
   const component = deepCopy(JSON.parse(e.dataTransfer.getData('component')) || {})
   const x = e.offsetX
   const y = e.offsetY
-  const width = Number.parseInt(component.style.width || 0)
-  const height = Number.parseInt(component.style.height || 0)
+  const width = Number.parseInt(component.style?.width || 0)
+  const height = Number.parseInt(component.style?.height || 0)
   component.style.top = `${y - height / 2}px`
   component.style.left = `${x - width / 2}px`
   component.style.zIndex = componentData.value.length + 1 // 组件的定位层级

@@ -1,10 +1,10 @@
 import type { BaseProps, ComponentConfig } from '@/custom-components/types'
-import { getComponentConfigs } from '@/custom-components/utils'
+import { withConfigs } from '@/custom-components/utils'
 
 export interface IProps extends BaseProps {
 }
 
-export const componentConfig: ComponentConfig[] = getComponentConfigs([
+export const componentConfig: ComponentConfig[] = withConfigs([
   {
     key: '_configs',
     value: 'configs',

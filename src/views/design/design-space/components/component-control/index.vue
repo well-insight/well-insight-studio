@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import type { Compnents } from '@/type'
-import { Search } from '@element-plus/icons-vue'
 import { computed, ref } from 'vue'
 import Html2Canvas from '@/components/Html2canvas/index.vue'
-import ItemCard from '@/components/ItemCard/index.vue'
+import customComponents from '@/custom-components'
 import List from '@/custom-components/config'
+import { getComponentConfig } from '@/custom-components/utils'
 
 defineProps({
   shrinkComponent: {
@@ -31,17 +31,27 @@ function selectComponentList(index: number) {
 }
 
 const chartList = computed(() => {
+  let list: any[] = []
   if ((layerList.value[activeLayerIndex.value] as any).value === 'all') {
-    const list: any[] = []
     layerList.value.forEach((o: any) => {
       if (o.components.length) {
         list.push(...o.components)
       }
     })
-    return list
+  }
+  else {
+    list = (layerList.value[activeLayerIndex.value]?.components || [])
   }
 
-  return layerList.value[activeLayerIndex.value]?.components || []
+  list = list.map((e) => {
+    const config = customComponents?.find(u => u?.name === e?.component)?.config
+    return {
+      ...e,
+      ...getComponentConfig(e?.name, config),
+    }
+  })
+
+  return list
 })
 
 function selectLayerIndex(index: number) {

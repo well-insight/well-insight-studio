@@ -27,14 +27,6 @@ const svgClass = computed(() => {
   }
   return 'svg-icon'
 })
-
-onMounted(() => {
-  console.log(svgRef.value)
-})
-
-const iconColor = computed(() => {
-  return svgRef.value
-})
 </script>
 
 <template>
