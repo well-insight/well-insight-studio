@@ -4,6 +4,15 @@ import { cloneDeep } from 'lodash-es'
 
 const baseConfigs: ComponentConfig[] = [
   {
+    title: '组件标识',
+    key: 'Input',
+    value: 'id',
+    default: '',
+    props: {
+      disabled: true,
+    },
+  },
+  {
     title: '标题',
     key: 'Input',
     value: 'label',
@@ -37,6 +46,12 @@ const baseConfigs: ComponentConfig[] = [
         key: 'Input',
         value: 'height',
         default: '300px',
+      },
+      {
+        title: '背景',
+        key: 'Background',
+        value: 'background',
+        default: '#ffffff',
       },
     ],
   },

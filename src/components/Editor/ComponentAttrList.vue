@@ -15,12 +15,25 @@ const configs = ref<ComponentConfig[]>()
 
 watch(currentComponentConfig, (n) => {
   if (n) {
-    configs.value = customComponents.find(e => e?.name === n?.component)?.config || []
+    configs.value = addLevelToData(customComponents.find(e => e?.name === n?.component)?.config || [])
   }
   else {
     configs.value = []
   }
 })
+
+// 递归添加 level 属性的函数
+function addLevelToData(data: any, currentLevel = 1) {
+  return data.map((item: any) => {
+    // 复制原对象并添加 level
+    const newItem = { ...item, level: currentLevel }
+    // 如果有 children，递归处理子层级
+    if (item.children && Array.isArray(item.children) && item.children.length > 0) {
+      newItem.children = addLevelToData(item.children, currentLevel + 1)
+    }
+    return newItem
+  })
+}
 </script>
 
 <template>
@@ -31,7 +44,7 @@ watch(currentComponentConfig, (n) => {
     </div>
     <el-tabs type="border-card" class="w-full h-full" stretch>
       <el-tab-pane label="基础">
-        <AeerListRender :configs="configs" />
+        <AeerListRender :configs="configs" collapse-all />
       </el-tab-pane>
       <el-tab-pane label="动画">
         Config
@@ -39,7 +52,7 @@ watch(currentComponentConfig, (n) => {
       <el-tab-pane label="数据">
         Role
       </el-tab-pane>
-      <el-tab-pane label="Task">
+      <el-tab-pane label="事件">
         Task
       </el-tab-pane>
     </el-tabs>

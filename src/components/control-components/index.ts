@@ -1,3 +1,4 @@
+import { Background } from './background'
 import { Input, InputNumber } from './input'
 import { Style } from './style'
 
@@ -12,5 +13,9 @@ export function getComponent(key: string) {
   }
   if (key === 'Style') {
     return Style
+  }
+
+  if (key === 'Background') {
+    return Background
   }
 }

@@ -5,10 +5,10 @@ export interface IProps extends BaseProps {
 }
 
 export const componentConfig: ComponentConfig[] = withConfigs([
-  {
-    key: '_configs',
-    value: 'configs',
-    title: '图像配置',
-    children: [],
-  },
+  // {
+  //   key: '_configs',
+  //   value: 'configs',
+  //   title: '图像配置',
+  //   children: [],
+  // },
 ])

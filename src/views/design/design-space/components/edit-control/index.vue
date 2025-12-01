@@ -177,7 +177,7 @@ function handleDrop(e: any) {
   component.id = uuid() // 生成uuid
   component.ifLock = false // 是否锁定
   component.ifShow = true // 是否显示
-  component.title = `${component.label}-${componentData.value.length + 1}`
+  component.label = `${component.label}-${componentData.value.length + 1}`
   deisgnStore.addComponentsInCanvas(component)
 }
 function handleDragOver(e: any) {

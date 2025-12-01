@@ -46,8 +46,8 @@ const chartList = computed(() => {
   list = list.map((e) => {
     const config = customComponents?.find(u => u?.name === e?.component)?.config
     return {
-      ...e,
       ...getComponentConfig(e?.name, config),
+      ...e,
     }
   })
 

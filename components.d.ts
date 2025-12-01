@@ -10,6 +10,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     App: typeof import('./src/components/Ruler/app.vue')['default']
     AttrListRender: typeof import('./src/components/Editor/AttrListRender.vue')['default']
+    Background: typeof import('./src/components/control-components/background/Background.vue')['default']
     CanvasAttrList: typeof import('./src/components/Editor/CanvasAttrList.vue')['default']
     CanvasRuler: typeof import('./src/components/Ruler/canvasRuler/canvasRuler.vue')['default']
     Col: typeof import('./src/components/Layout/Col/index.vue')['default']
@@ -24,6 +25,7 @@ declare module 'vue' {
     ElCard: typeof import('element-plus/es')['ElCard']
     ElCollapse: typeof import('element-plus/es')['ElCollapse']
     ElCollapseItem: typeof import('element-plus/es')['ElCollapseItem']
+    ElColorPicker: typeof import('element-plus/es')['ElColorPicker']
     ElContainer: typeof import('element-plus/es')['ElContainer']
     ElDialog: typeof import('element-plus/es')['ElDialog']
     ElDropdown: typeof import('element-plus/es')['ElDropdown']
