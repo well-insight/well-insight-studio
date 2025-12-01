@@ -9,6 +9,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     App: typeof import('./src/components/Ruler/app.vue')['default']
+    AttrListRender: typeof import('./src/components/Editor/AttrListRender.vue')['default']
     CanvasAttrList: typeof import('./src/components/Editor/CanvasAttrList.vue')['default']
     CanvasRuler: typeof import('./src/components/Ruler/canvasRuler/canvasRuler.vue')['default']
     Col: typeof import('./src/components/Layout/Col/index.vue')['default']
@@ -51,6 +52,7 @@ declare module 'vue' {
     Hello: typeof import('./src/components/Hello.vue')['default']
     Html2canvas: typeof import('./src/components/Html2canvas/index.vue')['default']
     Input: typeof import('./src/components/control-components/input/Input.vue')['default']
+    InputNumber: typeof import('./src/components/control-components/input/InputNumber.vue')['default']
     ItemBox: typeof import('./src/components/ItemBox/index.vue')['default']
     ItemCard: typeof import('./src/components/ItemCard/index.vue')['default']
     Line: typeof import('./src/components/Ruler/line.vue')['default']
@@ -65,6 +67,7 @@ declare module 'vue' {
     Shape: typeof import('./src/components/Editor/Shape.vue')['default']
     Sidebar: typeof import('./src/components/Sidebar/index.vue')['default']
     SketchRuler: typeof import('./src/components/Ruler/sketchRuler.vue')['default']
+    Style: typeof import('./src/components/control-components/style/Style.vue')['default']
     Submenu: typeof import('./src/components/Submenu/index.vue')['default']
     TabBar: typeof import('./src/components/TabBar/index.vue')['default']
   }

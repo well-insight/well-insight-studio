@@ -5,8 +5,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import customComponents from '@/custom-components'
 import { useDesignStore } from '@/stores/design'
 import { getComponent } from '../control-components'
-
-const activeNames = ref(['1'])
+import AeerListRender from './AttrListRender.vue'
 
 const designStore = useDesignStore()
 
@@ -14,15 +13,14 @@ const { currentComponentConfig } = storeToRefs(designStore)
 
 const configs = ref<ComponentConfig[]>()
 
-watch(() => designStore.currentComponentConfig, (n) => {
-  console.log(customComponents, n)
-  configs.value = customComponents.find(e => e?.name === n.component)?.config || []
+watch(currentComponentConfig, (n) => {
+  if (n) {
+    configs.value = customComponents.find(e => e?.name === n?.component)?.config || []
+  }
+  else {
+    configs.value = []
+  }
 })
-function handleChange(val: string[]) {
-  console.log(val)
-}
-
-const chartOptions = ref({})
 </script>
 
 <template>
@@ -33,32 +31,7 @@ const chartOptions = ref({})
     </div>
     <el-tabs type="border-card" class="w-full h-full" stretch>
       <el-tab-pane label="基础">
-        <el-collapse v-model="activeNames">
-          <template v-for="e in configs" :key="e?.key">
-            <el-collapse-item :title="e?.title" :name="e?.value">
-              <div>
-                Consistent with real life: in line with the process and logic of real
-                life, and comply with languages and habits that the users are used to;
-              </div>
-            </el-collapse-item>
-            <!-- <div v-else class="w-full flex">
-              <el-text>{{ e?.title }}</el-text>
-              <div class="flex-auto w-0">
-                <component :is="getComponent(e?.key)" v-model="currentComponentConfig[e.value]" />
-              </div>
-            </div> -->
-          </template>
-          <template v-for="e in configs" :key="e?.key">
-            <div class="w-full flex h-[50px] items-center attrs-setting-item">
-              <el-text class="w-[30%]">
-                {{ e?.title }}
-              </el-text>
-              <div class="flex-auto w-0">
-                <component :is="getComponent(e?.key)" v-model="currentComponentConfig[e.value]" />
-              </div>
-            </div>
-          </template>
-        </el-collapse>
+        <AeerListRender :configs="configs" />
       </el-tab-pane>
       <el-tab-pane label="动画">
         Config
@@ -100,8 +73,5 @@ const chartOptions = ref({})
     }
   }
 
-  .attrs-setting-item {
-    border-bottom: 1px solid var(--el-collapse-border-color);
-  }
 }
 </style>

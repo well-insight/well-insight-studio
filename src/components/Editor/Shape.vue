@@ -56,7 +56,8 @@ function selectCurComponent(e: any) {
     curComponentIndex: Number(props.index),
   })
 
-  window.document.addEventListener('click', delComponentIndex)
+  const $container = document.getElementsByClassName('edit-control-container')?.[0]
+  $container?.addEventListener('click', delComponentIndex)
 
   // 阻止向父组件冒泡
   e.stopPropagation()
@@ -64,7 +65,8 @@ function selectCurComponent(e: any) {
 }
 
 watch(curComponentIndex, (n, o) => {
-  window.document.removeEventListener('click', delComponentIndex)
+  const $container = document.getElementsByClassName('edit-control-container')?.[0]
+  $container?.removeEventListener('click', delComponentIndex)
 })
 
 const shapeXY = reactive({

@@ -1,6 +1,6 @@
 <script setup lang='ts'>
 import { ref } from 'vue'
-import HorizontalBarChart from '@/custom-components/Charts/BarChart/HorizontalBarChart.vue'
+import { HorizontalBarChart } from '@/custom-components/bar-chart'
 // import { useDom2image } from "@/hooks/useDom2image"
 
 const dom2imageRef = ref<HTMLElement | null>(null)

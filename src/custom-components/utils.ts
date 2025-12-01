@@ -23,24 +23,28 @@ const baseConfigs: ComponentConfig[] = [
   // },
   {
     title: '样式',
-    key: 'Style',
+    key: '_style',
     value: 'style',
-    default: {
-      width: '500px',
-      height: '300px',
-      fontSize: 14,
-      fontWeight: 500,
-      lineHeight: '',
-      letterSpacing: 0,
-      textAlign: 'center',
-      color: '',
-    } as CSSProperties,
+    children: [
+      {
+        title: '宽度',
+        key: 'Input',
+        value: 'width',
+        default: '500px',
+      },
+      {
+        title: '高度',
+        key: 'Input',
+        value: 'height',
+        default: '300px',
+      },
+    ],
   },
 ]
 
 export function withConfigs(configs?: ComponentConfig[]) {
-  const dataList = cloneDeep(baseConfigs);
-  (configs || []).forEach((e) => {
+  const dataList = cloneDeep(baseConfigs)
+    ;(configs || []).forEach((e) => {
     const hasK = dataList.findIndex(u => u?.key === e?.key)
     if (hasK >= 0) {
       dataList.splice(hasK, 1, e)

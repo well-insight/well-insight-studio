@@ -14,3 +14,8 @@ export default [
     config: componentConfig,
   },
 ]
+
+export {
+  HorizontalBarChart,
+  MixedLineBarChart,
+}
