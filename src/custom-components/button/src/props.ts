@@ -11,13 +11,16 @@ export const componentConfig: ComponentConfig[] = withConfigs([
   {
     key: '_configs',
     value: 'configs',
+    title: '按钮配置',
     children: [
       {
         key: 'Input',
+        title: '文字',
         value: 'inputValue',
         default: '按钮',
       },
       {
+        title: '类型',
         key: 'Radio',
         value: 'type',
         default: 'primary',

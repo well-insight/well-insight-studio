@@ -24,7 +24,7 @@ function editName(e: any) {
 
 const showChart = ref(true)
 const showLayer = ref(false)
-const showSide = ref(false)
+const showSide = ref(true)
 function layerShrink() {
   showLayer.value = false
 }

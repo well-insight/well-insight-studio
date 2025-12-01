@@ -4,21 +4,25 @@ import { cloneDeep } from 'lodash-es'
 
 const baseConfigs: ComponentConfig[] = [
   {
+    title: '标题',
     key: 'Input',
     value: 'label',
     default: '',
   },
+  // {
+  //   title: '动画',
+  //   key: 'Animations',
+  //   value: 'animations',
+  //   default: [],
+  // },
+  // {
+  //   title: '事件',
+  //   key: 'Events',
+  //   value: 'events',
+  //   default: {},
+  // },
   {
-    key: 'Animations',
-    value: 'animations',
-    default: [],
-  },
-  {
-    key: 'Events',
-    value: 'events',
-    default: {},
-  },
-  {
+    title: '样式',
     key: 'Style',
     value: 'style',
     default: {

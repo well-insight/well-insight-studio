@@ -1,5 +1,6 @@
 import type { Compnents, designListType, PageConfig } from '@/type'
 import { dayjs } from 'element-plus'
+import { isNumber } from 'lodash-es'
 import { defineStore } from 'pinia'
 import { addDesign, deleteDesign, findDesignList, updateDesignById } from '@/api/design'
 import { getItem } from '@/utils'
@@ -44,6 +45,9 @@ export const useDesignStore = defineStore('design', {
         componentsInCanvas: this.componentsInCanvas,
       }
     },
+    currentComponentConfig(): any {
+      return this.componentsInCanvas[this.curComponentIndex]
+    },
   },
   actions: {
     setPageConfig(pageConfig: PageConfig) {
@@ -54,14 +58,17 @@ export const useDesignStore = defineStore('design', {
     setPageConfigByKey(key: string, value: any) {
       this.pageConfig[key] = value
     },
-    changeComponentsInCanvasByIndex(index: number | string, data: any) {
-      this.componentsInCanvas[Number(index)] = data
+    setComponentsInCanvas(component: Compnents[]) {
+      this.componentsInCanvas = component
     },
     addComponentsInCanvas(component: Compnents) {
       this.componentsInCanvas.push(component)
     },
-    setComponentsInCanvas(component: Compnents[]) {
-      this.componentsInCanvas = component
+    changeComponentsInCanvasByIndex(index: number | string, data: any) {
+      this.componentsInCanvas[Number(index)] = data
+    },
+    updateCurrentComponentConfig(key: string, config: any, index?: number) {
+      this.componentsInCanvas[isNumber(index) ? index : this.curComponentIndex][key] = config
     },
     async newDesignContent() {
       const content = JSON.stringify(this.editConfigContent || {})

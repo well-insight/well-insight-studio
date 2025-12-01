@@ -28,5 +28,6 @@ export interface ComponentConfig {
   value: string
   default?: any
   props?: any
+  title?: string
   children?: ComponentConfig[]
 }

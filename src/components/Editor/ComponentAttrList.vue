@@ -1,15 +1,26 @@
 <script lang="ts" setup>
-import { reactive, ref } from 'vue'
+import type { ComponentConfig } from '@/custom-components/types'
+import { storeToRefs } from 'pinia'
+import { computed, reactive, ref, watch } from 'vue'
+import customComponents from '@/custom-components'
+import { useDesignStore } from '@/stores/design'
+import { getComponent } from '../control-components'
 
 const activeNames = ref(['1'])
+
+const designStore = useDesignStore()
+
+const { currentComponentConfig } = storeToRefs(designStore)
+
+const configs = ref<ComponentConfig[]>()
+
+watch(() => designStore.currentComponentConfig, (n) => {
+  console.log(customComponents, n)
+  configs.value = customComponents.find(e => e?.name === n.component)?.config || []
+})
 function handleChange(val: string[]) {
   console.log(val)
 }
-
-const componentAttrListData = reactive({
-  width: 1920,
-  height: 1080,
-})
 
 const chartOptions = ref({})
 </script>
@@ -20,67 +31,45 @@ const chartOptions = ref({})
       <span>组件配置</span>
       <svg-icon name="预览" />
     </div>
-    <div class="w-full flex-auto h-0">
-      <el-tabs type="border-card" class="w-full h-full" stretch>
-        <el-tab-pane label="基础">
-          <el-collapse v-model="activeNames">
-            <el-collapse-item title="Consistency" name="1">
+    <el-tabs type="border-card" class="w-full h-full" stretch>
+      <el-tab-pane label="基础">
+        <el-collapse v-model="activeNames">
+          <template v-for="e in configs" :key="e?.key">
+            <el-collapse-item :title="e?.title" :name="e?.value">
               <div>
                 Consistent with real life: in line with the process and logic of real
                 life, and comply with languages and habits that the users are used to;
               </div>
-              <div>
-                Consistent within interface: all elements should be consistent, such
-                as: design style, icons and texts, position of elements, etc.
-              </div>
             </el-collapse-item>
-            <el-collapse-item title="Feedback" name="2">
-              <div>
-                Operation feedback: enable the users to clearly perceive their
-                operations by style updates and interactive effects;
+            <!-- <div v-else class="w-full flex">
+              <el-text>{{ e?.title }}</el-text>
+              <div class="flex-auto w-0">
+                <component :is="getComponent(e?.key)" v-model="currentComponentConfig[e.value]" />
               </div>
-              <div>
-                Visual feedback: reflect current state by updating or rearranging
-                elements of the page.
+            </div> -->
+          </template>
+          <template v-for="e in configs" :key="e?.key">
+            <div class="w-full flex h-[50px] items-center attrs-setting-item">
+              <el-text class="w-[30%]">
+                {{ e?.title }}
+              </el-text>
+              <div class="flex-auto w-0">
+                <component :is="getComponent(e?.key)" v-model="currentComponentConfig[e.value]" />
               </div>
-            </el-collapse-item>
-            <el-collapse-item title="Efficiency" name="3">
-              <div>
-                Simplify the process: keep operating process simple and intuitive;
-              </div>
-              <div>
-                Definite and clear: enunciate your intentions clearly so that the
-                users can quickly understand and make decisions;
-              </div>
-              <div>
-                Easy to identify: the interface should be straightforward, which helps
-                the users to identify and frees them from memorizing and recalling.
-              </div>
-            </el-collapse-item>
-            <el-collapse-item title="Controllability" name="4">
-              <div>
-                Decision making: giving advice about operations is acceptable, but do
-                not make decisions for the users;
-              </div>
-              <div>
-                Controlled consequences: users should be granted the freedom to
-                operate, including canceling, aborting or terminating current
-                operation.
-              </div>
-            </el-collapse-item>
-          </el-collapse>
-        </el-tab-pane>
-        <el-tab-pane label="动画">
-          Config
-        </el-tab-pane>
-        <el-tab-pane label="数据">
-          Role
-        </el-tab-pane>
-        <el-tab-pane label="Task">
-          Task
-        </el-tab-pane>
-      </el-tabs>
-    </div>
+            </div>
+          </template>
+        </el-collapse>
+      </el-tab-pane>
+      <el-tab-pane label="动画">
+        Config
+      </el-tab-pane>
+      <el-tab-pane label="数据">
+        Role
+      </el-tab-pane>
+      <el-tab-pane label="Task">
+        Task
+      </el-tab-pane>
+    </el-tabs>
   </div>
 </template>
 
@@ -109,6 +98,10 @@ const chartOptions = ref({})
     span {
       margin-right: 5px;
     }
+  }
+
+  .attrs-setting-item {
+    border-bottom: 1px solid var(--el-collapse-border-color);
   }
 }
 </style>
