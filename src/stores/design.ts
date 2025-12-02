@@ -50,6 +50,9 @@ export const useDesignStore = defineStore('design', {
     },
   },
   actions: {
+    setCurComponentIndex(index: number) {
+      this.curComponentIndex = index
+    },
     setPageConfig(pageConfig: PageConfig) {
       Object.entries(pageConfig || {}).forEach(([k, v]) => {
         this.pageConfig[k] = v

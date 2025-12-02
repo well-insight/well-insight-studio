@@ -129,6 +129,14 @@ const VdrProps = {
     type: Boolean,
     default: false,
   },
+  scale: {
+    type: Number,
+    default: 1,
+  },
+  container: {
+    type: String,
+    default: '#vue-dragable-resizeable-container',
+  },
 }
 
 const emits = [
@@ -153,7 +161,7 @@ const VueDraggableResizable = defineComponent({
   emits,
   setup(props, { emit }) {
     const containerProps = initState(props, emit)
-    const provideIdentity = inject('identity', Symbol())
+    const provideIdentity = inject('identity', Symbol(''))
     let containerProvider: ContainerProvider | null = null
     if (provideIdentity === IDENTITY) {
       containerProvider = {
@@ -206,6 +214,11 @@ const VueDraggableResizable = defineComponent({
         height: `${this.height}px`,
         top: `${this.top}px`,
         left: `${this.left}px`,
+
+        // width: `${this.width / (this.scale || 1)}px`,
+        // height: `${this.height / (this.scale || 1)}px`,
+        // top: `${this.top / (this.scale || 1)}px`,
+        // left: `${this.left / (this.scale || 1)}px`,
       }
     },
     klass(): { [propName: string]: string | boolean } {
@@ -254,9 +267,9 @@ const VueDraggableResizable = defineComponent({
             ],
             style: { display: this.enable ? 'block' : 'none' },
             onMousedown: (e: MouseEvent) =>
-              this.resizeHandleDown(e, <ResizingHandle>item),
+              this.resizeHandleDown(e, item as ResizingHandle),
             onTouchstart: (e: TouchEvent) =>
-              this.resizeHandleDown(e, <ResizingHandle>item),
+              this.resizeHandleDown(e, item as ResizingHandle),
           }),
         ),
       ],

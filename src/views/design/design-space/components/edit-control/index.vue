@@ -1,7 +1,8 @@
 <script lang="ts" setup>
+import type { BaseProps } from '@/custom-components/types'
 import { useResizeObserver } from '@vueuse/core'
-import { computed, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
 
+import { computed, nextTick, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getDesignContentById, setImg } from '@/api'
 import MarkLine from '@/components/Editor/MarkLine.vue'
@@ -178,13 +179,24 @@ const componentData = computed(() => {
   })
 })
 
-function moveComponent(x: number, y: number) {
+function dragEnd({ x, y }: { x: number, y: number }) {
   console.log(x, y, shapeRef.value)
-  debugger
 }
 
-function resizeComponent() {
+function resizeEnd() {
 
+}
+
+function activated(index: number) {
+  console.log('activated', deisgnStore.curComponentIndex)
+  setTimeout(() => {
+    deisgnStore.setCurComponentIndex(index)
+  }, 100)
+}
+
+function deactivated() {
+  console.log('deactivated', deisgnStore.curComponentIndex)
+  // deisgnStore.setCurComponentIndex(-1)
 }
 
 // 拖拽组件到当前画布
@@ -278,22 +290,24 @@ getComponents()
             @mousemove="canvasMousemove" @drop="handleDrop" @dragover="handleDragOver"
           >
             <div class="components-show-content">
-              <DraggableContainer>
+              <DraggableContainer :key="scaleValueReal">
                 <!-- 页面组件列表展示 -->
                 <template v-for="(item, index) in componentData" :key="item.id + item.id">
                   <VueDraggableResizable
                     ref="shapeRef"
                     :class-name="$style['drag-resize']" :init-h="item.initH" :init-w="item.initW"
                     :x="item.x" :y="item.y"
-                    @drag-end="moveComponent"
-                    @resize-end="resizeComponent"
+                    :scale="scaleValueReal"
+                    @drag-end="dragEnd"
+                    @resize-end="resizeEnd"
+                    @activated="activated(index)"
+                    @deactivated="deactivated"
                   >
                     <component :is="item.component" class="custom-component-class" :chart-option="item.chartOption" />
                   </VueDraggableResizable>
                 </template>
 
                 <!-- <Shape
-
                 :default-style="item.style"
                 :style="item.style"
                 :element="item"
@@ -360,10 +374,10 @@ getComponents()
         left: 0;
 
         .edit-canvas {
-          height: v-bind('pageConfig.height')px;
-          width: v-bind('pageConfig.width')px;
+          // height: v-bind('pageConfig.height')px;
+          // width: v-bind('pageConfig.width')px;
           position: absolute;
-          background-color: v-bind('pageConfig.backgroundColor');
+          // background-color: v-bind('pageConfig.backgroundColor');
           top: 50%;
           left: 50%;
           box-shadow: 0 8px 10px #00000012;
@@ -373,8 +387,8 @@ getComponents()
           overflow: hidden;
 
           .components-show-content {
-            height: v-bind('pageConfig.height')px;
-            width: v-bind('pageConfig.width')px;
+            height: 100%;
+            width: 100%;
 
             .custom-component-class {
               width: 100%;

@@ -39,7 +39,10 @@ export function initState(props: any, emit: any) {
   const [resizingMaxHeight, setResizingMaxHeight] = useState<number>(Infinity)
   const [resizingMinWidth, setResizingMinWidth] = useState<number>(props.minW)
   const [resizingMinHeight, setResizingMinHeight] = useState<number>(props.minH)
+  const [scale, setScale] = useState<number>(props.scale)
+  const [container, setContainer] = useState<string>(props.container)
   const aspectRatio = computed(() => height.value / width.value)
+
   watch(
     width,
     (newVal) => {
@@ -90,6 +93,10 @@ export function initState(props: any, emit: any) {
     resizingMinWidth,
     resizingMinHeight,
     aspectRatio,
+    scale,
+    setScale,
+    container,
+    setContainer,
     setEnable,
     setDragging,
     setResizing,
@@ -230,7 +237,7 @@ const MOVE_HANDLES: (keyof HTMLElementEventMap)[] = ['mousemove', 'touchmove']
 
 function getPosition(e: HandleEvent) {
   if ('touches' in e) {
-    return [e.touches[0].pageX, e.touches[0].pageY]
+    return [e.touches[0]?.pageX, e.touches[0]?.pageY]
   }
   else {
     return [e.pageX, e.pageY]
@@ -246,7 +253,7 @@ export function initDraggableContainer(
   containerProvider: ContainerProvider | null,
   parentSize: ReturnType<typeof initParent>,
 ) {
-  const { left: x, top: y, width: w, height: h, dragging, id } = containerProps
+  const { left: x, top: y, width: w, height: h, dragging, id, scale, container } = containerProps
   const {
     setDragging,
     setEnable,
@@ -259,10 +266,11 @@ export function initDraggableContainer(
   let lstPageX = 0
   let lstPageY = 0
   let referenceLineMap: ReferenceLineMap | null = null
-  const documentElement = document.documentElement
+  // const documentElement = document.documentElement
+  const documentElement = document.querySelector(container.value)! as HTMLElement
   const _unselect = (e: HandleEvent) => {
     const target = e.target
-    if (!containerRef.value?.contains(<Node>target)) {
+    if (!containerRef.value?.contains(target as Node)) {
       setEnable(false)
       setDragging(false)
       setResizing(false)
@@ -286,11 +294,17 @@ export function initDraggableContainer(
       containerProvider.setMatchedLine(null)
     }
   }
-  const handleDrag = (e: MouseEvent) => {
+  function handleDrag(e: MouseEvent) {
     e.preventDefault()
     if (!(dragging.value && containerRef.value))
       return
-    const [pageX, pageY] = getPosition(e)
+    let [pageX = 0, pageY = 0] = getPosition(e)
+
+    if (scale.value) {
+      pageX = Number(pageX) / scale.value
+      pageY = Number(pageY) / scale.value
+    }
+
     const deltaX = pageX - lstPageX
     const deltaY = pageY - lstPageY
     let newLeft = lstX + deltaX
@@ -356,8 +370,8 @@ export function initDraggableContainer(
     setDragging(true)
     lstX = x.value
     lstY = y.value
-    lstPageX = getPosition(e)[0]
-    lstPageY = getPosition(e)[1]
+    lstPageX = (getPosition(e)[0] || 0) / scale.value
+    lstPageY = (getPosition(e)[1] || 0) / scale.value
     // document.documentElement.addEventListener('mousemove', handleDrag)
     // document.documentElement.addEventListener('mouseup', handleUp)
     addEvent(documentElement, MOVE_HANDLES, handleDrag)
@@ -409,7 +423,7 @@ export function initResizeHandle(
   emit: any,
 ) {
   const { setWidth, setHeight, setLeft, setTop } = limitProps
-  const { width, height, left, top, aspectRatio } = containerProps
+  const { width, height, left, top, aspectRatio, scale, container } = containerProps
   const {
     setResizing,
     setResizingHandle,
@@ -428,14 +442,21 @@ export function initResizeHandle(
   let tmpAspectRatio = 1
   let idx0 = ''
   let idx1 = ''
-  const documentElement = document.documentElement
+  // const documentElement = document.documentElement
+  const documentElement = document.querySelector(container.value)! as HTMLElement
   const resizeHandleDrag = (e: HandleEvent) => {
     e.preventDefault()
-    let [_pageX, _pageY] = getPosition(e)
+    let [_pageX = 0, _pageY = 0] = getPosition(e)
+
+    if (scale.value) {
+      _pageX = _pageX / scale.value
+      _pageY = _pageY / scale.value
+    }
+
     let deltaX = _pageX - lstPageX
     let deltaY = _pageY - lstPageY
-    let _deltaX = deltaX
-    let _deltaY = deltaY
+    const _deltaX = deltaX
+    const _deltaY = deltaY
     if (props.lockAspectRatio) {
       deltaX = Math.abs(deltaX)
       deltaY = deltaX * tmpAspectRatio
@@ -497,8 +518,8 @@ export function initResizeHandle(
     e.stopPropagation()
     setResizingHandle(handleType)
     setResizing(true)
-    idx0 = handleType[0]
-    idx1 = handleType[1]
+    idx0 = handleType[0]!
+    idx1 = handleType[1]!
     if (props.lockAspectRatio) {
       if (['tl', 'tm', 'ml', 'bl'].includes(handleType)) {
         idx0 = 't'
@@ -542,8 +563,8 @@ export function initResizeHandle(
     lstX = left.value
     lstY = top.value
     const lstPagePosition = getPosition(e)
-    lstPageX = lstPagePosition[0]
-    lstPageY = lstPagePosition[1]
+    lstPageX = lstPagePosition[0]! / scale.value
+    lstPageY = lstPagePosition[1]! / scale.value
     tmpAspectRatio = aspectRatio.value
     emit('resize-start', {
       x: left.value,

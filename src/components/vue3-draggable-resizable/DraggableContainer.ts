@@ -115,6 +115,7 @@ export default defineComponent({
     return h(
       'div',
       {
+        id: 'vue-dragable-resizeable-container',
         style: { width: '100%', height: '100%', position: 'relative' },
       },
       [
