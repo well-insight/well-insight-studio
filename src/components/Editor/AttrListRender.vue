@@ -1,5 +1,6 @@
 <script lang='ts' setup>
 import type { ComponentConfig } from '@/custom-components/types'
+import { get, set } from 'lodash-es'
 import { storeToRefs } from 'pinia'
 import { ref, watch } from 'vue'
 import { useDesignStore } from '@/stores/design'
@@ -22,6 +23,12 @@ const activeNames = ref<string[]>([])
 watch(() => props?.configs, () => {
   activeNames.value = props?.collapseAll === true ? props?.configs?.map(e => e?.value) || [] : []
 })
+
+function changeCurrenComponentConfig(m: any, e: ComponentConfig) {
+  debugger
+  designStore.updateCurrentComponentConfig(e.path!, m)
+  debugger
+}
 </script>
 
 <template>
@@ -35,7 +42,10 @@ watch(() => props?.configs, () => {
           {{ e?.title }}
         </el-text>
         <div class="flex-auto w-0">
-          <component :is="getComponent(e?.key)" v-model="currentComponentConfig[e.value]" v-bind="e?.props" />
+          <component
+            :is="getComponent(e?.key)" :model-value="get(currentComponentConfig, e.path || '')"
+            v-bind="e?.props" @update:model-value="(m: any) => changeCurrenComponentConfig(m, e)"
+          />
         </div>
       </div>
     </template>
@@ -46,8 +56,10 @@ watch(() => props?.configs, () => {
 .attrs-setting-item {
   border-bottom: 1px solid var(--el-collapse-border-color);
 }
+
 .custom-collapse {
   border-bottom: none;
+
   :deep(.el-collapse-item__content) {
     padding-left: 20px;
   }

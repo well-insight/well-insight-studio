@@ -1,10 +1,9 @@
 <script lang="ts" setup>
 import type { ComponentConfig } from '@/custom-components/types'
 import { storeToRefs } from 'pinia'
-import { computed, reactive, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import customComponents from '@/custom-components'
 import { useDesignStore } from '@/stores/design'
-import { getComponent } from '../control-components'
 import AeerListRender from './AttrListRender.vue'
 
 const designStore = useDesignStore()
@@ -15,7 +14,7 @@ const configs = ref<ComponentConfig[]>()
 
 watch(currentComponentConfig, (n) => {
   if (n) {
-    configs.value = addLevelToData(customComponents.find(e => e?.name === n?.component)?.config || [])
+    configs.value = addParamsToData(customComponents.find(e => e?.name === n?.component)?.config || [])
   }
   else {
     configs.value = []
@@ -23,13 +22,14 @@ watch(currentComponentConfig, (n) => {
 })
 
 // 递归添加 level 属性的函数
-function addLevelToData(data: any, currentLevel = 1) {
+function addParamsToData(data: any, currentLevel = 1, key = '') {
   return data.map((item: any) => {
     // 复制原对象并添加 level
-    const newItem = { ...item, level: currentLevel }
+    const path = key ? `${key}.${item.value}` : item?.value
+    const newItem = { ...item, level: currentLevel, path }
     // 如果有 children，递归处理子层级
     if (item.children && Array.isArray(item.children) && item.children.length > 0) {
-      newItem.children = addLevelToData(item.children, currentLevel + 1)
+      newItem.children = addParamsToData(item.children, currentLevel + 1, item.value)
     }
     return newItem
   })

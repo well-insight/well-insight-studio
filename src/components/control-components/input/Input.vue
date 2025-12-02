@@ -1,9 +1,28 @@
 <script lang='ts' setup>
-const inputValue = defineModel<string>({ required: true, default: '' })
+import type { InputEmits, InputProps } from 'element-plus'
+import { ElInput, inputEmits } from 'element-plus'
+
+const props = withDefaults(defineProps<InputProps>(), {
+  size: 'small',
+  placeholder: '请输入',
+})
+
+const emits = defineEmits(inputEmits)
+
+const events: Partial<InputEmits> = {
+  'update:modelValue': (e) => {
+    emits('update:modelValue', e)
+    return true
+  },
+  'change': (v) => {
+    emits('change', v)
+    return true
+  },
+}
 </script>
 
 <template>
-  <el-input v-model="inputValue" size="small" placeholder="请输入" />
+  <ElInput v-bind="props" v-on="events" />
 </template>
 
 <style lang='scss' module></style>

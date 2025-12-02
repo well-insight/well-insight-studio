@@ -29,5 +29,7 @@ export interface ComponentConfig {
   default?: any
   props?: any
   title?: string
+  path?: string
+  level?: number
   children?: ComponentConfig[]
 }
