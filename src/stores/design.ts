@@ -65,7 +65,7 @@ export const useDesignStore = defineStore('design', {
       this.componentsInCanvas.push(component)
     },
     changeComponentsInCanvasByIndex(index: number | string, data: any) {
-      this.componentsInCanvas[Number(index)] = data
+      this.componentsInCanvas[Number(index)] = { ...this.componentsInCanvas[Number(index)], ...data }
     },
     updateCurrentComponentConfig(key: string, config: any, index?: number) {
       set(this.componentsInCanvas[isNumber(index) ? index : this.curComponentIndex], key, config)

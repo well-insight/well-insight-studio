@@ -32,6 +32,7 @@
     "vite-plugin-mock-dev-server": "^2.0.1",
     "vite-plugin-svg-icons": "^2.0.1",
     "vue": "^3.5.22",
+    "vue-draggable-resizable": "^3.0.0",
     "vue-router": "^4.6.2",
     "vue-sketch-ruler": "^1.0.3"
   },

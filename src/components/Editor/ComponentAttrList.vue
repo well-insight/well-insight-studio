@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { ComponentConfig } from '@/custom-components/types'
 import { storeToRefs } from 'pinia'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import customComponents from '@/custom-components'
 import { useDesignStore } from '@/stores/design'
 import AeerListRender from './AttrListRender.vue'
@@ -10,15 +10,8 @@ const designStore = useDesignStore()
 
 const { currentComponentConfig } = storeToRefs(designStore)
 
-const configs = ref<ComponentConfig[]>()
-
-watch(currentComponentConfig, (n) => {
-  if (n) {
-    configs.value = addParamsToData(customComponents.find(e => e?.name === n?.component)?.config || [])
-  }
-  else {
-    configs.value = []
-  }
+const configs = computed(() => {
+  return addParamsToData(customComponents.find(e => e?.name === currentComponentConfig.value?.component)?.config || []) || []
 })
 
 // 递归添加 level 属性的函数

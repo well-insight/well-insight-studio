@@ -1,12 +1,13 @@
 <script lang="ts" setup>
 import { useResizeObserver } from '@vueuse/core'
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
 
 import { useRoute } from 'vue-router'
 import { getDesignContentById, setImg } from '@/api'
 import MarkLine from '@/components/Editor/MarkLine.vue'
 import Shape from '@/components/Editor/Shape.vue'
 import SketchRule from '@/components/Ruler/sketchRuler.vue'
+import { DraggableContainer, VueDraggableResizable } from '@/components/vue3-draggable-resizable'
 import { useHtml2canvas } from '@/hooks/useDom2image'
 import { useDesignStore } from '@/stores/design'
 import { debounce, deepCopy, uuid } from '@/utils'
@@ -24,6 +25,8 @@ const canvasRef = ref<any>()
 const sketchRuleKey = ref<string>('')
 const domeStr = ref<string>('')
 const pageRef = ref()
+
+const shapeRef = useTemplateRef('shapeRef')
 
 // 缩放可视区
 const sliderConfig = reactive<any>({
@@ -160,7 +163,29 @@ onMounted(() => {
 })
 
 // 自定义组件
-const componentData = computed(() => deisgnStore.$state.componentsInCanvas)
+const componentData = computed(() => {
+  const data = deisgnStore.$state.componentsInCanvas
+  return data.map((e) => {
+    const width = Number.parseInt(e.style?.width || 0)
+    const height = Number.parseInt(e.style?.height || 0)
+    return {
+      ...e,
+      initH: height,
+      initW: width,
+      x: Number.parseInt(e.style?.left || 0),
+      y: Number.parseInt(e.style?.top || 0),
+    }
+  })
+})
+
+function moveComponent(x: number, y: number) {
+  console.log(x, y, shapeRef.value)
+  debugger
+}
+
+function resizeComponent() {
+
+}
 
 // 拖拽组件到当前画布
 function handleDrop(e: any) {
@@ -243,40 +268,40 @@ getComponents()
   <div class="edit-control-container">
     <div class="wrap-container">
       <div
-        id="wrap"
-        ref="$wrap"
-        @scroll.prevent="scrollEdit"
-        @mousedown.prevent="wrapMousedown"
+        id="wrap" ref="$wrap" @scroll.prevent="scrollEdit" @mousedown.prevent="wrapMousedown"
         @mousewheel="mouseWheel"
       >
         <div id="content">
           <div
-            ref="canvasRef"
-            v-loading="componentLoading"
-            class="edit-canvas"
+            ref="canvasRef" v-loading="componentLoading" class="edit-canvas"
             :style="{ transform: `scale(${scaleValueReal})`, cursor: isEnterSpace ? 'pointer' : 'auto', ...pageConfig }"
-            @mousemove="canvasMousemove"
-            @drop="handleDrop"
-            @dragover="handleDragOver"
+            @mousemove="canvasMousemove" @drop="handleDrop" @dragover="handleDragOver"
           >
             <div class="components-show-content">
-              <!-- 页面组件列表展示 -->
-              <Shape
-                v-for="(item, index) in componentData"
-                :key="item.id + item.id"
+              <DraggableContainer>
+                <!-- 页面组件列表展示 -->
+                <template v-for="(item, index) in componentData" :key="item.id + item.id">
+                  <VueDraggableResizable
+                    ref="shapeRef"
+                    :class-name="$style['drag-resize']" :init-h="item.initH" :init-w="item.initW"
+                    :x="item.x" :y="item.y"
+                    @drag-end="moveComponent"
+                    @resize-end="resizeComponent"
+                  >
+                    <component :is="item.component" class="custom-component-class" :chart-option="item.chartOption" />
+                  </VueDraggableResizable>
+                </template>
+
+                <!-- <Shape
+
                 :default-style="item.style"
                 :style="item.style"
                 :element="item"
                 :z-index="index"
                 :index="index"
-              >
-                <component
-                  :is="item.component"
-                  class="custom-component-class"
-                  :chart-option="item.chartOption"
-                />
-              </Shape>
-              <MarkLine />
+              /> -->
+                <MarkLine />
+              </DraggableContainer>
             </div>
           </div>
         </div>
@@ -284,150 +309,140 @@ getComponents()
       <div class="edit-bottom-menu">
         <span class="key-down-show">按下 [ {{}} ] 键</span>
         <el-slider
-          v-model="sliderConfig.scaleValue"
-          :format-tooltip="sliderConfig.formatSliderTip"
-          show-input
-          size="small"
-          @input="sliderConfig.inputScale"
+          v-model="sliderConfig.scaleValue" :format-tooltip="sliderConfig.formatSliderTip" show-input
+          size="small" @input="sliderConfig.inputScale"
         />
       </div>
     </div>
     <SketchRule
-      :key="sketchRuleKey"
-      ref="$sketchRule"
-      class="ruler-container"
-      :lang="lang"
-      :thick="thick"
-      :scale="scaleValueReal"
-      :width="10000"
-      :height="10000"
-      :start-x="-5000 / scaleValueReal"
-      :start-y="-5000 / scaleValueReal"
-      :shadow="shadow"
-      :hor-line-arr="lines.h"
-      :ver-line-arr="lines.v"
-      :corner-active="true"
-      @handle-line="handleLine"
-      @on-corner-click="handleCornerClick"
+      :key="sketchRuleKey" ref="$sketchRule" class="ruler-container" :lang="lang" :thick="thick"
+      :scale="scaleValueReal" :width="10000" :height="10000" :start-x="-5000 / scaleValueReal"
+      :start-y="-5000 / scaleValueReal" :shadow="shadow" :hor-line-arr="lines.h" :ver-line-arr="lines.v"
+      :corner-active="true" @handle-line="handleLine" @on-corner-click="handleCornerClick"
     />
   </div>
 </template>
 
 <style lang="scss" scoped>
 .edit-control-container {
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(#fafafc 14px, transparent 0), linear-gradient(90deg, transparent 14px, #373739 0);
+  background-color: #fff;
+  background-size: 15px 15px, 15px 15px;
+  position: relative;
+  overflow: hidden;
+
+  .wrap-container {
     width: 100%;
     height: 100%;
-    background-image: linear-gradient(#fafafc 14px,transparent 0),linear-gradient(90deg,transparent 14px,#373739 0);
-    background-color: #fff;
-    background-size: 15px 15px,15px 15px;
-    position: relative;
+    position: absolute;
     overflow: hidden;
 
-    .wrap-container {
-        width: 100%;
-        height: 100%;
+    #wrap {
+      position: absolute;
+      width: 100%;
+      height: calc(100% - 40px);
+      user-select: none;
+      padding-bottom: 0;
+      top: 0;
+      overflow: auto;
+
+      // &:hover {
+      //     overflow: auto;
+      // }
+
+      #content {
+        width: 10000px;
+        height: 10000px;
         position: absolute;
-        overflow: hidden;
+        top: 0;
+        left: 0;
 
-        #wrap {
-            position: absolute;
-            width: 100%;
-            height: calc(100% - 40px);
-            user-select: none;
-            padding-bottom: 0;
-            top: 0;
-            overflow: auto;
+        .edit-canvas {
+          height: v-bind('pageConfig.height')px;
+          width: v-bind('pageConfig.width')px;
+          position: absolute;
+          background-color: v-bind('pageConfig.backgroundColor');
+          top: 50%;
+          left: 50%;
+          box-shadow: 0 8px 10px #00000012;
+          border-radius: 20px;
+          -webkit-transform-origin: 0 0;
+          transform-origin: 0 0;
+          overflow: hidden;
 
-            // &:hover {
-            //     overflow: auto;
-            // }
+          .components-show-content {
+            height: v-bind('pageConfig.height')px;
+            width: v-bind('pageConfig.width')px;
 
-            #content {
-                width: 10000px;
-                height: 10000px;
-                position: absolute;
-                top: 0;
-                left: 0;
-
-                .edit-canvas {
-                    height: v-bind('pageConfig.height')px;
-                    width: v-bind('pageConfig.width')px;
-                    position: absolute;
-                    background-color: v-bind('pageConfig.backgroundColor');
-                    top: 50%;
-                    left: 50%;
-                    box-shadow: 0 8px 10px #00000012;
-                    border-radius: 20px;
-                    -webkit-transform-origin: 0 0;
-                    transform-origin: 0 0;
-                    overflow: hidden;
-
-                    .components-show-content {
-                        height: v-bind('pageConfig.height')px;
-                        width: v-bind('pageConfig.width')px;
-
-                        .custom-component-class {
-                            width: 100%;
-                            height: 100%;
-                            pointer-events: none;
-                        }
-
-                    }
-                }
+            .custom-component-class {
+              width: 100%;
+              height: 100%;
+              pointer-events: none;
             }
+
+          }
         }
-
-        .edit-bottom-menu {
-            width: 100%;
-            height: 40px;
-            background-color: #f6f8f9;
-            z-index: 100;
-            position: absolute;
-            bottom: 0;
-            display: flex;
-            align-items: center;
-            padding: 10px;
-
-            .el-slider {
-                width: 300px;
-                float: right;
-                margin-left: auto;
-            }
-
-            .key-down-show {
-                font-weight: bold;
-            }
-        }
-
+      }
     }
+
+    .edit-bottom-menu {
+      width: 100%;
+      height: 40px;
+      background-color: #f6f8f9;
+      z-index: 100;
+      position: absolute;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      padding: 10px;
+
+      .el-slider {
+        width: 300px;
+        float: right;
+        margin-left: auto;
+      }
+
+      .key-down-show {
+        font-weight: bold;
+      }
+    }
+
+  }
 
 }
 </style>
 
 <style lang="scss">
 .demos-img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 192px;
-    height: 108px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 192px;
+  height: 108px;
 }
+
 .ruler-container {
 
-    .h-container {
-        position: absolute;
-        width: 10000px!important;
-        top: 0;
-        left: v-bind(hRulerX)!important;
-        transform-origin: center;
-    }
+  .h-container {
+    position: absolute;
+    width: 10000px !important;
+    top: 0;
+    left: v-bind(hRulerX) !important;
+    transform-origin: center;
+  }
 
-    .v-container {
-        position: absolute;
-        height: 10000px!important;
-        left: 0;
-        top: v-bind(hRulerY)!important;
-        transform-origin: center;
-    }
+  .v-container {
+    position: absolute;
+    height: 10000px !important;
+    left: 0;
+    top: v-bind(hRulerY) !important;
+    transform-origin: center;
+  }
 }
+</style>
+
+<style lang="scss" module>
+.drag-resize {}
 </style>

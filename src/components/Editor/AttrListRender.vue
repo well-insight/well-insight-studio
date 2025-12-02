@@ -22,12 +22,10 @@ const activeNames = ref<string[]>([])
 
 watch(() => props?.configs, () => {
   activeNames.value = props?.collapseAll === true ? props?.configs?.map(e => e?.value) || [] : []
-})
+}, { immediate: true, deep: true })
 
 function changeCurrenComponentConfig(m: any, e: ComponentConfig) {
-  debugger
   designStore.updateCurrentComponentConfig(e.path!, m)
-  debugger
 }
 </script>
 

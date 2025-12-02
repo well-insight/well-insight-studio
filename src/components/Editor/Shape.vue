@@ -28,7 +28,7 @@ const props = defineProps({
 
 const store = useDesignStore()
 
-const $shape = ref()
+const $shape = ref<HTMLElement | null>(null)
 const shapeData = reactive<any>({
   pointList: ['lt', 't', 'rt', 'r', 'rb', 'b', 'lb', 'l'], // 八个方向
   pointList2: ['r', 'l'], // 左右两个方向
@@ -76,11 +76,11 @@ const shapeXY = reactive({
 const component = store.$state.componentsInCanvas[Number(props.index)]
 
 const scale = computed(() => store.$state.canvasScale)
-
+debugger
 const vDrag = {
   mounted: (el: any) => {
-    component.style.width = `${$shape.value.offsetWidth}px`
-    component.style.height = `${$shape.value.offsetHeight}px`
+    component.style.width = `${$shape.value?.offsetWidth}px`
+    component.style.height = `${$shape.value?.offsetHeight}px`
     store.changeComponentsInCanvasByIndex(props.index, component)
 
     el.onmousedown = function (e: any) {
@@ -97,13 +97,18 @@ const vDrag = {
 
       document.onmousemove = function (e: any) {
         const { x, y } = useMouseXY()
-        const top = Number.parseInt($shape.value.style.top)
-        const left = Number.parseInt($shape.value.style.left)
-        $shape.value.style.top = `${top + (y / scale.value - shapeXY.y / scale.value)}px`
-        $shape.value.style.left = `${left + (x / scale.value - shapeXY.x / scale.value)}px`
-        component.style.top = $shape.value.style.top
-        component.style.left = $shape.value.style.left
+        const top = Number.parseInt($shape.value?.style?.top || '')
+        const left = Number.parseInt($shape.value?.style?.left || '')
+        if ($shape.value?.style) {
+          $shape.value.style.top = `${top + (y / scale.value - shapeXY.y / scale.value)}px`
+          $shape.value.style.left = `${left + (x / scale.value - shapeXY.x / scale.value)}px`
+        }
+
+        component.style.top = $shape.value?.style.top
+        component.style.left = $shape.value?.style.left
         store.changeComponentsInCanvasByIndex(props.index, component)
+        console.log(component, props?.index)
+
         shapeXY.x = x
         shapeXY.y = y
 

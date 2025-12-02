@@ -11,14 +11,9 @@ const currentIndex = computed(() => store.$state.curComponentIndex)
 
 <template>
   <div class="side-setting-container">
-    <ComponentAttrList />
+    <CanvasAttrList v-if="currentIndex === -1" />
+    <ComponentAttrList v-else />
   </div>
 </template>
 
-<style scoped lang="scss">
-.side-setting-container {
-    width: 350px;
-    height: 100%;
-    overflow-y: auto;
-}
-</style>
+<style scoped lang="scss" src='./index.scss'></style>
