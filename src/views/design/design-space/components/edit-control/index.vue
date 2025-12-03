@@ -189,14 +189,14 @@ function resizeEnd() {
 
 function activated(index: number) {
   console.log('activated', deisgnStore.curComponentIndex)
-  setTimeout(() => {
-    deisgnStore.setCurComponentIndex(index)
-  }, 100)
+  deisgnStore.setCurComponentIndex(index)
 }
 
-function deactivated() {
+function deactivated(index: number) {
   console.log('deactivated', deisgnStore.curComponentIndex)
-  // deisgnStore.setCurComponentIndex(-1)
+  if (deisgnStore.curComponentIndex === index) {
+    deisgnStore.setCurComponentIndex(-1)
+  }
 }
 
 // 拖拽组件到当前画布
@@ -301,7 +301,7 @@ getComponents()
                     @drag-end="dragEnd"
                     @resize-end="resizeEnd"
                     @activated="activated(index)"
-                    @deactivated="deactivated"
+                    @deactivated="deactivated(index)"
                   >
                     <component :is="item.component" class="custom-component-class" :chart-option="item.chartOption" />
                   </VueDraggableResizable>

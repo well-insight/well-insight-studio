@@ -52,7 +52,7 @@ const systemLog = reactive<{
   <div class="index-container">
     <div class="one-container">
       <div class="one-block">
-        <el-card class="horse-race-lamp " :body-style="{ height: &quot;100px&quot; }">
+        <el-card class="horse-race-lamp " :body-style="{ height: '100px' }">
           <template #header>
             <div style="display: flex; align-items: center;">
               <svg-icon
