@@ -1,11 +1,16 @@
 <script lang="ts" setup>
-import { computed } from 'vue'
+import type { UploadFile } from 'element-plus'
+import { computed, ref } from 'vue'
 import { themeColor } from '@/hooks/useEchartTheme'
 import { useDesignStore } from '@/stores/design'
 
-const store = useDesignStore()
+const uploadImage = ref<UploadFile[]>([])
 
-const pageConfig = computed(() => store.$state.pageConfig)
+const fileUrl = ref('')
+
+const designStore = useDesignStore()
+
+const pageConfig = computed(() => designStore.$state.pageConfig)
 
 function selectThemeColor(key: string) {
   pageConfig.value.theme = key || 'light'
@@ -16,8 +21,25 @@ function showThemeBorderColor(key: string | number) {
   return isSel ? (themeColor as any)[key].colors[0] : 'transparent'
 }
 
-function changePageBgColor(e: string) {
-  store.setPageConfigByKey('backgroundColor', e)
+function changePageBgColor(e: string | null) {
+  designStore.setPageConfigByKey('backgroundColor', e)
+}
+
+function uploadSuccess(file: UploadFile) {
+  if (file.status !== 'ready')
+    return
+  if (file) {
+    const reader = new FileReader()
+
+    reader.readAsDataURL(file.raw!)
+
+    reader.onload = (e) => {
+      fileUrl.value = (e.target?.result || '') as string
+
+      designStore.setPageConfigByKey('backgroundImage', `url(${fileUrl.value})`)
+      debugger
+    }
+  }
 }
 </script>
 
@@ -41,14 +63,26 @@ function changePageBgColor(e: string) {
       <div class="config-item background-img-config">
         <!-- <label>背景图片</label> -->
         <el-upload
-          style="width: 100%" drag action="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15"
-          multiple
+          v-model:file-list="uploadImage"
+          style="width: 100%"
+          drag
+          action="#"
+          :multiple="false"
+          :show-file-list="false"
+          :on-change="uploadSuccess"
         >
-          <el-icon class="el-icon--upload" size="100px">
-            <PictureFilled />
-          </el-icon>
-          <div class="el-upload__text">
-            背景图需小于 5M ，格式为 png/jpg/gif 的文件
+          <div class="flex items-center justify-center flex-col h-[140px] w-full">
+            <div v-if="!fileUrl">
+              <el-icon class="el-icon--upload" size="100px">
+                <PictureFilled />
+              </el-icon>
+              <div class="el-upload__text">
+                背景图需小于 5M ，格式为 png/jpg/gif 的文件
+              </div>
+            </div>
+            <div v-else>
+              <img class="w-full" :src="fileUrl" alt="">
+            </div>
           </div>
         </el-upload>
       </div>

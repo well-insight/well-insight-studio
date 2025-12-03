@@ -235,11 +235,12 @@ function canvasMousemove() {
 
 // page 配置变动
 const pageConfig = computed(() => {
-  const pageConfig = computed(() => deisgnStore.$state.pageConfig)
+  const pageConfig = deisgnStore.pageConfig
   return {
-    width: `${pageConfig.value.width}px`,
-    height: `${pageConfig.value.height}px`,
-    backgroundColor: pageConfig.value.backgroundColor,
+    ...pageConfig,
+    width: `${pageConfig.width}px`,
+    height: `${pageConfig.height}px`,
+    backgroundColor: pageConfig.backgroundColor,
   }
 })
 
@@ -290,7 +291,7 @@ getComponents()
             @mousemove="canvasMousemove" @drop="handleDrop" @dragover="handleDragOver"
           >
             <div class="components-show-content">
-              <DraggableContainer :key="scaleValueReal">
+              <DraggableContainer>
                 <!-- 页面组件列表展示 -->
                 <template v-for="(item, index) in componentData" :key="item.id + item.id">
                   <VueDraggableResizable
@@ -458,5 +459,8 @@ getComponents()
 </style>
 
 <style lang="scss" module>
-.drag-resize {}
+.drag-resize {
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+}
 </style>

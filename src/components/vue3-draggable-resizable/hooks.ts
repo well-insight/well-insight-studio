@@ -78,6 +78,9 @@ export function initState(props: any, emit: any) {
       setEnable(newVal)
     },
   )
+  watch(() => props.scale, (n: number) => {
+    setScale(n)
+  })
   return {
     id: getId(),
     width,
