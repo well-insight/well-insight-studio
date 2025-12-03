@@ -80,6 +80,7 @@ export interface PageConfig {
   width: number
   height: number
   backgroundColor: string
+  backgroundImage?: string
   adapter: string
   theme: string
   status: string

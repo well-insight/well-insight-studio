@@ -275,7 +275,7 @@ function openAddPage() {
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
+      // font-size: 16px;
       font-weight: bold;
       padding: 8px;
       cursor: pointer;

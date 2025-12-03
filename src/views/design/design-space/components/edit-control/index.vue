@@ -241,6 +241,7 @@ const pageConfig = computed(() => {
     width: `${pageConfig.width}px`,
     height: `${pageConfig.height}px`,
     backgroundColor: pageConfig.backgroundColor,
+    backgroundImage: `url(${pageConfig.backgroundImage})`,
   }
 })
 
@@ -315,7 +316,7 @@ getComponents()
                 :z-index="index"
                 :index="index"
               /> -->
-                <MarkLine />
+                <!-- <MarkLine /> -->
               </DraggableContainer>
             </div>
           </div>

@@ -73,7 +73,7 @@ function handleDragStart(e: any, item: Compnents) {
         v-for="(item, index) in componentsList" :key="item.title"
         :class="activeComponentIndex === index ? 'active' : ''" @click="selectComponentList(index)"
       >
-        <svg-icon :name="item.icon" size="1.2em" />
+        <svg-icon :name="item.icon" size="20px" />
         <span class="title">{{ item.title }}</span>
       </li>
     </ul>
@@ -130,7 +130,7 @@ function handleDragStart(e: any, item: Compnents) {
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
+      // font-size: 16px;
       font-weight: bold;
       padding: 8px;
       cursor: pointer;

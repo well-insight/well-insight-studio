@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { UploadFile } from 'element-plus'
-import { computed, ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { computed, ref, watch } from 'vue'
 import { themeColor } from '@/hooks/useEchartTheme'
 import { useDesignStore } from '@/stores/design'
 
@@ -10,7 +11,7 @@ const fileUrl = ref('')
 
 const designStore = useDesignStore()
 
-const pageConfig = computed(() => designStore.$state.pageConfig)
+const { pageConfig } = storeToRefs(designStore)
 
 function selectThemeColor(key: string) {
   pageConfig.value.theme = key || 'light'
@@ -30,17 +31,23 @@ function uploadSuccess(file: UploadFile) {
     return
   if (file) {
     const reader = new FileReader()
-
     reader.readAsDataURL(file.raw!)
-
     reader.onload = (e) => {
       fileUrl.value = (e.target?.result || '') as string
-
-      designStore.setPageConfigByKey('backgroundImage', `url(${fileUrl.value})`)
-      debugger
+      designStore.setPageConfigByKey('backgroundImage', fileUrl.value)
     }
   }
 }
+
+function deleteBg() {
+  fileUrl.value = ''
+  uploadImage.value = []
+  designStore.setPageConfigByKey('backgroundImage', undefined)
+}
+
+watch(() => pageConfig.value.backgroundImage, (n) => {
+  fileUrl.value = n || ''
+}, { immediate: true })
 </script>
 
 <template>
@@ -50,50 +57,97 @@ function uploadSuccess(file: UploadFile) {
         <span>页面配置</span>
         <svg-icon name="预览" size="1.15em" />
       </div>
-      <div class="size-config config-item">
-        <span class="size-width">
-          <label for="canvas-size-width">宽度</label>
-          <el-input-number id="canvas-size-width" v-model="pageConfig.width" size="small" :min="1" />
-        </span>
-        <span class="size-height">
-          <label for="canvas-size-height">长度</label>
-          <el-input-number id="canvas-size-height" v-model="pageConfig.height" size="small" :min="1" />
-        </span>
-      </div>
-      <div class="config-item background-img-config">
-        <!-- <label>背景图片</label> -->
-        <el-upload
-          v-model:file-list="uploadImage"
-          style="width: 100%"
-          drag
-          action="#"
-          :multiple="false"
-          :show-file-list="false"
-          :on-change="uploadSuccess"
-        >
-          <div class="flex items-center justify-center flex-col h-[140px] w-full">
-            <div v-if="!fileUrl">
-              <el-icon class="el-icon--upload" size="100px">
-                <PictureFilled />
-              </el-icon>
-              <div class="el-upload__text">
-                背景图需小于 5M ，格式为 png/jpg/gif 的文件
-              </div>
-            </div>
-            <div v-else>
-              <img class="w-full" :src="fileUrl" alt="">
-            </div>
+
+      <div class="canvas-attr-list-content">
+        <div class="w-full flex h-[50px] items-center attrs-setting-item">
+          <el-text class="w-[30%]">
+            111
+          </el-text>
+          <div class="flex-auto w-0">
+            222
           </div>
-        </el-upload>
+        </div>
       </div>
-      <div class="config-item color-config">
-        <label>背景颜色</label>
-        <el-color-picker
-          v-model="pageConfig.backgroundColor" label="1111" color-format="hex"
-          popper-class="color-popper-container" show-alpha @active-change="changePageBgColor"
-        />
-      <!-- <span class="color-pick-value">{{ pageConfig.backgroundColor }}</span> -->
+
+      <!-- <div class="config-item ">
+        <label>宽度</label>
+        <div class="config-content">
+          <el-input v-model="pageConfig.width" type="number" :min="1">
+            <template #suffix>
+              px
+            </template>
+</el-input>
+</div>
+</div>
+
+<div class="config-item ">
+  <label>长度</label>
+  <div class="config-content">
+    <el-input id="canvas-size-height" v-model="pageConfig.height" type="number" :min="1">
+      <template #suffix>
+              px
+            </template>
+    </el-input>
+  </div>
+</div>
+
+<div class="config-item color-config">
+  <label>背景颜色</label>
+  <div class="config-content">
+    <el-color-picker v-model="pageConfig.backgroundColor" label="1111" color-format="hex"
+      popper-class="color-popper-container" show-alpha @active-change="changePageBgColor" />
+  </div>
+</div>
+
+<div class="config-item background-img-config">
+  <label>背景图片</label>
+  <div class="config-content">
+    <el-upload v-model:file-list="uploadImage" class="custom-upload" drag action="#" :multiple="false"
+      :show-file-list="false" :on-change="uploadSuccess">
+      <div class="flex items-center justify-center flex-col w-full relative h-full custom-upload-wrapper">
+        <template v-if="!fileUrl">
+                <el-icon class="el-icon--upload" size="60px">
+                  <PictureFilled />
+                </el-icon>
+                <div class="el-upload__text">
+                  背景图需小于 5M ，格式为 png/jpg/gif 的文件
+                </div>
+              </template>
+        <template v-else>
+                <img class="w-full" :src="fileUrl" alt="" fit="contain">
+                <div class="flex absolute top-2 right-2 z-99">
+                  <el-icon :size="20" @click.stop="deleteBg">
+                    <Delete />
+                  </el-icon>
+                </div>
+              </template>
       </div>
+    </el-upload>
+  </div>
+</div>
+
+<div class="config-item color-config">
+  <label>背景颜色</label>
+  <div class="config-content">
+    <el-radio-group v-model="pageConfig.adapter" class="mb-4">
+      <el-radio-button label="auto">
+        自适应
+      </el-radio-button>
+      <el-radio-button label="XPro">
+        X轴铺满
+      </el-radio-button>
+    </el-radio-group>
+    <el-radio-group v-model="pageConfig.adapter">
+      <el-radio-button label="YPro">
+        Y轴铺满
+      </el-radio-button>
+      <el-radio-button label="XYPro">
+        四周铺满
+      </el-radio-button>
+    </el-radio-group>
+  </div>
+</div> -->
+
       <!-- <div class="config-item">
       <label>适配方式</label>
       <el-radio-group v-model="pageConfig.adapter" size="small">
@@ -154,6 +208,7 @@ $themeColor: v-bind(themeColor);
     border-radius: 6px;
     background-color: #fff;
     cursor: pointer;
+    margin-bottom: 12px;
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 8%);
 
     span {
@@ -161,42 +216,49 @@ $themeColor: v-bind(themeColor);
     }
   }
 
-  .size-config {
-    justify-content: space-between;
+  .canvas-attr-list-content {
+    border: var(--el-border);
+    background-color: var(--el-bg-color);
+    margin-bottom: 12px;
+    padding: 15px;
 
-    .size-width,
-    .size-height {
-      label {
-        margin-right: 5px;
-      }
+    .attrs-setting-item {
+      border-bottom: var(--el-border);
     }
   }
 
   .config-item {
     width: 100%;
-    margin: 20px 0;
+    margin-bottom: 20px;
     display: flex;
-    align-items: center;
-
-    &>label {
-      width: auto;
-      margin-right: 8px;
-
-    }
-  }
-
-  .background-img-config {
+    // align-items: center;
     align-items: flex-start;
 
-    .el-upload {
-      width: 200px;
+    &>label {
+      width: 60px;
+      margin-right: 8px;
+      height: 32px;
+      line-height: 32px;
+    }
 
-      .el-icon--upload svg {
-        width: 100px;
-        height: 100px;
-      }
+    .config-content {
+      flex: 1;
+      width: 0;
     }
   }
+
+  // .background-img-config {
+  //   align-items: flex-start;
+
+  //   .el-upload {
+  //     width: 200px;
+
+  //     .el-icon--upload svg {
+  //       width: 100px;
+  //       height: 100px;
+  //     }
+  //   }
+  // }
 
   .color-config {
     //position: relative;
@@ -257,6 +319,26 @@ $themeColor: v-bind(themeColor);
       }
 
     }
+  }
+
+  .custom-upload {
+    height: 180px;
+    // width: 100%;
+
+    :deep(.el-upload) {
+      height: 100%;
+      width: 100%;
+    }
+
+    :deep(.el-upload-dragger) {
+      padding: 0;
+      height: 100%;
+      width: 100%;
+    }
+  }
+
+  .custom-upload-container {
+    // padding: var(--el-upload-dragger-padding-horizontal) var(--el-upload-dragger-padding-vertical);
   }
 }
 </style>

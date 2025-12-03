@@ -1,5 +1,6 @@
 <script setup lang="ts" name="SvgIcon">
 // 引入vue函数
+import { isString } from 'lodash-es'
 import { computed, ref } from 'vue'
 
 const props = withDefaults(
@@ -8,13 +9,13 @@ const props = withDefaults(
     bgColor?: string
     strokeColor?: string
     className?: string
-    fontSize?: string | number
+    size?: string | number
   }>(),
   {
     bgColor: '#2c2c2c',
     name: '',
     strokeColor: '',
-    fontSize: '1em',
+    size: '1em',
   },
 )
 
@@ -27,10 +28,19 @@ const svgClass = computed(() => {
   }
   return 'svg-icon'
 })
+
+const iconSize = computed(() => {
+  if (isString(props?.size)) {
+    return props?.size
+  }
+  else {
+    return `${props.size}px`
+  }
+})
 </script>
 
 <template>
-  <svg ref="svgRef" aria-hidden="true" :class="svgClass" :style="{ fontSize }" :color="bgColor" :stroke="strokeColor">
+  <svg ref="svgRef" aria-hidden="true" :class="svgClass" :style="{ fontSize: iconSize }" :color="bgColor" :stroke="strokeColor">
     <use :xlink:href="symbolId" />
   </svg>
 </template>
