@@ -1,5 +1,4 @@
 import type { ButtonProps as ElButtonProps } from 'element-plus'
-import type { CSSProperties } from 'vue'
 import type { BaseProps, ComponentConfig } from '@/custom-components/types'
 import { withConfigs } from '@/custom-components/utils'
 

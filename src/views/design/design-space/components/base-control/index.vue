@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { Action } from 'element-plus'
 import type { Compnents } from '@/type'
-import { Delete, Plus, Search } from '@element-plus/icons-vue'
+import { Delete, Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, ref } from 'vue'
 import List from '@/custom-components/config'

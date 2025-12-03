@@ -64,7 +64,7 @@ export function getRandomColor(type?: string | number): string {
 export function getRandomKey() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0
-    const v = c == 'x' ? r : (r & 0x3) | 0x8
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
     return v.toString(16)
   })
 }
@@ -98,7 +98,7 @@ export function uuid(len?: number, radix?: number) {
     for (i = 0; i < 36; i++) {
       if (!uuid[i]) {
         r = 0 | (Math.random() * 16)
-        uuid[i] = chars[i == 19 ? (r & 0x3) | 0x8 : r]
+        uuid[i] = chars[i === 19 ? (r & 0x3) | 0x8 : r]
       }
     }
   }
@@ -106,111 +106,10 @@ export function uuid(len?: number, radix?: number) {
   return uuid.join('')
 }
 
-/**
- * 防抖函数：n 秒后在执行该事件，若在 n 秒内被重复触发，则重新计时
- * @param func 函数
- * @param wait 等待时间
- * @param immediate 是否立即执行
- */
-export function debounce(func: Function, wait: number, immediate?: boolean) {
-  let timeout: any
-  return function () {
-    const context = this
-    const args = arguments
-
-    if (timeout)
-      clearTimeout(timeout) // timeout 不为null
-    if (immediate) {
-      const callNow = !timeout // 第一次会立即执行，以后只有事件执行后才会再次触发
-      timeout = setTimeout(() => {
-        timeout = null
-      }, wait)
-      if (callNow) {
-        func.apply(context, args)
-      }
-    }
-    else {
-      timeout = setTimeout(() => {
-        func.apply(context, args)
-      }, wait)
-    }
-  }
-}
-
-/**
- * 函数节流：n 秒内只运行一次，若在 n 秒内重复触发，只有一次生效
- * @param fn 函数
- * @param delay 等待时间
- */
-
-export function throttle(fn: any, delay = 300) {
-  let timer: any = null
-  console.log(2222)
-  return function (...args: any) {
-    if (timer == null) {
-      timer = setTimeout(() => {
-        fn.call(this, ...args)
-
-        clearTimeout(timer)
-        timer = null
-      }, delay)
-    }
-  }
-}
-
-/**
- * 深拷贝
- * @param data
- */
-export function deepCopy(data: any) {
-  // 匹配函数
-  function metaType(obj: any) {
-    const MAP = {
-      '[object String]': 'string',
-      '[object Number]': 'number',
-      '[object Boolean]': 'boolean',
-      '[object Null]': 'null',
-      '[object Undefined]': 'undefined',
-      '[object Symbol]': 'symbol',
-      '[object BigInt]': 'bigInt',
-      '[object Object]': 'object',
-      '[object Function]': 'function',
-      '[object Array]': 'array',
-      '[object Date]': 'date',
-      '[object RegExp]': 'regExp',
-      '[object Error]': 'error',
-    }
-
-    // @ts-ignore
-    return MAP[Object.prototype.toString.call(obj)]
-  }
-
-  const type = metaType(data)
-  let obj: any = null
-  if (type === 'array') {
-    obj = []
-    for (let i = 0; i < data.length; i++) {
-      obj.push(deepCopy(data[i]))
-    }
-  }
-  else if (type === 'object') {
-    obj = {}
-    for (const key in data) {
-      if (data.hasOwnProperty(key)) {
-        obj[key] = deepCopy(data[key])
-      }
-    }
-  }
-  else {
-    return data
-  }
-  return obj
-}
-
 export function setCookie(cookieName: string, cookieValue: string, cookieTime?: number) {
   cookieTime = cookieTime || 30 // 没有传入时间参数就默认设成 30
   let expires = '' // 存放过期时间
-  if (cookieTime != 0) {
+  if (cookieTime !== 0) {
     const date = new Date()
     date.setTime(date.getTime() + cookieTime * 1000)
     expires = `;expires=${date}` // 过去时间
@@ -226,11 +125,11 @@ export function getCookie(name: string) {
   for (let i = 0; i < strArr.length; i++) {
     let str = strArr[i] // 取得字符串
     // 去除字符串数组的前面的空格
-    while (str.charAt(0) == ' ') {
+    while (str.charAt(0) === ' ') {
       // 判断一下字符串有没有前导空格
       str = str.substring(1, str.length) // 有的话，从第二位开始取
     }
-    if (str.indexOf(nameEQ) == 0) {
+    if (str.indexOf(nameEQ) === 0) {
       // 如果含有我们要的name  indexOf -- 查找字符串
       result = window.unescape(str.substring(nameEQ.length, str.length))
       // cookie解码并截取我们要值

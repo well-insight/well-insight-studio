@@ -1,4 +1,3 @@
-import type { CSSProperties } from 'vue'
 import type { ComponentConfig } from './types'
 import { cloneDeep } from 'lodash-es'
 

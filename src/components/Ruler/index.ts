@@ -3,10 +3,8 @@ import SketchRuler from './sketchRuler.vue'
 
 // Declare install function executed by Vue.use()
 export function install(Vue: any) {
-  // @ts-ignore
   if (install.installed)
     return
-  // @ts-ignore
   install.installed = true
   Vue.component(SketchRuler.name, SketchRuler)
 }
@@ -19,7 +17,6 @@ const plugin = {
 // Auto-install when vue is found (eg. in browser via <script> tag)
 let GlobalVue = null
 if (typeof window !== 'undefined') {
-  // @ts-ignore
   GlobalVue = window.Vue
 }
 if (GlobalVue) {

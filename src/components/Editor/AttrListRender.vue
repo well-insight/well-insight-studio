@@ -1,6 +1,6 @@
 <script lang='ts' setup>
 import type { ComponentConfig } from '@/custom-components/types'
-import { get, set } from 'lodash-es'
+import { get } from 'lodash-es'
 import { storeToRefs } from 'pinia'
 import { ref, watch } from 'vue'
 import { useDesignStore } from '@/stores/design'

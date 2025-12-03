@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onMounted, reactive, ref } from 'vue'
 import { getRandomColor } from '@/utils'
-import { growData, growRoateData, systemInfomationData, systemUserData } from '@/views/Pages/SystemInfo/chartConfig'
+import { growData, growRoateData, systemInfomationData, systemUserData } from './chartConfig'
 import DependenceInfo from './components/DependenceInfo/index.vue'
 
 import HorseRaceLamp from './components/HorseRaceLamp/index.vue'

@@ -22,13 +22,20 @@ function getPointList() {
   return shapeData.pointList
 }
 
+const isActive = ref(false)
+
 const $elem = ref<any>(null)
 
 function getPointStyle(point: any) {
   if (isActive.value) {
     const offsetWidth = $elem.value.offsetWidth
     const offsetHeight = $elem.value.offsetHeight
-    let width = 10; let height = 10; let left; let top; let right; let bottom
+    let width = 10
+    let height = 10
+    let left
+    let top
+    let right
+    let bottom
     switch (point) {
       case 'lt':
         left = -5
@@ -81,7 +88,6 @@ function getPointStyle(point: any) {
   }
 }
 
-const isActive = ref(false)
 function activeElement() {
   isActive.value = true
 }
@@ -176,7 +182,10 @@ function handleMouseDownOnPoint(item: any, e: any) {
     <div ref="$elem" v-drag class="drag-element" @click="activeElement">
       这是拖拽元素
       <template v-if="isActive">
-        <div v-for="item in shapeData.pointList" :key="item" :data-name="item" class="shape-point" :style="getPointStyle(item)" @mousedown="handleMouseDownOnPoint(item, $event)" />
+        <div
+          v-for="item in shapeData.pointList" :key="item" :data-name="item" class="shape-point"
+          :style="getPointStyle(item)" @mousedown="handleMouseDownOnPoint(item, $event)"
+        />
       </template>
     </div>
   </div>
@@ -184,23 +193,23 @@ function handleMouseDownOnPoint(item: any, e: any) {
 
 <style lang="scss" scoped>
 .demos-test-container {
-    width: 100%;
-    height: 100%;
-    position: relative;
+  width: 100%;
+  height: 100%;
+  position: relative;
 
-    .drag-element {
-        width: 200px;
-        height: 200px;
-        border: 1px solid red;
-        cursor: pointer;
-        position: absolute;
+  .drag-element {
+    width: 200px;
+    height: 200px;
+    border: 1px solid red;
+    cursor: pointer;
+    position: absolute;
 
-        .shape-point {
-            position: absolute;
-            height: 10px;
-            width: 10px;
-            outline: 2px solid #0a8278;
-        }
+    .shape-point {
+      position: absolute;
+      height: 10px;
+      width: 10px;
+      outline: 2px solid #0a8278;
     }
+  }
 }
 </style>

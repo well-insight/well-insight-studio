@@ -1,8 +1,7 @@
 <script lang="ts" setup>
-import type { Compnents } from '@/type'
 import { Lock, View } from '@element-plus/icons-vue'
 import { storeToRefs } from 'pinia'
-import { computed, reactive, watch } from 'vue'
+import { computed } from 'vue'
 import { useDesignStore } from '@/stores/design'
 
 const designStore = useDesignStore()

@@ -5,8 +5,8 @@
  * @returns 随机生成的数
  */
 export function randomNum(minNum: number | string, maxNum: number | string): number {
-  minNum = isNaN(Number(minNum)) ? 0 : Number(minNum)
-  maxNum = isNaN(Number(maxNum)) ? 0 : Number(maxNum)
+  minNum = Number.isNaN(Number(minNum)) ? 0 : Number(minNum)
+  maxNum = Number.isNaN(Number(maxNum)) ? 0 : Number(maxNum)
   switch (arguments.length) {
     case 1:
       return Number.parseInt((Math.random() * minNum + 1).toString(), 10)

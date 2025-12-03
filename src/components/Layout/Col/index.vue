@@ -2,7 +2,7 @@
 import { defineComponent, reactive } from 'vue'
 
 export default defineComponent({
-  name: 'Col',
+  name: 'WCol',
   props: {
     // flex: 1, 1, 1
     span: {

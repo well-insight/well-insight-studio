@@ -11,7 +11,7 @@
 export function useStorage(param: string, pre?: string) {
   let type = localStorage
   const prefix = pre || ''
-  if (param == 'session' || param == 'sessionStorage') {
+  if (param === 'session' || param === 'sessionStorage') {
     type = sessionStorage
   }
   const length = type.length // storage的长度
@@ -25,7 +25,7 @@ export function useStorage(param: string, pre?: string) {
    * @example SStorage.set("aa","123456",5000)
    */
   function set(name: string, value = '', time = 0) {
-    time = isNaN(time - 0) ? 0 : time - 0 // 转换成数字,字符串类型的数字也转成数字
+    time = Number.isNaN(time - 0) ? 0 : time - 0 // 转换成数字,字符串类型的数字也转成数字
     time = time > 0 ? time : 0 // 有负数的情况
     const obj: any = {}
     obj[`${prefix}value`] = value
@@ -56,14 +56,15 @@ export function useStorage(param: string, pre?: string) {
       }
       catch (error) {
         // 如果不行就不是json的字符串，就直接返回
-        item = item
+        // item = item
+        return item
       }
 
       //  判断有没有设置过期时间、保存数据的格式
       // 先判断设置时的时间大于0，是否为数字,过期时间是否也为数字
-      if (item[`${prefix}startTime`] > 0 && !isNaN(item[`${prefix}startTime`]) && !isNaN(item[`${prefix}time`])) {
+      if (item[`${prefix}startTime`] > 0 && !Number.isNaN(item[`${prefix}startTime`]) && !Number.isNaN(item[`${prefix}time`])) {
         const date = new Date().getTime() // 获取当前时间
-        if (item[`${prefix}time`] == 0) {
+        if (item[`${prefix}time`] === 0) {
           // 等于0永不过期
           return item[`${prefix}value`]
         }
@@ -109,7 +110,7 @@ export function useStorage(param: string, pre?: string) {
    * @returns 键名(下标)
    */
   function key(num: number) {
-    num = isNaN(num - 0) ? -1 : num - 0 // 转换成数字,字符串类型的数字也转成数字，同时取整
+    num = Number.isNaN(num - 0) ? -1 : num - 0 // 转换成数字,字符串类型的数字也转成数字，同时取整
     if (num >= 0) {
       return type.key(num)
     }

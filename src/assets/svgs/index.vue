@@ -1,6 +1,6 @@
 <script setup lang="ts" name="SvgIcon">
 // 引入vue函数
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = withDefaults(
   defineProps<{

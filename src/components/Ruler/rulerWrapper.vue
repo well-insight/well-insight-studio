@@ -69,6 +69,7 @@ export default {
   },
   methods: {
     handleNewLine(value) {
+      // eslint-disable-next-line vue/no-mutating-props
       this.lines.push(value)
       this.$emit('onLineChange', this.lines, this.vertical)
       // !isShowReferLine && handleShowReferLine()
@@ -100,11 +101,13 @@ export default {
         this.handleLineRemove(index)
       }
       else {
+        // eslint-disable-next-line vue/no-mutating-props
         this.lines[index] = value
         this.$emit('onLineChange', this.lines, this.vertical)
       }
     },
     handleLineRemove(index) {
+      // eslint-disable-next-line vue/no-mutating-props
       this.lines.splice(index, 1)
       this.$emit('onLineChange', this.lines, this.vertical)
     },
@@ -116,35 +119,16 @@ export default {
 <template>
   <div :class="rwClassName" :style="rwStyle">
     <CanvasRuler
-      :vertical="vertical"
-      :scale="scale"
-      :width="width"
-      :height="height"
-      :start="start"
-      :select-start="selectStart"
-      :select-length="selectLength"
-      :canvas-configs="canvasConfigs"
-
-      @on-add-line="handleNewLine"
-      @on-indicator-show="handleIndicatorShow"
-      @on-indicator-move="handleIndicatorMove"
+      :vertical="vertical" :scale="scale" :width="width" :height="height" :start="start"
+      :select-start="selectStart" :select-length="selectLength" :canvas-configs="canvasConfigs"
+      @on-add-line="handleNewLine" @on-indicator-show="handleIndicatorShow" @on-indicator-move="handleIndicatorMove"
       @on-indicator-hide="handleIndicatorHide"
     />
     <div v-show="isShowReferLine" class="lines">
       <LineRuler
-        v-for="(v, i) in lines"
-        :key="v + i"
-        :index="i"
-        :value="v >> 0"
-        :scale="scale"
-        :start="start"
-        :thick="thick"
-        :palette="palette"
-        :vertical="vertical"
-        :is-show-refer-line="isShowReferLine"
-        @on-remove="handleLineRemove"
-        @on-mouse-down="handleLineDown"
-        @on-release="handleLineRelease"
+        v-for="(v, i) in lines" :key="v + i" :index="i" :value="v >> 0" :scale="scale" :start="start"
+        :thick="thick" :palette="palette" :vertical="vertical" :is-show-refer-line="isShowReferLine"
+        @on-remove="handleLineRemove" @on-mouse-down="handleLineDown" @on-release="handleLineRelease"
       />
     </div>
     <div v-show="showIndicator" class="indicator" :style="indicatorStyle">
@@ -157,67 +141,82 @@ export default {
 
 <style lang="scss" scoped>
 .line {
-    position: absolute;
+  position: absolute;
 }
-.h-container, .v-container {
-    position: absolute;
-    .lines {
-      pointer-events: none;
-    }
-    &:hover .lines {
-      pointer-events: auto;
-    }
+
+.h-container,
+.v-container {
+  position: absolute;
+
+  .lines {
+    pointer-events: none;
+  }
+
+  &:hover .lines {
+    pointer-events: auto;
+  }
 }
+
 .h-container {
+  top: 0;
+
+  .line {
+    height: 100vh;
     top: 0;
-    .line {
-		height: 100vh;
-		top: 0;
-		padding-left: 5px;
-		.action {
-			transform: translateX(-24px);
-			.value {
-				margin-left: 4px;
-			}
-		}
+    padding-left: 5px;
+
+    .action {
+      transform: translateX(-24px);
+
+      .value {
+        margin-left: 4px;
+      }
     }
-    .indicator {
-		top: 0;
-		height: 100vw;
-		.value {
-            padding: 0 2px;
-            width: auto;
-			margin-left: 4px;
-			margin-top: 4px;
-		}
+  }
+
+  .indicator {
+    top: 0;
+    height: 100vw;
+
+    .value {
+      padding: 0 2px;
+      width: auto;
+      margin-left: 4px;
+      margin-top: 4px;
     }
+  }
 }
 
 .v-container {
+  left: 0;
+
+  .line {
+    width: 100vw;
     left: 0;
-    .line {
-		width: 100vw;
-		left: 0;
-		padding-top: 5px;
-		.action {
-			transform: translateY(-24px);
-			flex-direction: column;
-			.value {
-				margin-top: 4px;
-			}
-		}
-	}
-    .indicator {
-		width: 100vw;
-		.value {
-            padding: 0 2px;
-            width: auto;
-            left: 0px;
-			margin-left: 2px;
-			margin-top: -5px;
-			transform-origin: 0 0;
-			transform: rotate(-90deg);
-		}
-	}
+    padding-top: 5px;
+
+    .action {
+      transform: translateY(-24px);
+      flex-direction: column;
+
+      .value {
+        margin-top: 4px;
+      }
+    }
+  }
+
+  .indicator {
+    width: 100vw;
+
+    .value {
+      padding: 0 2px;
+      width: auto;
+      left: 0px;
+      margin-left: 2px;
+      margin-top: -5px;
+      transform-origin: 0 0;
+      transform: rotate(-90deg);
+    }
+  }
 }
 </style>

@@ -1,5 +1,5 @@
 <script lang='ts' setup>
-import config from '../../../../../../package.json'
+import config from '../../../../../package.json'
 
 console.log(config)
 const { dependencies, devDependencies, version } = config

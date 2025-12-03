@@ -65,7 +65,10 @@ export default {
     },
     cornerActive: Boolean,
     lang: String,
-    isOpenMenuFeature: false,
+    isOpenMenuFeature: {
+      type: Boolean,
+      default: false,
+    },
     handleShowRuler: {
       type: Function,
       default: () => {

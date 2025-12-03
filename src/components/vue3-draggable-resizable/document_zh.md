@@ -43,9 +43,9 @@ $ npm install vue3-draggable-resizable
 ```js
 // >main.js
 import { createApp } from 'vue'
-import App from './App.vue'
 import Vue3DraggableResizable from 'vue3-draggable-resizable'
-//需引入默认样式
+import App from './App.vue'
+// 需引入默认样式
 import 'vue3-draggable-resizable/dist/Vue3DraggableResizable.css'
 
 // 你将会获得一个名为Vue3DraggableResizable的全局组件
@@ -60,7 +60,7 @@ createApp(App)
 // >component.js
 import { defineComponent } from 'vue'
 import Vue3DraggableResizable from 'vue3-draggable-resizable'
-//需引入默认样式
+// 需引入默认样式
 import 'vue3-draggable-resizable/dist/Vue3DraggableResizable.css'
 
 export default defineComponent({
@@ -72,39 +72,12 @@ export default defineComponent({
 下面是一个使用 vue-template 语法写的例子
 
 ```vue
-<template>
-  <div id="app">
-    <div class="parent">
-      <Vue3DraggableResizable
-        :initW="110"
-        :initH="120"
-        v-model:x="x"
-        v-model:y="y"
-        v-model:w="w"
-        v-model:h="h"
-        v-model:active="active"
-        :draggable="true"
-        :resizable="true"
-        @activated="print('activated')"
-        @deactivated="print('deactivated')"
-        @drag-start="print('drag-start')"
-        @resize-start="print('resize-start')"
-        @dragging="print('dragging')"
-        @resizing="print('resizing')"
-        @drag-end="print('drag-end')"
-        @resize-end="print('resize-end')"
-      >
-        This is a test example
-      </Vue3DraggableResizable>
-    </div>
-  </div>
-</template>
-
 <script>
 import { defineComponent } from 'vue'
 import Vue3DraggableResizable from 'vue3-draggable-resizable'
-//default styles
+// default styles
 import 'vue3-draggable-resizable/dist/Vue3DraggableResizable.css'
+
 export default defineComponent({
   components: { Vue3DraggableResizable },
   data() {
@@ -123,6 +96,35 @@ export default defineComponent({
   }
 })
 </script>
+
+<template>
+  <div id="app">
+    <div class="parent">
+      <Vue3DraggableResizable
+        v-model:x="x"
+        v-model:y="y"
+        v-model:w="w"
+        v-model:h="h"
+        v-model:active="active"
+        :init-w="110"
+        :init-h="120"
+        :draggable="true"
+        :resizable="true"
+        @activated="print('activated')"
+        @deactivated="print('deactivated')"
+        @drag-start="print('drag-start')"
+        @resize-start="print('resize-start')"
+        @dragging="print('dragging')"
+        @resizing="print('resizing')"
+        @drag-end="print('drag-end')"
+        @resize-end="print('resize-end')"
+      >
+        This is a test example
+      </Vue3DraggableResizable>
+    </div>
+  </div>
+</template>
+
 <style>
 .parent {
   width: 200px;
@@ -518,6 +520,21 @@ payload: `{ x: number, y: number, w: number, h: number }`
 像下面这样，将 Vue3DraggableResizable 放在 DraggableContainer 内：
 
 ```vue
+<script>
+import { defineComponent } from 'vue'
+// import Vue3DraggableResizable from 'vue3-draggable-resizable'
+// 这个组件不是默认导出的，
+// 如果你之前是通过“app.use(Vue3DraggableResizable)”注册的，
+// 那么你这里就不需要再引入了，因为DraggableContainer这个已经被全局注册了，你可以直接使用
+import { DraggableContainer } from 'vue3-draggable-resizable'
+// default styles
+import 'vue3-draggable-resizable/dist/Vue3DraggableResizable.css'
+
+export default defineComponent({
+  components: { Vue3DraggableResizable, DraggableContainer }
+})
+</script>
+
 <template>
   <div id="app">
     <div class="parent">
@@ -533,19 +550,6 @@ payload: `{ x: number, y: number, w: number, h: number }`
   </div>
 </template>
 
-<script>
-import { defineComponent } from 'vue'
-import Vue3DraggableResizable from 'vue3-draggable-resizable'
-// 这个组件不是默认导出的，
-// 如果你之前是通过“app.use(Vue3DraggableResizable)”注册的，
-// 那么你这里就不需要再引入了，因为DraggableContainer这个已经被全局注册了，你可以直接使用
-import { DraggableContainer } from 'vue3-draggable-resizable'
-//default styles
-import 'vue3-draggable-resizable/dist/Vue3DraggableResizable.css'
-export default defineComponent({
-  components: { Vue3DraggableResizable, DraggableContainer }
-})
-</script>
 <style>
 .parent {
   width: 200px;

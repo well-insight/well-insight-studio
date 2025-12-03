@@ -44,9 +44,9 @@ Register the Vue3DraggableResizable
 ```js
 // >main.js
 import { createApp } from 'vue'
-import App from './App.vue'
 import Vue3DraggableResizable from 'vue3-draggable-resizable'
-//default styles
+import App from './App.vue'
+// default styles
 import 'vue3-draggable-resizable/dist/Vue3DraggableResizable.css'
 
 // You will have a global component named "Vue3DraggableResizable"
@@ -61,7 +61,7 @@ You can also use it separately within the component
 // >component.js
 import { defineComponent } from 'vue'
 import Vue3DraggableResizable from 'vue3-draggable-resizable'
-//default styles
+// default styles
 import 'vue3-draggable-resizable/dist/Vue3DraggableResizable.css'
 
 export default defineComponent({
@@ -73,39 +73,12 @@ export default defineComponent({
 Here is a complete example of using "vue-template"
 
 ```vue
-<template>
-  <div id="app">
-    <div class="parent">
-      <Vue3DraggableResizable
-        :initW="110"
-        :initH="120"
-        v-model:x="x"
-        v-model:y="y"
-        v-model:w="w"
-        v-model:h="h"
-        v-model:active="active"
-        :draggable="true"
-        :resizable="true"
-        @activated="print('activated')"
-        @deactivated="print('deactivated')"
-        @drag-start="print('drag-start')"
-        @resize-start="print('resize-start')"
-        @dragging="print('dragging')"
-        @resizing="print('resizing')"
-        @drag-end="print('drag-end')"
-        @resize-end="print('resize-end')"
-      >
-        This is a test example
-      </Vue3DraggableResizable>
-    </div>
-  </div>
-</template>
-
 <script>
 import { defineComponent } from 'vue'
 import Vue3DraggableResizable from 'vue3-draggable-resizable'
-//default styles
+// default styles
 import 'vue3-draggable-resizable/dist/Vue3DraggableResizable.css'
+
 export default defineComponent({
   components: { Vue3DraggableResizable },
   data() {
@@ -124,6 +97,35 @@ export default defineComponent({
   }
 })
 </script>
+
+<template>
+  <div id="app">
+    <div class="parent">
+      <Vue3DraggableResizable
+        v-model:x="x"
+        v-model:y="y"
+        v-model:w="w"
+        v-model:h="h"
+        v-model:active="active"
+        :init-w="110"
+        :init-h="120"
+        :draggable="true"
+        :resizable="true"
+        @activated="print('activated')"
+        @deactivated="print('deactivated')"
+        @drag-start="print('drag-start')"
+        @resize-start="print('resize-start')"
+        @dragging="print('dragging')"
+        @resizing="print('resizing')"
+        @drag-end="print('drag-end')"
+        @resize-end="print('resize-end')"
+      >
+        This is a test example
+      </Vue3DraggableResizable>
+    </div>
+  </div>
+</template>
+
 <style>
 .parent {
   width: 200px;
@@ -501,6 +503,20 @@ You need to import another component to use the "adsorption alignment" feature.
 This can be used as follows.
 
 ```vue
+<script>
+import { defineComponent } from 'vue'
+// import Vue3DraggableResizable from 'vue3-draggable-resizable'
+// This component is not exported by default
+// If you used "app.use(Vue3DraggableResizable)"，then you don't need to import it, you can use it directly.
+import { DraggableContainer } from 'vue3-draggable-resizable'
+// default styles
+import 'vue3-draggable-resizable/dist/Vue3DraggableResizable.css'
+
+export default defineComponent({
+  components: { Vue3DraggableResizable, DraggableContainer }
+})
+</script>
+
 <template>
   <div id="app">
     <div class="parent">
@@ -516,18 +532,6 @@ This can be used as follows.
   </div>
 </template>
 
-<script>
-import { defineComponent } from 'vue'
-import Vue3DraggableResizable from 'vue3-draggable-resizable'
-// This component is not exported by default
-// If you used "app.use(Vue3DraggableResizable)"，then you don't need to import it, you can use it directly.
-import { DraggableContainer } from 'vue3-draggable-resizable'
-//default styles
-import 'vue3-draggable-resizable/dist/Vue3DraggableResizable.css'
-export default defineComponent({
-  components: { Vue3DraggableResizable, DraggableContainer }
-})
-</script>
 <style>
 .parent {
   width: 200px;

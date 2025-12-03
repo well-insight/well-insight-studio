@@ -1,6 +1,6 @@
 <script lang="ts">
 import { ArrowLeftBold, ArrowRightBold, InfoFilled, Paperclip } from '@element-plus/icons-vue'
-import { defineComponent, onMounted, reactive, ref } from 'vue'
+import { defineComponent, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSystemStore } from '@/stores/system'
 

@@ -16,7 +16,7 @@ export default defineComponent({
     },
     menuList: {
       type: Array as PropType<menuListType[]>,
-      default: [
+      default: () => [
         {
           title: '子菜单1',
           icon: '',

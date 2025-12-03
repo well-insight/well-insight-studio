@@ -1,17 +1,17 @@
 <script lang="ts" setup>
-import type { BaseProps } from '@/custom-components/types'
 import { useResizeObserver } from '@vueuse/core'
 
-import { computed, nextTick, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
+import { cloneDeep, debounce } from 'lodash-es'
+import { computed, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getDesignContentById, setImg } from '@/api'
 import MarkLine from '@/components/Editor/MarkLine.vue'
-import Shape from '@/components/Editor/Shape.vue'
 import SketchRule from '@/components/Ruler/sketchRuler.vue'
 import { DraggableContainer, VueDraggableResizable } from '@/components/vue3-draggable-resizable'
 import { useHtml2canvas } from '@/hooks/useDom2image'
 import { useDesignStore } from '@/stores/design'
-import { debounce, deepCopy, uuid } from '@/utils'
+
+import { uuid } from '@/utils'
 
 const deisgnStore = useDesignStore()
 const route = useRoute()
@@ -80,7 +80,7 @@ const startMoveWrap = reactive({
 })
 
 function wrapMousedown(e: any) {
-  if (e.target && e.target.id === 'content' || isEnterSpace.value) {
+  if ((e.target && e.target.id === 'content') || isEnterSpace.value) {
     startMoveWrap.x = e.x
     startMoveWrap.y = e.y
 
@@ -203,7 +203,7 @@ function deactivated(index: number) {
 function handleDrop(e: any) {
   e.preventDefault()
   e.stopPropagation()
-  const component = deepCopy(JSON.parse(e.dataTransfer.getData('component')) || {})
+  const component = cloneDeep(JSON.parse(e.dataTransfer.getData('component')) || {})
   const x = e.offsetX
   const y = e.offsetY
   const width = Number.parseInt(component.style?.width || 0)

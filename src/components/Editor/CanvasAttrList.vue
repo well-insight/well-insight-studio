@@ -1,8 +1,5 @@
 <script lang="ts" setup>
-import type { ComponentConfig } from '@/custom-components/types'
-import { storeToRefs } from 'pinia'
-import { computed, ref, watch } from 'vue'
-import customComponents from '@/custom-components'
+import { computed } from 'vue'
 import { themeColor } from '@/hooks/useEchartTheme'
 import { useDesignStore } from '@/stores/design'
 

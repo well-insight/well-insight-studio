@@ -1,4 +1,4 @@
-import type { assemblyType, reponseType } from '@/type'
+import type { assemblyType } from '@/type'
 import request from '@/utils/request'
 
 export async function getAssemblyLists(): Promise<assemblyType[]> {

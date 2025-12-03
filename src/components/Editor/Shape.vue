@@ -12,12 +12,12 @@ const props = defineProps({
   element: {
     required: true,
     type: Object,
-    default: () => {},
+    default: () => { },
   },
   defaultStyle: {
     required: true,
     type: Object,
-    default: () => {},
+    default: () => { },
   },
   index: {
     required: true,
@@ -76,7 +76,6 @@ const shapeXY = reactive({
 const component = store.$state.componentsInCanvas[Number(props.index)]
 
 const scale = computed(() => store.$state.canvasScale)
-debugger
 const vDrag = {
   mounted: (el: any) => {
     component.style.width = `${$shape.value?.offsetWidth}px`
@@ -210,7 +209,12 @@ function getPointList() {
 function getPointStyle(point: any) {
   const offsetWidth = $shape.value.offsetWidth
   const offsetHeight = $shape.value.offsetHeight
-  let width = 10; let height = 10; let left; let top; let right; let bottom
+  let width = 10
+  let height = 10
+  let left
+  let top
+  let right
+  let bottom
   switch (point) {
     case 'lt':
       left = -5
@@ -269,58 +273,61 @@ function isActive() {
 
 <template>
   <div ref="$shape" v-drag class="shape" :class="[isActive() ? 'active' : '', active]" @click="selectCurComponent">
-    <div v-for="item in (isActive() ? getPointList() : [])" :key="item" :data-name="item" class="shape-point" :style="getPointStyle(item)" @mousedown="handleMouseDownOnPoint(item, $event)" />
+    <div
+      v-for="item in (isActive() ? getPointList() : [])" :key="item" :data-name="item" class="shape-point"
+      :style="getPointStyle(item)" @mousedown="handleMouseDownOnPoint(item, $event)"
+    />
     <slot />
   </div>
 </template>
 
 <style lang="scss" scoped>
 .shape {
-    position: absolute;
-    outline: 2px solid transparent;
+  position: absolute;
+  outline: 2px solid transparent;
 
-    &:hover {
-        cursor: move;
-        outline: 2px solid #86d1cb;
-        background: rgba(134, 209, 203, 0.1);
-    }
+  &:hover {
+    cursor: move;
+    outline: 2px solid #86d1cb;
+    background: rgba(134, 209, 203, 0.1);
+  }
 
-    &.active {
-        cursor: move;
-        outline: 2px solid #86d1cb;
-        background: rgba(134, 209, 203, 0.3);
-    }
+  &.active {
+    cursor: move;
+    outline: 2px solid #86d1cb;
+    background: rgba(134, 209, 203, 0.3);
+  }
 }
 
 .active {
-    user-select: none;
+  user-select: none;
 }
 
 .shape-point {
-    position: absolute;
-    background: #fff;
-    outline: 2px solid var(--el-color-primary);
-    z-index: 1;
+  position: absolute;
+  background: #fff;
+  outline: 2px solid var(--el-color-primary);
+  z-index: 1;
 }
 
 .icon-xiangyouxuanzhuan {
-    position: absolute;
-    top: -34px;
-    left: 50%;
-    transform: translateX(-50%);
-    cursor: grab;
-    color: var(--el-color-primary);
-    font-size: 20px;
-    font-weight: 600;
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: grab;
+  color: var(--el-color-primary);
+  font-size: 20px;
+  font-weight: 600;
 
-    &:active {
-        cursor: grabbing;
-    }
+  &:active {
+    cursor: grabbing;
+  }
 }
 
 .icon-suo {
-    position: absolute;
-    top: 0;
-    right: 0;
+  position: absolute;
+  top: 0;
+  right: 0;
 }
 </style>

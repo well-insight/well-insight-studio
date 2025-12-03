@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-side-effects-in-computed-properties -->
 <script>
 export default {
   name: 'LineRuler',
@@ -77,12 +78,7 @@ export default {
 </script>
 
 <template>
-  <div
-    v-show="showLine"
-    class="line"
-    :style="[offset, borderCursor]"
-    @mousedown="handleDown"
-  >
+  <div v-show="showLine" class="line" :style="[offset, borderCursor]" @mousedown="handleDown">
     <div class="action" :style="actionStyle">
       <span class="del" @click="handleRemove">&times;</span>
       <span class="value">{{ startValue }}</span>
@@ -92,54 +88,62 @@ export default {
 
 <style lang="scss" scoped>
 .line {
-    position: absolute;
-    .action {
-        position: absolute;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
+  position: absolute;
 
-    .value {
-        pointer-events: none;
-        transform: scale(0.83);
-    }
-    .del {
-        cursor: pointer;
-        padding: 3px 5px;
-        visibility: hidden;
-    }
-    &:hover .del {
-        visibility: visible;
-    }
+  .action {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .value {
+    pointer-events: none;
+    transform: scale(0.83);
+  }
+
+  .del {
+    cursor: pointer;
+    padding: 3px 5px;
+    visibility: hidden;
+  }
+
+  &:hover .del {
+    visibility: visible;
+  }
 }
+
 .h-container {
-    .line {
-		height: 100vh;
-		top: 0;
-		padding-left: 5px;
-		.action {
-			transform: translateX(-24px);
-			.value {
-				margin-left: 4px;
-			}
-		}
+  .line {
+    height: 100vh;
+    top: 0;
+    padding-left: 5px;
+
+    .action {
+      transform: translateX(-24px);
+
+      .value {
+        margin-left: 4px;
+      }
     }
+  }
 }
 
 .v-container {
 
-    .line {
-		width: 100vw;
-		left: 0;
-		padding-top: 5px;
-		.action {
-			transform: translateY(-24px);
-			flex-direction: column;
-			.value {
-				margin-top: 4px;
-			}
-		}
-	}
+  .line {
+    width: 100vw;
+    left: 0;
+    padding-top: 5px;
+
+    .action {
+      transform: translateY(-24px);
+      flex-direction: column;
+
+      .value {
+        margin-top: 4px;
+      }
+    }
+  }
 }
 </style>
