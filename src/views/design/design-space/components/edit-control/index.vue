@@ -161,7 +161,7 @@ function keyEvent() {
 
 onMounted(() => {
   setWrapPositionSize()
-  keyEvent()
+  // keyEvent()
 })
 
 // 自定义组件
