@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { UploadFile } from 'element-plus'
 import { storeToRefs } from 'pinia'
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { themeColor } from '@/hooks/useEchartTheme'
 import { useDesignStore } from '@/stores/design'
 
@@ -12,6 +12,10 @@ const fileUrl = ref('')
 const designStore = useDesignStore()
 
 const { pageConfig } = storeToRefs(designStore)
+
+const backgroundControl = reactive({
+  
+})
 
 function selectThemeColor(key: string) {
   pageConfig.value.theme = key || 'light'
@@ -59,12 +63,88 @@ watch(() => pageConfig.value.backgroundImage, (n) => {
       </div>
 
       <div class="canvas-attr-list-content">
-        <div class="w-full flex h-[50px] items-center attrs-setting-item">
-          <el-text class="w-[30%]">
-            111
+        <div class="attrs-setting-item">
+          <el-text class="attrs-setting-item-title">
+            宽度
           </el-text>
-          <div class="flex-auto w-0">
-            222
+          <div class="attrs-setting-item-content">
+            <el-input v-model="pageConfig.width" type="number" :min="1">
+              <template #suffix>
+                px
+              </template>
+            </el-input>
+          </div>
+        </div>
+
+        <div class="attrs-setting-item">
+          <el-text class="attrs-setting-item-title">
+            长度
+          </el-text>
+          <div class="attrs-setting-item-content">
+            <el-input v-model="pageConfig.height" type="number" :min="1">
+              <template #suffix>
+                px
+              </template>
+            </el-input>
+          </div>
+        </div>
+
+        <div class="attrs-setting-item">
+          <el-text class="attrs-setting-item-title">
+            背景颜色
+          </el-text>
+          <div class="attrs-setting-item-content">
+            <el-color-picker
+              v-model="pageConfig.backgroundColor" label="1111" color-format="hex"
+              popper-class="color-popper-container" show-alpha @active-change="changePageBgColor"
+            />
+          </div>
+        </div>
+
+        <div class="attrs-setting-item">
+          <el-text class="attrs-setting-item-title">
+            背景图片
+          </el-text>
+          <div class="attrs-setting-item-content">
+            <el-upload
+              v-model:file-list="uploadImage" class="custom-upload" drag action="#" :multiple="false"
+              :show-file-list="false" :on-change="uploadSuccess"
+            >
+              <div class="flex items-center justify-center flex-col w-full relative h-full custom-upload-wrapper">
+                <template v-if="!fileUrl">
+                  <el-icon class="el-icon--upload" size="60px">
+                    <PictureFilled />
+                  </el-icon>
+                  <div class="el-upload__text">
+                    背景图需小于 5M ，格式为 png/jpg/gif 的文件
+                  </div>
+                </template>
+                <template v-else>
+                  <img class="w-full" :src="fileUrl" alt="" fit="contain">
+                  <div class="flex absolute top-2 right-2 z-99">
+                    <el-icon :size="20" @click.stop="deleteBg">
+                      <Delete />
+                    </el-icon>
+                  </div>
+                </template>
+              </div>
+            </el-upload>
+          </div>
+        </div>
+
+        <div class="attrs-setting-item">
+          <el-text class="attrs-setting-item-title">
+            背景位置
+          </el-text>
+          <div class="attrs-setting-item-content">
+            <el-radio-group v-model="" class="mb-4">
+              <el-radio-button label="XPro">
+                X轴铺满
+              </el-radio-button>
+              <el-radio-button label="YPro">
+                Y轴铺满
+              </el-radio-button>
+            </el-radio-group>
           </div>
         </div>
       </div>
@@ -223,7 +303,22 @@ $themeColor: v-bind(themeColor);
     padding: 15px;
 
     .attrs-setting-item {
+      display: flex;
+      align-items: flex-start;
       border-bottom: var(--el-border);
+      padding: 12px 0;
+
+      .attrs-setting-item-title {
+        width: 30%;
+        line-height: var(--el-component-size);
+        height: var(--el-component-size);
+        align-self: baseline;
+      }
+
+      .attrs-setting-item-content {
+        flex: 1;
+        width: 0;
+      }
     }
   }
 

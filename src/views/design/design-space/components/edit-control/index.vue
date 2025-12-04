@@ -1,6 +1,7 @@
 <script lang="ts" setup>
-import { useResizeObserver } from '@vueuse/core'
+import type { CSSProperties } from 'vue'
 
+import { useResizeObserver } from '@vueuse/core'
 import { cloneDeep, debounce } from 'lodash-es'
 import { computed, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -242,7 +243,8 @@ const pageConfig = computed(() => {
     height: `${pageConfig.height}px`,
     backgroundColor: pageConfig.backgroundColor,
     backgroundImage: `url(${pageConfig.backgroundImage})`,
-  }
+    backgroundAttachment: pageConfig.backgroundAttachment || 'fixed',
+  } as CSSProperties
 })
 
 // 不适用深层监听 性能消耗
