@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { UploadFile } from 'element-plus'
+import type { CSSProperties, Ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { computed, reactive, ref, watch } from 'vue'
 import { themeColor } from '@/hooks/useEchartTheme'
@@ -11,10 +12,10 @@ const fileUrl = ref('')
 
 const designStore = useDesignStore()
 
-const { pageConfig } = storeToRefs(designStore)
+const { pageConfig }: { pageConfig: Ref<CSSProperties> } = storeToRefs(designStore)
 
 const backgroundControl = reactive({
-  
+
 })
 
 function selectThemeColor(key: string) {
@@ -132,24 +133,43 @@ watch(() => pageConfig.value.backgroundImage, (n) => {
           </div>
         </div>
 
-        <div class="attrs-setting-item">
-          <el-text class="attrs-setting-item-title">
-            背景位置
-          </el-text>
-          <div class="attrs-setting-item-content">
-            <el-radio-group v-model="" class="mb-4">
-              <el-radio-button label="XPro">
-                X轴铺满
-              </el-radio-button>
-              <el-radio-button label="YPro">
-                Y轴铺满
-              </el-radio-button>
-            </el-radio-group>
-          </div>
-        </div>
-      </div>
+        <el-collapse class="custom-collapse">
+          <el-collapse-item title="背景属性设置" name="backgroundControl">
+            <div class="attrs-setting-item">
+              <el-text class="attrs-setting-item-title">
+                背景位置
+              </el-text>
+              <div class="attrs-setting-item-content">
+                <el-input v-model="pageConfig.backgroundPosition" placeholder="请输入" />
+              </div>
+            </div>
 
-      <!-- <div class="config-item ">
+            <div class="attrs-setting-item">
+              <el-text class="attrs-setting-item-title">
+                背景大小
+              </el-text>
+              <div class="attrs-setting-item-content">
+                <el-input v-model="pageConfig.backgroundSize" placeholder="请输入" />
+              </div>
+            </div>
+
+            <div class="attrs-setting-item">
+              <el-text class="attrs-setting-item-title">
+                背景重复
+              </el-text>
+              <div class="attrs-setting-item-content">
+                <el-select v-model="pageConfig.backgroundRepeat">
+                  <el-option value="repeat" label="repeat" />
+                  <el-option value="repeat-x" label="repeat-x" />
+                  <el-option value="repeat-y" label="repeat-y" />
+                  <el-option value="no-repeat" label="no-repeat" />
+                </el-select>
+              </div>
+            </div>
+          </el-collapse-item>
+        </el-collapse>
+
+        <!-- <div class="config-item ">
         <label>宽度</label>
         <div class="config-content">
           <el-input v-model="pageConfig.width" type="number" :min="1">
@@ -228,7 +248,7 @@ watch(() => pageConfig.value.backgroundImage, (n) => {
   </div>
 </div> -->
 
-      <!-- <div class="config-item">
+        <!-- <div class="config-item">
       <label>适配方式</label>
       <el-radio-group v-model="pageConfig.adapter" size="small">
         <el-radio-button size="small" label="auto">
@@ -245,20 +265,21 @@ watch(() => pageConfig.value.backgroundImage, (n) => {
         </el-radio-button>
       </el-radio-group>
     </div> -->
-      <div class="title">
-        <span>主题颜色</span>
-        <svg-icon name="调色板" size="1.15em" />
-      </div>
-      <div class="config-item theme-config">
-        <div
-          v-for="(item, key) in themeColor" :key="item.name"
-          :style="{ borderTop: `2px solid ${showThemeBorderColor(key)}` }"
-          :class="[`color-line theme-color-${key}`, pageConfig.theme === key ? 'active' : '']"
-          @click="selectThemeColor(key)"
-        >
-          <label>{{ item.name }}</label>
-          <div class="color-item-box">
-            <span v-for="color in item.colors" :key="color" class="color-item" :style="{ backgroundColor: color }" />
+        <div class="title">
+          <span>主题颜色</span>
+          <svg-icon name="调色板" size="1.15em" />
+        </div>
+        <div class="config-item theme-config">
+          <div
+            v-for="(item, key) in themeColor" :key="item.name"
+            :style="{ borderTop: `2px solid ${showThemeBorderColor(key)}` }"
+            :class="[`color-line theme-color-${key}`, pageConfig.theme === key ? 'active' : '']"
+            @click="selectThemeColor(key)"
+          >
+            <label>{{ item.name }}</label>
+            <div class="color-item-box">
+              <span v-for="color in item.colors" :key="color" class="color-item" :style="{ backgroundColor: color }" />
+            </div>
           </div>
         </div>
       </div>
@@ -434,6 +455,14 @@ $themeColor: v-bind(themeColor);
 
   .custom-upload-container {
     // padding: var(--el-upload-dragger-padding-horizontal) var(--el-upload-dragger-padding-vertical);
+  }
+
+  .custom-collapse {
+    // border-bottom: none;
+
+    :deep(.el-collapse-item__content) {
+      padding-left: 20px;
+    }
   }
 }
 </style>
