@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { CSSProperties } from 'vue'
 
-import { useResizeObserver } from '@vueuse/core'
+import { useMouseInElement, useResizeObserver } from '@vueuse/core'
 import { cloneDeep, debounce } from 'lodash-es'
 import { computed, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -21,7 +21,7 @@ const canvasId = String(route.query?.key) || ''
 
 const componentLoading = ref(false)
 
-const $wrap = ref<any>()
+const $wrap = useTemplateRef('$wrap')
 const $sketchRule = ref<any>()
 const canvasRef = ref<any>()
 const sketchRuleKey = ref<string>('')
@@ -29,6 +29,8 @@ const domeStr = ref<string>('')
 const pageRef = ref()
 
 const shapeRef = useTemplateRef('shapeRef')
+
+const { isOutside } = useMouseInElement($wrap)
 
 // 缩放可视区
 const sliderConfig = reactive<any>({
@@ -86,12 +88,14 @@ function wrapMousedown(e: any) {
     startMoveWrap.y = e.y
 
     document.onmousemove = (e: any) => {
-      $wrap.value.scrollLeft = $wrap.value.scrollLeft - (e.x - startMoveWrap.x)
-      $wrap.value.scrollTop = $wrap.value.scrollTop - (e.y - startMoveWrap.y)
-      hRulerY.value = `-${$wrap.value.scrollTop}px`
-      hRulerX.value = `-${$wrap.value.scrollLeft}px`
-      startMoveWrap.x = e.x
-      startMoveWrap.y = e.y
+      if ($wrap.value) {
+        $wrap.value.scrollLeft = $wrap.value.scrollLeft - (e.x - startMoveWrap.x)
+        $wrap.value.scrollTop = $wrap.value.scrollTop - (e.y - startMoveWrap.y)
+        hRulerY.value = `-${$wrap.value.scrollTop}px`
+        hRulerX.value = `-${$wrap.value.scrollLeft}px`
+        startMoveWrap.x = e.x
+        startMoveWrap.y = e.y
+      }
     }
 
     document.onmouseup = () => {
@@ -119,23 +123,25 @@ function mouseWheel(e: any) {
 function setWrapPositionSize() {
   // 监听wrap的尺寸变化
   useResizeObserver($wrap, debounce(() => {
-    const wrapW = $wrap.value.clientWidth
-    const wrapH = $wrap.value.clientHeight
-    const canvasW = canvasRef.value.clientWidth
-    const canvasH = canvasRef.value.clientHeight
-    if (canvasW > canvasH) {
-      sliderConfig.scaleValue = ~~(((wrapW - 200) / canvasW) * 100) // 数字取整
+    if ($wrap.value) {
+      const wrapW = $wrap.value?.clientWidth
+      const wrapH = $wrap.value?.clientHeight
+      const canvasW = canvasRef.value.clientWidth
+      const canvasH = canvasRef.value.clientHeight
+      if (canvasW > canvasH) {
+        sliderConfig.scaleValue = ~~(((Number(wrapW) - 200) / canvasW) * 100) // 数字取整
+      }
+      else {
+        sliderConfig.scaleValue = ~~(((Number(wrapH) - 200) / canvasH) * 100) // 数字取整
+      }
+      const scale = sliderConfig.scaleValue / 100
+      const x = ($wrap.value?.clientWidth - canvasRef.value.clientWidth * scale) / 2
+      const y = ($wrap.value?.clientHeight - canvasRef.value.clientHeight * scale) / 2
+      $wrap.value.scrollTop = 5000 - y
+      $wrap.value.scrollLeft = 5000 - x
+      hRulerY.value = `-${$wrap.value.scrollTop}px`
+      hRulerX.value = `-${$wrap.value.scrollLeft}px`
     }
-    else {
-      sliderConfig.scaleValue = ~~(((wrapH - 200) / canvasH) * 100) // 数字取整
-    }
-    const scale = sliderConfig.scaleValue / 100
-    const x = ($wrap.value.clientWidth - canvasRef.value.clientWidth * scale) / 2
-    const y = ($wrap.value.clientHeight - canvasRef.value.clientHeight * scale) / 2
-    $wrap.value.scrollTop = 5000 - y
-    $wrap.value.scrollLeft = 5000 - x
-    hRulerY.value = `-${$wrap.value.scrollTop}px`
-    hRulerX.value = `-${$wrap.value.scrollLeft}px`
   }, 50))
 }
 
@@ -146,7 +152,7 @@ defineExpose({
 // 监听键盘按键事件componentData
 function keyEvent() {
   document.addEventListener('keydown', (e: any) => {
-    if (e && e.code === 'Space') {
+    if (e && e.code === 'Space' && !isOutside.value) {
       isEnterSpace.value = true
       e.preventDefault() // 阻止默认事件行为
     }
@@ -161,7 +167,7 @@ function keyEvent() {
 
 onMounted(() => {
   setWrapPositionSize()
-  // keyEvent()
+  keyEvent()
 })
 
 // 自定义组件
@@ -290,7 +296,7 @@ getComponents()
         <div id="content">
           <div
             ref="canvasRef" v-loading="componentLoading" class="edit-canvas"
-            :style="{ transform: `scale(${scaleValueReal})`, cursor: isEnterSpace ? 'pointer' : 'auto', ...pageConfig }"
+            :style="{ transform: `scale(${scaleValueReal})`, cursor: isEnterSpace ? 'grab' : 'auto', ...pageConfig }"
             @mousemove="canvasMousemove" @drop="handleDrop" @dragover="handleDragOver"
           >
             <div class="components-show-content">
@@ -465,5 +471,14 @@ getComponents()
 .drag-resize {
   transform: translate3d(0, 0, 0);
   will-change: transform;
+  /* 替代border: 1px solid #ccc */
+  box-shadow: inset 0 0 0 1px #ccc;
+  /* 开启硬件加速，减少亚像素模糊 */
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  /* 禁用亚像素抗锯齿（针对像素级渲染） */
+  image-rendering: pixelated;
+  shape-rendering: crispEdges; /* SVG组件必备 */
+
 }
 </style>

@@ -2,6 +2,16 @@
   position: absolute;
   border: 1px solid transparent;
   box-sizing: border-box;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+  /* 替代border: 1px solid #ccc */
+  box-shadow: inset 0 0 0 1px #ccc;
+  /* 开启硬件加速，减少亚像素模糊 */
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  /* 禁用亚像素抗锯齿（针对像素级渲染） */
+  image-rendering: pixelated;
+  shape-rendering: crispEdges; /* SVG组件必备 */
 }
 .vdr-container.active {
   border-color: #000;

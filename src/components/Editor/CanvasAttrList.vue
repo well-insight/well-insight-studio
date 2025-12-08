@@ -54,149 +54,167 @@ watch(() => pageConfig.value.backgroundImage, (n) => {
 
 <template>
   <div class="canvas-attr-list-container">
-    <el-scrollbar view-style="padding: 10px">
-      <div class="title">
-        <span>页面配置</span>
-        <svg-icon name="预览" size="1.15em" />
-      </div>
+    <div class="title">
+      <span>页面配置</span>
+      <svg-icon name="预览" />
+    </div>
 
-      <div class="canvas-attr-list-content">
-        <div class="attrs-setting-item">
-          <el-text class="attrs-setting-item-title">
-            宽度
-          </el-text>
-          <div class="attrs-setting-item-content">
-            <el-input v-model="pageConfig.width" type="number" :min="1">
-              <template #suffix>
-                px
-              </template>
-            </el-input>
-          </div>
-        </div>
+    <div class="canvas-attr-list-content">
+      <el-tabs type="border-card" class="w-full h-full attrs-tabs" stretch>
+        <el-tab-pane label="基础">
+          <el-scrollbar view-style="padding: 12px">
+            <div class="attrs-setting-content">
+              <div class="attrs-setting-item">
+                <el-text class="attrs-setting-item-title">
+                  宽度
+                </el-text>
+                <div class="attrs-setting-item-content">
+                  <el-input v-model="pageConfig.width" type="number" :min="1">
+                    <template #suffix>
+                      px
+                    </template>
+                  </el-input>
+                </div>
+              </div>
 
-        <div class="attrs-setting-item">
-          <el-text class="attrs-setting-item-title">
-            长度
-          </el-text>
-          <div class="attrs-setting-item-content">
-            <el-input v-model="pageConfig.height" type="number" :min="1">
-              <template #suffix>
-                px
-              </template>
-            </el-input>
-          </div>
-        </div>
+              <div class="attrs-setting-item">
+                <el-text class="attrs-setting-item-title">
+                  长度
+                </el-text>
+                <div class="attrs-setting-item-content">
+                  <el-input v-model="pageConfig.height" type="number" :min="1">
+                    <template #suffix>
+                      px
+                    </template>
+                  </el-input>
+                </div>
+              </div>
 
-        <div class="attrs-setting-item">
-          <el-text class="attrs-setting-item-title">
-            背景颜色
-          </el-text>
-          <div class="attrs-setting-item-content">
-            <el-color-picker
-              v-model="pageConfig.backgroundColor" label="1111" color-format="hex"
-              popper-class="color-popper-container" show-alpha @active-change="changePageBgColor"
-            />
-          </div>
-        </div>
+              <div class="attrs-setting-item">
+                <el-text class="attrs-setting-item-title">
+                  背景颜色
+                </el-text>
+                <div class="attrs-setting-item-content">
+                  <el-color-picker
+                    v-model="pageConfig.backgroundColor" label="1111" color-format="hex"
+                    popper-class="color-popper-container" show-alpha @active-change="changePageBgColor"
+                  />
+                </div>
+              </div>
 
-        <div class="attrs-setting-item">
-          <el-text class="attrs-setting-item-title">
-            背景图片
-          </el-text>
-          <div class="attrs-setting-item-content">
-            <el-upload
-              v-model:file-list="uploadImage" class="custom-upload" drag action="#" :multiple="false"
-              :show-file-list="false" :on-change="uploadSuccess"
-            >
-              <div class="flex items-center justify-center flex-col w-full relative h-full custom-upload-wrapper">
-                <template v-if="!fileUrl">
-                  <el-icon class="el-icon--upload" size="60px">
-                    <PictureFilled />
-                  </el-icon>
-                  <div class="el-upload__text">
-                    背景图需小于 5M ，格式为 png/jpg/gif 的文件
+              <div class="attrs-setting-item">
+                <el-text class="attrs-setting-item-title">
+                  背景图片
+                </el-text>
+                <div class="attrs-setting-item-content">
+                  <el-upload
+                    v-model:file-list="uploadImage" class="custom-upload" drag action="#" :multiple="false"
+                    :show-file-list="false" :on-change="uploadSuccess"
+                  >
+                    <div class="flex items-center justify-center flex-col w-full relative h-full custom-upload-wrapper">
+                      <template v-if="!fileUrl">
+                        <el-icon class="el-icon--upload" size="60px">
+                          <PictureFilled />
+                        </el-icon>
+                        <div class="el-upload__text">
+                          背景图需小于 5M ，格式为 png/jpg/gif 的文件
+                        </div>
+                      </template>
+                      <template v-else>
+                        <img class="w-full" :src="fileUrl" alt="" fit="contain">
+                        <div class="flex absolute top-2 right-2 z-99">
+                          <el-icon :size="20" @click.stop="deleteBg">
+                            <Delete />
+                          </el-icon>
+                        </div>
+                      </template>
+                    </div>
+                  </el-upload>
+                </div>
+              </div>
+
+              <el-collapse v-model="backgroundCoolapse" class="custom-collapse">
+                <el-collapse-item title="背景属性设置" name="backgroundControl">
+                  <div class="attrs-setting-item">
+                    <el-text class="attrs-setting-item-title">
+                      背景位置
+                    </el-text>
+                    <div class="attrs-setting-item-content">
+                      <el-input v-model="pageConfig.backgroundPosition" placeholder="请输入" />
+                    </div>
                   </div>
-                </template>
-                <template v-else>
-                  <img class="w-full" :src="fileUrl" alt="" fit="contain">
-                  <div class="flex absolute top-2 right-2 z-99">
-                    <el-icon :size="20" @click.stop="deleteBg">
-                      <Delete />
-                    </el-icon>
+
+                  <div class="attrs-setting-item">
+                    <el-text class="attrs-setting-item-title">
+                      背景大小
+                    </el-text>
+                    <div class="attrs-setting-item-content">
+                      <el-input v-model="pageConfig.backgroundSize" placeholder="请输入" />
+                    </div>
                   </div>
-                </template>
-              </div>
-            </el-upload>
-          </div>
-        </div>
 
-        <el-collapse v-model="backgroundCoolapse" class="custom-collapse">
-          <el-collapse-item title="背景属性设置" name="backgroundControl">
-            <div class="attrs-setting-item">
-              <el-text class="attrs-setting-item-title">
-                背景位置
-              </el-text>
-              <div class="attrs-setting-item-content">
-                <el-input v-model="pageConfig.backgroundPosition" placeholder="请输入" />
+                  <div class="attrs-setting-item">
+                    <el-text class="attrs-setting-item-title">
+                      背景重复
+                    </el-text>
+                    <div class="attrs-setting-item-content">
+                      <el-select v-model="pageConfig.backgroundRepeat">
+                        <el-option value="repeat" label="repeat" />
+                        <el-option value="repeat-x" label="repeat-x" />
+                        <el-option value="repeat-y" label="repeat-y" />
+                        <el-option value="no-repeat" label="no-repeat" />
+                      </el-select>
+                    </div>
+                  </div>
+                </el-collapse-item>
+              </el-collapse>
+
+              <div class="attrs-setting-item" style="border-bottom: none;">
+                <el-text class="attrs-setting-item-title">
+                  主题颜色
+                </el-text>
+                <div class="attrs-setting-item-content" />
+              </div>
+
+              <div class="theme-config">
+                <div
+                  v-for="(item, key) in themeColor" :key="item.name"
+                  :style="{ borderTop: `2px solid ${showThemeBorderColor(key)}` }"
+                  :class="[`color-line theme-color-${key}`, pageConfig.theme === key ? 'active' : '']"
+                  @click="selectThemeColor(key)"
+                >
+                  <label>{{ item.name }}</label>
+                  <div class="color-item-box">
+                    <span
+                      v-for="color in item.colors" :key="color" class="color-item"
+                      :style="{ backgroundColor: color }"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
-
-            <div class="attrs-setting-item">
-              <el-text class="attrs-setting-item-title">
-                背景大小
-              </el-text>
-              <div class="attrs-setting-item-content">
-                <el-input v-model="pageConfig.backgroundSize" placeholder="请输入" />
-              </div>
-            </div>
-
-            <div class="attrs-setting-item">
-              <el-text class="attrs-setting-item-title">
-                背景重复
-              </el-text>
-              <div class="attrs-setting-item-content">
-                <el-select v-model="pageConfig.backgroundRepeat">
-                  <el-option value="repeat" label="repeat" />
-                  <el-option value="repeat-x" label="repeat-x" />
-                  <el-option value="repeat-y" label="repeat-y" />
-                  <el-option value="no-repeat" label="no-repeat" />
-                </el-select>
-              </div>
-            </div>
-          </el-collapse-item>
-        </el-collapse>
-
-        <div class="title">
-          <span>主题颜色</span>
-          <svg-icon name="调色板" size="1.15em" />
-        </div>
-        <div class="config-item theme-config">
-          <div
-            v-for="(item, key) in themeColor" :key="item.name"
-            :style="{ borderTop: `2px solid ${showThemeBorderColor(key)}` }"
-            :class="[`color-line theme-color-${key}`, pageConfig.theme === key ? 'active' : '']"
-            @click="selectThemeColor(key)"
-          >
-            <label>{{ item.name }}</label>
-            <div class="color-item-box">
-              <span v-for="color in item.colors" :key="color" class="color-item" :style="{ backgroundColor: color }" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </el-scrollbar>
+          </el-scrollbar>
+        </el-tab-pane>
+        <el-tab-pane label="全局数据">
+          Role
+        </el-tab-pane>
+        <el-tab-pane label="页面级事件">
+          呃呃呃
+        </el-tab-pane>
+      </el-tabs>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-$themeColor: v-bind(themeColor);
-
 .canvas-attr-list-container {
   width: 100%;
   height: 100%;
-  // padding: 10px;
+  padding: 12px;
   font-size: 14px;
   font-weight: 700;
+  display: flex;
+  flex-direction: column;
   // overflow-y: scroll;
 
   .title {
@@ -206,6 +224,7 @@ $themeColor: v-bind(themeColor);
     font-size: 14px;
     font-weight: 700;
     height: 35px;
+    flex-shrink: 0;
     width: 100%;
     border-radius: 6px;
     background-color: #fff;
@@ -219,10 +238,27 @@ $themeColor: v-bind(themeColor);
   }
 
   .canvas-attr-list-content {
-    border: var(--el-border);
-    background-color: var(--el-bg-color);
-    margin-bottom: 12px;
-    padding: 15px;
+    width: 100%;
+    flex: 1;
+    height: 0;
+
+    .attrs-tabs {
+      :deep(.el-tabs__content) {
+        flex: 1;
+        height: 0;
+        padding: 0;
+
+        .el-tab-pane {
+          width: 100%;
+          height: 100%;
+        }
+      }
+    }
+
+    .attrs-setting-content {
+      width: 100%;
+      height: 100%;
+    }
 
     .attrs-setting-item {
       display: flex;
@@ -244,26 +280,6 @@ $themeColor: v-bind(themeColor);
     }
   }
 
-  .config-item {
-    width: 100%;
-    margin-bottom: 20px;
-    display: flex;
-    // align-items: center;
-    align-items: flex-start;
-
-    &>label {
-      width: 60px;
-      margin-right: 8px;
-      height: 32px;
-      line-height: 32px;
-    }
-
-    .config-content {
-      flex: 1;
-      width: 0;
-    }
-  }
-
   // .background-img-config {
   //   align-items: flex-start;
 
@@ -276,18 +292,6 @@ $themeColor: v-bind(themeColor);
   //     }
   //   }
   // }
-
-  .color-config {
-    //position: relative;
-    //.color-pick-value {
-    //    display: inline-flex;
-    //    width: 200px;
-    //    position: absolute;
-    //    left: -200px;
-    //    align-items: center;
-    //    transform: translateX(100%);
-    //}
-  }
 
   .theme-config {
     display: flex;
@@ -354,10 +358,6 @@ $themeColor: v-bind(themeColor);
     }
   }
 
-  .custom-upload-container {
-    // padding: var(--el-upload-dragger-padding-horizontal) var(--el-upload-dragger-padding-vertical);
-  }
-
   .custom-collapse {
     border-top: none;
 
@@ -365,21 +365,5 @@ $themeColor: v-bind(themeColor);
       padding-left: 20px;
     }
   }
-}
-</style>
-
-<style lang="scss">
-.canvas-attr-list-container {
-  .color-config .el-color-picker {
-    flex: 1;
-
-    .el-color-picker__trigger {
-      width: 100%;
-    }
-  }
-}
-
-.color-popper-container .el-color-dropdown__btns button {
-  display: none;
 }
 </style>

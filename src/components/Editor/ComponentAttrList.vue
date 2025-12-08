@@ -67,6 +67,7 @@ function addParamsToData(data: any, currentLevel = 1, key = '') {
     font-size: 14px;
     font-weight: 700;
     height: 35px;
+    flex-shrink: 0;
     width: 100%;
     border-radius: 6px;
     background-color: #fff;
