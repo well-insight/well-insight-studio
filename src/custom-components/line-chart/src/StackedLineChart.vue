@@ -1,15 +1,8 @@
 <script lang="ts" setup>
+import type { IProps } from './props'
 import { onMounted, ref } from 'vue'
 
-const props = defineProps({
-  chartOption: {
-    type: Object,
-    default: () => {
-      return {
-      }
-    },
-  },
-})
+const props = withDefaults(defineProps<IProps>(), {})
 
 const options = ref({
   title: {

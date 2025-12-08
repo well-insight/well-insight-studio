@@ -3,7 +3,7 @@ import type { InputEmits, InputProps } from 'element-plus'
 import { ElInput, inputEmits } from 'element-plus'
 
 const props = withDefaults(defineProps<InputProps>(), {
-  size: 'small',
+  size: 'default',
   placeholder: '请输入',
 })
 

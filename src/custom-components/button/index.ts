@@ -8,3 +8,7 @@ export default [
     config: componentConfig,
   },
 ]
+
+export {
+  Button,
+}

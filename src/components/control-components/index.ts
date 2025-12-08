@@ -1,4 +1,4 @@
-import { Background } from './background'
+import { ColorPicker } from './color-picker'
 import { Input, InputNumber } from './input'
 import { Style } from './style'
 
@@ -15,7 +15,7 @@ export function getComponent(key: string) {
     return Style
   }
 
-  if (key === 'Background') {
-    return Background
+  if (key === 'ColorPicker') {
+    return ColorPicker
   }
 }

@@ -70,7 +70,7 @@ watch(() => pageConfig.value.backgroundImage, (n) => {
                 </el-text>
                 <div class="attrs-setting-item-content">
                   <el-input v-model="pageConfig.width" type="number" :min="1">
-                    <template #suffix>
+                    <template #append>
                       px
                     </template>
                   </el-input>
@@ -83,7 +83,7 @@ watch(() => pageConfig.value.backgroundImage, (n) => {
                 </el-text>
                 <div class="attrs-setting-item-content">
                   <el-input v-model="pageConfig.height" type="number" :min="1">
-                    <template #suffix>
+                    <template #append>
                       px
                     </template>
                   </el-input>
@@ -196,10 +196,10 @@ watch(() => pageConfig.value.backgroundImage, (n) => {
           </el-scrollbar>
         </el-tab-pane>
         <el-tab-pane label="全局数据">
-          Role
+          <el-empty description="开发中" />
         </el-tab-pane>
         <el-tab-pane label="页面级事件">
-          呃呃呃
+          <el-empty description="开发中" />
         </el-tab-pane>
       </el-tabs>
     </div>

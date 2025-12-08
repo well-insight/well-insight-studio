@@ -35,21 +35,37 @@ const baseConfigs: ComponentConfig[] = [
     value: 'style',
     children: [
       {
+        title: '左边距',
+        key: 'InputNumber',
+        value: 'left',
+        props: {
+          unit: 'px'
+        }
+      },
+      {
+        title: '上边距',
+        key: 'InputNumber',
+        value: 'top',
+        props: {
+          unit: 'px'
+        }
+      },
+      {
         title: '宽度',
-        key: 'Input',
+        key: 'InputNumber',
         value: 'width',
         default: '500px',
       },
       {
         title: '高度',
-        key: 'Input',
+        key: 'InputNumber',
         value: 'height',
         default: '300px',
       },
       {
         title: '背景',
-        key: 'Background',
-        value: 'background',
+        key: 'ColorPicker',
+        value: 'backgroundColor',
         default: '#ffffff',
       },
     ],

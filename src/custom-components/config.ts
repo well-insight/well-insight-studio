@@ -78,7 +78,7 @@ export default [
           {
             id: uuid(),
             type: 'element',
-            component: 'w-button', // 组件名称，需要提前注册到 Vue
+            component: 'WButton', // 组件名称，需要提前注册到 Vue
             label: '按钮', // 左侧组件列表中显示的名字
           },
         ],

@@ -52,7 +52,8 @@ const chartList = computed(() => {
   })
 
   return list
-})
+}, { onTrigger: () => {
+} })
 
 function selectLayerIndex(index: number) {
   activeLayerIndex.value = index

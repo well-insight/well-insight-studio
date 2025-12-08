@@ -38,14 +38,14 @@ function addParamsToData(data: any, currentLevel = 1, key = '') {
       <el-tab-pane label="基础">
         <AeerListRender :configs="configs" collapse-all />
       </el-tab-pane>
-      <el-tab-pane label="动画">
+      <!-- <el-tab-pane label="动画">
         Config
-      </el-tab-pane>
+      </el-tab-pane> -->
       <el-tab-pane label="数据">
-        Role
+        <el-empty description="开发中" />
       </el-tab-pane>
       <el-tab-pane label="事件">
-        Task
+        <el-empty description="开发中" />
       </el-tab-pane>
     </el-tabs>
   </div>

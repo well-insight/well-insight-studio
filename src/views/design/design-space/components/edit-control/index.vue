@@ -129,10 +129,10 @@ function setWrapPositionSize() {
       const canvasW = canvasRef.value.clientWidth
       const canvasH = canvasRef.value.clientHeight
       if (canvasW > canvasH) {
-        sliderConfig.scaleValue = ~~(((Number(wrapW) - 200) / canvasW) * 100) // 数字取整
+        sliderConfig.scaleValue = ~~(((Number(wrapW) - 100) / canvasW) * 100) // 数字取整
       }
       else {
-        sliderConfig.scaleValue = ~~(((Number(wrapH) - 200) / canvasH) * 100) // 数字取整
+        sliderConfig.scaleValue = ~~(((Number(wrapH) - 100) / canvasH) * 100) // 数字取整
       }
       const scale = sliderConfig.scaleValue / 100
       const x = ($wrap.value?.clientWidth - canvasRef.value.clientWidth * scale) / 2
@@ -172,19 +172,32 @@ onMounted(() => {
 
 // 自定义组件
 const componentData = computed(() => {
-  const data = deisgnStore.$state.componentsInCanvas
+  const data = deisgnStore.componentsInCanvas
   return data.map((e) => {
     const width = Number.parseInt(e.style?.width || 0)
     const height = Number.parseInt(e.style?.height || 0)
     return {
       ...e,
-      initH: height,
-      initW: width,
+      // initH: height,
+      // initW: width,
+      h: height,
+      w: width,
       x: Number.parseInt(e.style?.left || 0),
       y: Number.parseInt(e.style?.top || 0),
     }
   })
 })
+
+function shapeContentStyle(config: any) {
+  return {
+    backgroundColor: config?.style?.backgroundColor || '',
+  } as CSSProperties
+}
+
+// watch(componentData, (n) => {
+// }, {
+//   deep: true,
+// })
 
 function dragEnd({ x, y }: { x: number, y: number }) {
   console.log(x, y, shapeRef.value)
@@ -192,6 +205,18 @@ function dragEnd({ x, y }: { x: number, y: number }) {
 
 function resizeEnd() {
 
+}
+
+function dragging(index: number, { x, y }: { x: number, y: number }) {
+  deisgnStore.updateCurrentComponentConfig('style.left', `${x}px`, index)
+  deisgnStore.updateCurrentComponentConfig('style.top', `${y}px`, index)
+}
+
+function resizing(index: number, { x, y, h, w }: { x: number, y: number, w: number, h: number }) {
+  deisgnStore.updateCurrentComponentConfig('style.left', `${x}px`, index)
+  deisgnStore.updateCurrentComponentConfig('style.top', `${y}px`, index)
+  deisgnStore.updateCurrentComponentConfig('style.height', `${h}px`, index)
+  deisgnStore.updateCurrentComponentConfig('style.width', `${w}px`, index)
 }
 
 function activated(index: number) {
@@ -305,15 +330,22 @@ getComponents()
                 <template v-for="(item, index) in componentData" :key="item.id + item.id">
                   <VueDraggableResizable
                     ref="shapeRef"
-                    :class-name="$style['drag-resize']" :init-h="item.initH" :init-w="item.initW"
-                    :x="item.x" :y="item.y"
+                    :class-name="$style['drag-resize']"
+                    :x="item.x"
+                    :y="item.y"
+                    :h="item.h"
+                    :w="item.w"
                     :scale="scaleValueReal"
+                    @dragging="(data) => dragging(index, data)"
+                    @resizing="(data) => resizing(index, data)"
                     @drag-end="dragEnd"
                     @resize-end="resizeEnd"
                     @activated="activated(index)"
                     @deactivated="deactivated(index)"
                   >
-                    <component :is="item.component" class="custom-component-class" :chart-option="item.chartOption" />
+                    <div class="shape-content" :style="shapeContentStyle(item)">
+                      <component :is="item.component" class="custom-component-class" :chart-option="item.chartOption" />
+                    </div>
                   </VueDraggableResizable>
                 </template>
 
@@ -404,6 +436,11 @@ getComponents()
               width: 100%;
               height: 100%;
               pointer-events: none;
+            }
+
+            .shape-content {
+              width: 100%;
+              height: 100%;
             }
 
           }
