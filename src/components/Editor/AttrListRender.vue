@@ -35,11 +35,11 @@ function changeCurrenComponentConfig(m: any, e: ComponentConfig) {
       <el-collapse-item v-if="e?.children?.length" :title="e?.title" :name="e?.value">
         <AttrListRender :configs="e?.children" />
       </el-collapse-item>
-      <div v-else class="w-full flex h-[50px] items-center attrs-setting-item">
-        <el-text class="w-[30%]">
+      <div v-else class="items-center attrs-setting-item">
+        <el-text class="attrs-setting-item-title">
           {{ e?.title }}
         </el-text>
-        <div class="flex-auto w-0">
+        <div class="attrs-setting-item-content">
           <component
             :is="getComponent(e?.key)" :model-value="get(currentComponentConfig, e.path || '')"
             v-bind="e?.props" @update:model-value="(m: any) => changeCurrenComponentConfig(m, e)"
@@ -52,7 +52,22 @@ function changeCurrenComponentConfig(m: any, e: ComponentConfig) {
 
 <style lang='scss' scoped>
 .attrs-setting-item {
-  border-bottom: 1px solid var(--el-collapse-border-color);
+  display: flex;
+  align-items: flex-start;
+  border-bottom: var(--el-border);
+  padding: 12px 0;
+
+  .attrs-setting-item-title {
+    width: 30%;
+    line-height: var(--el-component-size);
+    height: var(--el-component-size);
+    align-self: baseline;
+  }
+
+  .attrs-setting-item-content {
+    flex: 1;
+    width: 0;
+  }
 }
 
 .custom-collapse {

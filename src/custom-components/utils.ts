@@ -39,16 +39,16 @@ const baseConfigs: ComponentConfig[] = [
         key: 'InputNumber',
         value: 'left',
         props: {
-          unit: 'px'
-        }
+          unit: 'px',
+        },
       },
       {
         title: '上边距',
         key: 'InputNumber',
         value: 'top',
         props: {
-          unit: 'px'
-        }
+          unit: 'px',
+        },
       },
       {
         title: '宽度',
@@ -64,8 +64,8 @@ const baseConfigs: ComponentConfig[] = [
       },
       {
         title: '背景',
-        key: 'ColorPicker',
-        value: 'backgroundColor',
+        key: 'Background',
+        value: 'background',
         default: '#ffffff',
       },
     ],

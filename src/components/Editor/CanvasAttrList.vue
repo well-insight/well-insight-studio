@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { computed, reactive, ref, watch } from 'vue'
 import { themeColor } from '@/hooks/useEchartTheme'
 import { useDesignStore } from '@/stores/design'
+import { BackgroundRepeat } from '../control-components/background'
 
 const uploadImage = ref<UploadFile[]>([])
 
@@ -158,12 +159,7 @@ watch(() => pageConfig.value.backgroundImage, (n) => {
                       背景重复
                     </el-text>
                     <div class="attrs-setting-item-content">
-                      <el-select v-model="pageConfig.backgroundRepeat">
-                        <el-option value="repeat" label="repeat" />
-                        <el-option value="repeat-x" label="repeat-x" />
-                        <el-option value="repeat-y" label="repeat-y" />
-                        <el-option value="no-repeat" label="no-repeat" />
-                      </el-select>
+                      <BackgroundRepeat v-model="pageConfig.backgroundRepeat" />
                     </div>
                   </div>
                 </el-collapse-item>

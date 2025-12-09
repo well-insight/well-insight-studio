@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'vue'
 import type { Compnents, designListType, PageConfig } from '@/type'
 import { dayjs } from 'element-plus'
 import { isNumber, set } from 'lodash-es'
@@ -9,7 +10,7 @@ export interface DsignStateTypes {
   curComponentIndex: number
   canvasScale: number
   componentsInCanvas: any[]
-  pageConfig: PageConfig
+  pageConfig: PageConfig & Partial<CSSProperties>
   componentConfig: any
   designList: designListType[]
 }
@@ -27,10 +28,13 @@ export const useDesignStore = defineStore('design', {
         img: '平台', // 封面
         width: 1920,
         height: 1080,
-        backgroundColor: '#f2f3f5',
         adapter: 'auto',
         theme: 'light',
         status: 'success',
+        backgroundColor: '#f2f3f5',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center center',
+        backgroundSize: '100% 100%',
       },
       designList: [],
     }
