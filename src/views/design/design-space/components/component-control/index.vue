@@ -18,11 +18,18 @@ const activeComponentIndex = ref(0) // 选择组件 index
 const activeLayerIndex = ref(0) // 选择 类型 index
 
 const layerList = computed(() => {
-  return [{
-    name: '全部',
-    components: [],
-    value: 'all',
-  }, ...(List || [])[activeComponentIndex.value]?.list || []]
+  return [...(List || [])[activeComponentIndex.value]?.list || []]?.map((e) => {
+    return {
+      ...e,
+      components: e?.components?.map((s) => {
+        const config = customComponents?.find(u => u?.name === s?.component)?.config
+        return {
+          ...getComponentConfig(s?.component, config),
+          ...s,
+        }
+      }),
+    }
+  })
 })
 
 function selectComponentList(index: number) {
@@ -78,15 +85,31 @@ function handleDragStart(e: any, item: Compnents) {
         <span class="title">{{ item.title }}</span>
       </li>
     </ul>
+
     <ul class="layer-list">
       <li
         v-for="(item, index) in layerList" :key="item.name" :class="activeLayerIndex === index ? 'active' : ''"
         @click="selectLayerIndex(index)"
       >
-        {{ item.name }}
+        <div class="flex flex-col gap-2">
+          <el-text>
+            {{ item.name }}
+          </el-text>
+          <div class="flex flex-col gap-2">
+            <el-card v-for="e in item?.components" :key="e?.id" shadow="never" class="w-full h-full custom-card">
+              <template #header>
+                {{ e.label }}
+              </template>
+              <div class="layer-content">
+                <Html2Canvas :component-data="e" />
+                <!-- <svg-icon :name="item.icon" style="width: 90%; height: 90%"></svg-icon> -->
+              </div>
+            </el-card>
+          </div>
+        </div>
       </li>
     </ul>
-    <ul class="chart-list">
+    <!-- <ul class="chart-list">
       <li
         v-for="(item, index) in chartList" :key="index + item.id" draggable="true" :data-index="index"
         @dragstart="handleDragStart($event, item)"
@@ -97,11 +120,10 @@ function handleDragStart(e: any, item: Compnents) {
           </template>
           <div class="layer-content">
             <Html2Canvas :component-data="item" />
-            <!-- <svg-icon :name="item.icon" style="width: 90%; height: 90%"></svg-icon> -->
           </div>
         </el-card>
       </li>
-    </ul>
+    </ul> -->
   </div>
 </template>
 
@@ -156,11 +178,11 @@ function handleDragStart(e: any, item: Compnents) {
   }
 
   .layer-list {
-    width: 80px;
+    width: 0;
+    flex: 1;
     height: 100%;
     background-color: #fff;
-    padding: 12px 0 12px 12px;
-    font-weight: 700;
+    padding: 12px;
 
     li {
       list-style: none;
@@ -179,50 +201,6 @@ function handleDragStart(e: any, item: Compnents) {
     }
   }
 
-  .chart-list {
-    width: 0;
-    flex: 1;
-    height: 100%;
-    background-color: #fff;
-    padding: 12px;
-    overflow-y: auto;
-
-    &::-webkit-scrollbar {
-      /*滚动条整体样式*/
-      width: 0px;
-      /*高宽分别对应横竖滚动条的尺寸*/
-      height: 0px;
-    }
-
-    li {
-      width: 100%;
-      height: 150px;
-      display: block;
-      list-style: none;
-      margin-bottom: 10px;
-
-      .layer-content {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-
-        .svg-icon {
-          transition: all .4s;
-          max-height: 100px;
-        }
-
-        &:hover {
-          .svg-icon {
-            width: 100% !important;
-            height: 100% !important;
-          }
-        }
-      }
-    }
-  }
 }
 
 .custom-card {
