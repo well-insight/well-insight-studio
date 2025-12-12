@@ -2,7 +2,10 @@
 import type { CSSProperties } from 'vue'
 import { ref } from 'vue'
 import { ColorPicker } from '../color-picker'
+import { ImageUploader } from '../uploader'
 import BackgroundRepeat from './BackgroundRepeat.vue'
+
+
 
 const modelForm = ref({
   backgroundColor: '#ffffff',
@@ -11,6 +14,8 @@ const modelForm = ref({
   backgroundRepeat: 'no-repeat',
   backgroundSize: '100% 100%',
 })
+
+
 </script>
 
 <template>
@@ -24,7 +29,7 @@ const modelForm = ref({
         <ColorPicker v-model="modelForm.backgroundColor" />
       </el-form-item>
       <el-form-item label="背景图片">
-        <el-input v-model="modelForm.backgroundImage" />
+        <ImageUploader v-model="modelForm.backgroundImage" />
       </el-form-item>
       <el-form-item label="背景位置">
         <el-input v-model="modelForm.backgroundPosition" />

@@ -1,12 +1,13 @@
 import type { ComponentConfig } from './types'
 import { cloneDeep } from 'lodash-es'
+import { uuid } from '@/utils'
 
 const baseConfigs: ComponentConfig[] = [
   {
     title: '组件标识',
     key: 'Input',
     value: 'id',
-    default: '',
+    default: uuid(),
     props: {
       disabled: true,
     },
@@ -71,6 +72,10 @@ const baseConfigs: ComponentConfig[] = [
     ],
   },
 ]
+
+export function getBaseConfigs() {
+  return 
+}
 
 export function withConfigs(configs?: ComponentConfig[]) {
   const dataList = cloneDeep(baseConfigs)

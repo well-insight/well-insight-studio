@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { Compnents } from '@/type'
+import { Connection } from '@element-plus/icons-vue'
 import { computed, ref } from 'vue'
 import Html2Canvas from '@/components/Html2canvas/index.vue'
 import customComponents from '@/custom-components'
@@ -26,11 +27,13 @@ const layerList = computed(() => {
         return {
           ...getComponentConfig(s?.component, config),
           ...s,
-        }
+        } as Compnents
       }),
     }
   })
 })
+
+const groupActive = computed(() => layerList.value?.map(e => e.name))
 
 function selectComponentList(index: number) {
   activeComponentIndex.value = index
@@ -59,8 +62,10 @@ const chartList = computed(() => {
   })
 
   return list
-}, { onTrigger: () => {
-} })
+}, {
+  onTrigger: () => {
+  },
+})
 
 function selectLayerIndex(index: number) {
   activeLayerIndex.value = index
@@ -87,27 +92,47 @@ function handleDragStart(e: any, item: Compnents) {
     </ul>
 
     <ul class="layer-list">
-      <li
-        v-for="(item, index) in layerList" :key="item.name" :class="activeLayerIndex === index ? 'active' : ''"
-        @click="selectLayerIndex(index)"
-      >
-        <div class="flex flex-col gap-2">
-          <el-text>
-            {{ item.name }}
-          </el-text>
-          <div class="flex flex-col gap-2">
+      <el-scrollbar class="wf-ull h-full" view-style="padding: 12px">
+        <el-collapse v-model="groupActive" expand-icon-position="left">
+          <el-collapse-item v-for="(item) in layerList" :key="item.name" :title="item.name" :name="item.name">
+            <template #icon>
+              <el-icon><Connection /></el-icon>
+            </template>
+            <el-card
+              v-for="(e, i) in item?.components" :key="e?.id" shadow="never" class="w-full h-full custom-card" draggable="true" :data-index="i"
+              @dragstart="handleDragStart($event, e)"
+            >
+              <template #header>
+                {{ e.label }}
+              </template>
+              <div class="layer-content">
+                <Html2Canvas :component-data="e" />
+              <!-- <svg-icon :name="item.icon" style="width: 90%; height: 90%"></svg-icon> -->
+              </div>
+            </el-card>
+          </el-collapse-item>
+        </el-collapse>
+      </el-scrollbar>
+
+      <!-- <li v-for="(item, index) in layerList" :key="item.name">
+        <div class="flex flex-col gap-2 w-full">
+          <div class="layer-group-title">
+            <span>
+              {{ item.name }}
+            </span>
+          </div>
+          <div class="flex flex-col gap-2 w-full">
             <el-card v-for="e in item?.components" :key="e?.id" shadow="never" class="w-full h-full custom-card">
               <template #header>
                 {{ e.label }}
               </template>
               <div class="layer-content">
                 <Html2Canvas :component-data="e" />
-                <!-- <svg-icon :name="item.icon" style="width: 90%; height: 90%"></svg-icon> -->
               </div>
             </el-card>
           </div>
         </div>
-      </li>
+      </li> -->
     </ul>
     <!-- <ul class="chart-list">
       <li
@@ -182,9 +207,55 @@ function handleDragStart(e: any, item: Compnents) {
     flex: 1;
     height: 100%;
     background-color: #fff;
-    padding: 12px;
+    // padding: 12px;
+
+    .layer-group-title {
+      padding: 12px;
+      border-radius: 4px;
+      border: var(--el-border);
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .custom-card {
+      display: flex;
+      flex-direction: column;
+      height: 150px;
+      width: 100%;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+
+      --el-card-padding: 12px;
+
+      :deep(.el-card__body) {
+        flex: 1;
+        height: 0;
+      }
+
+      .layer-content {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+
+        .svg-icon {
+          transition: all .4s;
+          max-height: 100px;
+        }
+
+        &:hover {
+          .svg-icon {
+            width: 100% !important;
+            height: 100% !important;
+          }
+        }
+      }
+    }
 
     li {
+      width: 100%;
       list-style: none;
       padding: 6px 10px;
       display: flex;
@@ -194,25 +265,9 @@ function handleDragStart(e: any, item: Compnents) {
       border-radius: 4px;
       cursor: pointer;
 
-      &.active {
-        background-color: var(--el-color-primary);
-        color: var(--el-color-white);
-      }
     }
   }
 
-}
-
-.custom-card {
-  display: flex;
-  flex-direction: column;
-
-  --el-card-padding: 12px;
-
-  :deep(.el-card__body) {
-    flex: 1;
-    height: 0;
-  }
 }
 </style>
 

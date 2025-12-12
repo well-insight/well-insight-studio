@@ -1,8 +1,31 @@
-<script lang='ts' setup></script>
+<script lang='ts' setup>
+import type { UploadFile } from 'element-plus'
+import { ref, watch } from 'vue'
+
+const fileUrl = defineModel<string>({ required: true, default: '' })
+const fileList = ref([])
+
+function uploadSuccess(file: UploadFile) {
+  if (file.status !== 'ready')
+    return
+  if (file) {
+    const reader = new FileReader()
+    reader.readAsDataURL(file.raw!)
+    reader.onload = (e) => {
+      fileUrl.value = (e.target?.result || '') as string
+    }
+  }
+}
+
+function deleteBg() {
+  fileUrl.value = ''
+  fileList.value = []
+}
+</script>
 
 <template>
   <el-upload
-    v-model:file-list="uploadImage" class="custom-upload" drag action="#" :multiple="false"
+    v-model:file-list="fileList" :class="$style['custom-upload']" drag action="#" :multiple="false"
     :show-file-list="false" :on-change="uploadSuccess"
   >
     <div class="flex items-center justify-center flex-col w-full relative h-full custom-upload-wrapper">
@@ -26,4 +49,20 @@
   </el-upload>
 </template>
 
-<style lang='scss' module></style>
+<style lang='scss' module>
+.custom-upload {
+  height: 180px;
+  width: 100%;
+
+  :global(.el-upload) {
+    height: 100%;
+    width: 100%;
+  }
+
+  :global(.el-upload-dragger) {
+    padding: 0;
+    height: 100%;
+    width: 100%;
+  }
+}
+</style>

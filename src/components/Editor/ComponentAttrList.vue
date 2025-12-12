@@ -34,9 +34,11 @@ function addParamsToData(data: any, currentLevel = 1, key = '') {
       <span>组件配置</span>
       <svg-icon name="预览" />
     </div>
-    <el-tabs type="border-card" class="w-full h-full" stretch>
+    <el-tabs type="border-card" :class="$style.tabs" class="w-full flex-auto h-0" stretch>
       <el-tab-pane label="基础">
-        <AeerListRender :configs="configs" collapse-all />
+        <el-scrollbar view-style="padding: 12px">
+          <AeerListRender :configs="configs" collapse-all />
+        </el-scrollbar>
       </el-tab-pane>
       <!-- <el-tab-pane label="动画">
         Config
@@ -79,5 +81,21 @@ function addParamsToData(data: any, currentLevel = 1, key = '') {
     }
   }
 
+}
+</style>
+
+<style lang="scss" module>
+.tabs {
+  :global(.el-tabs__content) {
+    padding: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  :global(.el-tab-pane) {
+    padding: 0;
+    width: 100%;
+    height: 100%;
+  }
 }
 </style>
