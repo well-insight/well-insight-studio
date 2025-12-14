@@ -4,7 +4,7 @@ const color = defineModel<string>({ required: true, default: '#ffffff' })
 
 <template>
   <div class="w-full">
-    <el-color-picker v-model="color" show-alpha />
+    <el-color-picker v-model="color" v-bind="$attrs" show-alpha />
   </div>
 </template>
 
