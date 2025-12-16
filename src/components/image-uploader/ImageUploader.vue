@@ -235,10 +235,12 @@ function handlePreviewClose() { previewUrl.value = ''; previewVisible.value = fa
   <div class="image-uploader-container" :class="{ mobile: isMobile }">
     <!-- PC端：Element Plus -->
     <div v-if="!isMobile" class="pc-upload">
-      <el-upload :action="uploadUrl" :headers="headers" :file-list="elFileList" :limit="limit" :multiple="multiple"
+      <el-upload
+        :action="uploadUrl" :headers="headers" :file-list="elFileList" :limit="limit" :multiple="multiple"
         :accept="accept" :auto-upload="autoUpload" :disabled="disabled" :drag="drag"
         :before-upload="handleElBeforeUpload" :on-success="handleElSuccess" :on-error="handleElError"
-        :on-remove="handleElRemove" :on-exceed="handleElExceed" :on-progress="handleElProgress" :list-type="listType">
+        :on-remove="handleElRemove" :on-exceed="handleElExceed" :on-progress="handleElProgress" :list-type="listType"
+      >
         <div v-if="!disabled" class="upload-trigger">
           <ElIcon v-if="drag && !multiple" class="upload-icon">
             <UploadFilled />
@@ -263,11 +265,13 @@ function handlePreviewClose() { previewUrl.value = ''; previewVisible.value = fa
 
     <!-- 移动端：Vant -->
     <div v-else class="mobile-upload">
-      <van-uploader :file-list="vantFileList" :accept="accept" :max-size="fileSize * 1024 * 1024" :max-count="limit"
+      <van-uploader
+        :file-list="vantFileList" :accept="accept" :max-size="fileSize * 1024 * 1024" :max-count="limit"
         :multiple="multiple" :disabled="disabled" :upload-url="uploadUrl" :headers="headers" :auto-upload="autoUpload"
         :before-read="handleVantBeforeRead" preview-size="80" @delete="handleVantDelete" @oversize="handleVantOversize"
         @max-count="handleVantMaxCount" @upload-success="handleVantSuccess" @upload-fail="handleVantError"
-        @upload-progress="handleVantProgress">
+        @upload-progress="handleVantProgress"
+      >
         <van-button type="primary" size="normal" icon="plus" class="vant-upload-btn">
           {{ buttonText || (multiple ? '选择图片' : '上传图片') }}
         </van-button>
@@ -275,12 +279,16 @@ function handlePreviewClose() { previewUrl.value = ''; previewVisible.value = fa
     </div>
 
     <!-- 预览弹窗 -->
-    <ElDialog v-if="!isMobile && previewVisible" v-model="previewVisible" title="预览" width="80%" append-to-body
-      @close="handlePreviewClose">
+    <ElDialog
+      v-if="!isMobile && previewVisible" v-model="previewVisible" title="预览" width="80%" append-to-body
+      @close="handlePreviewClose"
+    >
       <img :src="previewUrl" alt="预览" class="preview-image">
     </ElDialog>
-    <van-image-preview v-if="isMobile && previewVisible" v-model:show="previewVisible" :images="[previewUrl]"
-      @close="handlePreviewClose" />
+    <van-image-preview
+      v-if="isMobile && previewVisible" v-model:show="previewVisible" :images="[previewUrl]"
+      @close="handlePreviewClose"
+    />
   </div>
 </template>
 
