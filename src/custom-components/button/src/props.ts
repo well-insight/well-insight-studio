@@ -1,8 +1,8 @@
 import type { ButtonProps as ElButtonProps } from 'element-plus'
-import type { BaseProps, ComponentConfig } from '@/custom-components/types'
+import type { ComponentBaseProps, ComponentConfig } from '@/custom-components/types'
 import { withConfigs } from '@/custom-components/utils'
 
-export interface ButtonProps extends BaseProps {
+export interface ButtonProps extends ComponentBaseProps {
   configs?: Partial<ElButtonProps> & { inputValue?: string }
 }
 

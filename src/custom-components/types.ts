@@ -1,6 +1,6 @@
 import type { Component, CSSProperties } from 'vue'
 
-export interface BaseProps {
+export interface ComponentBaseProps {
   id?: string
   type?: ComponentType // 元素类性
   component?: string // 组件名称，需要提前注册到 Vue
@@ -15,7 +15,7 @@ export interface BaseProps {
 
 export type ComponentType = 'chart' | 'element'
 
-export interface ComponentExport<T = BaseProps> {
+export interface ComponentExport<T = ComponentBaseProps> {
   name: string
   component: Component
   default?: T

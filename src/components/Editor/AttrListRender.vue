@@ -2,7 +2,7 @@
 import type { ComponentConfig } from '@/custom-components/types'
 import { get } from 'lodash-es'
 import { storeToRefs } from 'pinia'
-import { ref, watch } from 'vue'
+import { ref, watch, watchEffect } from 'vue'
 import { useDesignStore } from '@/stores/design'
 import { getComponent } from '../control-components'
 
@@ -21,8 +21,13 @@ const { currentComponentConfig } = storeToRefs(designStore)
 const activeNames = ref<string[]>([])
 
 watch(() => props?.configs, () => {
-  activeNames.value = props?.collapseAll === true ? props?.configs?.map(e => e?.value) || [] : []
+  activeNames.value = props?.collapseAll === true ? (props?.configs?.map(e => e?.value) || []) : []
 }, { immediate: true, deep: true })
+
+watchEffect(() => {
+  console.log('currentComponentConfig.value', currentComponentConfig.value)
+  // debugger
+})
 
 function changeCurrenComponentConfig(m: any, e: ComponentConfig) {
   designStore.updateCurrentComponentConfig(e.path!, m)

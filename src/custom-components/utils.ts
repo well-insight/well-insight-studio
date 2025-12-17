@@ -67,15 +67,19 @@ const baseConfigs: ComponentConfig[] = [
         title: '背景',
         key: 'Background',
         value: 'background',
-        default: '#ffffff',
+        default: {
+          backgroundColor: '#ffffff',
+          backgroundImage: '',
+          backgroundPosition: 'center center',
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: '100% 100%',
+        },
       },
     ],
   },
 ]
 
-export function getBaseConfigs() {
-  return 
-}
+export function getBaseConfigs() {}
 
 export function withConfigs(configs?: ComponentConfig[]) {
   const dataList = cloneDeep(baseConfigs)

@@ -189,8 +189,10 @@ const componentData = computed(() => {
 })
 
 function shapeContentStyle(config: any) {
+  const backgroundImage = config?.style?.background?.backgroundImage
+  const backgroundStyle = { ...(config?.style?.background || {}), backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'inherit' }
   return {
-    backgroundColor: config?.style?.backgroundColor || '',
+    ...backgroundStyle,
   } as CSSProperties
 }
 
@@ -329,22 +331,13 @@ getComponents()
                 <!-- 页面组件列表展示 -->
                 <template v-for="(item, index) in componentData" :key="item.id + item.id">
                   <VueDraggableResizable
-                    ref="shapeRef"
-                    :class-name="$style['drag-resize']"
-                    :x="item.x"
-                    :y="item.y"
-                    :h="item.h"
-                    :w="item.w"
-                    :scale="scaleValueReal"
-                    @dragging="(data) => dragging(index, data)"
-                    @resizing="(data) => resizing(index, data)"
-                    @drag-end="dragEnd"
-                    @resize-end="resizeEnd"
-                    @activated="activated(index)"
-                    @deactivated="deactivated(index)"
+                    ref="shapeRef" :class-name="$style['drag-resize']" :x="item.x" :y="item.y"
+                    :h="item.h" :w="item.w" :scale="scaleValueReal" @dragging="(data) => dragging(index, data)"
+                    @resizing="(data) => resizing(index, data)" @drag-end="dragEnd" @resize-end="resizeEnd"
+                    @activated="activated(index)" @deactivated="deactivated(index)"
                   >
                     <div class="shape-content" :style="shapeContentStyle(item)">
-                      <component :is="item.component" class="custom-component-class" :chart-option="item.chartOption" />
+                      <component :is="item.component" :chart-option="item.chartOption" />
                     </div>
                   </VueDraggableResizable>
                 </template>
@@ -441,6 +434,9 @@ getComponents()
             .shape-content {
               width: 100%;
               height: 100%;
+              display: flex;
+              justify-content: center;
+              align-items: center;
             }
 
           }
@@ -515,7 +511,8 @@ getComponents()
   transform: translateZ(0);
   /* 禁用亚像素抗锯齿（针对像素级渲染） */
   image-rendering: pixelated;
-  shape-rendering: crispEdges; /* SVG组件必备 */
+  shape-rendering: crispEdges;
+  /* SVG组件必备 */
 
 }
 </style>

@@ -1,9 +1,10 @@
 import type { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import Axios from 'axios'
+import { ElMessage } from 'element-plus'
+
 import { ResultEnum } from '@/enums/request-enum'
 
 import { useStorage } from '@/hooks/useStorage'
-
 import NProgress from '../progress'
 
 type AxiosConfig = {
@@ -58,14 +59,15 @@ class Http {
       (response: AxiosResponse) => {
         NProgress.done()
         // 与后端协定的返回字段
-        const { code, data } = response.data
+        const { data } = response.data
         // 判断请求是否成功
-        const isSuccess = response?.data?.code && code === ResultEnum.SUCCESS
+        const isSuccess = checkIsSuccess(response)
         if (isSuccess) {
           return data
         }
         else {
           // 处理请求错误
+          ElMessage.error(response.data?.message || response.data?.msg)
           console.error(response.data?.message || response.data?.msg)
           return Promise.reject(response.data)
         }
@@ -172,4 +174,9 @@ export default {
   delete<T = any>(url: string, data?: any, config?: AxiosConfig): Promise<T> {
     return http.request({ method: 'DELETE', url, data, ...config })
   },
+}
+
+function checkIsSuccess(response: AxiosResponse<any>) {
+  const { code, status } = response?.data || {}
+  return code === ResultEnum.SUCCESS || status === true || status === ResultEnum.SUCCESS
 }
