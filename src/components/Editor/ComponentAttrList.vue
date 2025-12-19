@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'
-import { computed } from 'vue'
+import { computed, watchEffect } from 'vue'
 import customComponents from '@/custom-components'
 import { useDesignStore } from '@/stores/design'
 import AeerListRender from './AttrListRender.vue'
@@ -21,7 +21,7 @@ function addParamsToData(data: any, currentLevel = 1, key = '') {
     const newItem = { ...item, level: currentLevel, path }
     // 如果有 children，递归处理子层级
     if (item.children && Array.isArray(item.children) && item.children.length > 0) {
-      newItem.children = addParamsToData(item.children, currentLevel + 1, item.value)
+      newItem.children = addParamsToData(item.children, currentLevel + 1, path)
     }
     return newItem
   })

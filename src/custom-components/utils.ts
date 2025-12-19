@@ -65,25 +65,70 @@ const baseConfigs: ComponentConfig[] = [
       },
       {
         title: '背景',
-        key: 'Background',
+        key: '_background',
         value: 'background',
-        default: {
-          backgroundColor: '#ffffff',
-          backgroundImage: '',
-          backgroundPosition: 'center center',
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: '100% 100%',
-        },
+        children: [
+          {
+            title: '背景颜色',
+            key: 'ColorPicker',
+            value: 'backgroundColor',
+            default: '#ffffff',
+          },
+          {
+            title: '背景颜色',
+            key: 'ImageUploader',
+            value: 'backgroundImage',
+            default: '',
+          },
+          {
+            title: '背景位置',
+            key: 'Input',
+            value: 'backgroundPosition',
+            default: 'center center',
+          },
+          {
+            title: '背景重复',
+            key: 'Select',
+            value: 'backgroundRepeat',
+            default: 'no-repeat',
+            props: {
+              options: [
+                {
+                  label: 'repeat',
+                  value: 'repeat'
+                },
+                {
+                  label: 'repeat-x',
+                  value: 'repeat-x'
+                },
+                {
+                  label: 'repeat-y',
+                  value: 'repeat-y'
+                },
+                {
+                  label: 'no-repeat',
+                  value: 'no-repeat'
+                }
+              ]
+            }
+          },
+          {
+            title: '背景大小',
+            key: 'Input',
+            value: 'backgroundSize',
+            default: '100% 100%',
+          },
+        ],
       },
     ],
   },
 ]
 
-export function getBaseConfigs() {}
+export function getBaseConfigs() { }
 
 export function withConfigs(configs?: ComponentConfig[]) {
   const dataList = cloneDeep(baseConfigs)
-    ;(configs || []).forEach((e) => {
+    ; (configs || []).forEach((e) => {
     const hasK = dataList.findIndex(u => u?.key === e?.key)
     if (hasK >= 0) {
       dataList.splice(hasK, 1, e)
