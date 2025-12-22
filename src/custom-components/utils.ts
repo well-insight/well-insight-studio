@@ -95,22 +95,22 @@ const baseConfigs: ComponentConfig[] = [
               options: [
                 {
                   label: 'repeat',
-                  value: 'repeat'
+                  value: 'repeat',
                 },
                 {
                   label: 'repeat-x',
-                  value: 'repeat-x'
+                  value: 'repeat-x',
                 },
                 {
                   label: 'repeat-y',
-                  value: 'repeat-y'
+                  value: 'repeat-y',
                 },
                 {
                   label: 'no-repeat',
-                  value: 'no-repeat'
-                }
-              ]
-            }
+                  value: 'no-repeat',
+                },
+              ],
+            },
           },
           {
             title: '背景大小',
@@ -121,6 +121,12 @@ const baseConfigs: ComponentConfig[] = [
         ],
       },
     ],
+  },
+  {
+    title: '动画',
+    key: 'Animations',
+    value: 'animations',
+    default: [''],
   },
 ]
 

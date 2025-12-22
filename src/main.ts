@@ -13,7 +13,7 @@ import router from './router/index' // 引入router
 import './styles/element/index.scss'
 import 'virtual:svg-icons-register'
 // import waycloudUI from '@waycloud/ui'
-import 'animate.css/animate.min.css' // 引入
+import 'animate.css' // 引入
 import 'virtual:uno.css'
 
 const app = createApp(App)

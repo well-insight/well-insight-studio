@@ -38,7 +38,7 @@ function changeCurrenComponentConfig(m: any, e: ComponentConfig) {
   <el-collapse v-model="activeNames" class="custom-collapse">
     <template v-for="e in configs" :key="e?.key">
       <el-collapse-item v-if="e?.children?.length" :title="e?.title" :name="e?.value">
-        <AttrListRender :configs="e?.children" collapse-all />
+        <AttrListRender :configs="e?.children" />
       </el-collapse-item>
       <div v-else class="items-center attrs-setting-item">
         <el-text class="attrs-setting-item-title">
