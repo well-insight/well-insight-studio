@@ -1,11 +1,24 @@
 <script lang='ts' setup>
 import type { ButtonProps } from './props'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = withDefaults(defineProps<ButtonProps>(), {
   configs: () => ({
     inputValue: '这是按钮',
   }),
+  style: () => {
+    return {
+      width: 'auto',
+      height: '32px',
+    }
+  },
+})
+
+const buttonOriginProps = computed(() => {
+  return {
+    ...props?.configs,
+    inputValue: undefined,
+  }
 })
 
 const compRef = ref()
@@ -15,7 +28,7 @@ defineExpose({
 </script>
 
 <template>
-  <el-button v-bind="configs" ref="compRef">
+  <el-button v-bind="buttonOriginProps" ref="compRef" :style="style">
     {{ configs?.inputValue }}
   </el-button>
 </template>

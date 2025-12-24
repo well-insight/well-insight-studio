@@ -8,6 +8,41 @@ export interface ButtonProps extends ComponentBaseProps {
 
 export const componentConfig: ComponentConfig[] = withConfigs([
   {
+    title: '样式',
+    key: '_style',
+    value: 'style',
+    children: [
+      {
+        title: '左边距',
+        key: 'InputNumber',
+        value: 'left',
+        props: {
+          unit: 'px',
+        },
+      },
+      {
+        title: '上边距',
+        key: 'InputNumber',
+        value: 'top',
+        props: {
+          unit: 'px',
+        },
+      },
+      {
+        title: '宽度',
+        key: 'InputNumber',
+        value: 'width',
+        default: 'auto',
+      },
+      {
+        title: '高度',
+        key: 'InputNumber',
+        value: 'height',
+        default: '32px',
+      },
+    ],
+  },
+  {
     key: '_configs',
     value: 'configs',
     title: '按钮配置',

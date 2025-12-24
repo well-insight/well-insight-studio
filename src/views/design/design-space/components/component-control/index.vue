@@ -19,17 +19,12 @@ const activeComponentIndex = ref(0) // 选择组件 index
 const activeLayerIndex = ref(0) // 选择 类型 index
 
 const layerList = computed(() => {
-  return [...(List || [])[activeComponentIndex.value]?.list || []]?.map((e) => {
+  return [...(List || [])[activeComponentIndex.value]?.list || []]?.map((s) => {
+    const config = customComponents?.find(u => u?.name === s?.component)?.config
     return {
-      ...e,
-      components: e?.components?.map((s) => {
-        const config = customComponents?.find(u => u?.name === s?.component)?.config
-        return {
-          ...getComponentConfig(s?.component, config),
-          ...s,
-        } as Compnents
-      }),
-    }
+      ...getComponentConfig(s?.component, config),
+      ...s,
+    } as Compnents
   })
 })
 
@@ -93,25 +88,18 @@ function handleDragStart(e: any, item: Compnents) {
 
     <ul class="layer-list">
       <el-scrollbar class="wf-ull h-full" view-style="padding: 12px">
-        <el-collapse v-model="groupActive" expand-icon-position="left">
-          <el-collapse-item v-for="(item) in layerList" :key="item.name" :title="item.name" :name="item.name">
-            <template #icon>
-              <el-icon><Connection /></el-icon>
-            </template>
-            <el-card
-              v-for="(e, i) in item?.components" :key="e?.id" shadow="never" class="w-full h-full custom-card" draggable="true" :data-index="i"
-              @dragstart="handleDragStart($event, e)"
-            >
-              <template #header>
-                {{ e.label }}
-              </template>
-              <div class="layer-content">
-                <Html2Canvas :component-data="e" />
-              <!-- <svg-icon :name="item.icon" style="width: 90%; height: 90%"></svg-icon> -->
-              </div>
-            </el-card>
-          </el-collapse-item>
-        </el-collapse>
+        <el-card
+          v-for="(e, i) in layerList" :key="e?.id" shadow="never" class="w-full h-full custom-card" draggable="true" :data-index="i"
+          @dragstart="handleDragStart($event, e)"
+        >
+          <template #header>
+            {{ e.label }}
+          </template>
+          <div class="layer-content">
+            <Html2Canvas :component-data="e" />
+            <!-- <svg-icon :name="item.icon" style="width: 90%; height: 90%"></svg-icon> -->
+          </div>
+        </el-card>
       </el-scrollbar>
 
       <!-- <li v-for="(item, index) in layerList" :key="item.name">
