@@ -6,12 +6,6 @@ const props = withDefaults(defineProps<ButtonProps>(), {
   configs: () => ({
     inputValue: '这是按钮',
   }),
-  style: () => {
-    return {
-      width: 'auto',
-      height: '32px',
-    }
-  },
 })
 
 const buttonOriginProps = computed(() => {
@@ -28,9 +22,14 @@ defineExpose({
 </script>
 
 <template>
-  <el-button v-bind="buttonOriginProps" ref="compRef" :style="style">
+  <el-button v-bind="buttonOriginProps" ref="compRef" :class="$style.input">
     {{ configs?.inputValue }}
   </el-button>
 </template>
 
-<style lang='scss' scoped></style>
+<style lang='scss' module>
+.input {
+  width: 100%;
+  height: 100%;
+}
+</style>

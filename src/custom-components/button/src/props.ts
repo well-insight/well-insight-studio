@@ -32,7 +32,7 @@ export const componentConfig: ComponentConfig[] = withConfigs([
         title: '宽度',
         key: 'InputNumber',
         value: 'width',
-        default: 'auto',
+        default: '120px',
       },
       {
         title: '高度',
@@ -55,27 +55,29 @@ export const componentConfig: ComponentConfig[] = withConfigs([
       },
       {
         title: '类型',
-        key: 'Radio',
+        key: 'Select',
         value: 'type',
         default: 'primary',
-        props: [
-          {
-            label: '默认',
-            value: 'primary',
-          },
-          {
-            label: '成功',
-            value: 'success',
-          },
-          {
-            label: '提示',
-            value: 'info',
-          },
-          {
-            label: '危险',
-            value: 'warnning',
-          },
-        ],
+        props: {
+          options: [
+            {
+              label: '默认',
+              value: 'primary',
+            },
+            {
+              label: '成功',
+              value: 'success',
+            },
+            {
+              label: '提示',
+              value: 'info',
+            },
+            {
+              label: '危险',
+              value: 'warnning',
+            },
+          ],
+        },
       },
     ],
   },

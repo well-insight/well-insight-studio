@@ -1,9 +1,11 @@
 <script lang='ts' setup>
 import { isNumber, isString } from 'lodash-es'
-import { computed, ref, watch, watchEffect } from 'vue'
+import { computed, ref, watchEffect } from 'vue'
 import { splitNumberUnit } from '@/utils/string'
 
 const props = withDefaults(defineProps<{ unit?: '' }>(), {})
+
+const emits = defineEmits(['change'])
 
 const moduleValue = defineModel<string | number | null | undefined>({ required: true, default: null })
 
@@ -19,6 +21,11 @@ function setInputValue(v: string) {
   else {
     moduleValue.value = Number(v)
   }
+}
+
+function changeValue() {
+  debugger
+  emits('change', moduleValue.value)
 }
 
 watchEffect(() => {
@@ -38,7 +45,7 @@ watchEffect(() => {
 </script>
 
 <template>
-  <el-input v-model="inputValue" placeholder="请输入" type="number" @input="setInputValue">
+  <el-input v-model="inputValue" placeholder="请输入" type="number" @input="setInputValue" @change="changeValue">
     <template v-if="showUnitValue" #append>
       {{ showUnitValue }}
     </template>

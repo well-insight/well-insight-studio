@@ -337,7 +337,7 @@ getComponents()
                     @activated="activated(index)" @deactivated="deactivated(index)"
                   >
                     <div class="shape-content" :style="shapeContentStyle(item)">
-                      <component :is="item.component" :chart-option="item.chartOption" />
+                      <component v-bind="item" :is="item.component" :chart-option="item.chartOption" />
                     </div>
                   </VueDraggableResizable>
                 </template>

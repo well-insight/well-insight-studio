@@ -55,6 +55,7 @@ declare module 'vue' {
     ElText: typeof import('element-plus/es')['ElText']
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
     ElUpload: typeof import('element-plus/es')['ElUpload']
+    Font: typeof import('./src/components/control-components/font/Font.vue')['default']
     Header: typeof import('./src/components/Header/index.vue')['default']
     Heart: typeof import('./src/components/Heart/index.vue')['default']
     Hello: typeof import('./src/components/Hello.vue')['default']
