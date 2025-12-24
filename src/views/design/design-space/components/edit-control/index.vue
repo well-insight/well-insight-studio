@@ -331,7 +331,7 @@ getComponents()
                 <!-- 页面组件列表展示 -->
                 <template v-for="(item, index) in componentData" :key="item.id + item.id">
                   <VueDraggableResizable
-                    ref="shapeRef" :class-name="[$style['drag-resize'], 'animate__animated animate__bounce']" :x="item.x" :y="item.y"
+                    ref="shapeRef" :class-name="[$style['drag-resize']]" :x="item.x" :y="item.y"
                     :h="item.h" :w="item.w" :scale="scaleValueReal" @dragging="(data) => dragging(index, data)"
                     @resizing="(data) => resizing(index, data)" @drag-end="dragEnd" @resize-end="resizeEnd"
                     @activated="activated(index)" @deactivated="deactivated(index)"

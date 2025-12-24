@@ -88,7 +88,7 @@ export default defineComponent({
 <template>
   <div class="sidebar-container" :class="isCollapse ? 'arrow' : 'expand'" :style="{ width: !isCollapse ? '200px' : '70px' }">
     <div class="logo" title="weiDesign" @click="router.push('/')">
-      <svg-icon name="lightning" size="40px" class="animate__animated animate__bounce" color="var(--el-color-primary)" />
+      <svg-icon name="lightning" size="40px" color="var(--el-color-primary)" />
       <span v-if="!isCollapse" class="title">DESIGNER</span>
     </div>
     <div class="sidebar-list">

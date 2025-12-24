@@ -1,6 +1,47 @@
 import { uuid } from '@/utils'
 
+export interface ComponentList {
+  title: string
+  icon: string
+  list: {
+    name: string
+    components: {
+      id: string
+      type: string
+      component: string
+      label: string
+    }[]
+  }[]
+}
+
 export default [
+  {
+    title: '基础',
+    icon: '小组件',
+    list: [
+      {
+        name: '按钮',
+        components: [
+          {
+            id: uuid(),
+            type: 'element',
+            component: 'WButton', // 组件名称，需要提前注册到 Vue
+            label: '按钮', // 左侧组件列表中显示的名字
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: '信息',
+    icon: '信息',
+    list: [],
+  },
+  {
+    title: '列表',
+    icon: '列表',
+    list: [],
+  },
   {
     title: '图表',
     icon: '图表',
@@ -58,31 +99,4 @@ export default [
       },
     ],
   },
-  {
-    title: '信息',
-    icon: '信息',
-    list: [],
-  },
-  {
-    title: '列表',
-    icon: '列表',
-    list: [],
-  },
-  {
-    title: '小组件',
-    icon: '小组件',
-    list: [
-      {
-        name: '按钮',
-        components: [
-          {
-            id: uuid(),
-            type: 'element',
-            component: 'WButton', // 组件名称，需要提前注册到 Vue
-            label: '按钮', // 左侧组件列表中显示的名字
-          },
-        ],
-      },
-    ],
-  },
-]
+] as ComponentList[]

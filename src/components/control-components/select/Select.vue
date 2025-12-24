@@ -4,7 +4,6 @@ import { selectProps } from 'element-plus'
 const props = defineProps(selectProps)
 
 const selectValue = defineModel<string>({ required: true, default: '' })
-debugger
 </script>
 
 <template>
