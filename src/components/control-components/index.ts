@@ -1,7 +1,8 @@
 import { Background, BackgroundRepeat } from './background'
 import { ColorPicker } from './color-picker'
+import { Font } from './font'
 import { Input, InputNumber } from './input'
-import Select from './select/Select.vue'
+import { Select } from './select'
 import { Style } from './style'
 import { ImageUploader } from './uploader'
 
@@ -36,5 +37,9 @@ export function getComponent(key: string) {
 
   if (key === 'Select') {
     return Select
+  }
+
+  if (key === 'Font') {
+    return Font
   }
 }

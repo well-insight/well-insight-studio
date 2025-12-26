@@ -1,9 +1,10 @@
 import type { ButtonProps as ElButtonProps } from 'element-plus'
+import type { CSSProperties } from 'vue'
 import type { ComponentBaseProps, ComponentConfig } from '@/custom-components/types'
 import { withConfigs } from '@/custom-components/utils'
 
 export interface ButtonProps extends ComponentBaseProps {
-  configs?: Partial<ElButtonProps> & { inputValue?: string }
+  configs?: Partial<ElButtonProps> & { inputValue?: string, font?: CSSProperties }
 }
 
 export const componentConfig: ComponentConfig[] = withConfigs([
@@ -77,6 +78,16 @@ export const componentConfig: ComponentConfig[] = withConfigs([
               value: 'warnning',
             },
           ],
+        },
+      },
+      {
+        key: 'Font',
+        title: '字体',
+        value: 'font',
+        default: {
+          fontSize: '14px',
+          fontWeight: '500',
+          fontStyle: 'normal',
         },
       },
     ],

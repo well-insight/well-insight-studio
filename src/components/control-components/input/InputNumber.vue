@@ -24,7 +24,6 @@ function setInputValue(v: string) {
 }
 
 function changeValue() {
-  debugger
   emits('change', moduleValue.value)
 }
 

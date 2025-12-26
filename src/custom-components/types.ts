@@ -21,7 +21,7 @@ export interface ComponentExport<T = ComponentBaseProps> {
   default?: T
 }
 
-type ConfigType = 'Input' | 'Animations' | 'Events' | 'Style' | 'Radio' | 'Background' | 'InputNumber' | 'ColorPicker' | 'Background' | 'ImageUploader' | 'BackgroundRepeat' | 'Select'
+type ConfigType = 'Input' | 'Animations' | 'Events' | 'Style' | 'Radio' | 'Background' | 'InputNumber' | 'ColorPicker' | 'Background' | 'ImageUploader' | 'BackgroundRepeat' | 'Select' | 'Font'
 
 export interface ComponentConfig {
   key: ConfigType | `_${string}`

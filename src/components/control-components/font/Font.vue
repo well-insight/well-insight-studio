@@ -1,34 +1,29 @@
 <script lang='ts' setup>
 import type { CSSProperties } from 'vue'
 import { ref, watch } from 'vue'
-import { ColorPicker } from '../color-picker'
-import { ImageUploader } from '../uploader'
-import BackgroundRepeat from './BackgroundRepeat.vue'
 
-const backgroundValue = defineModel<CSSProperties>({
+const modelValue = defineModel<CSSProperties>({
   default: {
-    backgroundColor: '#ffffff',
-    backgroundImage: '',
-    backgroundPosition: 'center center',
-    backgroundRepeat: 'no-repeat',
-    backgroundSize: '100% 100%',
+    fontSize: '14px',
+    fontWeight: '500',
+    fontStyle: 'normal',
   },
   required: true,
 })
 
 const modelForm = ref({
-  backgroundColor: '#ffffff',
-  backgroundImage: '',
-  backgroundPosition: 'center center',
-  backgroundRepeat: 'no-repeat',
-  backgroundSize: '100% 100%',
+  fontSize: '14px',
+  fontWeight: '500',
+  fontStyle: 'normal',
 })
 
-async function changeBackground() {
-  backgroundValue.value = modelForm.value
+const fontStyleOptions = [{ label: '正常', value: 'normal' }, { label: '斜体', value: 'italic' }]
+
+async function changeValue() {
+  modelValue.value = modelForm.value
 }
 
-watch(backgroundValue, (n) => {
+watch(modelValue, (n) => {
   modelForm.value = { ...modelForm.value, ...n } as typeof modelForm.value
 }, {
   immediate: true,
@@ -38,21 +33,15 @@ watch(backgroundValue, (n) => {
 
 <template>
   <div class="wfull flex flex-col">
-    <el-form class="w-full" label-position="top" label-width="aut o" :model="modelForm">
-      <el-form-item label="背景颜色" prop="backgroundColor">
-        <ColorPicker v-model="modelForm.backgroundColor" @change="changeBackground" />
+    <el-form class="w-full" label-position="top" label-width="auto" :model="modelForm">
+      <el-form-item label="字体大小" prop="fontSize">
+        <InputNumber v-model="modelForm.fontSize" @change="changeValue" />
       </el-form-item>
-      <el-form-item label="背景图片" prop="backgroundImage">
-        <ImageUploader v-model="modelForm.backgroundImage" @change="changeBackground" />
+      <el-form-item label="字体粗细" prop="fontWeight">
+        <InputNumber v-model="modelForm.fontSize" @change="changeValue" />
       </el-form-item>
-      <el-form-item label="背景位置" prop="backgroundPosition">
-        <el-input v-model="modelForm.backgroundPosition" @change="changeBackground" />
-      </el-form-item>
-      <el-form-item label="背景大小" prop="backgroundSize">
-        <el-input v-model="modelForm.backgroundSize" @change="changeBackground" />
-      </el-form-item>
-      <el-form-item label="背景重复" prop="backgroundRepeat">
-        <BackgroundRepeat v-model="modelForm.backgroundRepeat" @change="changeBackground" />
+      <el-form-item label="字体样式" prop="fontSize">
+        <el-select-v2 v-model="modelForm.fontStyle" :options="fontStyleOptions" @change="changeValue" />
       </el-form-item>
     </el-form>
   </div>
