@@ -1,23 +1,17 @@
 <script lang='ts' setup>
-import type { ButtonProps } from './props'
+import type { TextProps } from './props'
 import { computed, ref } from 'vue'
 
-const props = withDefaults(defineProps<ButtonProps>(), {
-  style: () => ({
-    width: '120px',
-    height: '32px',
-  }),
+const props = withDefaults(defineProps<TextProps>(), {
   configs: () => ({
-    inputValue: '这是按钮',
-    type: 'primary',
+    value: '这是文本',
   }),
 })
 
-const buttonOriginProps = computed(() => {
+const originProps = computed(() => {
   return {
     ...props?.configs,
-    inputValue: undefined,
-    font: undefined,
+    value: undefined,
   }
 })
 
@@ -38,14 +32,17 @@ defineExpose({
 </script>
 
 <template>
-  <el-button v-bind="buttonOriginProps" ref="compRef" :class="$style.input" :style="getStyle">
-    {{ configs?.inputValue }}
-  </el-button>
+  <el-text v-bind="originProps" ref="compRef" :class="$style.text" :style="getStyle">
+    {{ configs?.value }}
+  </el-text>
 </template>
 
 <style lang='scss' module>
-.input {
+.text {
   // width: 100%;
   // height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

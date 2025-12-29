@@ -1,10 +1,10 @@
-import type { ButtonProps as ElButtonProps } from 'element-plus'
+import type { TextProps as ElTextProps } from 'element-plus'
 import type { CSSProperties } from 'vue'
 import type { ComponentBaseProps, ComponentConfig } from '@/custom-components/types'
 import { withConfigs } from '@/custom-components/utils'
 
-export interface ButtonProps extends ComponentBaseProps {
-  configs?: Partial<ElButtonProps> & { inputValue?: string, font?: CSSProperties }
+export interface TextProps extends ComponentBaseProps {
+  configs?: Partial<ElTextProps> & { value?: string, font?: CSSProperties }
 }
 
 export const componentConfig: ComponentConfig[] = withConfigs([
@@ -16,8 +16,8 @@ export const componentConfig: ComponentConfig[] = withConfigs([
       {
         key: 'Input',
         title: '文字',
-        value: 'inputValue',
-        default: '这是按钮',
+        value: 'value',
+        default: '这是文本',
       },
       {
         title: '类型',
@@ -53,22 +53,6 @@ export const componentConfig: ComponentConfig[] = withConfigs([
     value: 'style',
     children: [
       {
-        title: '左边距',
-        key: 'InputNumber',
-        value: 'left',
-        props: {
-          unit: 'px',
-        },
-      },
-      {
-        title: '上边距',
-        key: 'InputNumber',
-        value: 'top',
-        props: {
-          unit: 'px',
-        },
-      },
-      {
         title: '宽度',
         key: 'InputNumber',
         value: 'width',
@@ -92,5 +76,4 @@ export const componentConfig: ComponentConfig[] = withConfigs([
       },
     ],
   },
-
 ])

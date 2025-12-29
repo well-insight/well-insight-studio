@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { Compnents } from '@/type'
-import { Connection } from '@element-plus/icons-vue'
+// import { Connection } from '@element-plus/icons-vue'
 import { computed, ref } from 'vue'
 import Html2Canvas from '@/components/Html2canvas/index.vue'
 import customComponents from '@/custom-components'

@@ -22,6 +22,54 @@ export default [
         component: 'WButton', // 组件名称，需要提前注册到 Vue
         label: '按钮', // 左侧组件列表中显示的名字
       },
+      {
+        id: uuid(),
+        type: 'element',
+        component: 'WText', // 组件名称，需要提前注册到 Vue
+        label: '文本', // 左侧组件列表中显示的名字
+      },
+      {
+        id: uuid(),
+        type: 'element',
+        component: 'WDivider', // 组件名称，需要提前注册到 Vue
+        label: '分割线', // 左侧组件列表中显示的名字
+      },
+      {
+        id: uuid(),
+        type: 'element',
+        component: 'WIcon', // 组件名称，需要提前注册到 Vue
+        label: '图标', // 左侧组件列表中显示的名字
+      },
+    ],
+  },
+  {
+    title: '表单',
+    icon: '信息',
+    list: [
+      {
+        id: uuid(),
+        type: 'element',
+        component: 'WInput', // 组件名称，需要提前注册到 Vue
+        label: '输入框', // 左侧组件列表中显示的名字
+      },
+      {
+        id: uuid(),
+        type: 'element',
+        component: 'WSelect', // 组件名称，需要提前注册到 Vue
+        label: '下拉选择', // 左侧组件列表中显示的名字
+      },
+      {
+        id: uuid(),
+        type: 'element',
+        component: 'WRadio', // 组件名称，需要提前注册到 Vue
+        label: '单选框', // 左侧组件列表中显示的名字
+      },
+      {
+        id: uuid(),
+        type: 'element',
+        component: 'WCheckBox', // 组件名称，需要提前注册到 Vue
+        label: '复选框', // 左侧组件列表中显示的名字
+      },
     ],
   },
   {

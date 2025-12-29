@@ -38,7 +38,7 @@ watch(modelValue, (n) => {
         <InputNumber v-model="modelForm.fontSize" @change="changeValue" />
       </el-form-item>
       <el-form-item label="字体粗细" prop="fontWeight">
-        <InputNumber v-model="modelForm.fontSize" @change="changeValue" />
+        <InputNumber v-model="modelForm.fontWeight" @change="changeValue" />
       </el-form-item>
       <el-form-item label="字体样式" prop="fontSize">
         <el-select-v2 v-model="modelForm.fontStyle" :options="fontStyleOptions" @change="changeValue" />

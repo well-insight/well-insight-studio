@@ -64,70 +64,35 @@ const baseConfigs: ComponentConfig[] = [
         default: '300px',
       },
       {
+        key: 'Font',
+        title: '字体',
+        value: 'font',
+        default: {
+          fontSize: '14px',
+          fontWeight: '500',
+          fontStyle: 'normal',
+        },
+      },
+      {
         title: '背景',
-        key: '_background',
+        key: 'Background',
         value: 'background',
-        children: [
-          {
-            title: '背景颜色',
-            key: 'ColorPicker',
-            value: 'backgroundColor',
-            default: '#ffffff',
-          },
-          {
-            title: '背景颜色',
-            key: 'ImageUploader',
-            value: 'backgroundImage',
-            default: '',
-          },
-          {
-            title: '背景位置',
-            key: 'Input',
-            value: 'backgroundPosition',
-            default: 'center center',
-          },
-          {
-            title: '背景重复',
-            key: 'Select',
-            value: 'backgroundRepeat',
-            default: 'no-repeat',
-            props: {
-              options: [
-                {
-                  label: 'repeat',
-                  value: 'repeat',
-                },
-                {
-                  label: 'repeat-x',
-                  value: 'repeat-x',
-                },
-                {
-                  label: 'repeat-y',
-                  value: 'repeat-y',
-                },
-                {
-                  label: 'no-repeat',
-                  value: 'no-repeat',
-                },
-              ],
-            },
-          },
-          {
-            title: '背景大小',
-            key: 'Input',
-            value: 'backgroundSize',
-            default: '100% 100%',
-          },
-        ],
+        default: {
+          backgroundColor: '#ffffff',
+          backgroundImage: '',
+          backgroundPosition: 'center center',
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: '100% 100%',
+        },
       },
     ],
   },
-  {
-    title: '动画',
-    key: 'Animations',
-    value: 'animations',
-    default: [''],
-  },
+  // {
+  //   title: '动画',
+  //   key: 'Animations',
+  //   value: 'animations',
+  //   default: [''],
+  // },
 ]
 
 export function getBaseConfigs() { }
