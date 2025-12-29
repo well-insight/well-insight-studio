@@ -1,10 +1,9 @@
 import type { TextProps as ElTextProps } from 'element-plus'
-import type { CSSProperties } from 'vue'
 import type { ComponentBaseProps, ComponentConfig } from '@/custom-components/types'
 import { withConfigs } from '@/custom-components/utils'
 
 export interface TextProps extends ComponentBaseProps {
-  configs?: Partial<ElTextProps> & { value?: string, font?: CSSProperties }
+  configs?: Partial<ElTextProps> & { value?: string }
 }
 
 export const componentConfig: ComponentConfig[] = withConfigs([
@@ -73,6 +72,24 @@ export const componentConfig: ComponentConfig[] = withConfigs([
           fontWeight: '500',
           fontStyle: 'normal',
         },
+      },
+      {
+        key: 'ColorPicker',
+        title: '字体颜色',
+        value: 'color',
+      },
+      {
+        key: '_background',
+        title: '背景',
+        value: 'background',
+        children: [
+          {
+            key: 'ColorPicker',
+            title: '背景颜色',
+            value: 'backgroundColor',
+            default: '#ffff',
+          },
+        ],
       },
     ],
   },

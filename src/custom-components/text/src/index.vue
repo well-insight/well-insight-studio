@@ -18,12 +18,10 @@ const originProps = computed(() => {
 const compRef = ref()
 
 const getStyle = computed(() => {
-  const { fontSize, fontStyle, fontWeight } = props.configs?.font || {}
   return {
     ...props?.style || {},
-    fontSize,
-    fontStyle,
-    fontWeight,
+    // ...字体
+    ...props.style?.font,
   }
 })
 defineExpose({

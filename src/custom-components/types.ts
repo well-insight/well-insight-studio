@@ -9,7 +9,7 @@ export interface ComponentBaseProps {
   animations?: string[] // 动画列表
   events?: Record<string, any> // 事件列表
   chartOption?: Record<string, any> // 图表组件的定制化样式
-  style?: CSSProperties
+  style?: Record<string, any>
   configs?: Record<string, any>
 }
 
