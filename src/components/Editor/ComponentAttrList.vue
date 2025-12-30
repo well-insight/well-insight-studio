@@ -37,7 +37,7 @@ function addParamsToData(data: any, currentLevel = 1, key = '') {
     <el-tabs type="border-card" :class="$style.tabs" class="w-full flex-auto h-0" stretch>
       <el-tab-pane label="基础">
         <el-scrollbar view-style="padding: 12px">
-          <AeerListRender :configs="configs" collapse-all />
+          <AeerListRender :configs="configs" />
         </el-scrollbar>
       </el-tab-pane>
       <!-- <el-tab-pane label="动画">

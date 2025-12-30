@@ -14,7 +14,7 @@ const designStore = useDesignStore()
 
 const { pageConfig } = storeToRefs(designStore)
 
-const backgroundCoolapse = ref(['backgroundControl'])
+const backgroundCoolapse = ref([])
 
 function selectThemeColor(key: string) {
   pageConfig.value.theme = key || 'light'

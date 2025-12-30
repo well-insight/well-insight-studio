@@ -10,7 +10,7 @@ export const componentConfig: ComponentConfig[] = withConfigs([
   {
     key: '_configs',
     value: 'configs',
-    title: '按钮配置',
+    title: '文本配置',
     children: [
       {
         key: 'Input',
