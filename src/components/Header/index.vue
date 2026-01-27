@@ -147,27 +147,6 @@ export default defineComponent({
         <el-icon title="刷新" @click="refresh">
           <refresh />
         </el-icon>
-        <div class="">
-          <el-dropdown>
-            <span class="user-info">
-              <el-avatar size="default" :src="userInfo.avator" />
-              <span class="username">{{ userInfo.username }}</span>
-              <el-icon><arrow-down /></el-icon>
-            </span>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item
-                  v-for="(item, i) in goUrl"
-                  :key="i + item.name"
-                  @click="goTo(item)"
-                >
-                  <svg-icon :name="item.icon" />
-                  <span class="item-class">{{ item.name }}</span>
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </div>
       </div>
     </div>
   </div>
@@ -180,7 +159,7 @@ export default defineComponent({
   background-color: #fff;
 
   .info-container {
-    height: 60px;
+    height: 100%;
     width: 100%;
     display: flex;
     align-items: center;

@@ -18,13 +18,13 @@ function arrowSide(isClose: boolean) {
 <template>
   <div class="component-box">
     <el-container>
-      <el-aside :style="{ width: !isCollapse ? '200px' : '70px' }">
+      <el-aside :style="{ width: !isCollapse ? '200px' : '70px', overflow: 'hidden' }">
         <suspense>
           <Sidebar @arrow="arrowSide" />
         </suspense>
       </el-aside>
       <el-container>
-        <el-header style="padding: 0">
+        <el-header height="50px" style="padding: 0">
           <DesignHeader />
         </el-header>
         <div class="tabBar">
