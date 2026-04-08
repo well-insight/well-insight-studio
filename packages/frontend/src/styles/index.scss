@@ -1,0 +1,44 @@
+@import './element/common.scss';
+
+html,
+body,
+#app {
+  height: 100%;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #bfbfbf;
+  border-radius: 10px;
+}
+
+.placeholder {
+  color: #c8c9cc;
+}
+
+img {
+  image-rendering: pixelated;
+}
+
+.el-dialog__body {
+  max-height: 66vh;
+  overflow: auto;
+}
+
+.h5-preview .el-dialog__body {
+  overflow: hidden;
+}

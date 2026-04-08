@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>隧道示例</name>
+    <description>包含隧道中心线和一个断面示例</description>
+
+    <!-- 隧道中心线 -->
+    <Placemark>
+      <name>隧道中心线</name>
+      <description>模拟的隧道走向</description>
+      <Style>
+        <LineStyle>
+          <color>ff0000ff</color> <!-- ABGR格式: 红色 -->
+          <width>4</width>
+        </LineStyle>
+      </Style>
+      <LineString>
+        <tessellate>1</tessellate>
+        <altitudeMode>clampToGround</altitudeMode>
+        <coordinates>
+          -74.05,40.67,0
+          -74.04,40.68,0
+          -74.03,40.69,0
+          -74.02,40.70,0
+          -74.01,40.71,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+
+    <!-- 隧道断面 -->
+    <GroundOverlay>
+      <name>隧道断面示意图</name>
+      <description>隧道在某个位置的横截面</description>
+      <Icon>
+        <href>https://via.placeholder.com/200x100/4a90e2/ffffff?text=TUNNEL+X-SECTION</href>
+      </Icon>
+      <LatLonBox>
+        <north>40.715</north>
+        <south>40.705</south>
+        <east>-74.005</east>
+        <west>-74.015</west>
+        <rotation>0</rotation>
+      </LatLonBox>
+    </GroundOverlay>
+
+  </Document>
+</kml>

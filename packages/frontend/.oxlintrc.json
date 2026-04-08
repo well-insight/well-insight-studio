@@ -1,0 +1,12 @@
+{
+  "$schema": "https://oxc.rs/schemas/oxlintrc.json",
+  "categories": {
+    "correctness": "error",
+    "perf": "error"
+  },
+  "rules": {
+    "no-console": "warn",
+    "no-debugger": "off",
+    "no-unused-vars": "off"
+  }
+}
