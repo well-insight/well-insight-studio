@@ -1,59 +1,62 @@
 import { db } from "../config/database";
 import {
-  RoleType,
   ResourceType,
   ActionType,
   PermissionRule,
+  PermissionRuleInput,
   Role,
+  RoleInput,
   UserRole,
   PermissionCheckResult,
 } from "./Permission";
+import { generateSnowflakeId } from "../utils/snowflake";
 
 export class PermissionDatabase {
-  // 创建角色
   static async createRole(
-    roleData: Omit<Role, "id" | "createdAt" | "updatedAt" | "createdBy">,
-    createdBy: number,
+    roleData: RoleInput,
+    createdBy: string,
   ): Promise<Role> {
     const trans = db.transaction(() => {
-      // 插入角色
+      const roleId = generateSnowflakeId();
       const roleStmt = db.prepare(`
-        INSERT INTO roles (name, description, created_by) VALUES (?, ?, ?)
+        INSERT INTO roles (id, name, description, created_by) VALUES (?, ?, ?, ?)
       `);
-      const roleId = roleStmt.run(roleData.name, roleData.description, createdBy)
-        .lastInsertRowid as number;
+      roleStmt.run(roleId, roleData.name, roleData.description ?? null, createdBy);
 
-      // 插入权限规则并关联到角色
       for (const permission of roleData.permissions) {
+        const permId = generateSnowflakeId();
         const permStmt = db.prepare(`
-          INSERT INTO permission_rules (resource_type, resource_id, actions, conditions, priority, is_active) 
-          VALUES (?, ?, ?, ?, ?, ?)
+          INSERT INTO permission_rules (id, resource_type, resource_id, actions, conditions, priority, is_active) 
+          VALUES (?, ?, ?, ?, ?, ?, ?)
         `);
-        const permId = permStmt.run(
+        permStmt.run(
+          permId,
           permission.resourceType,
-          permission.resourceId,
+          permission.resourceId ?? null,
           JSON.stringify(permission.actions),
           permission.conditions ? JSON.stringify(permission.conditions) : null,
           permission.priority,
           permission.isActive ? 1 : 0,
-        ).lastInsertRowid as number;
+        );
 
-        // 关联角色和权限
         const rolePermStmt = db.prepare(`
-          INSERT INTO role_permissions (role_id, permission_rule_id) VALUES (?, ?)
+          INSERT INTO role_permissions (id, role_id, permission_rule_id) VALUES (?, ?, ?)
         `);
-        rolePermStmt.run(roleId, permId);
+        rolePermStmt.run(generateSnowflakeId(), roleId, permId);
       }
 
       return roleId;
     });
 
     const roleId = trans();
-    return this.getRoleById(roleId)!;
+    const created = await this.getRoleById(roleId);
+    if (!created) {
+      throw new Error("角色创建失败");
+    }
+    return created;
   }
 
-  // 获取角色
-  static async getRoleById(id: number): Promise<Role | undefined> {
+  static async getRoleById(id: string): Promise<Role | undefined> {
     const roleStmt = db.prepare(`
       SELECT r.*, u.username as created_by_username 
       FROM roles r 
@@ -61,10 +64,8 @@ export class PermissionDatabase {
       WHERE r.id = ?
     `);
     const roleData = roleStmt.get(id) as any;
-
     if (!roleData) return undefined;
 
-    // 获取角色的权限
     const permissionsStmt = db.prepare(`
       SELECT pr.* FROM permission_rules pr
       INNER JOIN role_permissions rp ON pr.id = rp.permission_rule_id
@@ -75,8 +76,8 @@ export class PermissionDatabase {
     const permissions: PermissionRule[] = permissionsData.map((perm) => ({
       id: perm.id,
       resourceType: perm.resource_type,
-      resourceId: perm.resource_id || undefined,
-      actions: JSON.parse(perm.actions),
+      resourceId: perm.resource_id ?? undefined,
+      actions: JSON.parse(perm.actions) as ActionType[],
       conditions: perm.conditions ? JSON.parse(perm.conditions) : undefined,
       priority: perm.priority,
       isActive: Boolean(perm.is_active),
@@ -95,7 +96,6 @@ export class PermissionDatabase {
     };
   }
 
-  // 获取所有角色
   static async getAllRoles(): Promise<Role[]> {
     const rolesStmt = db.prepare("SELECT * FROM roles ORDER BY created_at DESC");
     const rolesData = rolesStmt.all() as any[];
@@ -109,13 +109,11 @@ export class PermissionDatabase {
     return roles;
   }
 
-  // 更新角色
-  static async updateRole(id: number, updates: Partial<Role>): Promise<Role | null> {
+  static async updateRole(id: string, updates: Partial<RoleInput>): Promise<Role | null> {
     const trans = db.transaction(() => {
-      // 更新角色基本信息
       if (updates.name || updates.description) {
-        const updateFields = [];
-        const params = [];
+        const updateFields: string[] = [];
+        const params: unknown[] = [];
 
         if (updates.name) {
           updateFields.push("name = ?");
@@ -127,48 +125,46 @@ export class PermissionDatabase {
         }
 
         updateFields.push("updated_at = ?");
-        params.push(new Date());
+        params.push(new Date().toISOString());
         params.push(id);
 
         const stmt = db.prepare(`UPDATE roles SET ${updateFields.join(", ")} WHERE id = ?`);
         stmt.run(...params);
       }
 
-      // 如果有权限更新，替换所有权限
       if (updates.permissions) {
-        // 删除旧的权限关联
+        const rolePermissionRows = db
+          .prepare("SELECT permission_rule_id FROM role_permissions WHERE role_id = ?")
+          .all(id) as Array<{ permission_rule_id: string }>;
+
         const delRolePerms = db.prepare("DELETE FROM role_permissions WHERE role_id = ?");
         delRolePerms.run(id);
 
-        // 删除旧的权限规则
-        const delPerms = db.prepare(`
-          DELETE FROM permission_rules 
-          WHERE id IN (
-            SELECT permission_rule_id FROM role_permissions 
-            WHERE role_id = ?
-          )
-        `);
-        delPerms.run(id);
+        const delPerm = db.prepare("DELETE FROM permission_rules WHERE id = ?");
+        for (const row of rolePermissionRows) {
+          delPerm.run(row.permission_rule_id);
+        }
 
-        // 插入新的权限规则并关联
-        for (const permission of updates.permissions) {
+        for (const permission of updates.permissions as PermissionRuleInput[]) {
+          const permId = generateSnowflakeId();
           const permStmt = db.prepare(`
-            INSERT INTO permission_rules (resource_type, resource_id, actions, conditions, priority, is_active) 
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO permission_rules (id, resource_type, resource_id, actions, conditions, priority, is_active) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
           `);
-          const permId = permStmt.run(
+          permStmt.run(
+            permId,
             permission.resourceType,
-            permission.resourceId,
+            permission.resourceId ?? null,
             JSON.stringify(permission.actions),
             permission.conditions ? JSON.stringify(permission.conditions) : null,
             permission.priority,
             permission.isActive ? 1 : 0,
-          ).lastInsertRowid as number;
+          );
 
           const rolePermStmt = db.prepare(`
-            INSERT INTO role_permissions (role_id, permission_rule_id) VALUES (?, ?)
+            INSERT INTO role_permissions (id, role_id, permission_rule_id) VALUES (?, ?, ?)
           `);
-          rolePermStmt.run(id, permId);
+          rolePermStmt.run(generateSnowflakeId(), id, permId);
         }
       }
 
@@ -177,48 +173,50 @@ export class PermissionDatabase {
 
     try {
       trans();
-      return this.getRoleById(id);
+      return (await this.getRoleById(id)) ?? null;
     } catch (error) {
       console.error("更新角色失败:", error);
       return null;
     }
   }
 
-  // 删除角色
-  static async deleteRole(id: number): Promise<boolean> {
+  static async deleteRole(id: string): Promise<boolean> {
     const stmt = db.prepare("DELETE FROM roles WHERE id = ?");
     const result = stmt.run(id);
     return result.changes > 0;
   }
 
-  // 分配角色给用户
   static async assignRole(userRoleData: Omit<UserRole, "id" | "assignedAt">): Promise<UserRole> {
+    const id = generateSnowflakeId();
     const stmt = db.prepare(`
-      INSERT INTO user_roles (user_id, role_id, project_id, assigned_by, assigned_at, expires_at) 
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO user_roles (id, user_id, role_id, project_id, assigned_by, assigned_at, expires_at) 
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
 
-    const result = stmt.run(
+    stmt.run(
+      id,
       userRoleData.userId,
       userRoleData.roleId,
-      userRoleData.projectId || null,
+      userRoleData.projectId ?? null,
       userRoleData.assignedBy,
-      new Date(),
-      userRoleData.expiresAt || null,
+      new Date().toISOString(),
+      userRoleData.expiresAt?.toISOString() ?? null,
     );
 
-    return this.getUserRoleById(result.lastInsertRowid as number)!;
+    const created = await this.getUserRoleById(id);
+    if (!created) {
+      throw new Error("用户角色创建失败");
+    }
+    return created;
   }
 
-  // 移除用户角色
-  static async removeUserRole(id: number): Promise<boolean> {
+  static async removeUserRole(id: string): Promise<boolean> {
     const stmt = db.prepare("DELETE FROM user_roles WHERE id = ?");
     const result = stmt.run(id);
     return result.changes > 0;
   }
 
-  // 获取用户角色详情
-  static async getUserRoleById(id: number): Promise<UserRole | undefined> {
+  static async getUserRoleById(id: string): Promise<UserRole | undefined> {
     const stmt = db.prepare(`
       SELECT ur.*, u1.username as assigned_by_username, u2.username as user_username
       FROM user_roles ur
@@ -234,15 +232,14 @@ export class PermissionDatabase {
       id: userRole.id,
       userId: userRole.user_id,
       roleId: userRole.role_id,
-      projectId: userRole.project_id || undefined,
+      projectId: userRole.project_id ?? undefined,
       assignedBy: userRole.assigned_by,
       assignedAt: new Date(userRole.assigned_at),
       expiresAt: userRole.expires_at ? new Date(userRole.expires_at) : undefined,
     };
   }
 
-  // 获取用户的所有角色
-  static async getUserRoles(userId: number, projectId?: number): Promise<UserRole[]> {
+  static async getUserRoles(userId: string, projectId?: string): Promise<UserRole[]> {
     let query = `
       SELECT * FROM user_roles 
       WHERE user_id = ? 
@@ -266,32 +263,28 @@ export class PermissionDatabase {
       id: ur.id,
       userId: ur.user_id,
       roleId: ur.role_id,
-      projectId: ur.project_id || undefined,
+      projectId: ur.project_id ?? undefined,
       assignedBy: ur.assigned_by,
       assignedAt: new Date(ur.assigned_at),
       expiresAt: ur.expires_at ? new Date(ur.expires_at) : undefined,
     }));
   }
 
-  // 检查用户权限
   static async checkPermission(
-    userId: number,
+    userId: string,
     resourceType: ResourceType,
     action: ActionType,
     resourceId?: string,
-    projectId?: number,
+    projectId?: string,
   ): Promise<PermissionCheckResult> {
-    // 获取用户角色
     const userRoles = await this.getUserRoles(userId, projectId);
     const applicableRules: PermissionRule[] = [];
 
-    // 收集所有相关的权限规则
     for (const userRole of userRoles) {
       const role = await this.getRoleById(userRole.roleId);
       if (role) {
         for (const rule of role.permissions) {
           if (rule.resourceType === resourceType && rule.isActive) {
-            // 检查资源ID匹配
             if (!rule.resourceId || rule.resourceId === "*" || rule.resourceId === resourceId) {
               applicableRules.push(rule);
             }
@@ -300,16 +293,13 @@ export class PermissionDatabase {
       }
     }
 
-    // 按优先级排序
     applicableRules.sort((a, b) => b.priority - a.priority);
 
-    // 检查是否有允许的操作权限
     let allowed = false;
     let reason = "";
 
     for (const rule of applicableRules) {
       if (rule.actions.includes(action)) {
-        // 检查条件（如果有）
         if (
           rule.conditions &&
           !this.evaluateConditions(rule.conditions, { userId, resourceType, action, resourceId })
@@ -334,7 +324,6 @@ export class PermissionDatabase {
     };
   }
 
-  // 评估条件表达式
   private static evaluateConditions(conditions: Record<string, any>, context: any): boolean {
     for (const [key, value] of Object.entries(conditions)) {
       if (context[key] !== value) {
@@ -344,8 +333,7 @@ export class PermissionDatabase {
     return true;
   }
 
-  // 获取用户权限摘要
-  static async getUserPermissionsSummary(userId: number): Promise<any> {
+  static async getUserPermissionsSummary(userId: string): Promise<any> {
     const userRoles = await this.getUserRoles(userId);
     const permissions = new Set<string>();
 
@@ -371,8 +359,7 @@ export class PermissionDatabase {
     };
   }
 
-  // 获取项目的用户角色
-  static async getProjectUserRoles(projectId: number): Promise<UserRole[]> {
+  static async getProjectUserRoles(projectId: string): Promise<UserRole[]> {
     const stmt = db.prepare(`
       SELECT * FROM user_roles 
       WHERE project_id = ? 
@@ -385,7 +372,7 @@ export class PermissionDatabase {
       id: ur.id,
       userId: ur.user_id,
       roleId: ur.role_id,
-      projectId: ur.project_id,
+      projectId: ur.project_id ?? undefined,
       assignedBy: ur.assigned_by,
       assignedAt: new Date(ur.assigned_at),
       expiresAt: ur.expires_at ? new Date(ur.expires_at) : undefined,

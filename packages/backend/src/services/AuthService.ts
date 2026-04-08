@@ -2,7 +2,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { UserModel, User } from "../models/User";
-import { PermissionModel } from "../models/Permission";
+import { ActionType, PermissionModel, ResourceType } from "../models/Permission";
 
 interface LoginResult {
   success: boolean;
@@ -48,12 +48,12 @@ export class AuthService {
   }
 
   static async checkPermission(
-    userId: number,
-    resourceType: string,
-    action: string,
+    userId: string,
+    resourceType: ResourceType,
+    action: ActionType,
     resourceId?: string,
   ): Promise<boolean> {
-    let availableActions: string[];
+    let availableActions: ActionType[];
     if (resourceId) {
       availableActions = await PermissionModel.getUserPermissionsForResourceInstance(
         userId,
@@ -64,7 +64,7 @@ export class AuthService {
       const perms = await PermissionModel.getUserPermissionsForResource(userId, resourceType);
       availableActions = [];
       for (const perm of perms) {
-        availableActions.push(...JSON.parse(perm.actions));
+        availableActions.push(...perm.actions);
       }
     }
 

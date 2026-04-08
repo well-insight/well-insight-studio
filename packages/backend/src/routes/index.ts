@@ -5,7 +5,7 @@ import authRoutes from "./authRoutes";
 import userRoutes from "./userRoutes";
 import datasetRoutes from "./datasetRoutes";
 
-const router = Router();
+const router: Router = Router();
 
 // API 版本路由
 router.use("/auth", authRoutes);

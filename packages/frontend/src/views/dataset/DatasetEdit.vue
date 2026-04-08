@@ -13,8 +13,8 @@ const workspaceStore = useWorkspaceStore();
 const datasetId = computed(() => {
   const raw = route.params.id;
   const s = Array.isArray(raw) ? raw.join("/") : raw;
-  const n = Number(s);
-  return Number.isFinite(n) && n > 0 ? n : null;
+  const id = String(s || "").trim();
+  return id || null;
 });
 
 const datasetTitle = ref("");

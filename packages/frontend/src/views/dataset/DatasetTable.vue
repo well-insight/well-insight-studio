@@ -17,7 +17,7 @@ import { vueGroupCustomLayout } from "@/utils/vtableVueCustomLayout";
 
 const props = withDefaults(
   defineProps<{
-    datasetId: number | null;
+    datasetId: string | null;
     /** 为 true 时展示新增/编辑/删除行（用于「编辑数据集」对话框） */
     editable?: boolean;
   }>(),
@@ -47,7 +47,7 @@ const tableOptions = reactive<ListTableConstructorOptions>({
 
 const rowDialogVisible = ref(false);
 const rowDialogMode = ref<"create" | "edit">("create");
-const editingRowId = ref<number | null>(null);
+const editingRowId = ref<string | null>(null);
 const rowForm = ref<Record<string, string>>({});
 const rowSubmitting = ref(false);
 
@@ -139,7 +139,7 @@ function buildColumns(f: ApiDatasetField[], editable: boolean) {
 }
 
 function buildRecords(
-  rows: { id: number; values: Record<string, unknown> }[],
+  rows: { id: string; values: Record<string, unknown> }[],
   f: ApiDatasetField[],
 ) {
   return rows.map((r) => {
@@ -186,7 +186,7 @@ async function loadDetailAndRows() {
   syncTableFrozen(false);
   try {
     const detail = await fetchDatasetDetail(id);
-    fields.value = [...detail.fields].sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
+    fields.value = [...detail.fields].sort((a, b) => a.sort_order - b.sort_order);
     if (fields.value.length === 0) {
       tableOptions.columns = [];
       tableOptions.records = [];
@@ -265,7 +265,7 @@ function openCreateRow() {
 
 function openEditRow(row: Record<string, unknown>) {
   rowDialogMode.value = "edit";
-  editingRowId.value = row.__row_id as number;
+  editingRowId.value = String(row.__row_id ?? "");
   const next: Record<string, string> = {};
   for (const f of fields.value) {
     const v = row[`c_${f.id}`];
@@ -330,7 +330,7 @@ async function submitRowDialog() {
 async function confirmDeleteRow(row: Record<string, unknown>) {
   const id = props.datasetId;
   if (id == null) return;
-  const rowId = row.__row_id as number;
+  const rowId = String(row.__row_id ?? "");
   try {
     await ElMessageBox.confirm("确定删除该行吗？此操作不可恢复。", "删除确认", {
       type: "warning",

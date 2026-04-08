@@ -65,7 +65,7 @@ export class AuthController {
         display_name,
         password_hash: hashedPassword,
         role: "user",
-        is_active: 1,
+        is_active: true,
       });
 
       const newUser = await UserModel.findById(userId);

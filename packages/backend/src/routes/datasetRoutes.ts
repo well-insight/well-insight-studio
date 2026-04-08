@@ -11,7 +11,7 @@ import {
   DatasetRowModel,
 } from "../models/DatasetModel";
 
-const router = Router();
+const router: Router = Router();
 
 const FieldTypeEnum = z.enum(["text", "number", "datetime"]);
 
@@ -21,11 +21,13 @@ const FieldInputSchema = z.object({
   sort_order: z.number().int().optional(),
 });
 
+const IdSchema = z.string().min(1);
+
 const CreateFolderSchema = z.object({
   name: z.string().min(1).max(200),
   description: z.string().max(2000).optional().nullable(),
-  parent_id: z.number().int().positive().optional().nullable(),
-  project_id: z.number().int().positive().optional().nullable(),
+  parent_id: IdSchema.optional().nullable(),
+  project_id: IdSchema.optional().nullable(),
   sort_order: z.number().int().optional(),
 });
 
@@ -34,16 +36,16 @@ const UpdateFolderSchema = CreateFolderSchema.partial();
 const CreateDatasetSchema = z.object({
   name: z.string().min(1).max(200),
   description: z.string().max(5000).optional().nullable(),
-  project_id: z.number().int().positive().optional().nullable(),
-  folder_id: z.number().int().positive().optional().nullable(),
+  project_id: IdSchema.optional().nullable(),
+  folder_id: IdSchema.optional().nullable(),
   fields: z.array(FieldInputSchema).default([]),
 });
 
 const UpdateDatasetSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   description: z.string().max(5000).optional().nullable(),
-  project_id: z.number().int().positive().optional().nullable(),
-  folder_id: z.number().int().positive().optional().nullable(),
+  project_id: IdSchema.optional().nullable(),
+  folder_id: IdSchema.optional().nullable(),
   fields: z.array(FieldInputSchema).optional(),
 });
 
@@ -57,18 +59,24 @@ const RowUpdateSchema = z.object({
   sort_order: z.number().int().optional(),
 });
 
-function parseOptionalInt(q: unknown): number | null | undefined {
+function parseOptionalId(q: unknown): string | null | undefined {
   if (q === undefined || q === "") return undefined;
   if (q === "null") return null;
-  const n = Number(q);
-  return Number.isFinite(n) ? n : undefined;
+  const value = typeof q === "string" ? q.trim() : "";
+  return value || undefined;
 }
 
-function projectExists(projectId: number): boolean {
+function parseRequiredId(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim();
+  return normalized || null;
+}
+
+function projectExists(projectId: string): boolean {
   return !!db.prepare("SELECT 1 FROM projects WHERE id = ?").get(projectId);
 }
 
-function wouldCreateFolderCycle(folderId: number, newParentId: number): boolean {
+function wouldCreateFolderCycle(folderId: string, newParentId: string): boolean {
   let cur = DatasetFolderModel.findById(newParentId);
   while (cur) {
     if (cur.id === folderId) return true;
@@ -77,7 +85,7 @@ function wouldCreateFolderCycle(folderId: number, newParentId: number): boolean 
   return false;
 }
 
-async function canAccessOwnerResource(req: Request, resourceOwnerId: number): Promise<boolean> {
+async function canAccessOwnerResource(req: Request, resourceOwnerId: string): Promise<boolean> {
   const uid = req.userId!;
   if (uid === resourceOwnerId) return true;
   const u = await UserModel.findById(uid);
@@ -95,7 +103,7 @@ function normalizeFields(
 }
 
 function validateRowValues(
-  fields: { id: number; field_type: DatasetFieldType }[],
+  fields: { id: string; field_type: DatasetFieldType }[],
   values: Record<string, string | number | null>,
 ): string | null {
   const allowed = new Set(fields.map((f) => String(f.id)));
@@ -121,7 +129,7 @@ router.use(authenticateToken);
 
 router.get("/folders/tree", async (req: Request, res: Response) => {
   try {
-    const projectId = parseOptionalInt(req.query.projectId);
+    const projectId = parseOptionalId(req.query.projectId);
     const list = DatasetFolderModel.listAllForOwner(req.userId!, projectId);
     const tree = DatasetFolderModel.buildTree(list, null);
     res.json({ success: true, data: tree, message: "目录树" });
@@ -133,20 +141,20 @@ router.get("/folders/tree", async (req: Request, res: Response) => {
 
 router.get("/folders", async (req: Request, res: Response) => {
   try {
-    const projectId = parseOptionalInt(req.query.projectId);
+    const projectId = parseOptionalId(req.query.projectId);
     const listAll = req.query.all === "1" || req.query.all === "true";
     if (listAll) {
       const rows = DatasetFolderModel.listAllForOwner(req.userId!, projectId);
       return res.json({ success: true, data: rows, total: rows.length, message: "目录扁平列表" });
     }
     const parentRaw = req.query.parentId;
-    let parentId: number | null;
+    let parentId: string | null;
     if (parentRaw === undefined || parentRaw === "" || parentRaw === "null") {
       parentId = null;
     } else {
-      const n = Number(parentRaw);
-      if (!Number.isFinite(n)) return res.status(400).json({ success: false, error: "parentId 无效" });
-      parentId = n;
+      const parsed = parseRequiredId(parentRaw);
+      if (!parsed) return res.status(400).json({ success: false, error: "parentId 无效" });
+      parentId = parsed;
     }
     const rows = DatasetFolderModel.listChildren(req.userId!, { projectId, parentId });
     res.json({ success: true, data: rows, total: rows.length, message: "子目录列表" });
@@ -158,8 +166,8 @@ router.get("/folders", async (req: Request, res: Response) => {
 
 router.get("/folders/:folderId", async (req: Request, res: Response) => {
   try {
-    const folderId = Number(req.params.folderId);
-    if (!Number.isFinite(folderId)) return res.status(400).json({ success: false, error: "无效 ID" });
+    const folderId = parseRequiredId(req.params.folderId);
+    if (!folderId) return res.status(400).json({ success: false, error: "无效 ID" });
     const row = DatasetFolderModel.findById(folderId);
     if (!row || !(await canAccessOwnerResource(req, row.owner_id))) {
       return res.status(404).json({ success: false, error: "目录不存在" });
@@ -182,7 +190,7 @@ router.post("/folders", async (req: Request, res: Response) => {
     if (body.project_id != null && !projectExists(body.project_id)) {
       return res.status(400).json({ success: false, error: "项目不存在" });
     }
-    let parent_id: number | null = body.parent_id ?? null;
+    let parent_id: string | null = body.parent_id ?? null;
     if (parent_id != null) {
       const p = DatasetFolderModel.findById(parent_id);
       if (!p || !(await canAccessOwnerResource(req, p.owner_id))) {
@@ -219,8 +227,8 @@ router.post("/folders", async (req: Request, res: Response) => {
 
 router.put("/folders/:folderId", async (req: Request, res: Response) => {
   try {
-    const folderId = Number(req.params.folderId);
-    if (!Number.isFinite(folderId)) return res.status(400).json({ success: false, error: "无效 ID" });
+    const folderId = parseRequiredId(req.params.folderId);
+    if (!folderId) return res.status(400).json({ success: false, error: "无效 ID" });
     const row = DatasetFolderModel.findById(folderId);
     if (!row || !(await canAccessOwnerResource(req, row.owner_id))) {
       return res.status(404).json({ success: false, error: "目录不存在" });
@@ -267,8 +275,8 @@ router.put("/folders/:folderId", async (req: Request, res: Response) => {
 
 router.delete("/folders/:folderId", async (req: Request, res: Response) => {
   try {
-    const folderId = Number(req.params.folderId);
-    if (!Number.isFinite(folderId)) return res.status(400).json({ success: false, error: "无效 ID" });
+    const folderId = parseRequiredId(req.params.folderId);
+    if (!folderId) return res.status(400).json({ success: false, error: "无效 ID" });
     const row = DatasetFolderModel.findById(folderId);
     if (!row || !(await canAccessOwnerResource(req, row.owner_id))) {
       return res.status(404).json({ success: false, error: "目录不存在" });
@@ -293,15 +301,15 @@ router.delete("/folders/:folderId", async (req: Request, res: Response) => {
 
 router.get("/", async (req: Request, res: Response) => {
   try {
-    const projectId = parseOptionalInt(req.query.projectId);
+    const projectId = parseOptionalId(req.query.projectId);
     const folderRaw = req.query.folderId;
     const folderId =
       folderRaw === undefined || folderRaw === ""
         ? undefined
         : folderRaw === "null"
           ? null
-          : Number(folderRaw);
-    if (folderId !== undefined && folderId !== null && !Number.isFinite(folderId)) {
+          : parseRequiredId(folderRaw);
+    if (folderId === null && folderRaw !== "null") {
       return res.status(400).json({ success: false, error: "folderId 无效" });
     }
     const rows = DatasetEntityModel.list(req.userId!, { projectId, folderId });
@@ -363,8 +371,8 @@ router.post("/", async (req: Request, res: Response) => {
 
 router.get("/:datasetId/rows", async (req: Request, res: Response) => {
   try {
-    const datasetId = Number(req.params.datasetId);
-    if (!Number.isFinite(datasetId)) return res.status(400).json({ success: false, error: "无效 ID" });
+    const datasetId = parseRequiredId(req.params.datasetId);
+    if (!datasetId) return res.status(400).json({ success: false, error: "无效 ID" });
     const ds = DatasetEntityModel.findById(datasetId);
     if (!ds || !(await canAccessOwnerResource(req, ds.owner_id))) {
       return res.status(404).json({ success: false, error: "数据集不存在" });
@@ -395,8 +403,8 @@ router.get("/:datasetId/rows", async (req: Request, res: Response) => {
 
 router.post("/:datasetId/rows", async (req: Request, res: Response) => {
   try {
-    const datasetId = Number(req.params.datasetId);
-    if (!Number.isFinite(datasetId)) return res.status(400).json({ success: false, error: "无效 ID" });
+    const datasetId = parseRequiredId(req.params.datasetId);
+    if (!datasetId) return res.status(400).json({ success: false, error: "无效 ID" });
     const ds = DatasetEntityModel.findById(datasetId);
     if (!ds || !(await canAccessOwnerResource(req, ds.owner_id))) {
       return res.status(404).json({ success: false, error: "数据集不存在" });
@@ -410,8 +418,8 @@ router.post("/:datasetId/rows", async (req: Request, res: Response) => {
     if (err) return res.status(400).json({ success: false, error: err });
     const id = DatasetRowModel.create(datasetId, JSON.stringify(body.values), body.sort_order);
     const row = db.prepare("SELECT * FROM dataset_rows WHERE id = ?").get(id) as {
-      id: number;
-      dataset_id: number;
+      id: string;
+      dataset_id: string;
       sort_order: number;
       values_json: string;
       created_at: string;
@@ -435,9 +443,9 @@ router.post("/:datasetId/rows", async (req: Request, res: Response) => {
 
 router.put("/:datasetId/rows/:rowId", async (req: Request, res: Response) => {
   try {
-    const datasetId = Number(req.params.datasetId);
-    const rowId = Number(req.params.rowId);
-    if (!Number.isFinite(datasetId) || !Number.isFinite(rowId)) {
+    const datasetId = parseRequiredId(req.params.datasetId);
+    const rowId = parseRequiredId(req.params.rowId);
+    if (!datasetId || !rowId) {
       return res.status(400).json({ success: false, error: "无效 ID" });
     }
     const ds = DatasetEntityModel.findById(datasetId);
@@ -465,8 +473,8 @@ router.put("/:datasetId/rows/:rowId", async (req: Request, res: Response) => {
     const ok = DatasetRowModel.update(rowId, datasetId, JSON.stringify(merged), body.sort_order);
     if (!ok) return res.status(404).json({ success: false, error: "行不存在" });
     const row = db.prepare("SELECT * FROM dataset_rows WHERE id = ?").get(rowId) as {
-      id: number;
-      dataset_id: number;
+      id: string;
+      dataset_id: string;
       sort_order: number;
       values_json: string;
       created_at: string;
@@ -490,9 +498,9 @@ router.put("/:datasetId/rows/:rowId", async (req: Request, res: Response) => {
 
 router.delete("/:datasetId/rows/:rowId", async (req: Request, res: Response) => {
   try {
-    const datasetId = Number(req.params.datasetId);
-    const rowId = Number(req.params.rowId);
-    if (!Number.isFinite(datasetId) || !Number.isFinite(rowId)) {
+    const datasetId = parseRequiredId(req.params.datasetId);
+    const rowId = parseRequiredId(req.params.rowId);
+    if (!datasetId || !rowId) {
       return res.status(400).json({ success: false, error: "无效 ID" });
     }
     const ds = DatasetEntityModel.findById(datasetId);
@@ -510,8 +518,8 @@ router.delete("/:datasetId/rows/:rowId", async (req: Request, res: Response) => 
 
 router.get("/:id", async (req: Request, res: Response) => {
   try {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(400).json({ success: false, error: "无效 ID" });
+    const id = parseRequiredId(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: "无效 ID" });
     const ds = DatasetEntityModel.findById(id);
     if (!ds || !(await canAccessOwnerResource(req, ds.owner_id))) {
       return res.status(404).json({ success: false, error: "数据集不存在" });
@@ -531,8 +539,8 @@ router.get("/:id", async (req: Request, res: Response) => {
 
 router.put("/:id", async (req: Request, res: Response) => {
   try {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(400).json({ success: false, error: "无效 ID" });
+    const id = parseRequiredId(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: "无效 ID" });
     const ds = DatasetEntityModel.findById(id);
     if (!ds || !(await canAccessOwnerResource(req, ds.owner_id))) {
       return res.status(404).json({ success: false, error: "数据集不存在" });
@@ -586,8 +594,8 @@ router.put("/:id", async (req: Request, res: Response) => {
 
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(400).json({ success: false, error: "无效 ID" });
+    const id = parseRequiredId(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: "无效 ID" });
     const ds = DatasetEntityModel.findById(id);
     if (!ds || !(await canAccessOwnerResource(req, ds.owner_id))) {
       return res.status(404).json({ success: false, error: "数据集不存在" });

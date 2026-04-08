@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from "express";
+import express, { Express, Request, Response, NextFunction } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
@@ -12,7 +12,7 @@ import { setupSwagger } from "./swagger/setupSwagger";
 
 dotenv.config();
 
-const app = express();
+const app: Express = express();
 const PORT = parseInt(process.env.PORT || "3001", 10);
 
 // 初始化数据库

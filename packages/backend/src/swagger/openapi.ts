@@ -76,7 +76,7 @@ export function getOpenApiSpec(port: number) {
           type: "object",
           description: "不含 password_hash",
           properties: {
-            id: { type: "integer" },
+            id: { type: "string" },
             email: { type: "string" },
             username: { type: "string" },
             display_name: { type: "string", nullable: true, description: "显示名称 / 昵称" },
@@ -126,7 +126,7 @@ export function getOpenApiSpec(port: number) {
             data: {
               type: "object",
               properties: {
-                id: { type: "integer" },
+                id: { type: "string" },
                 email: { type: "string" },
                 username: { type: "string" },
                 display_name: { type: "string", nullable: true },
@@ -203,8 +203,8 @@ export function getOpenApiSpec(port: number) {
         DatasetField: {
           type: "object",
           properties: {
-            id: { type: "integer" },
-            dataset_id: { type: "integer" },
+            id: { type: "string" },
+            dataset_id: { type: "string" },
             name: { type: "string" },
             field_type: { $ref: "#/components/schemas/DatasetFieldType" },
             sort_order: { type: "integer" },
@@ -214,12 +214,12 @@ export function getOpenApiSpec(port: number) {
         DatasetFolder: {
           type: "object",
           properties: {
-            id: { type: "integer" },
-            parent_id: { type: "integer", nullable: true },
-            project_id: { type: "integer", nullable: true },
+            id: { type: "string" },
+            parent_id: { type: "string", nullable: true },
+            project_id: { type: "string", nullable: true },
             name: { type: "string" },
             description: { type: "string", nullable: true },
-            owner_id: { type: "integer" },
+            owner_id: { type: "string" },
             sort_order: { type: "integer" },
             created_at: { type: "string" },
             updated_at: { type: "string" },
@@ -254,14 +254,14 @@ export function getOpenApiSpec(port: number) {
         DatasetCore: {
           type: "object",
           properties: {
-            id: { type: "integer" },
+            id: { type: "string" },
             name: { type: "string" },
             description: { type: "string", nullable: true },
             file_path: { type: "string", nullable: true },
             file_size: { type: "integer", nullable: true },
-            owner_id: { type: "integer" },
-            project_id: { type: "integer", nullable: true },
-            folder_id: { type: "integer", nullable: true },
+            owner_id: { type: "string" },
+            project_id: { type: "string", nullable: true },
+            folder_id: { type: "string", nullable: true },
             created_at: { type: "string" },
             updated_at: { type: "string" },
           },
@@ -293,8 +293,8 @@ export function getOpenApiSpec(port: number) {
         DatasetRow: {
           type: "object",
           properties: {
-            id: { type: "integer" },
-            dataset_id: { type: "integer" },
+            id: { type: "string" },
+            dataset_id: { type: "string" },
             sort_order: { type: "integer" },
             values: {
               type: "object",
@@ -310,8 +310,8 @@ export function getOpenApiSpec(port: number) {
           properties: {
             name: { type: "string" },
             description: { type: "string", nullable: true },
-            project_id: { type: "integer", nullable: true },
-            folder_id: { type: "integer", nullable: true },
+            project_id: { type: "string", nullable: true },
+            folder_id: { type: "string", nullable: true },
             fields: { type: "array", items: { $ref: "#/components/schemas/DatasetFieldInput" } },
           },
         },
@@ -321,8 +321,8 @@ export function getOpenApiSpec(port: number) {
           properties: {
             name: { type: "string" },
             description: { type: "string", nullable: true },
-            parent_id: { type: "integer", nullable: true },
-            project_id: { type: "integer", nullable: true },
+            parent_id: { type: "string", nullable: true },
+            project_id: { type: "string", nullable: true },
             sort_order: { type: "integer" },
           },
         },
@@ -462,7 +462,7 @@ export function getOpenApiSpec(port: number) {
               name: "id",
               in: "path",
               required: true,
-              schema: { type: "integer", minimum: 1 },
+              schema: { type: "string" },
               description: "用户 ID",
             },
           ],
@@ -676,7 +676,7 @@ export function getOpenApiSpec(port: number) {
             {
               name: "projectId",
               in: "query",
-              schema: { type: "integer" },
+              schema: { type: "string" },
               description: "可选，按项目筛选；不传则包含所有归属当前用户的目录",
             },
           ],
@@ -711,8 +711,8 @@ export function getOpenApiSpec(port: number) {
             "默认返回根下子目录（`parentId` 省略或 `null`）。`all=true` 时返回扁平列表。可选 `projectId`。",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "projectId", in: "query", schema: { type: "integer" } },
-            { name: "parentId", in: "query", schema: { type: "integer", nullable: true } },
+            { name: "projectId", in: "query", schema: { type: "string" } },
+            { name: "parentId", in: "query", schema: { type: "string", nullable: true } },
             { name: "all", in: "query", schema: { type: "string", enum: ["1", "true"] } },
           ],
           responses: {
@@ -755,7 +755,7 @@ export function getOpenApiSpec(port: number) {
           tags: ["Datasets"],
           summary: "目录详情",
           security: [{ bearerAuth: [] }],
-          parameters: [{ name: "folderId", in: "path", required: true, schema: { type: "integer" } }],
+          parameters: [{ name: "folderId", in: "path", required: true, schema: { type: "string" } }],
           responses: {
             "200": {
               description: "成功",
@@ -779,7 +779,7 @@ export function getOpenApiSpec(port: number) {
           tags: ["Datasets"],
           summary: "更新目录",
           security: [{ bearerAuth: [] }],
-          parameters: [{ name: "folderId", in: "path", required: true, schema: { type: "integer" } }],
+          parameters: [{ name: "folderId", in: "path", required: true, schema: { type: "string" } }],
           requestBody: {
             content: { "application/json": { schema: { $ref: "#/components/schemas/CreateFolderRequest" } } },
           },
@@ -794,7 +794,7 @@ export function getOpenApiSpec(port: number) {
           tags: ["Datasets"],
           summary: "删除目录（须为空）",
           security: [{ bearerAuth: [] }],
-          parameters: [{ name: "folderId", in: "path", required: true, schema: { type: "integer" } }],
+          parameters: [{ name: "folderId", in: "path", required: true, schema: { type: "string" } }],
           responses: {
             "200": { description: "已删除" },
             "409": { description: "目录非空" },
@@ -810,8 +810,8 @@ export function getOpenApiSpec(port: number) {
           description: "可选 `projectId`、`folderId`（`folderId=null` 表示未归类）。",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "projectId", in: "query", schema: { type: "integer" } },
-            { name: "folderId", in: "query", schema: { type: "integer", nullable: true } },
+            { name: "projectId", in: "query", schema: { type: "string" } },
+            { name: "folderId", in: "query", schema: { type: "string", nullable: true } },
           ],
           responses: {
             "200": {
@@ -866,7 +866,7 @@ export function getOpenApiSpec(port: number) {
           summary: "数据集详情",
           description: "含字段列表与行数。",
           security: [{ bearerAuth: [] }],
-          parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
+          parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
           responses: {
             "200": {
               description: "成功",
@@ -891,7 +891,7 @@ export function getOpenApiSpec(port: number) {
           summary: "更新数据集",
           description: "若传 `fields` 且已有数据行则返回 409。",
           security: [{ bearerAuth: [] }],
-          parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
+          parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
           requestBody: {
             content: {
               "application/json": {
@@ -900,8 +900,8 @@ export function getOpenApiSpec(port: number) {
                   properties: {
                     name: { type: "string" },
                     description: { type: "string", nullable: true },
-                    project_id: { type: "integer", nullable: true },
-                    folder_id: { type: "integer", nullable: true },
+                    project_id: { type: "string", nullable: true },
+                    folder_id: { type: "string", nullable: true },
                     fields: { type: "array", items: { $ref: "#/components/schemas/DatasetFieldInput" } },
                   },
                 },
@@ -919,7 +919,7 @@ export function getOpenApiSpec(port: number) {
           tags: ["Datasets"],
           summary: "删除数据集",
           security: [{ bearerAuth: [] }],
-          parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
+          parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
           responses: {
             "200": { description: "已删除" },
             "404": { description: "不存在" },
@@ -933,7 +933,7 @@ export function getOpenApiSpec(port: number) {
           summary: "分页查询数据行",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "datasetId", in: "path", required: true, schema: { type: "integer" } },
+            { name: "datasetId", in: "path", required: true, schema: { type: "string" } },
             { name: "page", in: "query", schema: { type: "integer", default: 1 } },
             { name: "pageSize", in: "query", schema: { type: "integer", default: 20 } },
           ],
@@ -963,7 +963,7 @@ export function getOpenApiSpec(port: number) {
           tags: ["Datasets"],
           summary: "新增一行",
           security: [{ bearerAuth: [] }],
-          parameters: [{ name: "datasetId", in: "path", required: true, schema: { type: "integer" } }],
+          parameters: [{ name: "datasetId", in: "path", required: true, schema: { type: "string" } }],
           requestBody: {
             required: true,
             content: { "application/json": { schema: { $ref: "#/components/schemas/RowCreateRequest" } } },
@@ -982,8 +982,8 @@ export function getOpenApiSpec(port: number) {
           summary: "删除一行",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "datasetId", in: "path", required: true, schema: { type: "integer" } },
-            { name: "rowId", in: "path", required: true, schema: { type: "integer" } },
+            { name: "datasetId", in: "path", required: true, schema: { type: "string" } },
+            { name: "rowId", in: "path", required: true, schema: { type: "string" } },
           ],
           responses: {
             "200": { description: "已删除" },

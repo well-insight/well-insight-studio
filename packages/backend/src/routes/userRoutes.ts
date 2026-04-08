@@ -2,7 +2,7 @@ import { Router } from "express";
 import { UserController } from "../controllers/UserController";
 import { authenticateToken, requireAdmin } from "../middleware/authMiddleware";
 
-const router = Router();
+const router: Router = Router();
 
 router.get("/", authenticateToken, requireAdmin, UserController.list);
 router.post(

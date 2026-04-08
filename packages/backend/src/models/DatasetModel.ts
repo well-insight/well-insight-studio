@@ -1,14 +1,15 @@
 import { db } from "../config/database";
+import { generateSnowflakeId } from "../utils/snowflake";
 
 export type DatasetFieldType = "text" | "number" | "datetime";
 
 export interface DatasetFolder {
-  id: number;
-  parent_id: number | null;
-  project_id: number | null;
+  id: string;
+  parent_id: string | null;
+  project_id: string | null;
   name: string;
   description: string | null;
-  owner_id: number;
+  owner_id: string;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -17,8 +18,8 @@ export interface DatasetFolder {
 export type DatasetFolderTreeNode = DatasetFolder & { children: DatasetFolderTreeNode[] };
 
 export interface DatasetField {
-  id: number;
-  dataset_id: number;
+  id: string;
+  dataset_id: string;
   name: string;
   field_type: DatasetFieldType;
   sort_order: number;
@@ -26,35 +27,35 @@ export interface DatasetField {
 }
 
 export interface Dataset {
-  id: number;
+  id: string;
   name: string;
   description: string | null;
   file_path: string | null;
   file_size: number | null;
-  owner_id: number;
-  project_id: number | null;
-  folder_id: number | null;
+  owner_id: string;
+  project_id: string | null;
+  folder_id: string | null;
   created_at: string;
   updated_at: string;
 }
 
 export interface DatasetRow {
-  id: number;
-  dataset_id: number;
+  id: string;
+  dataset_id: string;
   sort_order: number;
   values_json: string;
   created_at: string;
 }
 
 export class DatasetFolderModel {
-  static findById(id: number): DatasetFolder | undefined {
+  static findById(id: string): DatasetFolder | undefined {
     return db.prepare("SELECT * FROM dataset_folders WHERE id = ?").get(id) as DatasetFolder | undefined;
   }
 
   /** 列出当前用户在某父级下的子文件夹（parentId 省略表示不限；null 表示根） */
   static listChildren(
-    ownerId: number,
-    opts: { projectId?: number | null; parentId?: number | null },
+    ownerId: string,
+    opts: { projectId?: string | null; parentId?: string | null },
   ): DatasetFolder[] {
     const conditions: string[] = ["owner_id = ?"];
     const params: unknown[] = [ownerId];
@@ -74,11 +75,11 @@ export class DatasetFolderModel {
       conditions.push("parent_id = ?");
       params.push(opts.parentId);
     }
-    const sql = `SELECT * FROM dataset_folders WHERE ${conditions.join(" AND ")} ORDER BY sort_order ASC, id ASC`;
+    const sql = `SELECT * FROM dataset_folders WHERE ${conditions.join(" AND ")} ORDER BY sort_order ASC, created_at ASC`;
     return db.prepare(sql).all(...params) as DatasetFolder[];
   }
 
-  static listAllForOwner(ownerId: number, projectId?: number | null): DatasetFolder[] {
+  static listAllForOwner(ownerId: string, projectId?: string | null): DatasetFolder[] {
     const conditions = ["owner_id = ?"];
     const params: unknown[] = [ownerId];
     if (projectId !== undefined) {
@@ -91,12 +92,12 @@ export class DatasetFolderModel {
     }
     return db
       .prepare(
-        `SELECT * FROM dataset_folders WHERE ${conditions.join(" AND ")} ORDER BY sort_order ASC, id ASC`,
+        `SELECT * FROM dataset_folders WHERE ${conditions.join(" AND ")} ORDER BY sort_order ASC, created_at ASC`,
       )
       .all(...params) as DatasetFolder[];
   }
 
-  static buildTree(folders: DatasetFolder[], parentId: number | null): DatasetFolderTreeNode[] {
+  static buildTree(folders: DatasetFolder[], parentId: string | null): DatasetFolderTreeNode[] {
     return folders
       .filter((f) => (f.parent_id ?? null) === (parentId ?? null))
       .map((f) => ({
@@ -106,19 +107,21 @@ export class DatasetFolderModel {
   }
 
   static create(data: {
-    parent_id: number | null;
-    project_id: number | null;
+    parent_id: string | null;
+    project_id: string | null;
     name: string;
     description?: string | null;
-    owner_id: number;
+    owner_id: string;
     sort_order?: number;
-  }): number {
-    const r = db
+  }): string {
+    const id = generateSnowflakeId();
+    db
       .prepare(
-        `INSERT INTO dataset_folders (parent_id, project_id, name, description, owner_id, sort_order)
-         VALUES (@parent_id, @project_id, @name, @description, @owner_id, @sort_order)`,
+        `INSERT INTO dataset_folders (id, parent_id, project_id, name, description, owner_id, sort_order)
+         VALUES (@id, @parent_id, @project_id, @name, @description, @owner_id, @sort_order)`,
       )
       .run({
+        id,
         parent_id: data.parent_id,
         project_id: data.project_id,
         name: data.name,
@@ -126,11 +129,11 @@ export class DatasetFolderModel {
         owner_id: data.owner_id,
         sort_order: data.sort_order ?? 0,
       });
-    return Number(r.lastInsertRowid);
+    return id;
   }
 
   static update(
-    id: number,
+    id: string,
     data: Partial<Pick<DatasetFolder, "name" | "description" | "parent_id" | "sort_order" | "project_id">>,
   ): boolean {
     const entries = Object.entries(data).filter(([, v]) => v !== undefined);
@@ -143,12 +146,12 @@ export class DatasetFolderModel {
     return r.changes > 0;
   }
 
-  static delete(id: number): boolean {
+  static delete(id: string): boolean {
     const r = db.prepare("DELETE FROM dataset_folders WHERE id = ?").run(id);
     return r.changes > 0;
   }
 
-  static countChildren(folderId: number): { subfolders: number; datasets: number } {
+  static countChildren(folderId: string): { subfolders: number; datasets: number } {
     const sub = db.prepare("SELECT COUNT(1) as c FROM dataset_folders WHERE parent_id = ?").get(folderId) as {
       c: number;
     };
@@ -158,13 +161,13 @@ export class DatasetFolderModel {
 }
 
 export class DatasetEntityModel {
-  static findById(id: number): Dataset | undefined {
+  static findById(id: string): Dataset | undefined {
     return db.prepare("SELECT * FROM datasets WHERE id = ?").get(id) as Dataset | undefined;
   }
 
   static list(
-    ownerId: number,
-    opts: { projectId?: number | null; folderId?: number | null },
+    ownerId: string,
+    opts: { projectId?: string | null; folderId?: string | null },
   ): Dataset[] {
     const conditions: string[] = ["owner_id = ?"];
     const params: unknown[] = [ownerId];
@@ -184,34 +187,36 @@ export class DatasetEntityModel {
         params.push(opts.folderId);
       }
     }
-    const sql = `SELECT * FROM datasets WHERE ${conditions.join(" AND ")} ORDER BY updated_at DESC, id DESC`;
+    const sql = `SELECT * FROM datasets WHERE ${conditions.join(" AND ")} ORDER BY updated_at DESC, created_at DESC`;
     return db.prepare(sql).all(...params) as Dataset[];
   }
 
   static create(data: {
     name: string;
     description?: string | null;
-    owner_id: number;
-    project_id?: number | null;
-    folder_id?: number | null;
-  }): number {
-    const r = db
+    owner_id: string;
+    project_id?: string | null;
+    folder_id?: string | null;
+  }): string {
+    const id = generateSnowflakeId();
+    db
       .prepare(
-        `INSERT INTO datasets (name, description, owner_id, project_id, folder_id)
-         VALUES (@name, @description, @owner_id, @project_id, @folder_id)`,
+        `INSERT INTO datasets (id, name, description, owner_id, project_id, folder_id)
+         VALUES (@id, @name, @description, @owner_id, @project_id, @folder_id)`,
       )
       .run({
+        id,
         name: data.name,
         description: data.description ?? null,
         owner_id: data.owner_id,
         project_id: data.project_id ?? null,
         folder_id: data.folder_id ?? null,
       });
-    return Number(r.lastInsertRowid);
+    return id;
   }
 
   static update(
-    id: number,
+    id: string,
     data: Partial<Pick<Dataset, "name" | "description" | "project_id" | "folder_id">>,
   ): boolean {
     const entries = Object.entries(data).filter(([, v]) => v !== undefined);
@@ -224,12 +229,12 @@ export class DatasetEntityModel {
     return r.changes > 0;
   }
 
-  static delete(id: number): boolean {
+  static delete(id: string): boolean {
     const r = db.prepare("DELETE FROM datasets WHERE id = ?").run(id);
     return r.changes > 0;
   }
 
-  static rowCount(datasetId: number): number {
+  static rowCount(datasetId: string): number {
     const row = db.prepare("SELECT COUNT(1) as c FROM dataset_rows WHERE dataset_id = ?").get(datasetId) as {
       c: number;
     };
@@ -238,38 +243,38 @@ export class DatasetEntityModel {
 }
 
 export class DatasetFieldModel {
-  static listByDataset(datasetId: number): DatasetField[] {
+  static listByDataset(datasetId: string): DatasetField[] {
     return db
       .prepare(
-        "SELECT * FROM dataset_fields WHERE dataset_id = ? ORDER BY sort_order ASC, id ASC",
+        "SELECT * FROM dataset_fields WHERE dataset_id = ? ORDER BY sort_order ASC, created_at ASC",
       )
       .all(datasetId) as DatasetField[];
   }
 
-  static replaceForDataset(datasetId: number, fields: { name: string; field_type: DatasetFieldType; sort_order: number }[]) {
+  static replaceForDataset(datasetId: string, fields: { name: string; field_type: DatasetFieldType; sort_order: number }[]) {
     const del = db.prepare("DELETE FROM dataset_fields WHERE dataset_id = ?");
     const ins = db.prepare(
-      `INSERT INTO dataset_fields (dataset_id, name, field_type, sort_order) VALUES (?, ?, ?, ?)`,
+      `INSERT INTO dataset_fields (id, dataset_id, name, field_type, sort_order) VALUES (?, ?, ?, ?, ?)`,
     );
     const tx = db.transaction(() => {
       del.run(datasetId);
       for (const f of fields) {
-        ins.run(datasetId, f.name, f.field_type, f.sort_order);
+        ins.run(generateSnowflakeId(), datasetId, f.name, f.field_type, f.sort_order);
       }
     });
     tx();
   }
 
   static createMany(
-    datasetId: number,
+    datasetId: string,
     fields: { name: string; field_type: DatasetFieldType; sort_order: number }[],
   ) {
     const ins = db.prepare(
-      `INSERT INTO dataset_fields (dataset_id, name, field_type, sort_order) VALUES (?, ?, ?, ?)`,
+      `INSERT INTO dataset_fields (id, dataset_id, name, field_type, sort_order) VALUES (?, ?, ?, ?, ?)`,
     );
     const tx = db.transaction(() => {
       for (const f of fields) {
-        ins.run(datasetId, f.name, f.field_type, f.sort_order);
+        ins.run(generateSnowflakeId(), datasetId, f.name, f.field_type, f.sort_order);
       }
     });
     tx();
@@ -278,7 +283,7 @@ export class DatasetFieldModel {
 
 export class DatasetRowModel {
   static listPage(
-    datasetId: number,
+    datasetId: string,
     page: number,
     pageSize: number,
   ): { rows: DatasetRow[]; total: number } {
@@ -288,13 +293,13 @@ export class DatasetRowModel {
     const offset = (page - 1) * pageSize;
     const rows = db
       .prepare(
-        `SELECT * FROM dataset_rows WHERE dataset_id = ? ORDER BY sort_order ASC, id ASC LIMIT ? OFFSET ?`,
+        `SELECT * FROM dataset_rows WHERE dataset_id = ? ORDER BY sort_order ASC, created_at ASC LIMIT ? OFFSET ?`,
       )
       .all(datasetId, pageSize, offset) as DatasetRow[];
     return { rows, total: total.c };
   }
 
-  static create(datasetId: number, valuesJson: string, sortOrder?: number): number {
+  static create(datasetId: string, valuesJson: string, sortOrder?: number): string {
     let order = sortOrder;
     if (order === undefined) {
       const row = db
@@ -302,19 +307,23 @@ export class DatasetRowModel {
         .get(datasetId) as { n: number };
       order = row.n;
     }
-    const r = db
-      .prepare(`INSERT INTO dataset_rows (dataset_id, sort_order, values_json) VALUES (?, ?, ?)`)
-      .run(datasetId, order, valuesJson);
-    return Number(r.lastInsertRowid);
+    const id = generateSnowflakeId();
+    db.prepare(`INSERT INTO dataset_rows (id, dataset_id, sort_order, values_json) VALUES (?, ?, ?, ?)`).run(
+      id,
+      datasetId,
+      order,
+      valuesJson,
+    );
+    return id;
   }
 
-  static findById(rowId: number, datasetId: number): DatasetRow | undefined {
+  static findById(rowId: string, datasetId: string): DatasetRow | undefined {
     return db
       .prepare("SELECT * FROM dataset_rows WHERE id = ? AND dataset_id = ?")
       .get(rowId, datasetId) as DatasetRow | undefined;
   }
 
-  static update(rowId: number, datasetId: number, valuesJson: string, sortOrder?: number): boolean {
+  static update(rowId: string, datasetId: string, valuesJson: string, sortOrder?: number): boolean {
     if (sortOrder !== undefined) {
       const r = db
         .prepare(
@@ -329,7 +338,7 @@ export class DatasetRowModel {
     return r.changes > 0;
   }
 
-  static delete(rowId: number, datasetId: number): boolean {
+  static delete(rowId: string, datasetId: string): boolean {
     const r = db.prepare("DELETE FROM dataset_rows WHERE id = ? AND dataset_id = ?").run(rowId, datasetId);
     return r.changes > 0;
   }

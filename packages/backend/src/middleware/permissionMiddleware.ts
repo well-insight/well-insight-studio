@@ -10,7 +10,7 @@ export const requirePermission = (
 ) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).userId; // 从认证中间件获取用户ID
+      const userId = req.userId;
 
       if (!userId) {
         return res.status(401).json({
@@ -26,9 +26,9 @@ export const requirePermission = (
       }
 
       // 获取项目ID（如果存在）
-      let projectId: number | undefined;
+      let projectId: string | undefined;
       if (req.params.projectId) {
-        projectId = parseInt(req.params.projectId);
+        projectId = req.params.projectId;
       }
 
       // 检查权限
@@ -64,7 +64,7 @@ export const requirePermission = (
 export const requireRole = (requiredRoleName: string) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).userId;
+      const userId = req.userId;
 
       if (!userId) {
         return res.status(401).json({
@@ -104,7 +104,7 @@ export const requireProjectPermission = (
 ) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).userId;
+      const userId = req.userId;
 
       if (!userId) {
         return res.status(401).json({
@@ -113,9 +113,8 @@ export const requireProjectPermission = (
         });
       }
 
-      const projectId = parseInt(req.params[projectIdParam]);
-
-      if (isNaN(projectId)) {
+      const projectId = String(req.params[projectIdParam] ?? "").trim();
+      if (!projectId) {
         return res.status(400).json({
           success: false,
           error: "无效的项目ID",
@@ -127,7 +126,7 @@ export const requireProjectPermission = (
         userId,
         ResourceType.PROJECT,
         action,
-        projectId.toString(),
+        projectId,
         projectId,
       );
 

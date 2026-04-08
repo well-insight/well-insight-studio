@@ -19,7 +19,7 @@ const controlStore = useControlStore()
 const { layoutCollapse, settingCollapse } = storeToRefs(controlStore)
 
 function initCurrentApp() {
-  const current = appList.value?.find(e => e?.id === route.params?.appId) || appList.value?.[0]
+  const current = appList.value?.find(e => e?.id === route.params?.id) || appList.value?.[0]
   if (current) {
     workspaceStore.setCurrentApp(current)
   }

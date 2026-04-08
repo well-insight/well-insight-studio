@@ -1,7 +1,8 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
+import { generateSnowflakeId } from "../utils/snowflake";
 
-const router = Router();
+const router: Router = Router();
 
 // 数据模型验证
 const PageSchema = z.object({
@@ -36,7 +37,7 @@ router.post("/pages", (req: Request, res: Response) => {
     const validatedData = PageSchema.parse(req.body);
 
     const newPage = {
-      id: Date.now().toString(36) + Math.random().toString(36).substr(2),
+      id: generateSnowflakeId(),
       ...validatedData,
       createdAt: new Date(),
       updatedAt: new Date(),

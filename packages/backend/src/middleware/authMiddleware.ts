@@ -3,12 +3,13 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { UserModel } from '../models/User';
 import { AuthService } from '../services/AuthService';
+import { ActionType, ResourceType } from '../models/Permission';
 
 // 为 Express Request 对象扩展属性
 declare global {
   namespace Express {
     interface Request {
-      userId?: number;
+      userId?: string;
     }
   }
 }
@@ -61,14 +62,15 @@ export const requireAdmin = async (
  * @param resourceIdFromParam - 从哪个 URL 参数获取资源ID，默认为 'id'
  */
 export const requirePermission = (
-  resourceType: string,
-  action: string,
+  resourceType: ResourceType,
+  action: ActionType,
   resourceIdFromParam: string = 'id'
 ) => {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     if (!req.userId) {
       // 理论上不会发生，因为 requirePermission 应该在 authenticateToken 之后使用
-      return res.status(401).json({ error: 'Authentication required' });
+      res.status(401).json({ error: 'Authentication required' });
+      return;
     }
 
     const resourceId = req.params[resourceIdFromParam];
@@ -82,7 +84,8 @@ export const requirePermission = (
       );
 
       if (!hasPermission) {
-        return res.status(403).json({ error: 'Insufficient Permissions' });
+        res.status(403).json({ error: 'Insufficient Permissions' });
+        return;
       }
 
       next();

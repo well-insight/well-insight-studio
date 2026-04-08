@@ -1,5 +1,5 @@
 export interface AuthUser {
-  id: number
+  id: string
   email: string
   username: string
   /** 显示名称 / 昵称 */

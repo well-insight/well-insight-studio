@@ -1,26 +1,129 @@
-// src/models/Permission.ts
+import { z } from "zod";
 import { db } from "../config/database";
 
+export const ResourceType = {
+  PROJECT: "project",
+  DATASET: "dataset",
+  WORKFLOW: "workflow",
+  ROLE: "role",
+  USER: "user",
+} as const;
+export const ResourceTypeSchema = z.enum([
+  ResourceType.PROJECT,
+  ResourceType.DATASET,
+  ResourceType.WORKFLOW,
+  ResourceType.ROLE,
+  ResourceType.USER,
+]);
+export type ResourceType = z.infer<typeof ResourceTypeSchema>;
+
+export const ActionType = {
+  READ: "read",
+  WRITE: "write",
+  DELETE: "delete",
+  EXECUTE: "execute",
+  IMPORT: "import",
+  EXPORT: "export",
+  ASSIGN: "assign",
+  REMOVE: "remove",
+  VIEW_PERMISSIONS: "view_permissions",
+  VIEW_ROLES: "view_roles",
+} as const;
+export const ActionTypeSchema = z.enum([
+  ActionType.READ,
+  ActionType.WRITE,
+  ActionType.DELETE,
+  ActionType.EXECUTE,
+  ActionType.IMPORT,
+  ActionType.EXPORT,
+  ActionType.ASSIGN,
+  ActionType.REMOVE,
+  ActionType.VIEW_PERMISSIONS,
+  ActionType.VIEW_ROLES,
+]);
+export type ActionType = z.infer<typeof ActionTypeSchema>;
+
+export type RoleType = string;
+
 export interface PermissionRule {
-  id: number;
-  resource_type: string;
-  resource_id: string | null;
-  actions: string; // JSON string
-  conditions: string | null; // JSON string
+  id: string;
+  resourceType: ResourceType;
+  resourceId?: string;
+  actions: ActionType[];
+  conditions?: Record<string, unknown>;
   priority: number;
-  is_active: boolean;
-  created_at: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
+export interface Role {
+  id: string;
+  name: string;
+  description?: string;
+  permissions: PermissionRule[];
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string;
+}
+
+export interface UserRole {
+  id: string;
+  userId: string;
+  roleId: string;
+  projectId?: string;
+  assignedBy: string;
+  assignedAt: Date;
+  expiresAt?: Date;
+}
+
+export interface PermissionCheckResult {
+  allowed: boolean;
+  reason: string;
+  applicableRules: PermissionRule[];
+}
+
+const PermissionRuleInputSchema = z.object({
+  resourceType: ResourceTypeSchema,
+  resourceId: z.string().min(1).optional(),
+  actions: z.array(ActionTypeSchema).min(1),
+  conditions: z.record(z.string(), z.unknown()).optional(),
+  priority: z.number().int().default(0),
+  isActive: z.boolean().default(true),
+});
+export type PermissionRuleInput = z.infer<typeof PermissionRuleInputSchema>;
+
+export const RoleSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().max(500).optional(),
+  permissions: z.array(PermissionRuleInputSchema).default([]),
+});
+export type RoleInput = z.infer<typeof RoleSchema>;
+
+export const AssignRoleSchema = z.object({
+  userId: z.string().min(1),
+  roleId: z.string().min(1),
+  projectId: z.string().min(1).optional(),
+  expiresAt: z.coerce.date().optional(),
+});
+
+export const CheckPermissionSchema = z.object({
+  resourceType: ResourceTypeSchema,
+  action: ActionTypeSchema,
+  resourceId: z.string().min(1).optional(),
+  projectId: z.string().min(1).optional(),
+});
+
+type PermissionRow = {
+  resource_type: ResourceType;
+  actions: string;
+};
+
 export class PermissionModel {
-  /**
-   * 获取用户在特定资源类型上的所有权限
-   */
   static async getUserPermissionsForResource(
-    userId: number,
-    resourceType: string,
-    resourceId?: string,
-  ): Promise<{ resource_type: string; actions: string[] }[]> {
+    userId: string,
+    resourceType: ResourceType,
+  ): Promise<Array<{ resource_type: ResourceType; actions: ActionType[] }>> {
     const sql = `
       SELECT DISTINCT pr.resource_type, pr.actions
       FROM permission_rules pr
@@ -32,31 +135,26 @@ export class PermissionModel {
         AND (pr.resource_id IS NULL OR pr.resource_id = '*')
       ORDER BY pr.priority DESC
     `;
-    const rows = db.prepare(sql).all(userId, resourceType) as any[];
+    const rows = db.prepare(sql).all(userId, resourceType) as PermissionRow[];
 
     return rows.map((row) => ({
       resource_type: row.resource_type,
-      actions: JSON.parse(row.actions),
+      actions: JSON.parse(row.actions) as ActionType[],
     }));
   }
 
-  /**
-   * 获取用户在特定资源实例上的权限
-   */
   static async getUserPermissionsForResourceInstance(
-    userId: number,
-    resourceType: string,
+    userId: string,
+    resourceType: ResourceType,
     resourceId: string,
-  ): Promise<string[]> {
-    const allActions = new Set<string>();
-
-    // 1. 获取通用权限 (resource_id = '*')
+  ): Promise<ActionType[]> {
+    const allActions = new Set<ActionType>();
     const genericPerms = await this.getUserPermissionsForResource(userId, resourceType);
+
     for (const perm of genericPerms) {
-      JSON.parse(perm.actions).forEach((action: string) => allActions.add(action));
+      perm.actions.forEach((action) => allActions.add(action));
     }
 
-    // 2. 获取具体实例权限 (resource_id = specific_id)
     const sql = `
       SELECT pr.actions
       FROM permission_rules pr
@@ -68,10 +166,10 @@ export class PermissionModel {
         AND pr.resource_id = ?
       ORDER BY pr.priority DESC
     `;
-    const instanceRows = db.prepare(sql).all(userId, resourceType, resourceId) as any[];
+    const instanceRows = db.prepare(sql).all(userId, resourceType, resourceId) as Array<{ actions: string }>;
 
     for (const row of instanceRows) {
-      JSON.parse(row.actions).forEach((action: string) => allActions.add(action));
+      (JSON.parse(row.actions) as ActionType[]).forEach((action) => allActions.add(action));
     }
 
     return Array.from(allActions);

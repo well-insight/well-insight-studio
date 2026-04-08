@@ -23,8 +23,8 @@ export class UserController {
   /** 管理员重置指定用户密码 */
   static async resetPassword(req: Request, res: Response): Promise<void> {
     try {
-      const id = parseInt(req.params.id, 10);
-      if (Number.isNaN(id) || id < 1) {
+      const id = String(req.params.id ?? "").trim();
+      if (!id) {
         res.status(400).json({ success: false, error: "无效的用户 ID" });
         return;
       }

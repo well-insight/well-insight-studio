@@ -1,8 +1,9 @@
 // src/models/User.ts
 import { db } from "../config/database";
+import { generateSnowflakeId } from "../utils/snowflake";
 
 export interface User {
-  id: number;
+  id: string;
   email: string;
   username: string;
   /** 显示名称 / 昵称，用于界面展示 */
@@ -19,14 +20,14 @@ export interface User {
 export type UserPublic = Omit<User, "password_hash">;
 
 export class UserModel {
-  static async findById(id: number): Promise<User | undefined> {
+  static async findById(id: string): Promise<User | undefined> {
     return db.prepare("SELECT * FROM users WHERE id = ? AND is_active = 1").get(id) as
       | User
       | undefined;
   }
 
   /** 按主键查询（含已禁用用户），用于管理等场景 */
-  static findByPk(id: number): User | undefined {
+  static findByPk(id: string): User | undefined {
     return db.prepare("SELECT * FROM users WHERE id = ?").get(id) as User | undefined;
   }
 
@@ -49,23 +50,25 @@ export class UserModel {
     return UserModel.findByUsername(account);
   }
 
-  static async create(userData: Omit<User, "id" | "created_at" | "updated_at">): Promise<number> {
+  static async create(userData: Omit<User, "id" | "created_at" | "updated_at">): Promise<string> {
+    const id = generateSnowflakeId();
     const stmt = db.prepare(`
-      INSERT INTO users (email, username, display_name, password_hash, role, is_active)
-      VALUES (@email, @username, @display_name, @password_hash, @role, @is_active)
+      INSERT INTO users (id, email, username, display_name, password_hash, role, is_active)
+      VALUES (@id, @email, @username, @display_name, @password_hash, @role, @is_active)
     `);
-    const info = stmt.run({
+    stmt.run({
+      id,
       ...userData,
       display_name: userData.display_name ?? null,
     });
-    return info.lastInsertRowid as number;
+    return id;
   }
 
-  static async updateLastLogin(userId: number): Promise<void> {
+  static async updateLastLogin(userId: string): Promise<void> {
     db.prepare("UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?").run(userId);
   }
 
-  static updatePasswordHash(userId: number, passwordHash: string): boolean {
+  static updatePasswordHash(userId: string, passwordHash: string): boolean {
     const r = db
       .prepare(
         "UPDATE users SET password_hash = @hash, updated_at = CURRENT_TIMESTAMP WHERE id = @id",
@@ -81,10 +84,12 @@ export class UserModel {
         `
       SELECT id, email, username, display_name, role, is_active, created_at, updated_at, last_login_at
       FROM users
-      ORDER BY id ASC
+      ORDER BY created_at ASC, id ASC
     `,
       )
       .all() as UserPublic[];
     return rows;
   }
 }
+
+export const UserDatabase = UserModel;

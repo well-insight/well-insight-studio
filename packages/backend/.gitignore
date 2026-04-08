@@ -7,3 +7,5 @@ data/*.db-wal
 !data/.gitkeep
 
 .env
+
+/dist

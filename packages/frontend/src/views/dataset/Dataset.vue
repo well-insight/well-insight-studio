@@ -23,9 +23,9 @@ type FolderTreeNode = {
   id: string;
   label: string;
   type: "all" | "folder";
-  folderId?: number;
+  folderId?: string;
   description?: string | null;
-  parentFolderId?: number | null;
+  parentFolderId?: string | null;
   children?: FolderTreeNode[];
 };
 
@@ -40,9 +40,9 @@ const folderRoots = ref<ApiFolderTreeNode[]>([]);
 const allDatasets = ref<ApiDatasetListItem[]>([]);
 
 /** 当前选中的目录：全部，或某个 folder id */
-const selectedFolderId = ref<number | "all">("all");
+const selectedFolderId = ref<string | "all">("all");
 
-const contextFolderId = ref<number | null>(null);
+const contextFolderId = ref<string | null>(null);
 
 const treeRenderKey = ref(0);
 /** 目录行「更多」下拉展开时保持显示触发图标（菜单 teleport 到 body 会离开行悬停） */
@@ -53,10 +53,10 @@ const folderName = ref("");
 const folderSubmitting = ref(false);
 
 const folderEditVisible = ref(false);
-const folderEditId = ref<number | null>(null);
+const folderEditId = ref<string | null>(null);
 const folderEditName = ref("");
 const folderEditDesc = ref("");
-const folderEditParentId = ref<number | null>(null);
+const folderEditParentId = ref<string | null>(null);
 const folderEditSubmitting = ref(false);
 
 const datasetDialogVisible = ref(false);
@@ -69,10 +69,10 @@ const datasetFields = ref<{ name: string; field_type: DatasetFieldType }[]>([
 
 const editVisible = ref(false);
 const editSubmitting = ref(false);
-const editId = ref<number | null>(null);
+const editId = ref<string | null>(null);
 const editName = ref("");
 const editDesc = ref("");
-const editFolderId = ref<number | null>(null);
+const editFolderId = ref<string | null>(null);
 
 function mapFoldersToNodes(folders: ApiFolderTreeNode[]): FolderTreeNode[] {
   return folders.map((f) => ({
@@ -93,8 +93,8 @@ const treeData = computed<FolderTreeNode[]>(() => {
 function flattenFolderOptions(
   folders: ApiFolderTreeNode[],
   prefix = "",
-): { label: string; value: number }[] {
-  const out: { label: string; value: number }[] = [];
+): { label: string; value: string }[] {
+  const out: { label: string; value: string }[] = [];
   for (const f of folders) {
     out.push({ label: `${prefix}${f.name}`, value: f.id });
     if (f.children?.length) {
@@ -109,7 +109,7 @@ const folderSelectOptions = computed(() => flattenFolderOptions(folderRoots.valu
 /** 从根到该文件夹的名称路径（不含「全部」） */
 function folderPathSegments(
   folders: ApiFolderTreeNode[],
-  targetId: number,
+  targetId: string,
   chain: string[] = [],
 ): string[] | null {
   for (const f of folders) {
@@ -130,7 +130,7 @@ const folderDialogParentPath = computed(() => {
   return segs?.join(" / ") ?? "（未知目录）";
 });
 
-function findFolderInApiTree(folders: ApiFolderTreeNode[], id: number): ApiFolderTreeNode | null {
+function findFolderInApiTree(folders: ApiFolderTreeNode[], id: string): ApiFolderTreeNode | null {
   for (const f of folders) {
     if (f.id === id) return f;
     if (f.children?.length) {
@@ -141,8 +141,8 @@ function findFolderInApiTree(folders: ApiFolderTreeNode[], id: number): ApiFolde
   return null;
 }
 
-function collectDescendantFolderIds(root: ApiFolderTreeNode): Set<number> {
-  const s = new Set<number>();
+function collectDescendantFolderIds(root: ApiFolderTreeNode): Set<string> {
+  const s = new Set<string>();
   const walk = (n: ApiFolderTreeNode) => {
     s.add(n.id);
     for (const c of n.children || []) walk(c);
@@ -157,23 +157,19 @@ const folderEditParentOptions = computed(() => {
   const fid = folderEditId.value;
   if (fid == null) return flat;
   const node = findFolderInApiTree(folderRoots.value, fid);
-  const blocked = node ? collectDescendantFolderIds(node) : new Set<number>([fid]);
+  const blocked = node ? collectDescendantFolderIds(node) : new Set<string>([fid]);
   return flat.filter((o) => !blocked.has(o.value));
 });
 
 const filteredDatasets = computed(() => {
   const list = allDatasets.value;
   if (selectedFolderId.value === "all") {
-    return [...list].sort((a, b) =>
-      a.updated_at < b.updated_at ? 1 : a.updated_at > b.updated_at ? -1 : b.id - a.id,
-    );
+    return [...list].sort((a, b) => (a.updated_at < b.updated_at ? 1 : a.updated_at > b.updated_at ? -1 : 0));
   }
   const fid = selectedFolderId.value;
   return list
     .filter((d) => d.folder_id === fid)
-    .sort((a, b) =>
-      a.updated_at < b.updated_at ? 1 : a.updated_at > b.updated_at ? -1 : b.id - a.id,
-    );
+    .sort((a, b) => (a.updated_at < b.updated_at ? 1 : a.updated_at > b.updated_at ? -1 : 0));
 });
 
 function formatTime(iso: string) {
@@ -836,6 +832,7 @@ onMounted(async () => {
   color: var(--el-text-color-secondary);
   line-height: 1.5;
   min-height: 40px;
+  line-clamp: 2;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
