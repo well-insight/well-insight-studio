@@ -46,6 +46,15 @@ defineOptions({
 const containerRef = ref<HTMLElement | null>(null);
 const listTableRef = shallowRef<InstanceType<typeof ListTable> | null>(null);
 
+const defaultTableOptions: ListTableConstructorOptions = {
+  columns: [],
+  records: [],
+  widthMode: "adaptive",
+  select: {
+    disableSelect: true,
+  },
+};
+
 defineExpose({
   get vTableInstance() {
     return listTableRef.value;
@@ -68,6 +77,7 @@ const mergedOptions = computed((): ListTableConstructorOptions => {
   };
 
   const base: ListTableConstructorOptions = {
+    ...defaultTableOptions,
     ...userRest,
     theme,
     customConfig,

@@ -18,6 +18,7 @@ import {
 } from "@/api/dataset";
 import { useRouter } from "vue-router";
 import { useWorkspaceStore } from "@/store/workspaceStore/workspaceStore";
+import SvgIcon from "@/components/svg-icon/SvgIcon.vue";
 const router = useRouter();
 type FolderTreeNode = {
   id: string;
@@ -164,7 +165,9 @@ const folderEditParentOptions = computed(() => {
 const filteredDatasets = computed(() => {
   const list = allDatasets.value;
   if (selectedFolderId.value === "all") {
-    return [...list].sort((a, b) => (a.updated_at < b.updated_at ? 1 : a.updated_at > b.updated_at ? -1 : 0));
+    return [...list].sort((a, b) =>
+      a.updated_at < b.updated_at ? 1 : a.updated_at > b.updated_at ? -1 : 0,
+    );
   }
   const fid = selectedFolderId.value;
   return list
@@ -675,13 +678,28 @@ onMounted(async () => {
             <div v-for="(row, i) in datasetFields" :key="i" class="flex gap-2 items-center">
               <el-input v-model="row.name" placeholder="字段名" class="flex-1" maxlength="200" />
               <el-select v-model="row.field_type" style="width: 120px">
-                <el-option label="文本" value="text" />
-                <el-option label="数字" value="number" />
-                <el-option label="日期时间" value="datetime" />
+                <el-option value="text" label="文本">
+                  <el-space>
+                    <SvgIcon name="text" size="14" />
+                    <span>文本</span>
+                  </el-space>
+                </el-option>
+                <el-option value="number" label="数字">
+                  <el-space>
+                    <SvgIcon name="number" size="14" />
+                    <span>数字</span>
+                  </el-space>
+                </el-option>
+                <el-option value="datetime" label="日期时间">
+                  <el-space>
+                    <SvgIcon name="datetime" size="14" />
+                    <span>日期时间</span>
+                  </el-space>
+                </el-option>
               </el-select>
               <el-button text type="danger" @click="removeFieldRow(i)">删除</el-button>
             </div>
-            <el-button size="small" @click="addFieldRow">添加字段</el-button>
+            <el-button @click="addFieldRow">添加字段</el-button>
           </div>
         </el-form-item>
       </el-form>

@@ -12,6 +12,7 @@ import type { ColumnDefine, ListTableConstructorOptions } from "@visactor/vtable
 import { ElButton, ElMessage, ElMessageBox } from "element-plus";
 import dayjs from "dayjs";
 import { h, reactive, ref, watch } from "vue";
+import ColumnField from "@/components/column-field/ColumnField.vue";
 
 import { vueGroupCustomLayout } from "@/utils/vtableVueCustomLayout";
 
@@ -85,11 +86,19 @@ function buildColumns(f: ApiDatasetField[], editable: boolean) {
       style: { textAlign: "center" },
     },
   ];
-  const dataCols = f.map((col) => ({
-    field: `c_${col.id}`,
-    title: `${col.name} (${col.field_type})`,
-    width: 160,
-  }));
+  const dataCols: ColumnDefine[] = f.map((col) => {
+    const headerLayout = vueGroupCustomLayout(() =>
+      h("div", { style: { display: "flex", alignItems: "center", height: "100%" } }, [
+        h(ColumnField, { field: col }),
+      ]),
+    );
+    return {
+      field: `c_${col.id}`,
+      title: `${col.name} (${col.field_type})`,
+      width: 160,
+      headerCustomLayout: headerLayout,
+    };
+  });
   if (!editable) {
     return [...base, ...dataCols];
   }
@@ -394,24 +403,27 @@ defineExpose({ openCreateRow });
           @closed="editingRowId = null"
         >
           <el-form label-position="top">
-            <el-form-item v-for="f in fields" :key="f.id" :label="`${f.name}（${f.field_type}）`">
+            <el-form-item v-for="f in fields" :key="f.id">
+              <template #label>
+                <ColumnField :field="f" />
+              </template>
               <el-input
                 v-if="f.field_type === 'text'"
                 v-model="rowForm[String(f.id)]"
                 type="textarea"
                 :rows="2"
-                placeholder="文本，可留空"
+                placeholder="请输入文本"
               />
               <el-input
                 v-else-if="f.field_type === 'number'"
                 v-model="rowForm[String(f.id)]"
-                placeholder="数字，可留空"
+                placeholder="请输入数字"
               />
               <el-date-picker
                 v-else
                 v-model="rowForm[String(f.id)]"
                 type="datetime"
-                placeholder="选择日期时间，可留空"
+                placeholder="请选择日期时间"
                 style="width: 100%"
                 value-format="YYYY-MM-DD HH:mm:ss"
               />

@@ -19,13 +19,14 @@ export function buildElementPlusVTableThemePartial(root: HTMLElement = document.
 
   const border = read("--el-table-border-color", "#ebeef5");
   const text = read("--el-table-text-color", "#606266");
-  const headerText = read("--el-table-header-text-color", "#909399");
+  const headerText = read("--el-table-text-color", "#606266");
+  // const headerText = read("--el-table-header-text-color", "#909399");
   const headerBg = read("--el-table-header-bg-color", "#ffffff");
   const rowBg = read("--el-table-tr-bg-color", "#ffffff");
   const tableBg = read("--el-table-bg-color", rowBg);
   const hoverBg = read("--el-table-row-hover-bg-color", "#f5f7fa");
   const primary = read("--el-color-primary", "#409eff");
-  const selectBg = read("--el-color-primary-light-9", "rgba(64, 158, 255, 0.09)");
+  // const selectBg = read("--el-color-primary-light-9", "rgba(64, 158, 255, 0.09)");
   const resizeTint = read("--el-color-primary-light-8", "#d9ecff");
   const fontSize = readPx("--el-font-size-base", 14);
   const bodyFont =
@@ -108,7 +109,7 @@ export function buildElementPlusVTableThemePartial(root: HTMLElement = document.
     },
     frameStyle: {
       borderColor: border,
-      borderLineWidth: [0, 0, 0, 0],
+      borderLineWidth: [0, 0, 1, 0],
       cornerRadius: 0,
       shadowBlur: 0,
       shadowOffsetX: 0,
@@ -130,6 +131,7 @@ export function buildElementPlusVTableThemePartial(root: HTMLElement = document.
       },
     },
     selectionStyle: {
+      // color: primary,
       // cellBgColor: selectBg,
       cellBorderLineWidth: 1,
       cellBorderColor: primary,
