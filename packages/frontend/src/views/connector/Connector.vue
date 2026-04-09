@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import {
-  Coin,
-  Connection,
-  DataAnalysis,
-  Document,
-  FolderOpened,
-  Grid,
-  List,
-  Notebook,
-  Odometer
+    Coin,
+    Connection,
+    DataAnalysis,
+    Document,
+    FolderOpened,
+    Grid,
+    List,
+    Notebook,
+    Odometer
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { computed, ref } from 'vue'
@@ -99,25 +99,8 @@ const dbForm = ref({
   password: ''
 })
 
-const excelFields = [
-  { field: 'date', label: '日期', required: true, type: 'date' },
-  { field: 'plantName', label: '水厂名称', required: true, type: 'string' },
-  { field: 'totalSupply', label: '供水总量(m³)', required: true, type: 'number' },
-  { field: 'turbidity', label: '出厂水浊度(NTU)', required: false, type: 'number' },
-  { field: 'residualChlorine', label: '出厂水余氯(mg/L)', required: false, type: 'number' },
-  { field: 'pressure', label: '管网压力(MPa)', required: false, type: 'number' },
-  { field: 'leakRate', label: '管网漏损率(%)', required: false, type: 'number' },
-  { field: 'waterQualityRate', label: '水质合格率(%)', required: false, type: 'number' }
-]
-
-async function submitExcelData(data: any[]) {
-  console.log('提交数据', data)
-  return Promise.resolve()
-}
-
-function handleExcelSuccess(data: any[]) {
-  console.log('Excel 导入成功', data)
-  ElMessage.success('Excel 数据导入成功')
+function handleExcelSuccess(datasetId: string, datasetName: string) {
+  ElMessage.success(`数据集「${datasetName}」已创建成功`)
   excelDialogVisible.value = false
 }
 
@@ -202,8 +185,6 @@ async function connectDatabase() {
     <!-- Excel 导入对话框 -->
     <ExcelImporter
       v-else-if="excelDialogVisible"
-      :fields="excelFields"
-      :submit-api="submitExcelData"
       @success="handleExcelSuccess"
       @close="closeExcelDialog"
     />

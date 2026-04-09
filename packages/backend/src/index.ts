@@ -1,13 +1,13 @@
-import express, { Express, Request, Response, NextFunction } from "express";
-import cors from "cors";
-import helmet from "helmet";
 import compression from "compression";
-import rateLimit from "express-rate-limit";
+import cors from "cors";
 import dotenv from "dotenv";
+import express, { Express, NextFunction, Request, Response } from "express";
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 import path from "path";
-import routes from "./routes";
-import { initializeDatabaseSchema } from "./config/dbSchema"; // 添加数据库初始化
 import { closeDatabase } from "./config/database";
+import { initializeDatabaseSchema } from "./config/dbSchema"; // 添加数据库初始化
+import routes from "./routes";
 import { setupSwagger } from "./swagger/setupSwagger";
 
 dotenv.config();
@@ -34,7 +34,9 @@ app.use(
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000, // 15分钟
-    max: 100, // 限制每个IP 15分钟内最多100个请求
+    max: 500, // 限制每个IP 15分钟内最多500个请求
+    standardHeaders: true,  // 返回标准 RateLimit-* 响应头，方便客户端感知剩余配额
+    legacyHeaders: false,   // 禁用旧版 X-RateLimit-* 头
   }),
 );
 
@@ -94,6 +96,9 @@ const server = app.listen(PORT, () => {
   console.log(`[SERVER] OpenAPI JSON: http://localhost:${PORT}/api-docs/openapi.json`);
   console.log(`[DATABASE] SQLite 数据库已就绪`);
 });
+// 防止在反向代理（Nginx 等）65s keepalive 超时前服务端先断开连接
+server.keepAliveTimeout = 65000;
+server.headersTimeout = 66000;
 
 function shutdown(signal: string) {
   console.log(`[SERVER] 收到 ${signal}，正在安全退出…`);
@@ -109,5 +114,13 @@ function shutdown(signal: string) {
 
 process.once("SIGINT", () => shutdown("SIGINT"));
 process.once("SIGTERM", () => shutdown("SIGTERM"));
+
+// 全局守护：防止未捕获异常/未处理 Promise rejection 导致进程崩溃
+process.on("uncaughtException", (err) => {
+  console.error("[SERVER] 未捕获异常，服务继续运行:", err);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("[SERVER] 未处理的 Promise rejection，服务继续运行:", reason);
+});
 
 export default app;

@@ -1,228 +1,268 @@
 <script setup lang="ts">
+import type { ConnectorFieldConfig, ConnectorFieldType } from '@/api/connector'
+import { importDataset as apiImportDataset, parseFile as apiParseFile } from '@/api/connector'
+import type { ApiFolderTreeNode } from '@/api/dataset'
+import { fetchDatasetFolderTree } from '@/api/dataset'
+import ElListTable from '@/components/el-vtable/ElListTable.vue'
 import { UploadFilled } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
-import { computed, ref } from 'vue'
-import * as XLSX from 'xlsx'
+import type { ColumnDefine, ListTableConstructorOptions } from '@visactor/vtable'
+import type { UploadFile } from 'element-plus'
+import { ElMessage, ElNotification } from 'element-plus'
+import { computed, ref, watch } from 'vue'
 import TableDemo from '../components/TableDemo.vue'
 
-// ----- 类型定义 -----
-interface SystemField {
-  field: string // 系统字段英文名
-  label: string // 显示名称
-  required: boolean // 是否必填
-  type: string // 'string' | 'number' | 'date' // 数据类型
-}
-
-interface RawRow {
-  [key: string]: any
-}
-
-interface ValidatedRow {
-  [field: string]: any
-  _errors?: Record<string, string>
-}
-
-// ----- props & emits -----
-const props = defineProps<{
-  // 系统字段定义（从父组件传入）
-  fields: SystemField[]
-  // 提交接口
-  submitApi: (data: any[]) => Promise<any>
-}>()
-
+// ─── Emits ───────────────────────────────────────────────────────────
 const emit = defineEmits<{
-  (e: 'success', data: any[]): void
-  (e: 'close'): void
+  success: [datasetId: string, datasetName: string]
+  close: []
 }>()
 
-// ----- 响应式数据 -----
-const step = ref(0) // 当前步骤
-const rawData = ref<RawRow[]>([]) // 原始解析数据
-const excelColumns = ref<string[]>([]) // Excel 列名
+// ─── 步骤控制 ─────────────────────────────────────────────────────────
+const step = ref(0) // 0=上传  1=配置  2=创建
 
-// 映射关系：系统字段 -> Excel 列名
-const mapping = ref<Record<string, string>>({})
-// 默认值：系统字段 -> 默认值
-const defaultValues = ref<Record<string, string>>({})
+// ─── Step 1：上传结果 ─────────────────────────────────────────────────
+const uploading = ref(false)
+const uploadProgress = ref(0)
+const sessionId = ref('')
+const totalRows = ref(0)
 
-const validatedData = ref<ValidatedRow[]>([]) // 校验后的数据
-const errors = ref<string[]>([]) // 全局错误信息
-const submitting = ref(false)
+/** 原始行矩阵（前 10 行），每行是 unknown[] */
+const previewMatrix = ref<unknown[][]>([])
+const colCount = ref(0)
 
-// 系统字段列表（用于渲染映射表）
-const systemFields = computed(() => props.fields)
+// ─── Step 2：表头选择 & 字段配置 ──────────────────────────────────────
+/** 哪一行作为表头（0-based） */
+const headerRowIndex = ref(0)
 
-// 预览数据（带错误标记）
-const previewData = computed(() => {
-  return validatedData.value.slice(0, 100) // 只预览前100行，避免渲染过慢
-})
+/** 字段配置列表 */
+const fieldConfigs = ref<ConnectorFieldConfig[]>([])
 
-// ----- 辅助函数 -----
+const typeOptions: { label: string; value: ConnectorFieldType }[] = [
+  { label: '文本', value: 'text' },
+  { label: '数字', value: 'number' },
+  { label: '日期时间', value: 'datetime' },
+]
+
+/** 全选状态 */
+const allIncluded = computed(
+  () => fieldConfigs.value.length > 0 && fieldConfigs.value.every((f) => f.include),
+)
+const someIncluded = computed(
+  () => fieldConfigs.value.some((f) => f.include) && !allIncluded.value,
+)
+function toggleAllInclude(val: boolean) {
+  fieldConfigs.value.forEach((f) => (f.include = val))
+}
+
+// ─── 前端自动推断列类型 ────────────────────────────────────────────────
+function detectColumnType(values: unknown[]): ConnectorFieldType {
+  const nonEmpty = values.filter(
+    (v) => v !== null && v !== undefined && String(v).trim() !== '',
+  )
+  if (nonEmpty.length === 0) return 'text'
+  if (nonEmpty.every((v) => !isNaN(Number(String(v).trim())) && String(v).trim() !== ''))
+    return 'number'
+  const dateRe = /^\d{4}[-/]\d{1,2}[-/]\d{1,2}/
+  if (
+    nonEmpty.every((v) => {
+      const s = String(v).trim()
+      return dateRe.test(s) && !isNaN(Date.parse(s))
+    })
+  )
+    return 'datetime'
+  return 'text'
+}
+
 /**
- * 解析 Excel 文件
+ * 根据当前 headerRowIndex 重新计算 fieldConfigs
+ * 尽量保留用户已改过的 name / type / include
  */
-function parseExcel(file: File): Promise<RawRow[]> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = e => {
-      const data = new Uint8Array(e.target?.result as ArrayBuffer)
-      const workbook = XLSX.read(data, { type: 'array' })
-      const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
-      // 将第一行作为列名
-      const json = XLSX.utils.sheet_to_json<RawRow>(firstSheet, { defval: '' })
-      resolve(json)
+function rebuildFieldConfigs() {
+  const matrix = previewMatrix.value
+  if (matrix.length === 0) return
+  const headerRow = (matrix[headerRowIndex.value] ?? []) as unknown[]
+  const dataRows = matrix.filter((_, i) => i !== headerRowIndex.value)
+
+  const prev = fieldConfigs.value
+  fieldConfigs.value = Array.from({ length: colCount.value }, (_, ci) => {
+    const headerVal = String(headerRow[ci] ?? '')
+    const colValues = dataRows.map((r) => (r as unknown[])[ci])
+    const existing = prev.find((f) => f.colIndex === ci)
+    return {
+      colIndex: ci,
+      header: headerVal || `列${ci + 1}`,
+      name: existing?.name ?? (headerVal || `列${ci + 1}`),
+      type: existing?.type ?? detectColumnType(colValues),
+      include: existing?.include ?? true,
     }
-    reader.onerror = err => reject(err)
-    reader.readAsArrayBuffer(file)
   })
 }
 
-/**
- * 文件上传前的校验
- */
-function handleBeforeUpload(file: File) {
-  const isValidType = ['.xlsx', '.xls', '.csv'].some(ext => file.name.toLowerCase().endsWith(ext))
-  if (!isValidType) {
-    ElMessage.error('仅支持 .xlsx, .xls, .csv 格式文件')
+// 表头行变化时重建字段配置
+watch(headerRowIndex, rebuildFieldConfigs)
+
+// ─── 原始矩阵转 el-table 可用格式（用于表头选择表格）─────────────────
+const rawTableData = computed(() =>
+  previewMatrix.value.map((row, rowIdx) => {
+    const obj: Record<string, unknown> = { _rowIndex: rowIdx }
+    ;(row as unknown[]).forEach((v, ci) => {
+      obj[`c${ci}`] = v ?? ''
+    })
+    return obj
+  }),
+)
+
+/** 动态生成的列（最多展示前 8 列，避免过宽） */
+const rawTableColumns = computed(() => {
+  const count = Math.min(colCount.value, 8)
+  return Array.from({ length: count }, (_, ci) => ({
+    prop: `c${ci}`,
+    label: `列 ${ci + 1}`,
+  }))
+})
+
+// ─── 数据预览表格（VTable，仅展示数据行） ────────────────────────────
+const previewTableOptions = computed<ListTableConstructorOptions>(() => {
+  const included = fieldConfigs.value.filter((f) => f.include)
+  const dataRows = previewMatrix.value.filter((_, i) => i !== headerRowIndex.value)
+  if (included.length === 0 || dataRows.length === 0) return { columns: [], records: [] }
+
+  const columns: ColumnDefine[] = included.map((f) => ({
+    field: `c${f.colIndex}`,
+    title: `${f.name}\n(${
+      f.type === 'text' ? '文本' : f.type === 'number' ? '数字' : '日期时间'
+    })`,
+    minWidth: 120,
+    headerStyle: { textAlign: 'center' },
+    style: { textAlign: f.type === 'number' ? 'right' : 'left' },
+  }))
+
+  const records = dataRows.map((row) => {
+    const rec: Record<string, unknown> = {}
+    included.forEach((f) => {
+      rec[`c${f.colIndex}`] = (row as unknown[])[f.colIndex] ?? ''
+    })
+    return rec
+  })
+
+  return { columns, records }
+})
+
+// ─── Step 3：数据集信息 ───────────────────────────────────────────────
+const datasetName = ref('')
+const datasetDesc = ref('')
+const datasetFolderId = ref<string | null>(null)
+const folderTree = ref<ApiFolderTreeNode[]>([])
+const folderLoading = ref(false)
+const submitting = ref(false)
+
+const includedCount = computed(() => fieldConfigs.value.filter((f) => f.include).length)
+
+// ─── 进入 Step 2 时加载文件夹树 ──────────────────────────────────────
+watch(
+  () => step.value,
+  async (s) => {
+    if (s === 2 && folderTree.value.length === 0) {
+      folderLoading.value = true
+      try {
+        folderTree.value = (await fetchDatasetFolderTree(null)) ?? []
+      } catch {
+        folderTree.value = []
+      } finally {
+        folderLoading.value = false
+      }
+    }
+  },
+)
+
+// ─── 文件上传处理 ─────────────────────────────────────────────────────
+function beforeUpload(file: File): boolean {
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  if (!['xlsx', 'xls', 'csv'].includes(ext ?? '')) {
+    ElMessage.error('仅支持 .xlsx / .xls / .csv 格式')
     return false
   }
-  const isLt10M = file.size / 1024 / 1024 < 10
-  if (!isLt10M) {
-    ElMessage.error('文件大小不能超过 10MB')
+  if (file.size > 20 * 1024 * 1024) {
+    ElMessage.error('文件大小不能超过 20MB')
     return false
   }
   return true
 }
 
-/**
- * 文件选择变化时解析
- */
-async function handleFileChange(file: File) {
+async function handleFileChange(uploadFile: UploadFile) {
+  const file = uploadFile.raw
+  if (!file || !beforeUpload(file)) return
+
+  uploading.value = true
+  uploadProgress.value = 0
   try {
-    const data = await parseExcel(file)
-    if (!data.length) {
-      ElMessage.warning('文件为空')
-      return
-    }
-    rawData.value = data
-    // 获取列名（对象键名）
-    excelColumns.value = Object.keys(data[0])
-    // 初始化映射关系：如果系统字段名与列名匹配，自动建立映射
-    const initialMapping: Record<string, string> = {}
-    for (const field of systemFields.value) {
-      if (excelColumns.value.includes(field.field)) {
-        initialMapping[field.field] = field.field
-      } else {
-        // 尝试匹配标签（如果列名包含字段标签）
-        const matched = excelColumns.value.find(col => field.label.includes(col) || col.includes(field.label))
-        if (matched) initialMapping[field.field] = matched
-      }
-    }
-    mapping.value = initialMapping
-    defaultValues.value = {}
-    step.value = 1 // 进入字段映射步骤
-  } catch (error) {
-    console.error('解析失败', error)
-    ElMessage.error('文件解析失败，请检查格式')
+    const data = await apiParseFile(file, (pct) => (uploadProgress.value = pct))
+    sessionId.value = data.sessionId
+    totalRows.value = data.totalRows
+    previewMatrix.value = data.previewMatrix ?? []
+    colCount.value = data.colCount ?? 0
+    headerRowIndex.value = 0
+    fieldConfigs.value = []
+    rebuildFieldConfigs()
+    step.value = 1
+  } catch (e: any) {
+    ElMessage.error(e?.message ?? '文件解析失败')
+  } finally {
+    uploading.value = false
   }
 }
 
-/**
- * 映射改变时触发（可做额外处理，如清空默认值）
- */
-function handleMappingChange() {
-  // 可以添加逻辑，比如当某个字段映射变化时，清空相关默认值等
-}
-
-/**
- * 跳转到预览步骤，并进行数据转换与校验
- */
-function goToPreview() {
-  // 检查必填字段是否都有映射
-  const missingRequired = systemFields.value.filter(f => f.required && !mapping.value[f.field]).map(f => f.label)
-  if (missingRequired.length) {
-    ElMessage.error(`必填字段未映射：${missingRequired.join(', ')}`)
+// ─── Step 1 → Step 2 校验 ─────────────────────────────────────────────
+function goToStep2() {
+  if (includedCount.value === 0) {
+    ElMessage.warning('请至少选择一个字段')
     return
   }
-
-  // 转换数据并校验
-  const newValidatedData: ValidatedRow[] = []
-  const newErrors: string[] = []
-
-  for (let i = 0; i < rawData.value.length; i++) {
-    const row = rawData.value[i]
-    const newRow: ValidatedRow = {}
-    const rowErrors: Record<string, string> = {}
-
-    for (const field of systemFields.value) {
-      const excelCol = mapping.value[field.field]
-      let val = excelCol ? row[excelCol] : undefined
-
-      // 应用默认值
-      if ((val === undefined || val === '') && defaultValues.value[field.field]) {
-        val = defaultValues.value[field.field]
-      }
-
-      // 类型校验与转换
-      if (val !== undefined && val !== '') {
-        if (field.type === 'number') {
-          const num = Number(val)
-          if (Number.isNaN(num)) {
-            rowErrors[field.field] = `${field.label} 应为数字`
-            newErrors.push(`第 ${i + 2} 行：${field.label} 格式错误`)
-          } else {
-            newRow[field.field] = num
-          }
-        } else if (field.type === 'date') {
-          const date = new Date(val)
-          if (Number.isNaN(date.getTime())) {
-            rowErrors[field.field] = `${field.label} 应为日期格式`
-            newErrors.push(`第 ${i + 2} 行：${field.label} 格式错误`)
-          } else {
-            newRow[field.field] = date.toISOString().slice(0, 10) // 转为 YYYY-MM-DD
-          }
-        } else {
-          newRow[field.field] = String(val)
-        }
-      } else if (field.required) {
-        rowErrors[field.field] = `${field.label} 不能为空`
-        newErrors.push(`第 ${i + 2} 行：${field.label} 不能为空`)
-      } else {
-        newRow[field.field] = null // 可选字段留空
-      }
-    }
-
-    if (Object.keys(rowErrors).length) {
-      newRow._errors = rowErrors
-    }
-    newValidatedData.push(newRow)
+  const names = fieldConfigs.value.filter((f) => f.include).map((f) => f.name.trim())
+  if (names.some((n) => !n)) {
+    ElMessage.warning('字段名称不能为空')
+    return
   }
-
-  validatedData.value = newValidatedData
-  errors.value = newErrors
-  step.value = 2 // 进入预览步骤
+  if (new Set(names).size !== names.length) {
+    ElMessage.warning('字段名称不能重复')
+    return
+  }
+  datasetName.value = ''
+  datasetDesc.value = ''
+  datasetFolderId.value = null
+  step.value = 2
 }
 
-/**
- * 提交数据
- */
+// ─── 确认导入 ─────────────────────────────────────────────────────────
 async function handleSubmit() {
-  if (errors.value.length) {
-    ElMessage.error('请先修正数据错误后再提交')
+  const name = datasetName.value.trim()
+  if (!name) {
+    ElMessage.warning('请输入数据集名称')
     return
   }
   submitting.value = true
   try {
-    // 移除 _errors 临时字段
-    const dataToSubmit = validatedData.value.map(({ _errors, ...rest }) => rest)
-    await props.submitApi(dataToSubmit)
-    ElMessage.success('导入成功')
-    emit('success', dataToSubmit)
-    // 关闭弹窗或重置组件
-    emit('close')
-  } catch (error) {
-    console.error('提交失败', error)
-    ElMessage.error('导入失败，请稍后重试')
+    const method = apiImportDataset({
+      sessionId: sessionId.value,
+      headerRowIndex: headerRowIndex.value,
+      fields: fieldConfigs.value,
+      dataset: {
+        name,
+        description: datasetDesc.value.trim() || null,
+        folder_id: datasetFolderId.value || null,
+        project_id: null,
+      },
+    })
+    const result = await (method as any).send()
+    ElNotification({
+      title: '导入成功',
+      message: `「${result.name}」已创建，共 ${result.row_count} 行，${result.field_count} 个字段`,
+      type: 'success',
+      duration: 4000,
+    })
+    emit('success', result.id, result.name)
+  } catch (e: any) {
+    ElMessage.error(e?.message ?? '导入失败，请重试')
   } finally {
     submitting.value = false
   }
@@ -230,144 +270,345 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <div class="excel-importer">
-    <el-card class="w-full h-full">
-      <template #header>
-        <!-- 步骤条 -->
-        <el-steps :active="step" finish-status="success" align-center>
-          <el-step title="上传文件" />
-          <el-step title="字段映射" />
-          <el-step title="预览确认" />
-        </el-steps>
-      </template>
+  <div :class="$style.wrap">
+    <!-- 步骤条 -->
+    <div :class="$style.stepsBar">
+      <el-steps :active="step" finish-status="success" align-center>
+        <el-step title="上传文件" description="Excel / CSV" />
+        <el-step title="配置字段" description="选择表头与字段类型" />
+        <el-step title="创建数据集" description="填写基本信息" />
+      </el-steps>
+    </div>
 
-      <div class="w-full h-full">
-        <!-- 步骤1：上传文件 -->
-        <div v-if="step === 0" class="step-upload">
-          <el-upload
-            drag
-            :auto-upload="false"
-            :show-file-list="false"
-            :before-upload="handleBeforeUpload"
-            :on-change="handleFileChange"
-            class="mb-[40px]"
-            accept=".xlsx, .xls, .csv"
-          >
-            <el-icon class="el-icon--upload">
-              <UploadFilled />
-            </el-icon>
-            <div class="el-upload__text">拖拽文件到此处或<em>点击上传</em></div>
-            <template #tip>
-              <div class="el-upload__tip">支持 .xlsx, .xls, .csv 格式，文件大小不超过 10MB</div>
-            </template>
-          </el-upload>
+    <!-- ══ Step 0：上传 ══════════════════════════════════════════════ -->
+    <div v-if="step === 0" :class="$style.stepBody">
+      <div :class="$style.uploadArea">
+        <el-upload
+          drag
+          :auto-upload="false"
+          :show-file-list="false"
+          accept=".xlsx,.xls,.csv"
+          :on-change="handleFileChange"
+          :disabled="uploading"
+          :class="$style.uploader"
+        >
+          <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
+          <div class="el-upload__text">拖拽文件到此处或<em>点击上传</em></div>
+          <template #tip>
+            <div class="el-upload__tip">支持 .xlsx / .xls / .csv 格式，文件大小不超过 20 MB</div>
+          </template>
+        </el-upload>
 
-          <TableDemo />
+        <div v-if="uploading" :class="$style.progressWrap">
+          <el-progress :percentage="uploadProgress" striped striped-flow :duration="5" />
+          <p>正在解析文件，请稍候…</p>
         </div>
 
-        <!-- 步骤2：字段映射 -->
-        <div v-if="step === 1" class="step-mapping">
-          <el-alert title="请将 Excel 列映射到系统字段" type="info" show-icon :closable="false" />
-          <el-table :data="systemFields" style="width: 100%; margin-top: 20px">
-            <el-table-column prop="label" label="系统字段" width="200">
-              <template #default="{ row }">
-                {{ row.label }}<span v-if="row.required" style="color: red">*</span>
+        <div :class="$style.demoWrap">
+          <TableDemo />
+        </div>
+      </div>
+
+      <div :class="$style.footer">
+        <el-button @click="emit('close')">取消</el-button>
+      </div>
+    </div>
+
+    <!-- ══ Step 1：配置字段 ══════════════════════════════════════════ -->
+    <div v-else-if="step === 1" :class="$style.stepBody">
+      <div :class="$style.stepBodyScroll">
+
+        <!-- ① 表头行选择 -->
+        <div :class="$style.section">
+          <div :class="$style.sectionTitle">
+            <el-text type="primary" size="small" tag="b">① 选择表头行</el-text>
+            <el-text type="info" size="small">
+              点击左侧单选按钮指定哪一行作为字段名（当前选第
+              <b>{{ headerRowIndex + 1 }}</b> 行）
+            </el-text>
+          </div>
+          <el-table
+            :data="rawTableData"
+            border
+            size="small"
+            max-height="220"
+            style="width: 100%"
+            :row-class-name="
+              ({ row }) =>
+                row._rowIndex === headerRowIndex ? $style.headerRow : ''
+            "
+          >
+            <!-- 单选列 -->
+            <el-table-column width="72" label="表头" align="center" fixed>
+              <template #default="{ row }: { row: Record<string, unknown> }">
+                <el-radio
+                  :model-value="headerRowIndex"
+                  :value="row._rowIndex as number"
+                  @change="(v: number) => { headerRowIndex = v }"
+                >
+                  第 {{ (row._rowIndex as number) + 1 }} 行
+                </el-radio>
               </template>
             </el-table-column>
-            <el-table-column label="Excel 列">
-              <template #default="{ row }">
+            <!-- 数据列 -->
+            <el-table-column
+              v-for="col in rawTableColumns"
+              :key="col.prop"
+              :prop="col.prop"
+              :label="col.label"
+              min-width="100"
+              show-overflow-tooltip
+            />
+          </el-table>
+        </div>
+
+        <!-- ② 字段配置 -->
+        <div :class="$style.section">
+          <div :class="$style.sectionTitle">
+            <el-text type="primary" size="small" tag="b">② 配置字段</el-text>
+            <el-text type="info" size="small">
+              共 <b>{{ fieldConfigs.length }}</b> 列，已选
+              <b>{{ includedCount }}</b> 个
+            </el-text>
+          </div>
+          <el-table
+            :data="fieldConfigs"
+            border
+            size="small"
+            max-height="240"
+            style="width: 100%"
+          >
+            <el-table-column width="50" align="center">
+              <template #header>
+                <el-checkbox
+                  :model-value="allIncluded"
+                  :indeterminate="someIncluded"
+                  @change="(v: any) => toggleAllInclude(!!v)"
+                />
+              </template>
+              <template #default="{ row }: { row: ConnectorFieldConfig }">
+                <el-checkbox v-model="row.include" />
+              </template>
+            </el-table-column>
+            <el-table-column prop="header" label="原始列值" min-width="120" show-overflow-tooltip />
+            <el-table-column label="字段名称" min-width="150">
+              <template #default="{ row }: { row: ConnectorFieldConfig }">
+                <el-input
+                  v-model="row.name"
+                  :disabled="!row.include"
+                  size="small"
+                  placeholder="字段名称"
+                />
+              </template>
+            </el-table-column>
+            <el-table-column label="数据类型" width="130">
+              <template #default="{ row }: { row: ConnectorFieldConfig }">
                 <el-select
-                  v-model="mapping[row.field]"
-                  placeholder="请选择对应列"
-                  clearable
-                  @change="handleMappingChange"
+                  v-model="row.type"
+                  :disabled="!row.include"
+                  size="small"
+                  style="width: 100%"
                 >
-                  <el-option v-for="col in excelColumns" :key="col" :label="col" :value="col" />
+                  <el-option
+                    v-for="opt in typeOptions"
+                    :key="opt.value"
+                    :label="opt.label"
+                    :value="opt.value"
+                  />
                 </el-select>
               </template>
             </el-table-column>
-            <el-table-column label="默认值（可选）">
-              <template #default="{ row }">
-                <el-input v-model="defaultValues[row.field]" placeholder="留空则使用原始值" />
-              </template>
-            </el-table-column>
           </el-table>
-          <div class="mapping-actions">
-            <el-button @click="step--"> 上一步 </el-button>
-            <el-button type="primary" @click="goToPreview"> 下一步 </el-button>
+        </div>
+
+        <!-- ③ 数据预览 -->
+        <div :class="$style.section">
+          <div :class="$style.sectionTitle">
+            <el-text type="primary" size="small" tag="b">③ 数据预览</el-text>
+            <el-text type="info" size="small">
+              表头以下的数据行（最多展示 {{ previewMatrix.length - 1 }} 行）
+            </el-text>
+          </div>
+          <div :class="$style.previewTable">
+            <el-auto-resizer>
+              <template #default="{ width }">
+                <ElListTable
+                  :options="previewTableOptions"
+                  :width="width"
+                  :height="280"
+                />
+              </template>
+            </el-auto-resizer>
           </div>
         </div>
 
-        <!-- 步骤3：预览确认 -->
-        <div v-if="step === 2" class="step-preview">
-          <el-alert
-            v-if="errors.length > 0"
-            title="数据存在错误，请修正后提交"
-            type="error"
-            show-icon
-            :closable="false"
-          />
-          <el-table :data="previewData" style="width: 100%; margin-top: 20px" border max-height="500">
-            <el-table-column
-              v-for="field in Object.keys(mapping).filter(k => mapping[k])"
-              :key="field"
-              :prop="field"
-              :label="systemFields.find(f => f.field === field)?.label || field"
-              width="150"
-            >
-              <template #default="{ row }">
-                <span :class="{ 'error-cell': row._errors?.[field] }">
-                  {{ row[field] }}
-                </span>
-              </template>
-            </el-table-column>
-          </el-table>
-          <div class="preview-actions">
-            <el-button @click="step--"> 上一步 </el-button>
-            <el-button type="primary" :loading="submitting" @click="handleSubmit"> 确认导入 </el-button>
-          </div>
-        </div>
+      </div><!-- end stepBodyScroll -->
+
+      <div :class="$style.footer">
+        <el-button @click="step = 0">上一步</el-button>
+        <el-button type="primary" @click="goToStep2">下一步</el-button>
       </div>
-    </el-card>
+    </div>
+
+    <!-- ══ Step 2：创建数据集 ════════════════════════════════════════ -->
+    <div v-else-if="step === 2" :class="$style.stepBody">
+      <div :class="$style.formWrap">
+        <el-form label-position="top" style="max-width: 520px; margin: 0 auto">
+          <el-form-item label="数据集名称" required>
+            <el-input
+              v-model="datasetName"
+              placeholder="请输入数据集名称"
+              maxlength="100"
+              show-word-limit
+              clearable
+            />
+          </el-form-item>
+          <el-form-item label="描述（可选）">
+            <el-input
+              v-model="datasetDesc"
+              type="textarea"
+              :rows="3"
+              placeholder="简要描述该数据集"
+              maxlength="500"
+              show-word-limit
+            />
+          </el-form-item>
+          <el-form-item label="保存到文件夹（可选）">
+            <el-tree-select
+              v-model="datasetFolderId"
+              :data="folderTree"
+              :props="{ label: 'name', children: 'children' }"
+              value-key="id"
+              :loading="folderLoading"
+              placeholder="不选则保存到根目录"
+              clearable
+              filterable
+              check-strictly
+              style="width: 100%"
+            />
+          </el-form-item>
+          <el-alert type="info" :closable="false" style="margin-bottom: 16px">
+            <template #default>
+              即将导入 <b>{{ totalRows - 1 }}</b> 行数据（表头占 1 行），共
+              <b>{{ includedCount }}</b> 个字段
+            </template>
+          </el-alert>
+        </el-form>
+      </div>
+      <div :class="$style.footer">
+        <el-button @click="step = 1">上一步</el-button>
+        <el-button type="primary" :loading="submitting" @click="handleSubmit">
+          确认创建
+        </el-button>
+      </div>
+    </div>
   </div>
 </template>
 
-<style scoped lang="scss">
-.excel-importer {
-  padding: 12px;
+<style module lang="css">
+.wrap {
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100%;
+  min-height: 0;
+}
 
-  :deep(.el-card) {
-    --el-card-padding: 12px;
-  }
+.stepsBar {
+  flex-shrink: 0;
+  padding: 20px 40px 16px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: var(--el-bg-color);
+}
 
-  .step-upload {
-    height: 100%;
-    width: 100%;
-    padding: 0 100px;
-    :deep(.el-upload-dragger) {
-      width: 100%;
-      min-height: 200px;
-    }
-  }
+.stepBody {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
-  .step-mapping {
-    .mapping-actions {
-      margin-top: 20px;
-      text-align: center;
-    }
-  }
+.stepBodyScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 0 4px;
+}
 
-  .step-preview {
-    .error-cell {
-      color: #f56c6c;
-      font-weight: bold;
-    }
-    .preview-actions {
-      margin-top: 20px;
-      text-align: center;
-    }
-  }
+/* ── Step 0 上传 ── */
+.uploadArea {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 24px 48px;
+  gap: 20px;
+}
+
+.uploader {
+  width: 100%;
+}
+
+.progressWrap {
+  width: 100%;
+  text-align: center;
+}
+
+.progressWrap p {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
+.demoWrap {
+  width: 100%;
+}
+
+/* ── Step 1 通用分区 ── */
+.section {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.section:last-child {
+  border-bottom: none;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+/* 选中表头行高亮 */
+.headerRow {
+  background-color: var(--el-color-primary-light-9) !important;
+}
+
+.previewTable {
+  flex-shrink: 0;
+  height: 280px;
+}
+
+/* ── Step 2 创建 ── */
+.formWrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 16px;
+}
+
+/* ── 通用底栏 ── */
+.footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--el-border-color-lighter);
+  background: var(--el-bg-color);
 }
 </style>

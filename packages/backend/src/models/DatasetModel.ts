@@ -342,4 +342,19 @@ export class DatasetRowModel {
     const r = db.prepare("DELETE FROM dataset_rows WHERE id = ? AND dataset_id = ?").run(rowId, datasetId);
     return r.changes > 0;
   }
+
+  static createMany(
+    datasetId: string,
+    rows: { valuesJson: string; sortOrder: number }[],
+  ): void {
+    const ins = db.prepare(
+      `INSERT INTO dataset_rows (id, dataset_id, sort_order, values_json) VALUES (?, ?, ?, ?)`,
+    );
+    const tx = db.transaction(() => {
+      for (const r of rows) {
+        ins.run(generateSnowflakeId(), datasetId, r.sortOrder, r.valuesJson);
+      }
+    });
+    tx();
+  }
 }
