@@ -50,6 +50,7 @@ const defaultTableOptions: ListTableConstructorOptions = {
   columns: [],
   records: [],
   widthMode: "adaptive",
+  autoFillWidth: true,
   select: {
     disableSelect: true,
   },
@@ -116,13 +117,28 @@ function syncTable() {
   listTableRef.value = new ListTable(el, opts);
 }
 
+let resizeObserver: ResizeObserver | null = null;
+
 onMounted(() => {
   syncTable();
+  const el = containerRef.value;
+  if (el) {
+    resizeObserver = new ResizeObserver(() => {
+      const table = listTableRef.value;
+      if (!table) return;
+      // 容器尺寸变化时通知 VTable 重新测量并重绘
+      table.setCanvasSize(el.offsetWidth, el.offsetHeight);
+    });
+    // 观察容器本身：width:100% 时父级变化会直接反映到它身上
+    resizeObserver.observe(el);
+  }
 });
 
 watch(mergedOptions, syncTable, { deep: true });
 
 onBeforeUnmount(() => {
+  resizeObserver?.disconnect();
+  resizeObserver = null;
   listTableRef.value?.release();
   listTableRef.value = null;
 });

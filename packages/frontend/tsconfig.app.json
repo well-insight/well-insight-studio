@@ -13,7 +13,7 @@
     },
     "resolveJsonModule": true,
     // "typeRoots": ["./node_modules/@types/", "./types"],
-    "types": ["vite/client", "node", "element-plus/global", "vite-plugin-svg-icons-n/client"],
+    "types": ["vite/client", "node", "element-plus/global"],
     // 增加类型实例化深度
     "maxNodeModuleJsDepth": 2,
     // 关闭严格检查

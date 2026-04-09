@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import ElListTable from "@/components/el-vtable/ElListTable.vue";
 import type { ApiDatasetField } from "@/api/dataset";
 import {
-  createDatasetRow,
-  deleteDatasetRow,
-  fetchDatasetDetail,
-  fetchDatasetRowsPage,
-  updateDatasetRow,
+    createDatasetRow,
+    deleteDatasetRow,
+    fetchDatasetDetail,
+    fetchDatasetRowsPage,
+    updateDatasetRow,
 } from "@/api/dataset";
-import type { ColumnDefine, ListTableConstructorOptions } from "@visactor/vtable";
-import { ElButton, ElMessage, ElMessageBox } from "element-plus";
-import dayjs from "dayjs";
-import { h, reactive, ref, watch } from "vue";
 import ColumnField from "@/components/column-field/ColumnField.vue";
+import ElListTable from "@/components/el-vtable/ElListTable.vue";
+import type { ColumnDefine, ListTableConstructorOptions } from "@visactor/vtable";
+import dayjs from "dayjs";
+import { ElButton, ElMessage, ElMessageBox } from "element-plus";
+import { h, reactive, ref, watch } from "vue";
 
 import { vueGroupCustomLayout } from "@/utils/vtableVueCustomLayout";
 
@@ -79,9 +79,11 @@ function syncTableFrozen(editable: boolean) {
 function buildColumns(f: ApiDatasetField[], editable: boolean) {
   const base: ColumnDefine[] = [
     {
-      field: "__row_id",
-      title: "行 ID",
+      field: "__row_seq",
+      title: "序号",
       width: 60,
+      minWidth: 60,
+      maxWidth: 120,
       headerStyle: { textAlign: "center" },
       style: { textAlign: "center" },
     },
@@ -150,9 +152,13 @@ function buildColumns(f: ApiDatasetField[], editable: boolean) {
 function buildRecords(
   rows: { id: string; values: Record<string, unknown> }[],
   f: ApiDatasetField[],
+  startSeq: number = 1,
 ) {
-  return rows.map((r) => {
-    const rec: Record<string, unknown> = { __row_id: r.id };
+  return rows.map((r, index) => {
+    const rec: Record<string, unknown> = {
+      __row_id: r.id,
+      __row_seq: startSeq + index,
+    };
     for (const col of f) {
       const key = String(col.id);
       rec[`c_${col.id}`] = formatCell(r.values[key]);
@@ -167,7 +173,7 @@ async function loadRowsOnly() {
   loading.value = true;
   try {
     const { rows, total: t } = await fetchDatasetRowsPage(id, page.value, pageSize.value);
-    tableOptions.records = buildRecords(rows, fields.value);
+    tableOptions.records = buildRecords(rows, fields.value, (page.value - 1) * pageSize.value + 1);
     total.value = t;
   } catch (e) {
     const msg = e instanceof Error ? e.message : "加载数据失败";
@@ -206,7 +212,7 @@ async function loadDetailAndRows() {
     const { rows, total: t } = await fetchDatasetRowsPage(id, page.value, pageSize.value);
     syncTableFrozen(props.editable);
     tableOptions.columns = buildColumns(fields.value, props.editable);
-    tableOptions.records = buildRecords(rows, fields.value);
+    tableOptions.records = buildRecords(rows, fields.value, (page.value - 1) * pageSize.value + 1);
     total.value = t;
   } catch (e) {
     const msg = e instanceof Error ? e.message : "加载数据失败";
@@ -377,7 +383,7 @@ defineExpose({ openCreateRow });
           <div class="w-full flex-auto h-0">
             <el-auto-resizer>
               <template #default="{ height, width }">
-                <ElListTable :options="tableOptions" :width="'100%'" :height="height" />
+                <ElListTable :options="tableOptions" :width="width" :height="height" />
               </template>
             </el-auto-resizer>
           </div>
