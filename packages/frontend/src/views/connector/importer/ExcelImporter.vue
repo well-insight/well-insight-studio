@@ -18,7 +18,7 @@ const emit = defineEmits<{
 }>()
 
 // ─── 步骤控制 ─────────────────────────────────────────────────────────
-const step = ref(0) // 0=上传  1=配置  2=创建
+const step = ref(0) // 0=上传  1=配置字段  2=数据预览  3=创建
 
 // ─── Step 1：上传结果 ─────────────────────────────────────────────────
 const uploading = ref(false)
@@ -80,20 +80,20 @@ function detectColumnType(values: unknown[]): ConnectorFieldType {
 function rebuildFieldConfigs() {
   const matrix = previewMatrix.value
   if (matrix.length === 0) return
-  const headerRow = (matrix[headerRowIndex.value] ?? []) as unknown[]
-  const dataRows = matrix.filter((_, i) => i !== headerRowIndex.value)
+  const headerRow = (matrix[headerRowIndex.value] ?? []) as ConnectorFieldConfig[]
+  const dataRows = matrix.filter((_, i) => i > headerRowIndex.value)
 
-  const prev = fieldConfigs.value
+  // const prev = fieldConfigs.value
   fieldConfigs.value = Array.from({ length: colCount.value }, (_, ci) => {
     const headerVal = String(headerRow[ci] ?? '')
     const colValues = dataRows.map((r) => (r as unknown[])[ci])
-    const existing = prev.find((f) => f.colIndex === ci)
+    // const existing = prev?.filter(e => e).find((f) => f.colIndex === ci)
     return {
       colIndex: ci,
       header: headerVal || `列${ci + 1}`,
-      name: existing?.name ?? (headerVal || `列${ci + 1}`),
-      type: existing?.type ?? detectColumnType(colValues),
-      include: existing?.include ?? true,
+      name: headerVal || `列${ci + 1}`,
+      type: detectColumnType(colValues),
+      include: true,
     }
   })
 }
@@ -148,7 +148,7 @@ const previewTableOptions = computed<ListTableConstructorOptions>(() => {
   return { columns, records }
 })
 
-// ─── Step 3：数据集信息 ───────────────────────────────────────────────
+// ─── Step 4：数据集信息 ───────────────────────────────────────────────
 const datasetName = ref('')
 const datasetDesc = ref('')
 const datasetFolderId = ref<string | null>(null)
@@ -158,11 +158,11 @@ const submitting = ref(false)
 
 const includedCount = computed(() => fieldConfigs.value.filter((f) => f.include).length)
 
-// ─── 进入 Step 2 时加载文件夹树 ──────────────────────────────────────
+// ─── 进入 Step 4 时加载文件夹树 ──────────────────────────────────────
 watch(
   () => step.value,
   async (s) => {
-    if (s === 2 && folderTree.value.length === 0) {
+    if (s === 3 && folderTree.value.length === 0) {
       folderLoading.value = true
       try {
         folderTree.value = (await fetchDatasetFolderTree(null)) ?? []
@@ -213,7 +213,7 @@ async function handleFileChange(uploadFile: UploadFile) {
 }
 
 // ─── Step 1 → Step 2 校验 ─────────────────────────────────────────────
-function goToStep2() {
+function goToPreviewStep() {
   if (includedCount.value === 0) {
     ElMessage.warning('请至少选择一个字段')
     return
@@ -227,10 +227,18 @@ function goToStep2() {
     ElMessage.warning('字段名称不能重复')
     return
   }
+  step.value = 2
+}
+
+function goToCreateStep() {
   datasetName.value = ''
   datasetDesc.value = ''
   datasetFolderId.value = null
-  step.value = 2
+  step.value = 3
+}
+
+function selectHeaderRow(rowIndex: number) {
+  headerRowIndex.value = rowIndex
 }
 
 // ─── 确认导入 ─────────────────────────────────────────────────────────
@@ -276,6 +284,7 @@ async function handleSubmit() {
       <el-steps :active="step" finish-status="success" align-center>
         <el-step title="上传文件" description="Excel / CSV" />
         <el-step title="配置字段" description="选择表头与字段类型" />
+        <el-step title="数据预览" description="确认导入内容" />
         <el-step title="创建数据集" description="填写基本信息" />
       </el-steps>
     </div>
@@ -323,7 +332,7 @@ async function handleSubmit() {
           <div :class="$style.sectionTitle">
             <el-text type="primary" size="small" tag="b">① 选择表头行</el-text>
             <el-text type="info" size="small">
-              点击左侧单选按钮指定哪一行作为字段名（当前选第
+              点击左侧按钮指定哪一行作为字段名（当前选第
               <b>{{ headerRowIndex + 1 }}</b> 行）
             </el-text>
           </div>
@@ -338,19 +347,17 @@ async function handleSubmit() {
                 row._rowIndex === headerRowIndex ? $style.headerRow : ''
             "
           >
-            <!-- 单选列 -->
-            <el-table-column width="72" label="表头" align="center" fixed>
+            <el-table-column width="92" label="表头" align="center" fixed>
               <template #default="{ row }: { row: Record<string, unknown> }">
-                <el-radio
-                  :model-value="headerRowIndex"
-                  :value="row._rowIndex as number"
-                  @change="(v: number) => { headerRowIndex = v }"
+                <el-button
+                  size="small"
+                  :type="row._rowIndex === headerRowIndex ? 'primary' : 'default'"
+                  @click="selectHeaderRow(row._rowIndex as number)"
                 >
                   第 {{ (row._rowIndex as number) + 1 }} 行
-                </el-radio>
+                </el-button>
               </template>
             </el-table-column>
-            <!-- 数据列 -->
             <el-table-column
               v-for="col in rawTableColumns"
               :key="col.prop"
@@ -371,57 +378,69 @@ async function handleSubmit() {
               <b>{{ includedCount }}</b> 个
             </el-text>
           </div>
-          <el-table
-            :data="fieldConfigs"
-            border
-            size="small"
-            max-height="240"
-            style="width: 100%"
-          >
-            <el-table-column width="50" align="center">
-              <template #header>
-                <el-checkbox
-                  :model-value="allIncluded"
-                  :indeterminate="someIncluded"
-                  @change="(v: any) => toggleAllInclude(!!v)"
-                />
-              </template>
-              <template #default="{ row }: { row: ConnectorFieldConfig }">
-                <el-checkbox v-model="row.include" />
-              </template>
-            </el-table-column>
-            <el-table-column prop="header" label="原始列值" min-width="120" show-overflow-tooltip />
-            <el-table-column label="字段名称" min-width="150">
-              <template #default="{ row }: { row: ConnectorFieldConfig }">
-                <el-input
-                  v-model="row.name"
-                  :disabled="!row.include"
-                  size="small"
-                  placeholder="字段名称"
-                />
-              </template>
-            </el-table-column>
-            <el-table-column label="数据类型" width="130">
-              <template #default="{ row }: { row: ConnectorFieldConfig }">
-                <el-select
-                  v-model="row.type"
-                  :disabled="!row.include"
-                  size="small"
-                  style="width: 100%"
-                >
-                  <el-option
-                    v-for="opt in typeOptions"
-                    :key="opt.value"
-                    :label="opt.label"
-                    :value="opt.value"
-                  />
-                </el-select>
-              </template>
-            </el-table-column>
-          </el-table>
+          <div :class="$style.sectionBody">
+              <el-table
+                :data="fieldConfigs"
+                border
+                size="small"
+                height="100%"
+                style="width: 100%"
+              >
+                <el-table-column width="50" align="center">
+                  <template #header>
+                    <el-checkbox
+                      :model-value="allIncluded"
+                      :indeterminate="someIncluded"
+                      @change="(v: any) => toggleAllInclude(!!v)"
+                    />
+                  </template>
+                  <template #default="{ row }: { row: ConnectorFieldConfig }">
+                    <el-checkbox v-model="row.include" />
+                  </template>
+                </el-table-column>
+                <el-table-column prop="header" label="原始列值" min-width="120" show-overflow-tooltip />
+                <el-table-column label="字段名称" min-width="150">
+                  <template #default="{ row }: { row: ConnectorFieldConfig }">
+                    <el-input
+                      v-model="row.name"
+                      :disabled="!row.include"
+                      size="small"
+                      placeholder="字段名称"
+                    />
+                  </template>
+                </el-table-column>
+                <el-table-column label="数据类型" width="130">
+                  <template #default="{ row }: { row: ConnectorFieldConfig }">
+                    <el-select
+                      v-model="row.type"
+                      :disabled="!row.include"
+                      size="small"
+                      style="width: 100%"
+                    >
+                      <el-option
+                        v-for="opt in typeOptions"
+                        :key="opt.value"
+                        :label="opt.label"
+                        :value="opt.value"
+                      />
+                    </el-select>
+                  </template>
+                </el-table-column>
+              </el-table>
+          </div>
         </div>
 
-        <!-- ③ 数据预览 -->
+      </div><!-- end stepBodyScroll -->
+
+      <div :class="$style.footer">
+        <el-button @click="step = 0">上一步</el-button>
+        <el-button type="primary" @click="goToPreviewStep">下一步</el-button>
+      </div>
+    </div>
+
+    <!-- ══ Step 2：数据预览 ══════════════════════════════════════════ -->
+    <div v-else-if="step === 2" :class="$style.stepBody">
+      <div :class="$style.stepBodyScroll">
         <div :class="$style.section">
           <div :class="$style.sectionTitle">
             <el-text type="primary" size="small" tag="b">③ 数据预览</el-text>
@@ -431,27 +450,26 @@ async function handleSubmit() {
           </div>
           <div :class="$style.previewTable">
             <el-auto-resizer>
-              <template #default="{ width }">
+              <template #default="{ width, height }">
                 <ElListTable
                   :options="previewTableOptions"
                   :width="width"
-                  :height="280"
+                  :height="height"
                 />
               </template>
             </el-auto-resizer>
           </div>
         </div>
-
-      </div><!-- end stepBodyScroll -->
+      </div>
 
       <div :class="$style.footer">
-        <el-button @click="step = 0">上一步</el-button>
-        <el-button type="primary" @click="goToStep2">下一步</el-button>
+        <el-button @click="step = 1">上一步</el-button>
+        <el-button type="primary" @click="goToCreateStep">下一步</el-button>
       </div>
     </div>
 
-    <!-- ══ Step 2：创建数据集 ════════════════════════════════════════ -->
-    <div v-else-if="step === 2" :class="$style.stepBody">
+    <!-- ══ Step 3：创建数据集 ════════════════════════════════════════ -->
+    <div v-else-if="step === 3" :class="$style.stepBody">
       <div :class="$style.formWrap">
         <el-form label-position="top" style="max-width: 520px; margin: 0 auto">
           <el-form-item label="数据集名称" required>
@@ -496,7 +514,7 @@ async function handleSubmit() {
         </el-form>
       </div>
       <div :class="$style.footer">
-        <el-button @click="step = 1">上一步</el-button>
+        <el-button @click="step = 2">上一步</el-button>
         <el-button type="primary" :loading="submitting" @click="handleSubmit">
           确认创建
         </el-button>
@@ -523,7 +541,7 @@ async function handleSubmit() {
 
 .stepBody {
   flex: 1;
-  min-height: 0;
+  height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -531,15 +549,18 @@ async function handleSubmit() {
 
 .stepBodyScroll {
   flex: 1;
-  min-height: 0;
+  height: 0;
   overflow-y: auto;
   padding: 0 0 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 /* ── Step 0 上传 ── */
 .uploadArea {
   flex: 1;
-  min-height: 0;
+  height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -575,6 +596,10 @@ async function handleSubmit() {
 
 .section:last-child {
   border-bottom: none;
+  flex: 1;
+  height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .sectionTitle {
@@ -584,6 +609,12 @@ async function handleSubmit() {
   margin-bottom: 10px;
 }
 
+.sectionBody {
+  flex: 1;
+  height: 0;
+  padding: 0 0 4px;
+}
+
 /* 选中表头行高亮 */
 .headerRow {
   background-color: var(--el-color-primary-light-9) !important;
@@ -591,7 +622,9 @@ async function handleSubmit() {
 
 .previewTable {
   flex-shrink: 0;
-  height: 280px;
+  height: 0;
+  flex: 1;
+  width: 100%;
 }
 
 /* ── Step 2 创建 ── */

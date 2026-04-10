@@ -5,6 +5,7 @@
     "dev": "pnpm --parallel --filter \"./packages/*\" dev",
     "dev:frontend": "pnpm --filter frontend dev",
     "dev:backend": "pnpm --filter backend dev",
+    "async": "pnpm --filter backend db:checkpoint",
     "build": "pnpm --filter \"./packages/*\" build",
     "build:frontend": "pnpm --filter frontend build",
     "build:backend": "pnpm --filter backend build",

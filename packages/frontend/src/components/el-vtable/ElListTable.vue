@@ -53,7 +53,7 @@ const defaultTableOptions: ListTableConstructorOptions = {
   autoFillWidth: true,
   select: {
     disableSelect: true,
-  },
+  }
 };
 
 defineExpose({
@@ -161,6 +161,7 @@ onBeforeUnmount(() => {
 <style module lang="scss">
 .root {
   width: 100%;
+  height: 100%;
   line-height: 0;
   border-radius: var(--el-border-radius-base);
   overflow: hidden;

@@ -1,5 +1,5 @@
 import { request } from "@/utils";
-import { axiosInstance } from "@/utils/request/alovaConfig";
+import { axiosInstance, type ApiResponse } from "@/utils/request/alovaConfig";
 
 // ─── 类型定义 ───────────────────────────────────────────────
 export type ConnectorFieldType = "text" | "number" | "datetime";
@@ -41,12 +41,13 @@ export async function parseFile(
 ): Promise<ParseFileResult> {
   const formData = new FormData();
   formData.append("file", file);
-  return axiosInstance.post("/connector/parse-file", formData, {
+  const response = (await axiosInstance.post("/connector/parse-file", formData, {
     headers: { "Content-Type": "multipart/form-data" },
     onUploadProgress: (e: any) => {
       if (e.total && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
     },
-  }) as Promise<ParseFileResult>;
+  })) as ApiResponse<ParseFileResult>;
+  return response.data as ParseFileResult;
 }
 
 /** 确认导入：传入 headerRowIndex + 字段配置 + 数据集信息 */
