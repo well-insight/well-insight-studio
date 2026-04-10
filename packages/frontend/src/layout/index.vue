@@ -27,7 +27,7 @@ const { asideCollapse } = storeToRefs(controlStore)
         </div>
       </div>
     </ELayoutSider>
-    <ELayoutContent>
+    <ELayoutContent :style="{ width: 0 }">
       <ELayout direction="column">
         <ELayoutHeader class="h-[50px] border-bottom-1 p-0">
           <Header />

@@ -43,7 +43,7 @@ const fields = ref<ApiDatasetField[]>([]);
 const tableOptions = reactive<ListTableConstructorOptions>({
   columns: [],
   records: [],
-  widthMode: "adaptive",
+  widthMode: "autoWidth",
 });
 
 const rowDialogVisible = ref(false);
@@ -107,7 +107,7 @@ function buildColumns(f: ApiDatasetField[], editable: boolean) {
   const actionsCol = {
     field: "__actions",
     title: "操作",
-    width: 150,
+    minWidth: 150,
     headerStyle: {
       textAlign: "center",
     },
