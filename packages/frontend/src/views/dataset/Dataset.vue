@@ -1,10 +1,21 @@
 <script setup lang="ts">
 import type { ElTree } from "element-plus";
-import { Delete, Folder, FolderOpened, MoreFilled, Plus, Edit } from "@element-plus/icons-vue";
+import {
+  Delete,
+  Folder,
+  FolderOpened,
+  MoreFilled,
+  Plus,
+  Edit,
+} from "@element-plus/icons-vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import dayjs from "dayjs";
 import { computed, nextTick, onMounted, ref } from "vue";
-import type { ApiDatasetListItem, ApiFolderTreeNode, DatasetFieldType } from "@/api/dataset";
+import type {
+  ApiDatasetListItem,
+  ApiFolderTreeNode,
+  DatasetFieldType,
+} from "@/api/dataset";
 import {
   createDataset,
   createDatasetFolder,
@@ -88,7 +99,10 @@ function mapFoldersToNodes(folders: ApiFolderTreeNode[]): FolderTreeNode[] {
 }
 
 const treeData = computed<FolderTreeNode[]>(() => {
-  return [{ id: "__all__", label: "全部", type: "all" }, ...mapFoldersToNodes(folderRoots.value)];
+  return [
+    { id: "__all__", label: "全部", type: "all" },
+    ...mapFoldersToNodes(folderRoots.value),
+  ];
 });
 
 function flattenFolderOptions(
@@ -105,7 +119,9 @@ function flattenFolderOptions(
   return out;
 }
 
-const folderSelectOptions = computed(() => flattenFolderOptions(folderRoots.value));
+const folderSelectOptions = computed(() =>
+  flattenFolderOptions(folderRoots.value),
+);
 
 /** 从根到该文件夹的名称路径（不含「全部」） */
 function folderPathSegments(
@@ -131,7 +147,10 @@ const folderDialogParentPath = computed(() => {
   return segs?.join(" / ") ?? "（未知目录）";
 });
 
-function findFolderInApiTree(folders: ApiFolderTreeNode[], id: string): ApiFolderTreeNode | null {
+function findFolderInApiTree(
+  folders: ApiFolderTreeNode[],
+  id: string,
+): ApiFolderTreeNode | null {
   for (const f of folders) {
     if (f.id === id) return f;
     if (f.children?.length) {
@@ -158,7 +177,9 @@ const folderEditParentOptions = computed(() => {
   const fid = folderEditId.value;
   if (fid == null) return flat;
   const node = findFolderInApiTree(folderRoots.value, fid);
-  const blocked = node ? collectDescendantFolderIds(node) : new Set<string>([fid]);
+  const blocked = node
+    ? collectDescendantFolderIds(node)
+    : new Set<string>([fid]);
   return flat.filter((o) => !blocked.has(o.value));
 });
 
@@ -172,7 +193,9 @@ const filteredDatasets = computed(() => {
   const fid = selectedFolderId.value;
   return list
     .filter((d) => d.folder_id === fid)
-    .sort((a, b) => (a.updated_at < b.updated_at ? 1 : a.updated_at > b.updated_at ? -1 : 0));
+    .sort((a, b) =>
+      a.updated_at < b.updated_at ? 1 : a.updated_at > b.updated_at ? -1 : 0,
+    );
 });
 
 function formatTime(iso: string) {
@@ -183,12 +206,18 @@ async function loadData() {
   treeLoading.value = true;
   listLoading.value = true;
   try {
-    const [trees, datasets] = await Promise.all([fetchDatasetFolderTree(), fetchAllDatasets()]);
+    const [trees, datasets] = await Promise.all([
+      fetchDatasetFolderTree(),
+      fetchAllDatasets(),
+    ]);
     folderRoots.value = Array.isArray(trees) ? trees : [];
     allDatasets.value = Array.isArray(datasets) ? datasets : [];
     treeRenderKey.value += 1;
     await nextTick();
-    const key = selectedFolderId.value === "all" ? "__all__" : `folder-${selectedFolderId.value}`;
+    const key =
+      selectedFolderId.value === "all"
+        ? "__all__"
+        : `folder-${selectedFolderId.value}`;
     treeRef.value?.setCurrentKey(key);
   } catch (e) {
     ElMessage.error(e instanceof Error ? e.message : "加载失败");
@@ -201,7 +230,8 @@ async function loadData() {
 }
 
 function onFolderDropdownVisible(visible: boolean, data: FolderTreeNode) {
-  folderDropdownOpenNodeId.value = visible && data.type === "folder" ? data.id : null;
+  folderDropdownOpenNodeId.value =
+    visible && data.type === "folder" ? data.id : null;
 }
 
 function onFolderMenuCommand(cmd: string, data: FolderTreeNode) {
@@ -243,7 +273,9 @@ async function submitFolder() {
     await loadData();
     await nextTick();
     treeRef.value?.setCurrentKey(
-      selectedFolderId.value === "all" ? "__all__" : `folder-${selectedFolderId.value}`,
+      selectedFolderId.value === "all"
+        ? "__all__"
+        : `folder-${selectedFolderId.value}`,
     );
   } catch (e) {
     ElMessage.error(e instanceof Error ? e.message : "创建失败");
@@ -289,7 +321,9 @@ async function submitFolderEdit() {
     await loadData();
     await nextTick();
     treeRef.value?.setCurrentKey(
-      selectedFolderId.value === "all" ? "__all__" : `folder-${selectedFolderId.value}`,
+      selectedFolderId.value === "all"
+        ? "__all__"
+        : `folder-${selectedFolderId.value}`,
     );
   } catch (e) {
     ElMessage.error(e instanceof Error ? e.message : "保存失败");
@@ -335,7 +369,10 @@ function openDatasetDialog() {
 }
 
 function addFieldRow() {
-  datasetFields.value.push({ name: `列${datasetFields.value.length + 1}`, field_type: "text" });
+  datasetFields.value.push({
+    name: `列${datasetFields.value.length + 1}`,
+    field_type: "text",
+  });
 }
 
 function removeFieldRow(i: number) {
@@ -359,7 +396,8 @@ async function submitDataset() {
     ElMessage.warning("请填写至少一个有效字段名");
     return;
   }
-  const folder_id = selectedFolderId.value === "all" ? null : selectedFolderId.value;
+  const folder_id =
+    selectedFolderId.value === "all" ? null : selectedFolderId.value;
   datasetSubmitting.value = true;
   try {
     await createDataset({
@@ -423,11 +461,15 @@ async function submitEdit() {
 
 async function confirmDelete(ds: ApiDatasetListItem) {
   try {
-    await ElMessageBox.confirm(`确定删除数据集「${ds.name}」吗？此操作不可恢复。`, "删除确认", {
-      type: "warning",
-      confirmButtonText: "删除",
-      cancelButtonText: "取消",
-    });
+    await ElMessageBox.confirm(
+      `确定删除数据集「${ds.name}」吗？此操作不可恢复。`,
+      "删除确认",
+      {
+        type: "warning",
+        confirmButtonText: "删除",
+        cancelButtonText: "取消",
+      },
+    );
   } catch {
     return;
   }
@@ -453,7 +495,9 @@ onMounted(async () => {
     <aside :class="$style.sidebar">
       <div :class="$style.sidebarHeader">
         <h3 :class="$style.sidebarTitle">目录</h3>
-        <el-button :icon="Plus" plain type="primary" @click="openFolderDialog">新建目录</el-button>
+        <el-button :icon="Plus" plain type="primary" @click="openFolderDialog"
+          >新建目录</el-button
+        >
       </div>
       <div v-loading="treeLoading" :class="$style.treeWrap">
         <el-tree
@@ -495,7 +539,9 @@ onMounted(async () => {
                 v-if="data.type === 'folder'"
                 :class="[
                   $style.treeRowActions,
-                  folderDropdownOpenNodeId === data.id ? $style.treeRowActionsVisible : '',
+                  folderDropdownOpenNodeId === data.id
+                    ? $style.treeRowActionsVisible
+                    : '',
                 ]"
                 @click.stop
               >
@@ -511,8 +557,12 @@ onMounted(async () => {
                   </span>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item command="edit">编辑目录</el-dropdown-item>
-                      <el-dropdown-item command="delete" divided>删除目录</el-dropdown-item>
+                      <el-dropdown-item command="edit"
+                        >编辑目录</el-dropdown-item
+                      >
+                      <el-dropdown-item command="delete" divided
+                        >删除目录</el-dropdown-item
+                      >
                     </el-dropdown-menu>
                   </template>
                 </el-dropdown>
@@ -533,56 +583,69 @@ onMounted(async () => {
       </div>
 
       <div v-loading="listLoading" :class="$style.cardArea">
-        <el-empty
-          v-if="!listLoading && filteredDatasets.length === 0"
-          description="当前目录下暂无数据集"
-        />
-        <div v-else :class="$style.cardGrid">
-          <el-card
-            v-for="ds in filteredDatasets"
-            :key="ds.id"
-            :class="$style.card"
-            shadow="hover"
-            @click="toEditPage(ds)"
-          >
-            <div :class="$style.cardBody">
-              <div :class="$style.cardHead">
-                <span :class="$style.cardName">{{ ds.name }}</span>
-                <div :class="$style.cardHeadActions" @click.stop>
-                  <el-button link type="primary" :icon="Edit" @click.stop="openEdit(ds)"
-                    >编辑</el-button
-                  >
-                  <el-button
-                    link
-                    type="danger"
-                    :icon="Delete"
-                    @click.stop="onDatasetMenuCommand('delete', ds)"
-                  >
-                    删除
-                  </el-button>
+        <el-scrollbar class="w-full h-full" view-class="p-3">
+          <el-empty
+            v-if="!listLoading && filteredDatasets.length === 0"
+            description="当前目录下暂无数据集"
+          />
+          <div v-else :class="$style.cardGrid">
+            <el-card
+              v-for="ds in filteredDatasets"
+              :key="ds.id"
+              :class="$style.card"
+              shadow="hover"
+              @click="toEditPage(ds)"
+            >
+              <div :class="$style.cardBody">
+                <div :class="$style.cardHead">
+                  <span :class="$style.cardName">{{ ds.name }}</span>
+                  <div :class="$style.cardHeadActions" @click.stop>
+                    <el-button
+                      link
+                      type="primary"
+                      :icon="Edit"
+                      @click.stop="openEdit(ds)"
+                      >编辑</el-button
+                    >
+                    <el-button
+                      link
+                      type="danger"
+                      :icon="Delete"
+                      @click.stop="onDatasetMenuCommand('delete', ds)"
+                    >
+                      删除
+                    </el-button>
+                  </div>
+                </div>
+                <p :class="$style.cardDesc">
+                  {{ ds.description?.trim() || "暂无描述" }}
+                </p>
+                <div :class="$style.cardMeta">
+                  <span>字段 {{ ds.field_count }}</span>
+                  <span>行数 {{ ds.row_count }}</span>
+                  <span>更新 {{ formatTime(ds.updated_at) }}</span>
                 </div>
               </div>
-              <p :class="$style.cardDesc">
-                {{ ds.description?.trim() || "暂无描述" }}
-              </p>
-              <div :class="$style.cardMeta">
-                <span>字段 {{ ds.field_count }}</span>
-                <span>行数 {{ ds.row_count }}</span>
-                <span>更新 {{ formatTime(ds.updated_at) }}</span>
-              </div>
-            </div>
-          </el-card>
-        </div>
+            </el-card>
+          </div>
+        </el-scrollbar>
       </div>
     </div>
 
-    <el-dialog v-model="folderDialogVisible" title="新建目录" width="420px" destroy-on-close>
+    <el-dialog
+      v-model="folderDialogVisible"
+      title="新建目录"
+      width="420px"
+      destroy-on-close
+    >
       <el-form label-position="top">
         <el-form-item>
           <template #label>
             <div :class="$style.folderNameLabelRow">
               <span>目录名称</span>
-              <span :class="$style.folderParentHint">父级目录：{{ folderDialogParentPath }}</span>
+              <span :class="$style.folderParentHint"
+                >父级目录：{{ folderDialogParentPath }}</span
+              >
             </div>
           </template>
           <el-input
@@ -595,7 +658,12 @@ onMounted(async () => {
       </el-form>
       <template #footer>
         <el-button @click="folderDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="folderSubmitting" @click="submitFolder">创建</el-button>
+        <el-button
+          type="primary"
+          :loading="folderSubmitting"
+          @click="submitFolder"
+          >创建</el-button
+        >
       </template>
     </el-dialog>
 
@@ -640,13 +708,21 @@ onMounted(async () => {
       </el-form>
       <template #footer>
         <el-button @click="folderEditVisible = false">取消</el-button>
-        <el-button type="primary" :loading="folderEditSubmitting" @click="submitFolderEdit"
+        <el-button
+          type="primary"
+          :loading="folderEditSubmitting"
+          @click="submitFolderEdit"
           >保存</el-button
         >
       </template>
     </el-dialog>
 
-    <el-dialog v-model="datasetDialogVisible" title="新建数据集" width="520px" destroy-on-close>
+    <el-dialog
+      v-model="datasetDialogVisible"
+      title="新建数据集"
+      width="520px"
+      destroy-on-close
+    >
       <p class="text-sm text-gray-500 m-0 mb-3">
         {{
           selectedFolderId === "all"
@@ -675,8 +751,17 @@ onMounted(async () => {
         </el-form-item>
         <el-form-item label="字段定义">
           <div class="flex flex-col gap-2 w-full">
-            <div v-for="(row, i) in datasetFields" :key="i" class="flex gap-2 items-center">
-              <el-input v-model="row.name" placeholder="字段名" class="flex-1" maxlength="200" />
+            <div
+              v-for="(row, i) in datasetFields"
+              :key="i"
+              class="flex gap-2 items-center"
+            >
+              <el-input
+                v-model="row.name"
+                placeholder="字段名"
+                class="flex-1"
+                maxlength="200"
+              />
               <el-select v-model="row.field_type" style="width: 120px">
                 <el-option value="text" label="文本">
                   <el-space>
@@ -697,7 +782,9 @@ onMounted(async () => {
                   </el-space>
                 </el-option>
               </el-select>
-              <el-button text type="danger" @click="removeFieldRow(i)">删除</el-button>
+              <el-button text type="danger" @click="removeFieldRow(i)"
+                >删除</el-button
+              >
             </div>
             <el-button @click="addFieldRow">添加字段</el-button>
           </div>
@@ -705,7 +792,10 @@ onMounted(async () => {
       </el-form>
       <template #footer>
         <el-button @click="datasetDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="datasetSubmitting" @click="submitDataset"
+        <el-button
+          type="primary"
+          :loading="datasetSubmitting"
+          @click="submitDataset"
           >创建</el-button
         >
       </template>
@@ -723,7 +813,13 @@ onMounted(async () => {
           <el-input v-model="editName" maxlength="200" show-word-limit />
         </el-form-item>
         <el-form-item label="描述">
-          <el-input v-model="editDesc" type="textarea" :rows="3" maxlength="5000" show-word-limit />
+          <el-input
+            v-model="editDesc"
+            type="textarea"
+            :rows="3"
+            maxlength="5000"
+            show-word-limit
+          />
         </el-form-item>
         <el-form-item label="所属目录">
           <el-select
@@ -745,7 +841,9 @@ onMounted(async () => {
       </el-form>
       <template #footer>
         <el-button @click="editVisible = false">取消</el-button>
-        <el-button type="primary" :loading="editSubmitting" @click="submitEdit">保存</el-button>
+        <el-button type="primary" :loading="editSubmitting" @click="submitEdit"
+          >保存</el-button
+        >
       </template>
     </el-dialog>
   </div>
@@ -792,8 +890,8 @@ onMounted(async () => {
 
 .cardArea {
   flex: 1;
-  overflow: auto;
-  padding: 12px;
+  height: 0;
+  /*padding: 12px;*/
   background-color: var(--el-bg-color);
 }
 
