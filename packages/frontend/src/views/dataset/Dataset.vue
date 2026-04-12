@@ -680,8 +680,7 @@ onMounted(async () => {
               <el-select v-model="row.field_type" style="width: 120px">
                 <el-option value="text" label="文本">
                   <el-space>
-                    <SvgIcon name="text" size="14" />
-                    <span>文本</span>
+                    <SvgIcon name="text" size="14" />n
                   </el-space>
                 </el-option>
                 <el-option value="number" label="数字">

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { VideoPlay } from '@element-plus/icons-vue'
-import { ref } from 'vue'
+import { ref, toValue } from 'vue'
 import { localKey, useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { BASE_URL } from '@/visual-editor/utils'
 import Preview from './preview.vue'
@@ -17,8 +17,9 @@ const tools = useTools()
 const { jsonData } = useVisualData()
 
 function runPreview() {
-  sessionStorage.setItem(localKey, JSON.stringify(jsonData))
-  localStorage.setItem(localKey, JSON.stringify(jsonData))
+  const snapshot = JSON.stringify(toValue(jsonData))
+  sessionStorage.setItem(localKey, snapshot)
+  localStorage.setItem(localKey, snapshot)
   isShowH5Preview.value = true
 }
 </script>

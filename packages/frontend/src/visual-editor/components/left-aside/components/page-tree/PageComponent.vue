@@ -3,7 +3,7 @@ import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 
-const { jsonData, updatePage, currentPage, overrideProject, currentBlock, setCurrentBlock } = useVisualData()
+const { updatePage, currentPage, overrideProject, currentBlock, setCurrentBlock } = useVisualData()
 
 const currentBlocks = computed(() => transformToTreeData(currentPage.value?.blocks || []))
 

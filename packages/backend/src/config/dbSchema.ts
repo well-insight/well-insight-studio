@@ -8,6 +8,7 @@ const TABLES_IN_DROP_ORDER = [
   "dataset_fields",
   "datasets",
   "dataset_folders",
+  "applications",
   "permission_rules",
   "roles",
   "projects",
@@ -124,6 +125,23 @@ function createTables() {
       FOREIGN KEY (owner_id) REFERENCES users(id)
     )
   `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS applications (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      status INTEGER NOT NULL DEFAULT 1,
+      client_type INTEGER NOT NULL DEFAULT 1,
+      schema_json TEXT NOT NULL,
+      starred INTEGER NOT NULL DEFAULT 0,
+      owner_id TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (owner_id) REFERENCES users(id)
+    )
+  `);
+  db.exec("CREATE INDEX IF NOT EXISTS idx_applications_owner ON applications(owner_id)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_applications_updated ON applications(updated_at)");
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS dataset_folders (

@@ -1,20 +1,20 @@
 <script lang="ts" setup>
-import { computed, onMounted, reactive } from 'vue'
+import { computed, onMounted, reactive } from "vue";
 
 interface Line {
-  display?: boolean
-  position?: string
-  origin?: string
-  lineLength?: string
+  display?: boolean;
+  position?: string;
+  origin?: string;
+  lineLength?: string;
 }
 
 const props = withDefaults(
   defineProps<{
-    verticalLine: Line[]
-    horizontalLine: Line[]
+    verticalLine: Line[];
+    horizontalLine: Line[];
   }>(),
-  {}
-)
+  {},
+);
 </script>
 
 <template>
@@ -26,7 +26,7 @@ const props = withDefaults(
     :style="{
       left: item.position,
       top: item.origin,
-      height: item.lineLength
+      height: item.lineLength,
     }"
   />
   <span
@@ -36,7 +36,7 @@ const props = withDefaults(
     :style="{
       top: item.position,
       left: item.origin,
-      width: item.lineLength
+      width: item.lineLength,
     }"
   />
 </template>

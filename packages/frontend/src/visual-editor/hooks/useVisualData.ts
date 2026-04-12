@@ -9,7 +9,14 @@ import type {
 } from '@/visual-editor/visual-editor.utils'
 import { computed, inject, reactive, readonly, watch } from 'vue'
 
-import { useRoute, useRouter } from 'vue-router'
+/** 页面路由 path，统一为以 / 开头 */
+export function normalizeEditorPagePath(path: string) {
+  const t = (path || '').trim()
+  if (!t) return '/'
+  return t.startsWith('/') ? t : `/${t}`
+}
+
+import { useRoute } from 'vue-router'
 import { CacheEnum } from '@/enums'
 import { useWorkspaceStoreWithout } from '@/store/workspaceStore/workspaceStore'
 import { visualConfig } from '@/visual.config'
@@ -46,9 +53,6 @@ function defaultPageSize() {
  * @description 创建空的新页面
  */
 export function createNewPage({ title = '新页面', path = '/' }) {
-  console.log(workspaceStore.currentApp)
-
-  debugger
   return {
     title,
     path,
@@ -83,16 +87,15 @@ function defaultValue(): VisualEditorModelValue {
   }
 }
 
+/**
+ * 编辑器项目数据不以 sessionStorage 作为初始来源：进入应用编辑时由接口拉取并 overrideProject。
+ * 预览等场景在打开前会自行写入 sessionStorage / localStorage。
+ */
 export function initVisualData() {
-  const localData = JSON.parse(sessionStorage.getItem(localKey) as string)
-  const jsonData: VisualEditorModelValue = Object.keys(localData?.pages || {}).length ? localData : defaultValue()
+  const jsonData: VisualEditorModelValue = defaultValue()
 
   const route = useRoute()
-  const router = useRouter()
-
-  console.log('jsonData：', jsonData)
-  // 所有页面的path都必须以 / 开发
-  const getPrefixPath = (path: string) => (path.startsWith('/') ? path : `/${path}`)
+  const getPrefixPath = normalizeEditorPagePath
 
   const currentPage = jsonData.pages[route.path]
 
@@ -116,35 +119,63 @@ export function initVisualData() {
     url => setCurrentPage(url)
   )
 
-  // 更新page
-  const updatePage = ({ newPath = '', oldPath, page }) => {
-    console.log(state.jsonData.pages[oldPath], page)
-    if (newPath && newPath != oldPath) {
-      page.path = newPath
-      // 如果传了新的路径，则认为是修改页面路由
-      state.jsonData.pages[getPrefixPath(newPath)] = { ...state.jsonData.pages[oldPath], ...page }
-      deletePage(oldPath, getPrefixPath(newPath))
+  // 更新 page（路径比较必须规范化，否则 `foo` 与 `/foo` 会误判为改名并误删）
+  const updatePage = ({ newPath = '', oldPath, page }: { newPath?: string; oldPath: string; page: Partial<VisualEditorPage> }) => {
+    const o = getPrefixPath(oldPath)
+    const existing = state.jsonData.pages[o]
+    if (!existing) {
+      return
+    }
+    const n = getPrefixPath(newPath || o)
+    if (n !== o) {
+      const merged = { ...existing, ...page, path: n } as VisualEditorPage
+      state.jsonData.pages[n] = merged
+      delete state.jsonData.pages[o]
+      setCurrentPage(n)
     } else {
-      Object.assign(state.jsonData.pages[oldPath], page)
+      Object.assign(existing, page)
+      existing.path = n
     }
   }
-  // 添加page
-  const incrementPage = (path = '', page: VisualEditorPage) => {
-    state.jsonData.pages[getPrefixPath(path)] ??= page ?? createNewPage({ path })
-  }
-  // 删除page
-  function deletePage(path = '', redirectPath = '') {
-    delete state.jsonData.pages[path]
-    if (redirectPath) {
-      setCurrentPage(redirectPath)
+
+  /** 新增页面；路径已存在返回 false */
+  const incrementPage = (path: string, page: VisualEditorPage) => {
+    const key = getPrefixPath(path)
+    if (state.jsonData.pages[key]) {
+      return false
     }
+    state.jsonData.pages[key] = { ...page, path: key }
+    setCurrentPage(key)
+    return true
   }
-  // 设置当前页面
+
+  /** 删除页面；至少保留一页，失败返回 false */
+  function deletePage(path: string, redirectPath = '') {
+    const keys = Object.keys(state.jsonData.pages)
+    if (keys.length <= 1) {
+      return false
+    }
+    const p = getPrefixPath(path)
+    if (!state.jsonData.pages[p]) {
+      return false
+    }
+    delete state.jsonData.pages[p]
+    const rest = Object.keys(state.jsonData.pages)
+    const prefer = redirectPath ? getPrefixPath(redirectPath) : ''
+    const next =
+      (prefer && state.jsonData.pages[prefer] ? prefer : null) || rest[0] || '/'
+    setCurrentPage(next)
+    return true
+  }
+  // 设置当前页面（必须读 state.jsonData：overrideProject 会替换整棵项目树）
   function setCurrentPage(path = '/') {
-    state.currentPage = jsonData.pages[path]
+    const pages = state.jsonData.pages
+    state.currentPage = pages[path]
     if (!state.currentPage) {
-      state.currentPage = jsonData.pages['/']
-      // router.replace('/')
+      state.currentPage = pages['/'] ?? Object.values(pages)[0]
+    }
+    if (!state.currentPage) {
+      return
     }
     const currentFocusBlock = state.currentPage.blocks.find(item => item.focus)
     setCurrentBlock(currentFocusBlock ?? ({} as VisualEditorBlockData))
@@ -239,13 +270,18 @@ export function initVisualData() {
   }
 
   // 使用自定义JSON覆盖整个项目
-  const overrideProject = jsonData => {
-    state.jsonData = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData
+  const overrideProject = (incoming: VisualEditorModelValue | string) => {
+    state.jsonData =
+      typeof incoming === 'string' ? (JSON.parse(incoming) as VisualEditorModelValue) : incoming
+    const paths = Object.keys(state.jsonData.pages)
+    const path = state.jsonData.pages['/'] ? '/' : paths[0] || '/'
+    setCurrentPage(path)
   }
 
   return {
     visualConfig,
-    jsonData: readonly(state.jsonData), // 保护JSONData避免直接修改
+    /** 必须用 computed：overrideProject 会替换 state.jsonData 引用，否则注入的仍是初始默认对象 */
+    jsonData: computed(() => readonly(state.jsonData) as VisualEditorModelValue),
     currentPage: computed(() => state.currentPage),
     currentBlock: computed(() => state.currentBlock),
     overrideProject,

@@ -66,8 +66,8 @@ export const EventAction = defineComponent({
       {
         label: '全局',
         value: 'global',
-        children: Object.keys(jsonData.actions).map(actionKey => {
-          const item = cloneDeep(jsonData.actions[actionKey])
+        children: Object.keys(jsonData.value.actions).map(actionKey => {
+          const item = cloneDeep(jsonData.value.actions[actionKey])
           item.value = actionKey
           item.label = item.name
           const arrKey = Object.keys(item).find(key => Array.isArray(item[key]))

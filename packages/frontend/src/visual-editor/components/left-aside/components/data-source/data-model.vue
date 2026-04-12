@@ -30,7 +30,7 @@ const { showImportSwaggerJsonModal } = useImportSwaggerJsonModal()
 /**
  * @description 模型集合
  */
-const models = computed(() => cloneDeep(jsonData.models))
+const models = computed(() => cloneDeep(jsonData.value.models))
 
 /**
  * @description 是否处于编辑状态

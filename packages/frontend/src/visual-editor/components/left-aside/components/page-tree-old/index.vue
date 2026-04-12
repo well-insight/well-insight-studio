@@ -23,7 +23,7 @@ const rules = {
 const router = useRouter()
 const route = useRoute()
 
-const { jsonData, setCurrentPage, deletePage, updatePage, incrementPage } = useVisualData()
+const { jsonData: jsonDataRef, setCurrentPage, deletePage, updatePage, incrementPage } = useVisualData()
 
 const ruleFormRef = ref<InstanceType<typeof ElForm>>()
 
@@ -42,8 +42,8 @@ const form = ref({
 
 // 所有的页面
 const pages = computed(() =>
-  Object.keys(jsonData.pages).map(key => ({
-    title: jsonData.pages[key].title,
+  Object.keys(jsonDataRef.value.pages).map(key => ({
+    title: jsonDataRef.value.pages[key].title,
     path: key,
   })),
 )

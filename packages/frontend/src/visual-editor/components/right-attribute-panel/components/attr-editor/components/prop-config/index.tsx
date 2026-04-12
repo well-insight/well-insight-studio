@@ -38,7 +38,7 @@ export const PropConfig = defineComponent({
     /**
      * @description 模型集合
      */
-    const models = computed(() => cloneDeep(jsonData.models))
+    const models = computed(() => cloneDeep(jsonData.value.models))
 
     const renderPropItem = (propName: string, propConfig: VisualEditorProps) => {
       const { propObj, prop } = useDotProp(props.block.props, propName)

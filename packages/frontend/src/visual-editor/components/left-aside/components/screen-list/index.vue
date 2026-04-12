@@ -1,12 +1,14 @@
 <!-- 页面树 -->
 <script lang="tsx" setup>
-import type { VisualEditorPage } from '@/visual-editor/visual-editor.utils'
 import { Delete, Edit, Link, MoreFilled, Plus, Search, Tickets } from '@element-plus/icons-vue'
 import { ElForm, ElFormItem, ElInput, ElMessage } from 'element-plus'
-import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, ref, watch } from 'vue'
 import { useModal } from '@/visual-editor/hooks/useModal'
-import { createNewPage, useVisualData } from '@/visual-editor/hooks/useVisualData'
+import {
+  createNewPage,
+  normalizeEditorPagePath,
+  useVisualData
+} from '@/visual-editor/hooks/useVisualData'
 
 defineOptions({
   name: 'PageTree',
@@ -15,15 +17,18 @@ defineOptions({
   icon: Tickets,
 })
 
+interface PageTreeNode {
+  title: string
+  path: string
+  isDefault?: boolean
+}
+
 const rules = {
   title: [{ required: true, message: '请输入页面标题', trigger: 'blur' }],
   path: [{ required: true, message: '请输入页面路径', trigger: 'blur' }],
 }
 
-const router = useRouter()
-const route = useRoute()
-
-const { jsonData, setCurrentPage, deletePage, updatePage, incrementPage } = useVisualData()
+const { jsonData: jsonDataRef, setCurrentPage, deletePage, updatePage, incrementPage } = useVisualData()
 
 const ruleFormRef = ref<InstanceType<typeof ElForm>>()
 
@@ -31,26 +36,37 @@ const defaultProps = ref({
   children: 'children',
   label: 'title',
 })
-// 当前要增加或修改的页面
-const operatePageData = ref<VisualEditorPage | null>(null)
+// 当前要增加或修改的页面（树节点仅含 title / path）
+const operatePageData = ref<PageTreeNode | null>(null)
 // 增改页面表单数据
 const form = ref({
   title: '',
   path: '',
 })
 
-// 所有的页面
+// 所有的页面（jsonData 为 computed ref，须 .value 指向当前 state.jsonData）
 const pages = computed(() =>
-  Object.keys(jsonData.pages).map(key => ({
-    title: jsonData.pages[key].title,
+  Object.keys(jsonDataRef.value.pages).map(key => ({
+    title: jsonDataRef.value.pages[key].title,
     path: key,
   })),
 )
 
-const currentNodeKey = ref(pages.value?.[0]?.path)
+const currentNodeKey = ref('')
+
+watch(
+  pages,
+  list => {
+    const keys = list.map(p => p.path)
+    if (!currentNodeKey.value || !keys.includes(currentNodeKey.value)) {
+      currentNodeKey.value = keys[0] ?? ''
+    }
+  },
+  { immediate: true, deep: true }
+)
 
 // 点击当前节点
-function handleNodeClick(data) {
+function handleNodeClick(data: PageTreeNode) {
   setCurrentPage(data.path)
   // router.push(data.path)
 }
@@ -83,23 +99,27 @@ function showOparateModal() {
               return ElMessage.error('标题或路径不能为空！')
             }
             if (operatePageData.value) {
+              const oldPath = operatePageData.value.path || path
               updatePage({
                 newPath: path,
-                oldPath: operatePageData.value.path || path,
-                page: { title },
+                oldPath,
+                page: { title }
               })
-              // await router.replace(path)
-              currentNodeKey.value = path
-            }
-            else {
-              incrementPage(path, createNewPage({ title }))
+              currentNodeKey.value = normalizeEditorPagePath(path)
+            } else {
+              const routePath = normalizeEditorPagePath(path)
+              const ok = incrementPage(path, createNewPage({ title, path: routePath }))
+              if (!ok) {
+                ElMessage.error('该页面路径已存在')
+                reject(new Error('duplicate path'))
+                return
+              }
+              currentNodeKey.value = routePath
             }
             resolve(true)
           }
           else {
-            console.log('error submit!!')
             reject()
-            return false
           }
         })
       })
@@ -117,23 +137,24 @@ function addPage() {
   showOparateModal()
 }
 // 编辑页面
-function editPage(data) {
+function editPage(data: PageTreeNode) {
   operatePageData.value = data
   form.value = {
     title: data.title,
     path: data.path,
   }
   showOparateModal()
-  console.log('子页面数据：', data)
 }
 // 删除子页面
-function delPage(data) {
-  console.log('删除子页面数据', data)
-  deletePage(data.path, '/')
+function delPage(data: PageTreeNode) {
+  const ok = deletePage(data.path, '/')
+  if (!ok) {
+    ElMessage.warning('至少保留一个页面')
+  }
 }
 // 设置为默认页面
-function setDefaultPage(data) {
-  console.log('设置该页面为默认页面', data)
+function setDefaultPage(_data: PageTreeNode) {
+  // 预留：设为首页 / 默认路由
 }
 </script>
 

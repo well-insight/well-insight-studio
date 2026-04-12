@@ -15,38 +15,7 @@ export const useWorkspaceStore = defineStore("useWorkspaceStore", {
       },
     ],
     currentWorkspace: undefined,
-    appList: [
-      {
-        id: "001001",
-        workspaceId: "001",
-        title: "测试应用",
-        status: 1,
-        lastUpdated: "2025-01-18",
-        clientType: 1,
-      },
-      {
-        id: "001002",
-        workspaceId: "001",
-        title: "测试应用2",
-        status: 0,
-        lastUpdated: "2025-01-18",
-        clientType: 2,
-      },
-      // {
-      //   id: '001003',
-      //   workspaceId: '001',
-      //   title: '测试应用3',
-      //   status: 1,
-      //   lastUpdated: '2025-01-18',
-      // },
-      // {
-      //   id: '001004',
-      //   workspaceId: '001',
-      //   title: '测试应用4',
-      //   status: 0,
-      //   lastUpdated: '2025-01-18',
-      // },
-    ],
+    appList: [],
     currentApp: undefined,
     menuList: [
       {
@@ -186,8 +155,8 @@ export const useWorkspaceStore = defineStore("useWorkspaceStore", {
     setAppList(list: WorkspaceApp[]) {
       this.appList = list;
     },
-    setCurrentApp(app: WorkspaceApp) {
-      this.currentApp = app;
+    setCurrentApp(app: WorkspaceApp | null | undefined) {
+      this.currentApp = app ?? undefined;
     },
     setCurrentMenu(menu: SimpleMenuOption) {
       this.currentMenu = menu;
@@ -215,12 +184,13 @@ export interface Workspace {
 
 export interface WorkspaceApp {
   id: string | number;
-  workspaceId: string | number;
+  workspaceId?: string | number;
   title: string;
   status?: number;
   lastUpdated?: string;
-  // 设备类型
-  clientType?: number; // 1 pc端 2 移动端
+  /** 设备类型：1 PC，2 移动端 */
+  clientType?: number;
+  starred?: boolean;
 }
 
 export interface AppScreen {

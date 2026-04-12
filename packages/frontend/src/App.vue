@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { provide } from 'vue'
+import { provide, toValue } from 'vue'
+import { useWorkspaceStore } from '@/store/workspaceStore/workspaceStore'
 import { initVisualData, injectKey, localKey } from '@/visual-editor/hooks/useVisualData'
 
 const visualData = initVisualData()
@@ -7,9 +8,18 @@ const visualData = initVisualData()
 provide(injectKey, visualData)
 
 const { jsonData } = visualData
+const workspaceStore = useWorkspaceStore()
 
 window.addEventListener('beforeunload', () => {
-  sessionStorage.setItem(localKey, JSON.stringify(jsonData))
+  const id = workspaceStore.currentApp?.id
+  const key = id != null && String(id) !== '' ? `${localKey}_${id}` : localKey
+  try {
+    const snapshot = JSON.stringify(toValue(jsonData))
+    sessionStorage.setItem(key, snapshot)
+    sessionStorage.setItem(localKey, snapshot)
+  } catch {
+    /* ignore quota */
+  }
 })
 </script>
 

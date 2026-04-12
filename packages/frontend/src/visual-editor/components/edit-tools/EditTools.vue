@@ -1,37 +1,85 @@
 <script lang="ts" setup>
 import {
+  DocumentChecked,
   Iphone,
-  Menu,
   Monitor,
   Orange,
   RefreshLeft,
   RefreshRight,
-  ScaleToOriginal,
-  Setting,
   VideoPlay,
   WarnTriangleFilled
 } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref, toRaw, toValue } from 'vue'
+import { updateApplication } from '@/api/application'
 import { useControlStore } from '@/store/useControlStore/useControlStore'
 import { useWorkspaceStore } from '@/store/workspaceStore/workspaceStore'
+import { localKey, useVisualData } from '@/visual-editor/hooks/useVisualData'
 import Preview from './components/Preview.vue'
 
-// store
 const workspaceStore = useWorkspaceStore()
 const controlStore = useControlStore()
 const { currentApp } = storeToRefs(workspaceStore)
 const {} = storeToRefs(controlStore)
 
+const { jsonData } = useVisualData()
+
 const previewVisible = ref(false)
+const saving = ref(false)
 
-const value1 = ref(false)
+const statusActive = computed({
+  get: () => currentApp.value?.status === 1,
+  set: async (v: boolean) => {
+    const app = currentApp.value
+    if (!app?.id) return
+    try {
+      await updateApplication(String(app.id), { status: v ? 1 : 0 })
+      app.status = v ? 1 : 0
+    } catch (e) {
+      ElMessage.error((e as Error).message || '更新状态失败')
+    }
+  }
+})
 
-function triggerClient() {
-  currentApp.value.clientType = currentApp.value.clientType === 1 ? 2 : 1
+async function saveAll() {
+  const app = currentApp.value
+  if (!app?.id) {
+    ElMessage.warning('未找到当前应用')
+    return
+  }
+  saving.value = true
+  try {
+    const schema = JSON.parse(JSON.stringify(toRaw(toValue(jsonData)))) as Record<string, unknown>
+    await updateApplication(String(app.id), {
+      schema,
+      client_type: app.clientType ?? 1,
+      status: app.status ?? 1
+    })
+    sessionStorage.setItem(localKey, JSON.stringify(toRaw(toValue(jsonData))))
+    ElMessage.success('保存成功')
+  } catch (e) {
+    ElMessage.error((e as Error).message || '保存失败')
+  } finally {
+    saving.value = false
+  }
+}
+
+async function triggerClient() {
+  const app = currentApp.value
+  if (!app?.id) return
+  const next = app.clientType === 1 ? 2 : 1
+  try {
+    await updateApplication(String(app.id), { client_type: next })
+    app.clientType = next
+    ElMessage.success(next === 2 ? '已切换为移动端画布' : '已切换为 PC 画布')
+  } catch (e) {
+    ElMessage.error((e as Error).message || '切换失败')
+  }
 }
 
 function previewPage() {
+  sessionStorage.setItem(localKey, JSON.stringify(toRaw(toValue(jsonData))))
   previewVisible.value = true
 }
 </script>
@@ -49,14 +97,16 @@ function previewPage() {
       <el-button text :icon="Orange" />
       <el-button text :icon="WarnTriangleFilled" />
       <el-divider direction="vertical" />
-      <el-button text :icon="VideoPlay" @click="previewPage"> 预览 </el-button>
+      <el-button text :icon="DocumentChecked" :loading="saving" @click="saveAll">保存</el-button>
+      <el-divider direction="vertical" />
+      <el-button text :icon="VideoPlay" @click="previewPage">预览</el-button>
       <el-divider direction="vertical" />
       <el-space>
         <el-button text>
-          <span class="mr-2" :class="[$style.status, $style.enable]" />
-          <el-text>激活</el-text>
+          <span class="mr-2" :class="[$style.status, statusActive ? $style.enable : $style.disable]" />
+          <el-text>{{ statusActive ? '激活' : '关闭' }}</el-text>
         </el-button>
-        <el-switch v-model="value1" />
+        <el-switch v-model="statusActive" />
       </el-space>
     </div>
   </div>

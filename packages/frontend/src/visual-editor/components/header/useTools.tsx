@@ -13,7 +13,7 @@ import { useClipboard } from '@vueuse/core'
 import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { ElMessage, ElRadio, ElRadioGroup } from 'element-plus'
 
-import { reactive } from 'vue'
+import { reactive, unref } from 'vue'
 import MonacoEditor from '@/visual-editor/components/common/monaco-editor/MonacoEditor'
 import { useModal } from '@/visual-editor/hooks/useModal'
 import { localKey, useVisualData } from '@/visual-editor/hooks/useVisualData'
@@ -46,7 +46,7 @@ export function useTools() {
               </ElRadioGroup>
               <MonacoEditor
                 onChange={importJsonChange}
-                code={JSON.stringify(jsonData)}
+                code={JSON.stringify(unref(jsonData))}
                 layout={{ width: 600, height: 600 }}
               />
             </>
@@ -77,7 +77,7 @@ export function useTools() {
       title: '导出JSON',
       icon: Download,
       onClick: () => {
-        const { copy } = useClipboard({ source: JSON.stringify(jsonData) })
+        const { copy } = useClipboard({ source: JSON.stringify(unref(jsonData)) })
 
         copy()
           .then(() => ElMessage.success('复制成功'))
@@ -155,7 +155,7 @@ export function useTools() {
       title: '预览',
       icon: Position,
       onClick: () => {
-        localStorage.setItem(localKey, JSON.stringify(jsonData))
+        localStorage.setItem(localKey, JSON.stringify(unref(jsonData)))
         window.open(location.href.replace('/#/', '/preview/#/'))
       }
     },

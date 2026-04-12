@@ -31,12 +31,12 @@ const { showImportSwaggerJsonModal } = useImportSwaggerJsonModal()
 /**
  * @description 接口集合
  */
-const apis = computed(() => cloneDeep(jsonData.actions.fetch.apis))
+const apis = computed(() => cloneDeep(jsonData.value.actions.fetch.apis))
 
 /**
  * @description 模型集合
  */
-const models = computed(() => cloneDeep(jsonData.models))
+const models = computed(() => cloneDeep(jsonData.value.models))
 
 /**
  * @description 是否处于编辑状态
