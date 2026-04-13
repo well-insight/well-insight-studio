@@ -116,7 +116,7 @@ onUnmounted(() => {
     element-loading-text="加载应用配置…"
   >
     <ELayout class="w-full h-full flex overflow-hidden relative">
-      <ELayoutSider v-model:collapsed="layoutCollapse" show-trigger="bar" :width="280" :collapsed-width="0">
+      <ELayoutSider v-model:collapsed="layoutCollapse" show-trigger="button" :width="280" :collapsed-width="0">
         <LeftAside />
       </ELayoutSider>
 
@@ -126,7 +126,7 @@ onUnmounted(() => {
 
       <ELayoutSider
         v-model:collapsed="settingCollapse"
-        show-trigger="bar"
+        show-trigger="button"
         :width="360"
         :collapsed-width="0"
         position="right"

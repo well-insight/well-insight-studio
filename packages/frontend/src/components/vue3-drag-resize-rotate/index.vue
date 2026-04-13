@@ -1,18 +1,18 @@
 <script>
 import { round } from "lodash-es";
 import {
-  addEvent,
-  getComputedSize,
-  matchesSelectorToParentElements,
-  removeEvent,
+    addEvent,
+    getComputedSize,
+    matchesSelectorToParentElements,
+    removeEvent,
 } from "./utils/dom";
 import {
-  computeHeight,
-  computeWidth,
-  getAngle,
-  restrictToBounds,
-  rotatedPoint,
-  snapToGrid,
+    computeHeight,
+    computeWidth,
+    getAngle,
+    restrictToBounds,
+    rotatedPoint,
+    snapToGrid,
 } from "./utils/fns";
 import { $emit } from "./utils/gogocodeTransfer";
 
@@ -696,7 +696,6 @@ export default {
       if (this.$el?.parentNode) {
         const style = window.getComputedStyle(this.$el?.parentNode, null);
         const rect = this.$el.parentNode.getBoundingClientRect();
-        debugger;
         this.parentX = rect.x;
         this.parentY = rect.y;
         return [
@@ -1564,6 +1563,8 @@ export default {
 </script>
 
 <template>
+
+
   <div
     :style="style"
     class="vue-drag-resize-rotate"

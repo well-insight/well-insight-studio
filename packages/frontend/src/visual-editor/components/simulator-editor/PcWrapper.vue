@@ -1,14 +1,6 @@
 <script lang="tsx" setup>
-import type { CSSProperties, StyleValue } from 'vue'
+import type { CSSProperties } from 'vue'
 
-import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
-import { useMouseInElement, useResizeObserver } from '@vueuse/core'
-import { vLoading } from 'element-plus'
-import { de } from 'element-plus/es/locale/index.mjs'
-import { cloneDeep, debounce } from 'lodash-es'
-import { storeToRefs } from 'pinia'
-import { computed, onMounted, reactive, ref, useTemplateRef, watch, watchEffect } from 'vue'
-import { useRoute } from 'vue-router'
 import MarkLine from '@/components/Editor/MarkLine.vue'
 import SketchRule from '@/components/Ruler/sketchRuler.vue'
 import { VueDragResizeRotate } from '@/components/vue3-drag-resize-rotate'
@@ -20,8 +12,16 @@ import { useModal } from '@/visual-editor/hooks/useModal'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { generateNanoid } from '@/visual-editor/utils'
 import { $$dropdown, DropdownOption } from '@/visual-editor/utils/dropdown-service'
+import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
+import { useMouseInElement, useResizeObserver } from '@vueuse/core'
+import { vLoading } from 'element-plus'
+import { cloneDeep, debounce } from 'lodash-es'
+import { storeToRefs } from 'pinia'
+import { computed, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import CompRender from './comp-render'
 import SlotItem from './SlotItem.vue'
+import AttrSettingsPopover from './AttrSettingsPopover.vue'
 
 defineOptions({
   name: 'SimulatorEditor',
@@ -473,7 +473,7 @@ defineExpose({
                     focus: outElement.focus && enabled,
                     focusWithChild: outElement.focusWithChild && enabled,
                     drag,
-                    ['has-slot']: !!Object.keys(outElement.props.slots || {}).length
+                    ['has-slot']: !!Object.keys(outElement.props.slots || {}).length,
                   }"
                   @contextmenu.stop.prevent="onContextmenuBlock($event, outElement)"
                 >
@@ -481,10 +481,16 @@ defineExpose({
                     :key="outElement._vid"
                     :element="outElement"
                     :style="{
-                      pointerEvents: Object.keys(outElement.props?.slots || {}).length ? 'auto' : 'none'
+                      pointerEvents: Object.keys(outElement.props?.slots || {}).length
+                        ? 'auto'
+                        : 'none',
                     }"
                   >
-                    <template v-for="(value, slotKey) in outElement.props?.slots" :key="slotKey" #[slotKey]>
+                    <template
+                      v-for="(value, slotKey) in outElement.props?.slots"
+                      :key="slotKey"
+                      #[slotKey]
+                    >
                       <SlotItem
                         v-model:children="value.children"
                         v-model:drag="drag"
@@ -500,6 +506,8 @@ defineExpose({
             </VueDragResizeRotate>
 
             <MarkLine :horizontal-line="hLine" :vertical-line="vLine" />
+
+            <AttrSettingsPopover :virualRef="currentBlock" />
           </div>
         </div>
       </div>
@@ -528,7 +536,9 @@ defineExpose({
 .edit-control-container {
   width: 100%;
   height: 100%;
-  background-image: linear-gradient(#fafafc 14px, transparent 0), linear-gradient(90deg, transparent 14px, #373739 0);
+  background-image:
+    linear-gradient(#fafafc 14px, transparent 0),
+    linear-gradient(90deg, transparent 14px, #373739 0);
   background-color: #fff;
   background-size:
     15px 15px,
@@ -550,6 +560,16 @@ defineExpose({
       padding-bottom: 0;
       top: 0;
       overflow: auto;
+      /* Firefox */
+      /* scrollbar-width: none; */
+
+      /* IE/Edge 旧版 */
+      /* -ms-overflow-style: none; */
+
+      &::-webkit-scrollbar {
+        display: none;
+        /* height: 200px; */
+      }
 
       // &:hover {
       //     overflow: auto;
@@ -666,7 +686,7 @@ defineExpose({
 </style>
 
 <style lang="scss" scoped>
-@import './func.scss';
+@import "./func.scss";
 
 .drag-resize-rotate-normal {
   // border: none;
@@ -696,7 +716,7 @@ defineExpose({
   }
 
   &:not(.has-slot) {
-    content: '';
+    content: "";
   }
 
   &.focusWithChild {
