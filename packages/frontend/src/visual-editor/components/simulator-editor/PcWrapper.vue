@@ -21,7 +21,7 @@ import { computed, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import CompRender from './comp-render'
 import SlotItem from './SlotItem.vue'
-import AttrSettingsPopover from './AttrSettingsPopover.vue'
+import AttrSettingsToolbar from './AttrSettingsToolbar.vue'
 
 defineOptions({
   name: 'SimulatorEditor',
@@ -442,72 +442,76 @@ defineExpose({
             @mousemove="canvasMousemove"
             @dragover="elementDragover"
           >
-            <VueDragResizeRotate
-              v-for="outElement in currentPage.blocks"
-              :key="outElement._vid"
-              :scale-ratio="scale"
-              :x="outElement?.x"
-              :y="outElement?.y"
-              :w="outElement?.width"
-              :h="outElement?.height"
-              :active="outElement?.focus"
-              event-scope="#wrap"
-              :snap="true"
-              :parent="false"
-              :snap-border="true"
-              :snap-tolerance="20"
-              class-name="drag-resize-rotate-normal"
-              @ref-line-params="getRefLineParams"
-              @activated="selectComp(outElement)"
-              @deactivated="deSelectComp()"
-              @dragging="onDrag"
-              @dragstop="onDragStop"
-              @resizing="onResize"
-              @resizestop="onResizeStop"
-            >
-              <template #default="{ enabled }">
-                <div
-                  class="list-group-item"
-                  :data-label="outElement.label"
-                  :class="{
-                    focus: outElement.focus && enabled,
-                    focusWithChild: outElement.focusWithChild && enabled,
-                    drag,
-                    ['has-slot']: !!Object.keys(outElement.props.slots || {}).length,
-                  }"
-                  @contextmenu.stop.prevent="onContextmenuBlock($event, outElement)"
-                >
-                  <CompRender
-                    :key="outElement._vid"
-                    :element="outElement"
-                    :style="{
-                      pointerEvents: Object.keys(outElement.props?.slots || {}).length
-                        ? 'auto'
-                        : 'none',
+            <template v-for="outElement in currentPage.blocks" :key="outElement._vid">
+              <VueDragResizeRotate
+                :scale-ratio="scale"
+                :x="outElement?.x"
+                :y="outElement?.y"
+                :w="outElement?.width"
+                :h="outElement?.height"
+                :active="outElement?.focus"
+                event-scope="#wrap"
+                :snap="true"
+                :parent="false"
+                :snap-border="true"
+                :snap-tolerance="20"
+                show-toolbar
+                class-name="drag-resize-rotate-normal"
+                @ref-line-params="getRefLineParams"
+                @activated="selectComp(outElement)"
+                @deactivated="deSelectComp()"
+                @dragging="onDrag"
+                @dragstop="onDragStop"
+                @resizing="onResize"
+                @resizestop="onResizeStop"
+              >
+                <template #default="{ enabled }">
+                  <div
+                    class="list-group-item"
+                    :data-label="outElement.label"
+                    :class="{
+                      focus: outElement.focus && enabled,
+                      focusWithChild: outElement.focusWithChild && enabled,
+                      drag,
+                      ['has-slot']: !!Object.keys(outElement.props.slots || {}).length,
                     }"
+                    @contextmenu.stop.prevent="onContextmenuBlock($event, outElement)"
                   >
-                    <template
-                      v-for="(value, slotKey) in outElement.props?.slots"
-                      :key="slotKey"
-                      #[slotKey]
+                    <CompRender
+                      :key="outElement._vid"
+                      :element="outElement"
+                      :style="{
+                        pointerEvents: Object.keys(outElement.props?.slots || {}).length
+                          ? 'auto'
+                          : 'none',
+                      }"
                     >
-                      <SlotItem
-                        v-model:children="value.children"
-                        v-model:drag="drag"
-                        :slot-key="slotKey"
-                        :on-contextmenu-block="onContextmenuBlock"
-                        :select-comp="selectComp"
-                        :delete-comp="deleteComp"
-                      />
-                    </template>
-                  </CompRender>
-                </div>
-              </template>
-            </VueDragResizeRotate>
+                      <template
+                        v-for="(value, slotKey) in outElement.props?.slots"
+                        :key="slotKey"
+                        #[slotKey]
+                      >
+                        <SlotItem
+                          v-model:children="value.children"
+                          v-model:drag="drag"
+                          :slot-key="slotKey"
+                          :on-contextmenu-block="onContextmenuBlock"
+                          :select-comp="selectComp"
+                          :delete-comp="deleteComp"
+                        />
+                      </template>
+                    </CompRender>
+                  </div>
+                </template>
+                
+                <template #toolbar>
+                  <AttrSettingsToolbar></AttrSettingsToolbar>
+                </template>
+              </VueDragResizeRotate>
+
+            </template>
 
             <MarkLine :horizontal-line="hLine" :vertical-line="vLine" />
-
-            <AttrSettingsPopover :virualRef="currentBlock" />
           </div>
         </div>
       </div>
@@ -689,7 +693,7 @@ defineExpose({
 @import "./func.scss";
 
 .drag-resize-rotate-normal {
-  // border: none;
+  border: none;
 }
 
 .list-group-item {

@@ -12,8 +12,8 @@ export const useControlStore = defineStore('useControlStore', {
     customComponentsVisible: false,
     moveVisualData: null,
     editScale: 1,
-    layoutCollapse: false,
-    settingCollapse: false,
+    layoutCollapse: true,
+    settingCollapse: true,
     asideCollapse: false
   }),
   actions: {

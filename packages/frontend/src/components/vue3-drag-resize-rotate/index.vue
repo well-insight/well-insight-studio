@@ -1,18 +1,18 @@
 <script>
 import { round } from "lodash-es";
 import {
-    addEvent,
-    getComputedSize,
-    matchesSelectorToParentElements,
-    removeEvent,
+  addEvent,
+  getComputedSize,
+  matchesSelectorToParentElements,
+  removeEvent,
 } from "./utils/dom";
 import {
-    computeHeight,
-    computeWidth,
-    getAngle,
-    restrictToBounds,
-    rotatedPoint,
-    snapToGrid,
+  computeHeight,
+  computeWidth,
+  getAngle,
+  restrictToBounds,
+  rotatedPoint,
+  snapToGrid,
 } from "./utils/fns";
 import { $emit } from "./utils/gogocodeTransfer";
 
@@ -291,6 +291,10 @@ export default {
     precision: {
       type: Number,
       default: 0,
+    },
+    showToolbar: {
+      type: Boolean,
+      default: false
     },
   },
   emits: [
@@ -1563,10 +1567,9 @@ export default {
 </script>
 
 <template>
-
-
   <div
     :style="style"
+    ref="dragResizeRotateRef"
     class="vue-drag-resize-rotate"
     :class="[
       {
@@ -1602,15 +1605,24 @@ export default {
       :rotating="rotating"
       :rotatable="rotatable"
     />
+
+    <div v-if="showToolbar" v-show="enabled" class="vue-drag-resize-rotate-toolbar">
+      <slot name="toolbar"> 这是测试toolbar </slot>
+    </div>
   </div>
 </template>
 
-<style>
+<style lang="scss">
 .vue-drag-resize-rotate {
   touch-action: none;
   position: absolute;
   box-sizing: border-box;
   border: 1px dashed;
+}
+
+.vue-drag-resize-rotate-toolbar {
+  position: absolute;
+  bottom: 100%;
 }
 
 .vue-drag-resize-rotate .handle {

@@ -14,7 +14,7 @@ const { asideCollapse } = storeToRefs(controlStore)
 
 <template>
   <ELayout class="w-full h-full">
-    <ELayoutSider v-model:collapsed="asideCollapse" class="border-end-1" :width="240" :collapsed-width="100">
+    <ELayoutSider v-model:collapsed="asideCollapse" class="border-end-1" :width="240" :collapsed-width="76">
       <div class="w-full h-full flex flex-col">
         <div class="h-[50px] border-bottom-1">
           <Logo :collapse="asideCollapse" />
