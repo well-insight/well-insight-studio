@@ -115,10 +115,10 @@ export const PropConfig = defineComponent({
     return () => {
       return Object.entries(props.component.props ?? {}).map(([propName, propConfig]) => (
         <>
-          <ElDropdownItem key={propName}>
-            <div class="flex w-full items-center justify-between">
-              <span>
-                宽度
+          <ElDropdownItem key={propName} class="!items-start">
+            <div class="flex w-full flex-col items-start gap-2">
+              <span class="inline-flex items-center gap-1">
+                {propConfig.label}
                 {propConfig.tips && (
                   <ElTooltip
                     placement="left-start"
@@ -135,6 +135,7 @@ export const PropConfig = defineComponent({
               </span>
               <ElFormItem
                 key={props.block._vid + propName}
+                class="w-full !mb-0"
                 style={
                   propConfig.labelPosition === "top"
                     ? {

@@ -14,7 +14,8 @@ export const useControlStore = defineStore('useControlStore', {
     editScale: 1,
     layoutCollapse: true,
     settingCollapse: true,
-    asideCollapse: false
+    asideCollapse: false,
+    floatingSettingVisible: false
   }),
   actions: {
     setMoveVisualData(v: VisualEditorBlockData | null) {
@@ -30,4 +31,5 @@ export interface ControlStoreState {
   layoutCollapse: boolean
   settingCollapse: boolean
   asideCollapse: boolean
+  floatingSettingVisible: boolean
 }

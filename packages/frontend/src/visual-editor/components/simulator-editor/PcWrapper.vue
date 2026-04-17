@@ -514,6 +514,7 @@ defineExpose({
             <MarkLine :horizontal-line="hLine" :vertical-line="vLine" />
           </div>
         </div>
+
       </div>
     </div>
     <SketchRule
@@ -602,6 +603,7 @@ defineExpose({
         }
       }
     }
+
 
     .edit-bottom-menu {
       width: 100%;

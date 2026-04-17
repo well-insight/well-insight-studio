@@ -1,9 +1,11 @@
 <script lang="ts" setup>
 import type { ApiApplicationListItem } from '@/api/application'
+import { CloseBold } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { onActivated, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { onClickOutside } from '@vueuse/core'
 import { fetchApplication } from '@/api/application'
 import { ELayout, ELayoutContent, ELayoutSider } from '@/components/e-layout'
 import { useControlStore } from '@/store/useControlStore/useControlStore'
@@ -19,7 +21,7 @@ const workspaceStore = useWorkspaceStore()
 const { appList } = storeToRefs(workspaceStore)
 
 const controlStore = useControlStore()
-const { layoutCollapse, settingCollapse } = storeToRefs(controlStore)
+const { layoutCollapse, settingCollapse, floatingSettingVisible } = storeToRefs(controlStore)
 
 const { overrideProject } = useVisualData()
 
@@ -27,6 +29,13 @@ const { overrideProject } = useVisualData()
 let loadSeq = 0
 
 const loading = ref(false)
+const floatingPanelRef = ref<HTMLElement | null>(null)
+
+onClickOutside(floatingPanelRef, () => {
+  if (controlStore.floatingSettingVisible) {
+    controlStore.floatingSettingVisible = false
+  }
+})
 
 function normalizeAppId(): string | null {
   const raw = route.params.id
@@ -105,6 +114,7 @@ onActivated(() => {
 
 onUnmounted(() => {
   workspaceStore.setCurrentApp(null)
+  controlStore.floatingSettingVisible = false
 })
 </script>
 
@@ -136,7 +146,66 @@ onUnmounted(() => {
 
       <CustomComponents />
     </ELayout>
+
+    <transition name="floating-setting-panel">
+      <div v-if="floatingSettingVisible" ref="floatingPanelRef" class="floating-setting-panel">
+        <div class="floating-setting-panel__header">
+          <span>更多选项</span>
+          <el-button text circle @click="controlStore.floatingSettingVisible = false">
+            <el-icon><CloseBold /></el-icon>
+          </el-button>
+        </div>
+        <div class="floating-setting-panel__body">
+          <RightAttributePanel />
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
-<style lang="scss" module></style>
+<style lang="scss" scoped>
+.floating-setting-panel {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 380px;
+  height: calc(100% - 32px);
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  background: var(--el-bg-color-overlay);
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 12%);
+  overflow: hidden;
+}
+
+.floating-setting-panel__header {
+  height: 46px;
+  flex-shrink: 0;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--el-fill-color-blank);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.floating-setting-panel__body {
+  flex: 1;
+  min-height: 0;
+}
+
+.floating-setting-panel-enter-active,
+.floating-setting-panel-leave-active {
+  transition: all 0.2s ease;
+}
+
+.floating-setting-panel-enter-from,
+.floating-setting-panel-leave-to {
+  opacity: 0;
+  transform: translateX(8px);
+}
+</style>
