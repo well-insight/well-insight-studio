@@ -6,7 +6,7 @@ import { setupElementPlus } from "./plugins/element-plus";
 import { setupVant } from "./plugins/vant";
 
 import router from "./router";
-import { setupStore } from "./store";
+import { setupStore } from "@/stores/pinia";
 import "virtual:uno.css";
 import "normalize.css";
 import "animate.css";

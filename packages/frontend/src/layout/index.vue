@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'
 import { ELayout, ELayoutContent, ELayoutFooter, ELayoutHeader, ELayoutSider } from '@/components/e-layout'
-import { useControlStore } from '@/store/useControlStore/useControlStore'
+import { useControlStore } from '@/stores/controlStore'
 import Logo from './aside/Logo.vue'
 import Menu from './aside/Menu.vue'
 import Setting from './aside/Setting.vue'

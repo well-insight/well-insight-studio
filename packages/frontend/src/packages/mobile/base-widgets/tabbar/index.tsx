@@ -3,7 +3,7 @@ import { Tabbar, TabbarItem } from 'vant'
 
 import { onBeforeUnmount, onMounted } from 'vue'
 import { useGlobalProperties } from '@/hooks/useGlobalProperties'
-import { BASE_URL } from '@/visual-editor/utils'
+import { BASE_URL } from '@/visual-editor/lib'
 import {
   createEditorColorProp,
   createEditorCrossSortableProp,

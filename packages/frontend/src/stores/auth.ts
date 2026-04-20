@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import type { AuthUser } from '@/api/auth'
-import { store } from '@/store'
+import { store } from '@/stores/pinia'
 
 const TOKEN_KEY = 'well-cube-auth-token'
 const USER_KEY = 'well-cube-auth-user'

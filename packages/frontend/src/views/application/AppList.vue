@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { WorkspaceApp } from '@/store/workspaceStore/workspaceStore'
+import type { WorkspaceApp } from '@/stores/workspaceStore'
 import type { ApiApplicationListItem } from '@/api/application'
 import { Delete, EditPen, MoreFilled, Plus, Star, StarFilled } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -13,7 +13,7 @@ import {
   updateApplication
 } from '@/api/application'
 import { ButtonTabs } from '@/components/button-tabs'
-import { useWorkspaceStore } from '@/store/workspaceStore/workspaceStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 
 const router = useRouter()
 const workspaceStore = useWorkspaceStore()

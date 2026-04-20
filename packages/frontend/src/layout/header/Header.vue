@@ -4,8 +4,8 @@ import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import SvgIcon from '@/components/svg-icon/SvgIcon.vue'
-import { useControlStore } from '@/store/useControlStore/useControlStore'
-import { useWorkspaceStore } from '@/store/workspaceStore/workspaceStore'
+import { useControlStore } from '@/stores/controlStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 
 const workspaceStore = useWorkspaceStore()
 

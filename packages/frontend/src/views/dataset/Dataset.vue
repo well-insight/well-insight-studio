@@ -28,7 +28,7 @@ import {
   updateDatasetFolder,
 } from "@/api/dataset";
 import { useRouter } from "vue-router";
-import { useWorkspaceStore } from "@/store/workspaceStore/workspaceStore";
+import { useWorkspaceStore } from "@/stores/workspaceStore";
 import SvgIcon from "@/components/svg-icon/SvgIcon.vue";
 const router = useRouter();
 type FolderTreeNode = {

@@ -25,7 +25,8 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
 
   jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key', (err, decoded: any) => {
     if (err) {
-      return res.status(403).json({ error: 'Invalid Token' });
+      // 与前端约定：鉴权失败统一 401，便于请求层统一跳转登录（403 保留给业务权限不足）
+      return res.status(401).json({ success: false, error: 'Invalid Token' });
     }
     req.userId = decoded.userId;
     next();

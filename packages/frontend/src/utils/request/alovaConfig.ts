@@ -103,6 +103,15 @@ export const createAlovaInstance = (): Alova<any> => {
         if (!response.ok) {
           const errorMessage = data.error || data.message || `请求失败 (${response.status})`;
           console.error("[API] HTTP 错误:", errorMessage);
+          // 兼容旧后端或网关：无效/过期 JWT 曾返回 403
+          if (
+            response.status === 403 &&
+            typeof errorMessage === "string" &&
+            errorMessage.includes("Invalid Token")
+          ) {
+            console.warn("[API] Token 无效，跳转登录页");
+            redirectToLogin();
+          }
           throw new Error(errorMessage);
         }
 
@@ -186,6 +195,13 @@ export const createAxiosInstance = () => {
         return Promise.reject(new Error("认证已过期，请重新登录"));
       }
       const body = error.response?.data as { message?: string; error?: string } | undefined;
+      if (
+        status === 403 &&
+        (body?.error === "Invalid Token" || body?.message === "Invalid Token")
+      ) {
+        redirectToLogin();
+        return Promise.reject(new Error("认证已过期，请重新登录"));
+      }
       const errorMessage = body?.message || body?.error || error.message || "请求失败";
       return Promise.reject(new Error(errorMessage));
     },

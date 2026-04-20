@@ -6,7 +6,7 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { userDisplayLabel } from '@/api/auth'
 import { useAuthStore } from '@/stores/auth'
-import { useControlStore } from '@/store/useControlStore/useControlStore'
+import { useControlStore } from '@/stores/controlStore'
 
 defineProps<{ collapse?: boolean }>()
 

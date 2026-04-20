@@ -3,7 +3,7 @@ import { storeToRefs } from "pinia";
 import { nextTick, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import SvgIcon from "@/components/svg-icon/SvgIcon.vue";
-import { useWorkspaceStore } from "@/store/workspaceStore/workspaceStore";
+import { useWorkspaceStore } from "@/stores/workspaceStore";
 
 defineProps<{ collapse?: boolean }>();
 

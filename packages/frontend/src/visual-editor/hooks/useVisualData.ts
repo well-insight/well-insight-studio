@@ -18,7 +18,7 @@ export function normalizeEditorPagePath(path: string) {
 
 import { useRoute } from 'vue-router'
 import { CacheEnum } from '@/enums'
-import { useWorkspaceStoreWithout } from '@/store/workspaceStore/workspaceStore'
+import { useWorkspaceStoreWithout } from '@/stores/workspaceStore'
 import { visualConfig } from '@/visual.config'
 
 // 保存到本地JSON数据的key

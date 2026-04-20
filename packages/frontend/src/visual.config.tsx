@@ -4,7 +4,7 @@ import mobileWidgets from './packages/mobile'
 import pcWidgets from './packages/pc'
 // import baseWidgets from '@/packages/base-widgets'
 // import containerComponent from '@/packages/container-component'
-import { useWorkspaceStoreWithout } from './store/workspaceStore/workspaceStore'
+import { useWorkspaceStoreWithout } from './stores/workspaceStore'
 
 import { createVisualEditorConfig } from './visual-editor/visual-editor.utils'
 

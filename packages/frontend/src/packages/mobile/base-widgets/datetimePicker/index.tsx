@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { DatePicker, Field, Popup } from 'vant'
 import { reactive, useAttrs } from 'vue'
 import { useGlobalProperties } from '@/hooks/useGlobalProperties'
-import { isDate } from '@/visual-editor/utils/is'
+import { isDate } from '@/visual-editor/lib/is'
 import {
   createEditorInputNumberProp,
   createEditorInputProp,

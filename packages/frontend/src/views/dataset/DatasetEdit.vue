@@ -4,7 +4,7 @@ import { computed, onUnmounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import DatasetTable from "./DatasetTable.vue";
 import { ApiDatasetListItem, fetchDatasetDetail } from "@/api/dataset";
-import { useWorkspaceStore } from "@/store/workspaceStore/workspaceStore";
+import { useWorkspaceStore } from "@/stores/workspaceStore";
 
 const route = useRoute();
 const router = useRouter();

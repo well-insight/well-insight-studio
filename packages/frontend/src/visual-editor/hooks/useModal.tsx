@@ -1,7 +1,7 @@
 import type { ComponentInternalInstance, PropType } from 'vue'
 import { ElButton, ElDialog } from 'element-plus'
 import { createApp, defineComponent, getCurrentInstance, isVNode, reactive } from 'vue'
-import { isFunction } from '@/visual-editor/utils/is'
+import { isFunction } from '@/visual-editor/lib/is'
 
 interface ModalOptions {
   title?: string

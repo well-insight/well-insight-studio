@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { provide, toValue } from 'vue'
-import { useWorkspaceStore } from '@/store/workspaceStore/workspaceStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { initVisualData, injectKey, localKey } from '@/visual-editor/hooks/useVisualData'
 
 const visualData = initVisualData()
