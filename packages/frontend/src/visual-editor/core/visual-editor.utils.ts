@@ -265,6 +265,7 @@ export function createNewBlock(
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
+      backgroundColor: '#ffffff',
       paddingTop: '12px',
       paddingRight: '12px',
       paddingLeft: '12px',

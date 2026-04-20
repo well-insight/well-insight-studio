@@ -57,7 +57,7 @@ export function createNewPage({ title = '新页面', path = '/' }) {
     title,
     path,
     config: {
-      bgColor: '',
+      bgColor: '#ffffff',
       bgImage: '',
       keepAlive: false,
       pageSize: defaultPageSize()

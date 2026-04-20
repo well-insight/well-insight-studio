@@ -8,8 +8,8 @@
     "module": "ESNext", // 建议配合 ESNext 使用
     "moduleResolution": "bundler", // 替换原来的 "node" 或其他值
     "paths": {
-      "@/*": ["src/*"],
-      "/#/*": ["types/*"]
+      "@/*": ["./src/*"],
+      "/#/*": ["./types/*"]
     },
     "resolveJsonModule": true,
     // "typeRoots": ["./node_modules/@types/", "./types"],
@@ -28,12 +28,12 @@
     "skipLibCheck": true // 可选，跳过库文件的类型检查，避免额外报错
   },
   "include": [
-    "src/**/*.ts",
-    "src/**/*.d.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue",
-    "types/**/*",
-    "src/api/mock/vchart/bar.js"
+    "./src/**/*.ts",
+    "./src/**/*.d.ts",
+    "./src/**/*.tsx",
+    "./src/**/*.vue",
+    "./types/**/*",
+    "./src/api/mock/vchart/bar.js"
   ],
-  "exclude": ["node_modules", "dist", "**/*.js"]
+  "exclude": ["./node_modules", "./dist", "**/*.js"]
 }
