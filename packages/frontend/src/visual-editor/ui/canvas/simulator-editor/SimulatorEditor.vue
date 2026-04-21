@@ -219,7 +219,7 @@ onUnmounted(() => {
   position: absolute;
   top: 16px;
   right: 16px;
-  width: 380px;
+  width: 360px;
   height: calc(100% - 32px);
   z-index: 1200;
   display: flex;

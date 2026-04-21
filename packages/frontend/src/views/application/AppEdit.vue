@@ -138,7 +138,7 @@ onUnmounted(() => {
         <SimulatorEditor />
       </ELayoutContent>
 
-      <ELayoutSider
+      <!-- <ELayoutSider
         v-model:collapsed="settingCollapse"
         show-trigger="button"
         :width="360"
@@ -146,7 +146,7 @@ onUnmounted(() => {
         position="right"
       >
         <RightAttributePanel />
-      </ELayoutSider>
+      </ELayoutSider> -->
 
       <CustomComponents />
     </ELayout>

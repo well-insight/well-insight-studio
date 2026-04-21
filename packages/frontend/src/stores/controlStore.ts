@@ -12,9 +12,9 @@ export const useControlStore = defineStore("useControlStore", {
     customComponentsVisible: false,
     moveVisualData: null,
     editScale: 1,
-    layoutCollapse: true,
+    layoutCollapse: false,
     settingCollapse: true,
-    asideCollapse: false,
+    asideCollapse: true,
     floatingSettingVisible: false,
   }),
   actions: {

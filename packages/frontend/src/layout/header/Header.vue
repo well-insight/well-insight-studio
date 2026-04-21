@@ -58,20 +58,20 @@ const childTitle = computed(() => {
       >
         <el-button :type="asideCollapse ? '' : 'primary'" :icon="Menu" @click="asideCollapse = !asideCollapse" />
       </el-tooltip> -->
-      <el-tooltip v-if="isAppEdit" content="页面" placement="top">
+      <!-- <el-tooltip v-if="isAppEdit" content="页面" placement="top">
         <el-button
           :type="layoutCollapse ? '' : 'primary'"
           :icon="ScaleToOriginal"
           @click="layoutCollapse = !layoutCollapse"
         />
-      </el-tooltip>
-      <el-tooltip v-if="isAppEdit" content="组件设置" placement="top">
+      </el-tooltip> -->
+      <!-- <el-tooltip v-if="isAppEdit" content="组件设置" placement="top">
         <el-button
           :type="settingCollapse ? '' : 'primary'"
           :icon="Setting"
           @click="settingCollapse = !settingCollapse"
         />
-      </el-tooltip>
+      </el-tooltip> -->
     </el-space>
   </div>
 </template>

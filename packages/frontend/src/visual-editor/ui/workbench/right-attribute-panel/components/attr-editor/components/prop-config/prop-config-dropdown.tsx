@@ -11,7 +11,6 @@ import {
   ElCascader,
   ElColorPicker,
   ElDropdownItem,
-  ElFormItem,
   ElIcon,
   ElInput,
   ElInputNumber,
@@ -34,6 +33,10 @@ export const PropConfig = defineComponent({
     block: {
       type: Object as PropType<VisualEditorBlockData>,
       default: () => ({}),
+    },
+    commonOnly: {
+      type: Boolean,
+      default: false,
     },
   },
   setup(props) {
@@ -114,12 +117,28 @@ export const PropConfig = defineComponent({
       return renderFunc[propConfig.type]?.();
     };
 
+    const commonTypes = new Set<VisualEditorPropsType>([
+      VisualEditorPropsType.input,
+      VisualEditorPropsType.inputNumber,
+      VisualEditorPropsType.switch,
+      VisualEditorPropsType.select,
+      VisualEditorPropsType.color,
+      VisualEditorPropsType.imageUpload,
+    ]);
+
     return () => {
-      return Object.entries(props.component.props ?? {}).map(([propName, propConfig]) => (
+      const propEntries = Object.entries(props.component.props ?? {}).filter(([, propConfig]) => {
+        if (!props.commonOnly) {
+          return true;
+        }
+        return commonTypes.has(propConfig.type);
+      });
+
+      return propEntries.map(([propName, propConfig]) => (
         <>
-          <ElDropdownItem key={propName} class="!items-start">
-            <div class="flex w-full items-center gap-2">
-              <span class="inline-flex min-w-[72px] flex-shrink-0 items-center gap-1">
+          <ElDropdownItem key={propName} class="items-start!">
+            <div class="toolbar-item-row">
+              <span class="toolbar-item-title inline-flex items-center gap-1">
                 <span>{propConfig.label}</span>
                 {propConfig.tips && (
                   <ElTooltip
@@ -127,7 +146,7 @@ export const PropConfig = defineComponent({
                     popper-class="max-w-200px"
                     content={propConfig.tips}
                   >
-                    <div>
+                    <div class="inline-flex">
                       <ElIcon>
                         <Warning />
                       </ElIcon>
@@ -135,14 +154,9 @@ export const PropConfig = defineComponent({
                   </ElTooltip>
                 )}
               </span>
-              <ElFormItem
-                key={props.block._vid + propName}
-                class="!mb-0 min-w-0 flex-1"
-              >
-                {{
-                  default: () => renderPropItem(propName, propConfig),
-                }}
-              </ElFormItem>
+              <div key={props.block._vid + propName} class="toolbar-item-content">
+                {renderPropItem(propName, propConfig)}
+              </div>
             </div>
           </ElDropdownItem>
         </>
