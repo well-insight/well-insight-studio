@@ -168,26 +168,9 @@
 
     <el-divider direction="vertical"></el-divider>
 
-    <el-dropdown
-      trigger="click"
-      placement="bottom"
-      :show-arrow="false"
-      transition="el-zoom-in-top"
-      :hide-on-click="false"
-      popper-class="toolbar-dropdown toolbar-dropdown-panel"
-    >
-      <el-button size="default" text :icon="VideoPlay">
-        <span>动画</span>
-        <el-icon><CaretBottom /></el-icon>
-      </el-button>
-      <template #dropdown>
-        <el-scrollbar class="toolbar-panel-scroll" max-height="500px">
-          <div class="toolbar-panel">
-            <Animate />
-          </div>
-        </el-scrollbar>
-      </template>
-    </el-dropdown>
+    <el-button size="default" text :icon="VideoPlay" @click="openAnimatePanel">
+      <span>动画</span>
+    </el-button>
 
     <el-divider direction="vertical"></el-divider>
     <el-dropdown
@@ -225,15 +208,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from "vue";
+import { useControlStore } from "@/stores/controlStore";
 import { useVisualData } from "@/visual-editor/hooks/useVisualData";
 import { FormatInputNumber } from "@/visual-editor/ui/shared/format-input-number";
-import {
-  Animate,
-  EventAction,
-} from "@/visual-editor/ui/workbench/right-attribute-panel/components";
+import { EventAction } from "@/visual-editor/ui/workbench/right-attribute-panel/components";
+import { PropConfig } from "@/visual-editor/ui/workbench/right-attribute-panel/components/attr-editor/components/prop-config/prop-config-dropdown";
 import ImageUpload from "@/visual-editor/ui/workbench/right-attribute-panel/components/page-setting/ImageUpload.vue";
-import { useControlStore } from "@/stores/controlStore";
 import {
   BrushFilled,
   CaretBottom,
@@ -243,7 +223,7 @@ import {
   Setting,
   VideoPlay,
 } from "@element-plus/icons-vue";
-import { PropConfig } from "@/visual-editor/ui/workbench/right-attribute-panel/components/attr-editor/components/prop-config/prop-config-dropdown";
+import { computed, watch } from "vue";
 
 const props = withDefaults(defineProps<{ virualRef: any }>(), {
   virualRef: null,
@@ -304,6 +284,12 @@ const bgImageUrl = computed({
 });
 
 function openMorePanel() {
+  controlStore.floatingSettingActiveTab = "attr";
+  controlStore.floatingSettingVisible = true;
+}
+
+function openAnimatePanel() {
+  controlStore.floatingSettingActiveTab = "animate";
   controlStore.floatingSettingVisible = true;
 }
 </script>

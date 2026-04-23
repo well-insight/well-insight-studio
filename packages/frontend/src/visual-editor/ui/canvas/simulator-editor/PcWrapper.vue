@@ -7,11 +7,11 @@ import { VueDragResizeRotate } from '@/components/vue3-drag-resize-rotate'
 import { useGlobalProperties } from '@/hooks/useGlobalProperties'
 import { useControlStore } from '@/stores/controlStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
-import MonacoEditor from '@/visual-editor/ui/shared/monaco-editor/MonacoEditor'
 import { useModal } from '@/visual-editor/hooks/useModal'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { generateNanoid } from '@/visual-editor/lib'
 import { $$dropdown, DropdownOption } from '@/visual-editor/lib/dropdown-service'
+import MonacoEditor from '@/visual-editor/ui/shared/monaco-editor/MonacoEditor'
 import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
 import { useMouseInElement, useResizeObserver } from '@vueuse/core'
 import { vLoading } from 'element-plus'
@@ -19,9 +19,9 @@ import { cloneDeep, debounce } from 'lodash-es'
 import { storeToRefs } from 'pinia'
 import { computed, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import AttrSettingsToolbar from './AttrSettingsToolbar.vue'
 import CompRender from './comp-render'
 import SlotItem from './SlotItem.vue'
-import AttrSettingsToolbar from './AttrSettingsToolbar.vue'
 
 defineOptions({
   name: 'SimulatorEditor',
@@ -46,12 +46,15 @@ const workspaceStore = useWorkspaceStore()
 const { currentApp } = storeToRefs(workspaceStore)
 
 const { currentPage, setCurrentBlock, currentBlock, updateCurrentBlock } = useVisualData()
-
 const { globalProperties } = useGlobalProperties()
+
+// watch(currentPage, () => {
+//   debugger
+// }, { deep: true })
 
 const controlStore = useControlStore()
 
-const { editScale } = storeToRefs(controlStore)
+const { editScale, floatingSettingVisible } = storeToRefs(controlStore)
 
 const drag = ref(false)
 
@@ -277,6 +280,7 @@ function handleSlotsFocus(block: VisualEditorBlockData, _vid: string) {
  * 取消选择当前组件
  */
 function deSelectComp() {
+  floatingSettingVisible.value = false
   setCurrentBlock(null)
 }
 
@@ -454,7 +458,6 @@ defineExpose({
                 :y="outElement?.y"
                 :w="outElement?.width"
                 :h="outElement?.height"
-                :active="outElement?.focus"
                 event-scope="#wrap"
                 :snap="true"
                 :parent="false"
@@ -513,13 +516,11 @@ defineExpose({
                   <AttrSettingsToolbar></AttrSettingsToolbar>
                 </template>
               </VueDragResizeRotate>
-
             </template>
 
             <MarkLine :horizontal-line="hLine" :vertical-line="vLine" />
           </div>
         </div>
-
       </div>
     </div>
     <SketchRule
@@ -608,7 +609,6 @@ defineExpose({
         }
       }
     }
-
 
     .edit-bottom-menu {
       width: 100%;

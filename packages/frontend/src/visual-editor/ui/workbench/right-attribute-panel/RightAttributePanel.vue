@@ -1,94 +1,77 @@
 <script lang="ts" setup>
-import { debounce, throttle } from 'lodash-es'
-import { computed, reactive, ref, watch, watchEffect } from 'vue'
-import { ButtonTabs } from '@/components/button-tabs'
-import { useVisualData } from '@/visual-editor/hooks/useVisualData'
-import { Animate, AttrEditor, FormRule, PageSetting } from './components'
+import { ButtonTabs } from "@/components/button-tabs";
+import { useControlStore } from "@/stores/controlStore";
+import { useVisualData } from "@/visual-editor/hooks/useVisualData";
+import { debounce } from "lodash-es";
+import { storeToRefs } from "pinia";
+import { ref, watch } from "vue";
+import { Animate, AttrEditor, FormRule } from "./components";
 
 defineOptions({
-  name: 'RightAttributePanel'
-})
+  name: "RightAttributePanel",
+});
 
-const { currentBlock } = useVisualData()
+const controlStore = useControlStore();
+const { currentBlock } = useVisualData();
+const { floatingSettingActiveTab } = storeToRefs(controlStore);
 
-const currentActive = ref('attr')
+const currentActive = ref("attr");
 
-const pageListOptions = ref([])
+const pageListOptions = ref([]);
 
-function getPageListOptions() {
+function initPageOptions() {
   const options = [
     {
-      label: '属性',
-      value: 'attr'
+      label: "属性",
+      value: "attr",
     },
     {
-      label: '动画',
-      value: 'animate'
-    }
-  ]
+      label: "动画",
+      value: "animate",
+    },
+  ];
 
-  const pageOptions = {
-    label: '页面',
-    value: 'page-setting'
-  }
-
-  if (!currentBlock.value?._vid) {
-    pageListOptions.value = [pageOptions]
-    return
-  }
-
-  if (currentBlock.value?.label?.startsWith('表单')) {
+  if (currentBlock.value?.label?.startsWith("表单")) {
     options.push({
-      label: '规则',
-      value: 'form-rule'
-    })
+      label: "规则",
+      value: "form-rule",
+    });
   }
 
-  options.push(pageOptions)
+  if (floatingSettingActiveTab.value) {
+    currentActive.value = floatingSettingActiveTab.value;
+  }
 
-  pageListOptions.value = options
+  pageListOptions.value = options;
 }
 
-const activeName = ref('attr')
-
-const isOpen = ref(true)
+const isOpen = ref(true);
 
 watch(
   () => currentBlock.value,
   debounce(
     () => {
-      if (!currentBlock.value?.label?.startsWith('表单') && currentActive.value === 'form-rule') {
-        activeName.value = 'attr'
-      }
-
-      if (!currentBlock.value?._vid) {
-        currentActive.value = 'page-setting'
-      } else {
-        currentActive.value = 'attr'
-      }
-
-      getPageListOptions()
+      initPageOptions();
     },
     100,
-    { leading: false, trailing: true }
+    { leading: false, trailing: true },
   ),
-  { immediate: true }
-)
+  { immediate: true },
+);
 </script>
 
 <template>
   <div :class="[$style.wrapper, isOpen ? $style['open-wrapper'] : '']">
     <div :class="[$style.drawer, isOpen ? $style['is-open'] : '']">
-      <div class="w-full h-full flex flex-col border-start-1">
-        <div class="h-[50px] flex items-center px-3 border-bottom-1">
+      <div class="border-start-1 flex h-full w-full flex-col">
+        <div class="border-bottom-1 flex h-[50px] items-center px-3">
           <ButtonTabs v-model="currentActive" :options="pageListOptions" />
         </div>
-        <div class="flex-auto h-0 w-full">
-          <el-scrollbar class="p-3">
+        <div class="h-0 w-full flex-auto overflow-hidden">
+          <el-scrollbar :class="currentActive === 'animate' ? 'animate-scrollbar' : ''" class="p-3">
             <AttrEditor v-if="currentActive === 'attr'" />
             <Animate v-else-if="currentActive === 'animate'" />
             <FormRule v-else-if="currentActive === 'form-rule'" />
-            <PageSetting v-else />
           </el-scrollbar>
         </div>
       </div>
@@ -98,7 +81,7 @@ watch(
 
 <style lang="scss" module>
 // $boxShadow: -2px 0 4px 0 rgb(0 0 0 / 10%);
-
+  
 .wrapper {
   width: 100%;
   height: 100%;

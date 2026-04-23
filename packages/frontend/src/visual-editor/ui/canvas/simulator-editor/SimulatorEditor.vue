@@ -33,13 +33,13 @@ const scaleValue = computed({
 });
 
 
-// const floatingPanelRef = ref<HTMLElement | null>(null);
+const floatingPanelRef = ref<HTMLElement | null>(null);
 
-// onClickOutside(floatingPanelRef, () => {
-//   if (controlStore.floatingSettingVisible) {
-//     controlStore.floatingSettingVisible = false;
-//   }
-// });
+onClickOutside(floatingPanelRef, () => {
+  if (controlStore.floatingSettingVisible) {
+    controlStore.floatingSettingVisible = false;
+  }
+});
 
 function changeScale(s: number) {
   editScale.value = s;
