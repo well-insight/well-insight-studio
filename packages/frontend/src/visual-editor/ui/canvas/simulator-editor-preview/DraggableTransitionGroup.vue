@@ -1,49 +1,49 @@
 <script lang="ts" setup>
-import { useVModel } from '@vueuse/core'
-import { computed } from 'vue'
-import draggable from 'vuedraggable'
-import { useControlStore } from '@/stores/controlStore'
-import { createNewBlock } from '@/visual-editor/visual-editor.utils'
+import { useVModel } from "@vueuse/core";
+import { computed } from "vue";
+import draggable from "vuedraggable";
+import { useControlStore } from "@/stores/controlStore";
+import { createNewBlock } from "@/visual-editor/visual-editor.utils";
 
 defineOptions({
-  name: 'DraggableTransitionGroup'
-})
+  name: "DraggableTransitionGroup",
+});
 
 const props = withDefaults(
   defineProps<{
-    drag?: boolean
-    itemKey?: string
-    group?: object
-    fallbackClass?: string
+    drag?: boolean;
+    itemKey?: string;
+    group?: object;
+    fallbackClass?: string;
   }>(),
   {
-    itemKey: '_vid',
-    group: () => ({ name: 'components' }),
+    itemKey: "_vid",
+    group: () => ({ name: "components" }),
     drag: true,
-    fallbackClass: ''
-  }
-)
+    fallbackClass: "",
+  },
+);
 
-const emit = defineEmits(['update:moduleValue', 'update:drag'])
+const emit = defineEmits(["update:moduleValue", "update:drag"]);
 
-const controlStore = useControlStore()
+const controlStore = useControlStore();
 
-const moduleValue = defineModel<any[]>()
+const moduleValue = defineModel<any[]>();
 
-const isDrag = useVModel(props, 'drag', emit)
+const isDrag = useVModel(props, "drag", emit);
 
 const dragOptions = computed(() => ({
   animation: 200,
   disabled: false,
   scroll: true,
-  ghostClass: 'ghost'
-}))
+  ghostClass: "ghost",
+}));
 
 function dragStart(evt: DragEvent & { oldIndex?: number; originalEvent?: DragEvent }) {
-  isDrag.value = true
+  isDrag.value = true;
 
-  const current = moduleValue.value?.[evt?.oldIndex || 0]
-  controlStore.setMoveVisualData(createNewBlock(current))
+  const current = moduleValue.value?.[evt?.oldIndex || 0];
+  controlStore.setMoveVisualData(createNewBlock(current));
 }
 </script>
 
@@ -55,7 +55,7 @@ function dragStart(evt: DragEvent & { oldIndex?: number; originalEvent?: DragEve
     :component-data="{
       tag: 'ul',
       type: 'transition-group',
-      name: !isDrag ? 'flip-list' : null
+      name: !isDrag ? 'flip-list' : null,
     }"
     :group="group"
     v-bind="{ ...dragOptions, ...$attrs }"
@@ -72,7 +72,7 @@ function dragStart(evt: DragEvent & { oldIndex?: number; originalEvent?: DragEve
 </template>
 
 <style lang="scss" scoped>
-@import './func.scss';
+@use "./func.scss" as *;
 
 .flip-list-move {
   transition: transform 0.5s;

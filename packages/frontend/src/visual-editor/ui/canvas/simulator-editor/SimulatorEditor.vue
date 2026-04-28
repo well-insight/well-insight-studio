@@ -32,7 +32,6 @@ const scaleValue = computed({
   },
 });
 
-
 const floatingPanelRef = ref<HTMLElement | null>(null);
 
 onClickOutside(floatingPanelRef, () => {
@@ -119,7 +118,7 @@ onUnmounted(() => {
 </style>
 
 <style lang="scss" scoped>
-@import "./func.scss";
+@use "./func.scss" as *;
 
 .simulator-container {
   display: flex;

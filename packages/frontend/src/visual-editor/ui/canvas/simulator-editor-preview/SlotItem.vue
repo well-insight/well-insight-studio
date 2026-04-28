@@ -1,45 +1,45 @@
 <script lang="ts" setup>
-import type { PropType } from 'vue'
-import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
-import { useVModel } from '@vueuse/core'
-import CompRender from './comp-render'
-import DraggableTransitionGroup from './DraggableTransitionGroup.vue'
+import type { PropType } from "vue";
+import type { VisualEditorBlockData } from "@/visual-editor/visual-editor.utils";
+import { useVModel } from "@vueuse/core";
+import CompRender from "./comp-render";
+import DraggableTransitionGroup from "./DraggableTransitionGroup.vue";
 
 defineOptions({
-  name: 'SlotItem'
-})
+  name: "SlotItem",
+});
 
 const props = defineProps({
   slotKey: {
     type: String as PropType<string | number>,
-    default: ''
+    default: "",
   },
   drag: {
     type: Boolean as PropType<boolean>,
-    default: false
+    default: false,
   },
   children: {
     type: Array as PropType<VisualEditorBlockData[]>,
-    default: () => []
+    default: () => [],
   },
   selectComp: {
     type: Function as PropType<(comp: VisualEditorBlockData) => void>,
-    required: true
+    required: true,
   },
   onContextmenuBlock: {
     type: Function as PropType<
       (e: MouseEvent, block: VisualEditorBlockData, parentBlocks?: VisualEditorBlockData[]) => void
     >,
-    required: true
-  }
-})
-const emit = defineEmits(['update:children', 'on-selected', 'update:drag'])
+    required: true,
+  },
+});
+const emit = defineEmits(["update:children", "on-selected", "update:drag"]);
 
-const isDrag = useVModel(props, 'drag', emit)
-const slotChildren = useVModel(props, 'children', emit)
+const isDrag = useVModel(props, "drag", emit);
+const slotChildren = useVModel(props, "children", emit);
 
 // 初始化时设置上次选中的组件
-props.children.some(item => item.focus && props.selectComp(item))
+props.children.some((item) => item.focus && props.selectComp(item));
 </script>
 
 <template>
@@ -57,7 +57,7 @@ props.children.some(item => item.focus && props.selectComp(item))
         :data-label="innerElement.label"
         :class="{
           focus: innerElement.focus,
-          focusWithChild: innerElement.focusWithChild
+          focusWithChild: innerElement.focusWithChild,
         }"
         @contextmenu.stop.prevent="onContextmenuBlock($event, innerElement, slotChildren)"
         @mousedown.stop="selectComp(innerElement)"
@@ -65,7 +65,7 @@ props.children.some(item => item.focus && props.selectComp(item))
         <CompRender
           :element="innerElement"
           :style="{
-            pointerEvents: Object.keys(innerElement.props?.slots || {}).length ? 'auto' : 'none'
+            pointerEvents: Object.keys(innerElement.props?.slots || {}).length ? 'auto' : 'none',
           }"
         >
           <template v-for="(value, key) in innerElement.props?.slots" :key="key" #[key]>
@@ -84,7 +84,7 @@ props.children.some(item => item.focus && props.selectComp(item))
 </template>
 
 <style lang="scss" scoped>
-@import './func.scss';
+@use "./func.scss" as *;
 
 .inner-draggable {
   position: relative;

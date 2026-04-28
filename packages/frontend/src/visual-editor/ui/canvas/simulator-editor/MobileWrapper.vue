@@ -215,7 +215,11 @@ function triggerShowComponents() {
 <template>
   <div ref="wrapperRef" class="simulator-editor-wrapper">
     <div ref="contentRef" class="simulator-editor-content">
-      <DraggableTransitionGroup v-model:drag="drag" v-model="currentPage.blocks" draggable=".item-drag">
+      <DraggableTransitionGroup
+        v-model:drag="drag"
+        v-model="currentPage.blocks"
+        draggable=".item-drag"
+      >
         <template #item="{ element: outElement }">
           <div
             class="list-group-item"
@@ -224,7 +228,7 @@ function triggerShowComponents() {
               focus: outElement.focus,
               focusWithChild: outElement.focusWithChild,
               drag,
-              ['has-slot']: !!Object.keys(outElement.props.slots || {}).length
+              ['has-slot']: !!Object.keys(outElement.props.slots || {}).length,
             }"
             @contextmenu.stop.prevent="onContextmenuBlock($event, outElement)"
             @mousedown="selectComp(outElement)"
@@ -233,10 +237,14 @@ function triggerShowComponents() {
               :key="outElement._vid"
               :element="outElement"
               :style="{
-                pointerEvents: Object.keys(outElement.props?.slots || {}).length ? 'auto' : 'none'
+                pointerEvents: Object.keys(outElement.props?.slots || {}).length ? 'auto' : 'none',
               }"
             >
-              <template v-for="(value, slotKey) in outElement.props?.slots" :key="slotKey" #[slotKey]>
+              <template
+                v-for="(value, slotKey) in outElement.props?.slots"
+                :key="slotKey"
+                #[slotKey]
+              >
                 <SlotItem
                   v-model:children="value.children"
                   v-model:drag="drag"
@@ -255,7 +263,7 @@ function triggerShowComponents() {
 </template>
 
 <style lang="scss" scoped>
-@import './func.scss';
+@use "./func.scss" as *;
 
 .simulator-container {
   display: flex;
@@ -323,7 +331,7 @@ function triggerShowComponents() {
   }
 
   &:not(.has-slot) {
-    content: '';
+    content: "";
   }
 
   &.focusWithChild {

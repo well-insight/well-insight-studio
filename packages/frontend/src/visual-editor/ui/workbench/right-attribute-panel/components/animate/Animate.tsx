@@ -41,7 +41,7 @@ export const Animate = defineComponent({
         (window.$$refs[currentBlock.value._vid]?.$el as HTMLElement) ??
         (window.$$refs[currentBlock.value._vid] as HTMLElement);
 
-      animateEl = animateEl?.closest(".list-group-item")?.firstChild as HTMLElement;
+      animateEl = animateEl?.closest(".list-group-item")?.firstChild?.firstChild as HTMLElement;
 
       if (animateEl) {
         useAnimate(animateEl, animation);

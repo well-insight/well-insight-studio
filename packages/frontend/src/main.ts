@@ -10,6 +10,7 @@ import { setupStore } from "@/stores/pinia";
 import "virtual:uno.css";
 import "normalize.css";
 import "animate.css";
+import "@/styles/animate-force.css";
 
 import "virtual:svg-icons/register";
 

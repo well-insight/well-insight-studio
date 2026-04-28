@@ -697,7 +697,7 @@ defineExpose({
 </style>
 
 <style lang="scss" scoped>
-@import "./func.scss";
+@use "./func.scss" as *;
 
 .drag-resize-rotate-normal {
   border: none;
