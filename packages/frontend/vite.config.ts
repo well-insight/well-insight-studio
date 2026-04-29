@@ -50,15 +50,18 @@ export default ({ mode }: ConfigEnv): UserConfig => {
         iconDirs: [path.resolve(process.cwd(), "src/assets/svgs")],
         // 指定symbolId格式
         symbolId: "icon-[dir]-[name]",
-        svgoOptions: {
-          plugins: [
-            {
-              name: "removeAttrs",
-              params: {
-                attrs: ["class", "data-name", "fill", "stroke"],
+        bakerOptions: {
+          optimize: true,
+          svgoOptions: {
+            plugins: [
+              {
+                name: "removeAttrs",
+                params: {
+                  attrs: ["class", "data-name", "fill", "stroke"],
+                },
               },
-            },
-          ],
+            ],
+          },
         },
 
         /**

@@ -4,7 +4,6 @@ export async function useAnimate(animateEl: HTMLElement | string, animations: An
   animations = Array.isArray(animations) ? animations : [animations]
 
   animateEl = typeof animateEl === 'string' ? document.querySelector(animateEl) as HTMLElement : animateEl
-debugger
   const play = (animate: Animation) =>
     new Promise(resolve => {
       if (animateEl) {

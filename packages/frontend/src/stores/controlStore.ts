@@ -14,7 +14,7 @@ export const useControlStore = defineStore("useControlStore", {
     editScale: 1,
     layoutCollapse: false,
     settingCollapse: true,
-    asideCollapse: false,
+    asideCollapse: true,
     floatingSettingVisible: false,
     floatingSettingActiveTab: "attr",
   }),

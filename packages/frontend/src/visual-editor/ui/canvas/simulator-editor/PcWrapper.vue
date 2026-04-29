@@ -487,6 +487,7 @@ defineExpose({
                 :snap-border="true"
                 :snap-tolerance="20"
                 show-toolbar
+                toolbar-with-scale
                 class-name="drag-resize-rotate-normal"
                 @ref-line-params="getRefLineParams"
                 @activated="selectComp(outElement)"

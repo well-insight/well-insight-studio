@@ -1,5 +1,5 @@
 <script>
-import { round } from "lodash-es";
+import { round, transform } from "lodash-es";
 import {
   addEvent,
   getComputedSize,
@@ -296,6 +296,10 @@ export default {
       type: Boolean,
       default: false
     },
+    toolbarWithScale: {
+      type: Boolean,
+      default: false
+    }
   },
   emits: [
     "update:active",
@@ -466,6 +470,14 @@ export default {
       }
       return `${this.height}px`;
     },
+    /**
+     * 计算toolbar的样式
+     */
+    toolbarStyle() {
+      return {
+        transform: `scale(${this.toolbarWithScale ? 1 : 1 / this.scaleRatio})`
+      };
+    }
   },
   watch: {
     active(val) {
@@ -1606,7 +1618,7 @@ export default {
       :rotatable="rotatable"
     />
 
-    <div v-if="showToolbar" v-show="enabled" class="vue-drag-resize-rotate-toolbar">
+    <div v-if="showToolbar" v-show="enabled" class="vue-drag-resize-rotate-toolbar" :style="toolbarStyle">
       <slot name="toolbar"> 这是测试toolbar </slot>
     </div>
   </div>

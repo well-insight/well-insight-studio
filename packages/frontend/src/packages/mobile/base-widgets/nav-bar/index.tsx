@@ -26,7 +26,6 @@ export default {
         draggableEl.style.width = '100%'
         draggableEl.style.zIndex = '1000'
         dragArea.style.paddingTop = '50px'
-        debugger
       } else {
         document.body.style.paddingTop = '46px'
         const slotEl = compEl?.closest('__slot-item')

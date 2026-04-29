@@ -8,7 +8,7 @@
       popper-class="toolbar-dropdown"
       :hide-on-click="false"
     >
-      <el-button size="default" text :icon="Setting">
+      <el-button size="small" text :icon="Setting">
         <span>基础配置</span>
         <el-icon><CaretBottom /></el-icon>
       </el-button>
@@ -19,7 +19,7 @@
               <div class="toolbar-item-row">
                 <span class="toolbar-item-title">宽度</span>
                 <div class="toolbar-item-content">
-                  <el-input-number size="default" :min="0" v-model="currentBlock.width" />
+                  <el-input-number size="small" :min="0" v-model="currentBlock.width" />
                 </div>
               </div>
             </el-dropdown-item>
@@ -27,7 +27,7 @@
               <div class="toolbar-item-row">
                 <span class="toolbar-item-title">高度</span>
                 <div class="toolbar-item-content">
-                  <el-input-number size="default" :min="0" v-model="currentBlock.width" />
+                  <el-input-number size="small" :min="0" v-model="currentBlock.width" />
                 </div>
               </div>
             </el-dropdown-item>
@@ -35,7 +35,7 @@
               <div class="toolbar-item-row">
                 <span class="toolbar-item-title">背景颜色</span>
                 <div class="toolbar-item-content">
-                  <el-color-picker size="default" v-model="currentBlock.styles.backgroundColor" />
+                  <el-color-picker size="small" v-model="currentBlock.styles.backgroundColor" />
                 </div>
               </div>
             </el-dropdown-item>
@@ -52,7 +52,7 @@
                 <span class="toolbar-item-title">图片重复</span>
                 <div class="toolbar-item-content">
                   <el-select
-                    size="default"
+                    size="small"
                     v-model="currentBlock.styles.backgroundRepeat"
                     clearable
                     :teleported="false"
@@ -70,7 +70,7 @@
                 <span class="toolbar-item-title">图片大小</span>
                 <div class="toolbar-item-content">
                   <el-select
-                    size="default"
+                    size="small"
                     v-model="currentBlock.styles.backgroundSize"
                     clearable
                     :teleported="false"
@@ -98,7 +98,7 @@
       :hide-on-click="false"
       popper-class="toolbar-dropdown"
     >
-      <el-button size="default" text :icon="Grid">
+      <el-button size="small" text :icon="Grid">
         <span>组件配置</span>
         <el-icon><CaretBottom /></el-icon>
       </el-button>
@@ -122,7 +122,7 @@
       :hide-on-click="false"
       popper-class="toolbar-dropdown"
     >
-      <el-button size="default" text :icon="BrushFilled">
+      <el-button size="small" text :icon="BrushFilled">
         <span>样式设置</span>
         <el-icon><CaretBottom /></el-icon>
       </el-button>
@@ -133,7 +133,7 @@
               <div class="toolbar-item-row">
                 <span class="toolbar-item-title">水平对齐</span>
                 <div class="toolbar-item-content">
-                  <el-radio-group v-model="currentBlock.styles.justifyContent" size="default">
+                  <el-radio-group v-model="currentBlock.styles.justifyContent" size="small">
                     <el-radio-button label="flex-start">左</el-radio-button>
                     <el-radio-button label="center">中</el-radio-button>
                     <el-radio-button label="flex-end">右</el-radio-button>
@@ -145,7 +145,7 @@
               <div class="toolbar-item-row">
                 <span class="toolbar-item-title">垂直对齐</span>
                 <div class="toolbar-item-content">
-                  <el-radio-group v-model="currentBlock.styles.alignItems" size="default">
+                  <el-radio-group v-model="currentBlock.styles.alignItems" size="small">
                     <el-radio-button label="flex-start">上</el-radio-button>
                     <el-radio-button label="center">中</el-radio-button>
                     <el-radio-button label="flex-end">下</el-radio-button>
@@ -157,7 +157,7 @@
               <div class="toolbar-item-row">
                 <span class="toolbar-item-title">组件内边距</span>
                 <div class="toolbar-item-content">
-                  <FormatInputNumber size="default" v-model="compPadding" />
+                  <FormatInputNumber size="small" v-model="compPadding" />
                 </div>
               </div>
             </el-dropdown-item>
@@ -168,7 +168,7 @@
 
     <el-divider direction="vertical"></el-divider>
 
-    <el-button size="default" text :icon="VideoPlay" @click="openAnimatePanel">
+    <el-button size="small" text :icon="VideoPlay" @click="openAnimatePanel">
       <span>动画</span>
     </el-button>
 
@@ -181,7 +181,7 @@
       :hide-on-click="false"
       popper-class="toolbar-dropdown toolbar-dropdown-panel"
     >
-      <el-button size="default" text :icon="DataLine">
+      <el-button size="small" text :icon="DataLine">
         <span>数据配置 </span>
         <el-icon><CaretBottom /></el-icon>
       </el-button>
@@ -197,7 +197,7 @@
     <el-divider direction="vertical"></el-divider>
     <el-tooltip content="更多选项" placement="bottom">
       <el-button
-        size="default"
+        size="small"
         text
         :icon="MoreFilled"
         class="toolbar-more-btn"
