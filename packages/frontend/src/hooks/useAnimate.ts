@@ -1,8 +1,10 @@
 import type { Animation } from '@/visual-editor/visual-editor.utils'
 
-export async function useAnimate(animateEl: HTMLElement, animations: Animation | Animation[], prefixCls = 'animate__') {
+export async function useAnimate(animateEl: HTMLElement | string, animations: Animation | Animation[], prefixCls = 'animate__') {
   animations = Array.isArray(animations) ? animations : [animations]
 
+  animateEl = typeof animateEl === 'string' ? document.querySelector(animateEl) as HTMLElement : animateEl
+debugger
   const play = (animate: Animation) =>
     new Promise(resolve => {
       if (animateEl) {

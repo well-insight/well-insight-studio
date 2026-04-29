@@ -45,7 +45,7 @@ function initPageOptions() {
   pageListOptions.value = options;
 }
 
-const isOpen = ref(true);
+const isOpen = ref(true);   
 
 watch(
   () => currentBlock.value,

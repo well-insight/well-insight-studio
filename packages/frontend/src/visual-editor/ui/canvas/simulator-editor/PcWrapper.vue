@@ -17,11 +17,12 @@ import { useMouseInElement, useResizeObserver } from '@vueuse/core'
 import { vLoading } from 'element-plus'
 import { cloneDeep, debounce } from 'lodash-es'
 import { storeToRefs } from 'pinia'
-import { computed, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import AttrSettingsToolbar from './AttrSettingsToolbar.vue'
+import { AttrSettingsToolbar } from '@/visual-editor/ui/workbench/attr-settings-toolbar'
 import CompRender from './comp-render'
 import SlotItem from './SlotItem.vue'
+import { useAnimate } from '@/hooks/useAnimate'
 
 defineOptions({
   name: 'SimulatorEditor',
@@ -48,10 +49,6 @@ const { currentApp } = storeToRefs(workspaceStore)
 const { currentPage, setCurrentBlock, currentBlock, updateCurrentBlock } = useVisualData()
 const { globalProperties } = useGlobalProperties()
 
-// watch(currentPage, () => {
-//   debugger
-// }, { deep: true })
-
 const controlStore = useControlStore()
 
 const { editScale, floatingSettingVisible } = storeToRefs(controlStore)
@@ -74,6 +71,7 @@ const lines = reactive({
   h: [],
   v: [],
 })
+
 const thick = ref(20)
 const lang = ref('zh-CN')
 const shadow = reactive({
@@ -186,6 +184,12 @@ function keyEvent() {
 onMounted(() => {
   setWrapPositionSize()
   keyEvent()
+
+  nextTick(() => {
+    setTimeout(() => {
+      initAnimate()
+    }, 1000)
+  })
 })
 
 function canvasMousemove() {
@@ -416,6 +420,21 @@ function getRefLineParams(params: { vLine: any[], hLine: any[] }) {
   hLine.value = params.hLine
 }
 
+function initAnimate() {
+  const animations = currentPage.value.blocks.filter(block => block?.animations)?.map(block => ({
+    _vid: block._vid,
+    animations: block.animations,
+  }))
+  debugger
+
+  animations.forEach(({ _vid, animations }) => {
+    const anmiationEl = document.querySelector(`.list-group-item-${_vid}`)?.firstChild?.firstChild as HTMLElement
+    debugger
+    useAnimate(anmiationEl, animations)
+  })
+
+}
+
 watch(() => props?.scale, () => {
   currentScale.value = props?.scale || 1
 }, { immediate: true })
@@ -475,13 +494,14 @@ defineExpose({
               >
                 <template #default="{ enabled }">
                   <div
-                    class="list-group-item"
                     :data-label="outElement.label"
                     :class="{
                       focus: outElement.focus && enabled,
                       focusWithChild: outElement.focusWithChild && enabled,
                       drag,
                       ['has-slot']: !!Object.keys(outElement.props.slots || {}).length,
+                      ['list-group-item']: true,
+                      [`list-group-item-${outElement._vid}`]: true,
                     }"
                     @contextmenu.stop.prevent="onContextmenuBlock($event, outElement)"
                   >

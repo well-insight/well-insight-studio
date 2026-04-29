@@ -225,7 +225,7 @@ import {
 } from "@element-plus/icons-vue";
 import { computed, watch } from "vue";
 
-const props = withDefaults(defineProps<{ virualRef: any }>(), {
+const props = withDefaults(defineProps<{ virualRef?: any }>(), {
   virualRef: null,
 });
 
