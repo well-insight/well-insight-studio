@@ -46,7 +46,7 @@ const workspaceStore = useWorkspaceStore()
 
 const { currentApp } = storeToRefs(workspaceStore)
 
-const { currentPage, setCurrentBlock, currentBlock, updateCurrentBlock } = useVisualData()
+const { currentPage, setCurrentBlock, currentBlock, updateCurrentBlock, visualLoading } = useVisualData()
 const { globalProperties } = useGlobalProperties()
 
 const controlStore = useControlStore()
@@ -425,15 +425,19 @@ function initAnimate() {
     _vid: block._vid,
     animations: block.animations,
   }))
-  debugger
 
   animations.forEach(({ _vid, animations }) => {
     const anmiationEl = document.querySelector(`.list-group-item-${_vid}`)?.firstChild?.firstChild as HTMLElement
-    debugger
     useAnimate(anmiationEl, animations)
   })
 
 }
+
+watch(visualLoading, (value, oldValue) => {
+  if(!value && oldValue) {
+    initAnimate()
+  }
+})
 
 watch(() => props?.scale, () => {
   currentScale.value = props?.scale || 1

@@ -39,7 +39,6 @@ export default {
     textValue: createEditorInputProp({
       label: '按钮文字',
       defaultValue: '按钮',
-      tips: '如果插槽为空，则显示此文字'
     }),
     type: createEditorSelectProp({
       label: '类型',

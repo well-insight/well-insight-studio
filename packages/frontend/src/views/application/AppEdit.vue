@@ -22,7 +22,7 @@ const { appList } = storeToRefs(workspaceStore);
 const controlStore = useControlStore();
 const { layoutCollapse, settingCollapse, floatingSettingVisible } = storeToRefs(controlStore);
 
-const { overrideProject } = useVisualData();
+const { overrideProject, updateVisualLoading } = useVisualData();
 
 /** 并发/重复进入时只应用最后一次请求结果 */
 let loadSeq = 0;
@@ -59,6 +59,7 @@ function toWorkspaceApp(row: ApiApplicationListItem) {
 }
 
 async function loadApplicationById(id: string) {
+  updateVisualLoading(true);
   const seq = ++loadSeq;
   loading.value = true;
   try {
@@ -80,6 +81,7 @@ async function loadApplicationById(id: string) {
   } finally {
     if (seq === loadSeq) {
       loading.value = false;
+      updateVisualLoading(false);
     }
   }
 }

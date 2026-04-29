@@ -7,7 +7,7 @@ import type {
   VisualEditorModelValue,
   VisualEditorPage
 } from '@/visual-editor/visual-editor.utils'
-import { computed, inject, reactive, readonly, watch } from 'vue'
+import { computed, inject, reactive, readonly, ref, watch } from 'vue'
 
 /** 页面路由 path，统一为以 / 开头 */
 export function normalizeEditorPagePath(path: string) {
@@ -98,6 +98,13 @@ export function initVisualData() {
   const getPrefixPath = normalizeEditorPagePath
 
   const currentPage = jsonData.pages[route.path]
+
+  /**
+   * 获取visualData时可能会在组件内被多次调用，使用ref包裹loading状态避免重复请求数据
+    * 例如：在Animate组件中，点击添加动画集时会调用useVisualData获取currentBlock的值，此时如果loading状态没有被ref包裹，则会重复请求数据，导致性能问题
+    * 目前的解决方案是在useVisualData中使用ref包裹loading状态，确保在数据加载完成之前不会重复请求数据
+   * */
+  const visualLoading = ref(false)
 
   const state: IState = reactive({
     jsonData,
@@ -278,6 +285,10 @@ export function initVisualData() {
     setCurrentPage(path)
   }
 
+  function updateVisualLoading(loading: boolean) {
+    visualLoading.value = loading
+  }
+
   return {
     visualConfig,
     /** 必须用 computed：overrideProject 会替换 state.jsonData 引用，否则注入的仍是初始默认对象 */
@@ -297,7 +308,9 @@ export function initVisualData() {
     incrementPage,
     deletePage,
     updatePageBlock,
-    updateCurrentBlock
+    updateCurrentBlock,
+    visualLoading,
+    updateVisualLoading
   }
 }
 
