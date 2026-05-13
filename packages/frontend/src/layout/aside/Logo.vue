@@ -7,7 +7,7 @@ defineProps<{ collapse?: boolean }>();
 <template>
   <div class="logo-bar flex h-full w-full items-center">
     <el-icon color="var(--el-color-primary)" :size="32">
-      <SvgIcon name="lightning" />
+      <SvgIcon name="logo" />
     </el-icon>
     <el-text v-show="!collapse" type="primary" class="logo-bar__title font-600 text-[1.25em]">
       WellCube
@@ -16,7 +16,7 @@ defineProps<{ collapse?: boolean }>();
 </template>
 
 <style lang="scss" scoped>
-.logo-bar{
+.logo-bar {
   gap: 8px;
   padding-left: 20px;
 }

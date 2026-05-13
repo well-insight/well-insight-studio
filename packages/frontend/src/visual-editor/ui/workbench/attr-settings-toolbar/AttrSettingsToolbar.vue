@@ -182,7 +182,7 @@
       popper-class="toolbar-dropdown toolbar-dropdown-panel"
     >
       <el-button size="small" text :icon="DataLine">
-        <span>数据配置 </span>
+        <span>事件 </span>
         <el-icon><CaretBottom /></el-icon>
       </el-button>
       <template #dropdown>
