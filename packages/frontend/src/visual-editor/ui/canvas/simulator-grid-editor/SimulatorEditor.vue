@@ -9,6 +9,7 @@ import { storeToRefs } from "pinia";
 import { computed, onUnmounted, ref } from "vue";
 import MobileWrapper from "./MobileWrapper.vue";
 import PcWrapper from "./PcWrapper.vue";
+import { ComponentList } from "../../workbench/component-list-new";
 
 defineOptions({
   name: "SimulatorGridEditor",
@@ -61,8 +62,12 @@ onUnmounted(() => {
     </div>
 
     <div class="simulator-editor">
-      <MobileWrapper v-if="currentApp?.clientType === 2" />
-      <PcWrapper v-else :scale="editScale" @change-scale="changeScale" />
+      <div class="mr-4 flex h-full w-[100px] items-center justify-center">
+        <ComponentList></ComponentList>
+      </div>
+      <div class="h-full w-0 flex-auto">
+        <PcWrapper />
+      </div>
 
       <transition name="floating-setting-panel">
         <div v-if="floatingSettingVisible" ref="floatingPanelRef" class="floating-setting-panel">
@@ -133,8 +138,15 @@ onUnmounted(() => {
 .simulator-editor {
   width: 100%;
   overflow: hidden auto;
-  background: #fafafa;
-  border-radius: 5px;
+  background-image:
+    linear-gradient(#fafafc 14px, transparent 0),
+    linear-gradient(90deg, transparent 14px, #373739 0);
+  background-color: #fff;
+  background-size:
+    15px 15px,
+    15px 15px;
+  position: relative;
+  overflow: hidden;
   box-sizing: border-box;
   background-clip: content-box;
   contain: layout;

@@ -1,35 +1,31 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
-import { ButtonTabs } from '@/components/button-tabs'
-import { EventAction } from '@/visual-editor/ui/workbench/right-attribute-panel/components'
-import PageComponent from './PageComponent.vue'
+import { ref } from "vue";
+import { ButtonTabs } from "@/components/button-tabs";
+import { EventAction } from "@/visual-editor/ui/workbench/right-attribute-panel/components";
+import PageComponent from "./PageComponent.vue";
 // import PageEvent from './PageEvent.vue'
-import PageStore from './PageStore.vue'
+import PageStore from "./PageStore.vue";
 
-const currentActive = ref('component')
+const currentActive = ref("component");
 
 const pageListOptions = ref([
   {
-    label: '组件',
-    value: 'component'
+    label: "组件",
+    value: "component",
   },
   {
-    label: '事件',
-    value: 'event'
+    label: "状态",
+    value: "store",
   },
-  {
-    label: '状态',
-    value: 'store'
-  }
-])
+]);
 </script>
 
 <template>
-  <div class="w-full h-full flex flex-col">
-    <div class="h-[50px] flex items-center px-3 border-bottom-1">
+  <div class="flex h-full w-full flex-col">
+    <div class="border-bottom-1 flex h-[50px] items-center px-3">
       <ButtonTabs v-model="currentActive" :options="pageListOptions" />
     </div>
-    <div class="flex-auto h-0 w-full">
+    <div class="h-0 w-full flex-auto">
       <PageComponent v-if="currentActive === 'component'" />
       <EventAction v-else-if="currentActive === 'event'" />
       <PageStore v-else />

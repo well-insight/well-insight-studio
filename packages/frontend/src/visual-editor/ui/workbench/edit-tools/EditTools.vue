@@ -9,7 +9,7 @@ import {
   Iphone,
   Monitor,
   Orange,
-  RefreshLeft,  
+  RefreshLeft,
   RefreshRight,
   VideoPlay,
   WarnTriangleFilled,
@@ -18,8 +18,8 @@ import { ElMessage } from "element-plus";
 import { storeToRefs } from "pinia";
 import { computed, ref, toRaw, toValue } from "vue";
 import Preview from "./components/Preview.vue";
-import PageSettingButton from "./components/PageSettingButton.vue";
-
+import PageSettingButton from "./components/PageSetting.vue";
+import PageRouterSetting from "./components/PageRouterSetting.vue";
 
 const workspaceStore = useWorkspaceStore();
 const controlStore = useControlStore();

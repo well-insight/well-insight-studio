@@ -13,7 +13,7 @@ import { PageSetting } from "../../right-attribute-panel/components/page-setting
     :popper-class="$style['page-setting-popover']"
   >
     <template #reference>
-      <el-button type="primary" plain>
+      <el-button text bg type="primary">
         <SvgIcon name="page-setting" />
         <span class="ml-2">页面配置</span>
       </el-button>
@@ -26,8 +26,6 @@ import { PageSetting } from "../../right-attribute-panel/components/page-setting
 </template>
 
 <style lang="scss" module>
-
-
 .page-setting-popover {
   --el-popover-bg-color: var(--el-bg-color-overlay);
   --el-popover-font-size: var(--el-font-size-base);
@@ -43,7 +41,7 @@ import { PageSetting } from "../../right-attribute-panel/components/page-setting
   :global(.el-popover__title) {
     height: 40px;
     width: 100%;
-    padding: 0 10px;
+    padding: 0 16px;
     display: flex;
     align-items: center;
     margin-bottom: 0;
@@ -52,7 +50,7 @@ import { PageSetting } from "../../right-attribute-panel/components/page-setting
   }
 
   .page-setting-panel {
-    padding: 8px 10px;
+    padding: 12px 16px;
     width: 320px;
     height: min(460px, calc(100vh - 220px));
     max-height: min(460px, calc(100vh - 220px));

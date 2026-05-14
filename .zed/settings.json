@@ -1,4 +1,5 @@
 {
+  "tab_size": 2,
   "lsp": {
     "oxlint": {
       "initialization_options": {

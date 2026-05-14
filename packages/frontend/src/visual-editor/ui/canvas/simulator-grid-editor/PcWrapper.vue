@@ -480,7 +480,7 @@ defineExpose({
 
 <template>
   <div class="edit-control-container">
-    <div>
+    <div class="wrap-container">
       <GridLayout v-model:layout="layout" :row-height="30">
         <template #item="{ item }">
           <span class="text">{{ `${item.i}${item.static ? "- Static" : ""}` }}</span>
@@ -494,208 +494,15 @@ defineExpose({
 .edit-control-container {
   width: 100%;
   height: 100%;
-  background-image:
-    linear-gradient(#fafafc 14px, transparent 0),
-    linear-gradient(90deg, transparent 14px, #373739 0);
-  background-color: #fff;
-  background-size:
-    15px 15px,
-    15px 15px;
-  position: relative;
-  overflow: hidden;
+  padding: 16px;
 
   .wrap-container {
     width: 100%;
     height: 100%;
-    position: absolute;
+    box-shadow: 0 8px 10px #00000012;
+    background-color: var(--el-bg-color);
+    border-radius: var(--el-border-radius-base);
     overflow: hidden;
-
-    #wrap {
-      position: absolute;
-      width: 100%;
-      height: calc(100% - 0px);
-      user-select: none;
-      padding-bottom: 0;
-      top: 0;
-      overflow: auto;
-      /* Firefox */
-      /* scrollbar-width: none; */
-
-      /* IE/Edge 旧版 */
-      /* -ms-overflow-style: none; */
-
-      &::-webkit-scrollbar {
-        display: none;
-        /* height: 200px; */
-      }
-
-      // &:hover {
-      //     overflow: auto;
-      // }
-
-      #content {
-        width: 10000px;
-        height: 10000px;
-        position: absolute;
-        top: 0;
-        left: 0;
-
-        .edit-canvas {
-          // height: v-bind('pageConfig.height')px;
-          // width: v-bind('pageConfig.width')px;
-          position: absolute;
-          // background-color: v-bind('pageConfig.backgroundColor');
-          top: 50%;
-          left: 50%;
-          box-shadow: 0 8px 10px #00000012;
-          background-color: var(--el-bg-color);
-          border-radius: var(--el-border-radius-base);
-          -webkit-transform-origin: 0 0;
-          transform-origin: 0 0;
-          overflow: hidden;
-        }
-      }
-    }
-
-    .edit-bottom-menu {
-      width: 100%;
-      height: 40px;
-      background-color: #f6f8f9;
-      z-index: 100;
-      position: absolute;
-      bottom: 0;
-      display: flex;
-      align-items: center;
-      padding: 10px;
-
-      .el-slider {
-        width: 300px;
-        float: right;
-        margin-left: auto;
-      }
-
-      .key-down-show {
-        font-weight: bold;
-      }
-    }
-  }
-}
-</style>
-
-<style lang="scss">
-.demos-img {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 192px;
-  height: 108px;
-}
-
-.ruler-container {
-  .h-container {
-    position: absolute;
-    width: 10000px !important;
-    top: 0;
-    left: v-bind(hRulerX) !important;
-    transform-origin: center;
-  }
-
-  .v-container {
-    position: absolute;
-    height: 10000px !important;
-    left: 0;
-    top: v-bind(hRulerY) !important;
-    transform-origin: center;
-  }
-}
-</style>
-
-<style lang="scss" module>
-.drag-resize {
-  transform: translate3d(0, 0, 0);
-  will-change: transform;
-  /* 替代border: 1px solid #ccc */
-  box-shadow: inset 0 0 0 1px #ccc;
-  /* 开启硬件加速，减少亚像素模糊 */
-  backface-visibility: hidden;
-  transform: translateZ(0);
-  /* 禁用亚像素抗锯齿（针对像素级渲染） */
-  image-rendering: pixelated;
-  shape-rendering: crispEdges;
-  /* SVG组件必备 */
-}
-</style>
-
-<style lang="scss" module>
-.status {
-  height: 8px;
-  width: 8px;
-  border-radius: 50%;
-  display: inline-block;
-
-  &.enable {
-    background-color: green;
-  }
-
-  &.disable {
-    background-color: red;
-  }
-}
-</style>
-
-<style lang="scss" scoped>
-@use "./func.scss" as *;
-
-.drag-resize-rotate-normal {
-  border: none;
-}
-
-.list-group-item {
-  position: relative;
-  height: 100%;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  // padding: 3px;
-  // border: 2px solid var(--el-bg-color);
-  cursor: move;
-
-  > div {
-    position: relative;
-  }
-
-  &.focus {
-    @include showComponentBorder;
-  }
-
-  &.drag::after {
-    display: none;
-  }
-
-  &:not(.has-slot) {
-    content: "";
-  }
-
-  &.focusWithChild {
-    @include showContainerBorder;
-  }
-
-  i {
-    cursor: pointer;
-  }
-
-  &:hover {
-    // 边框
-    @include showComponentBorder;
-
-    &::after {
-      // 标签
-      opacity: 1;
-      transition: opacity 0.2s;
-      @include showSoliOutline;
-      @include showCompLabel(left);
-    }
   }
 }
 </style>
