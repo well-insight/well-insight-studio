@@ -41,19 +41,6 @@ const emits = defineEmits<{
   changeScale: [value: number]
 }>()
 
-const layout = ref<GridItemProps[]>([
-  { x: 0, y: 0, w: 2, h: 2, i: '0' },
-  { x: 2, y: 0, w: 2, h: 4, i: '1' },
-  { x: 4, y: 0, w: 2, h: 5, i: '2' },
-  { x: 6, y: 0, w: 2, h: 3, i: '3' },
-  { x: 8, y: 0, w: 2, h: 3, i: '4' },
-  { x: 10, y: 0, w: 2, h: 3, i: '5' },
-  { x: 0, y: 5, w: 2, h: 5, i: '6' },
-  { x: 2, y: 5, w: 2, h: 5, i: '7' },
-  { x: 4, y: 5, w: 2, h: 5, i: '8' },
-  { x: 5, y: 10, w: 4, h: 3, i: '9' },
-])
-
 const currentScale = ref(props?.scale)
 
 const workspaceStore = useWorkspaceStore()
@@ -255,7 +242,7 @@ const dragItem = { x: -1, y: -1, w: 2, h: 2, i: '' }
 
 const dragging = throttle(() => {
   const parentRect = wrapper.value?.getBoundingClientRect()
-
+  console.log('拖动中', { mouseAt, parentRect })
 
   if (!parentRect || !gridLayout.value) return
 
@@ -265,29 +252,16 @@ const dragging = throttle(() => {
     mouseAt.y > parentRect.top &&
     mouseAt.y < parentRect.bottom
 
-  console.log('拖拽', mouseInGrid);
+  if (mouseInGrid && !currentPage.value.blocks.find(item => item.i === dropId)) {
+    const moveData = { ...controlStore.moveVisualData, x: (currentPage.value.blocks.length * 2) % 12, y: currentPage.value.blocks.length + 12, w: 2, h: 2, i: dropId }
 
-
-  if (mouseInGrid && !layout.value.find(item => item.i === dropId)) {
-    layout.value.push({
-      x: (layout.value.length * 2) % 12,
-      y: layout.value.length + 12, // puts it at the bottom
-      w: 2,
-      h: 2,
-      i: dropId,
-    })
+    currentPage.value.blocks.push(moveData)
   }
 
-
-
-  const index = layout.value.findIndex(item => item.i === dropId)
-
-  console.log(index, 'dragging');
-  
+  const index = currentPage.value.blocks.findIndex(item => item.i === dropId)
 
   if (index !== -1) {
     const item = gridLayout.value.getItem(dropId)
-
 
     if (!item) return
 
@@ -301,15 +275,16 @@ const dragging = throttle(() => {
     })
     const newPos = item.calcXY(mouseAt.y - parentRect.top, mouseAt.x - parentRect.left)
 
-    if (mouseInGrid) {
-      gridLayout.value.dragEvent('dragging', dropId, newPos.x, newPos.y, dragItem.h, dragItem.w)
-      dragItem.i = String(index)
-      dragItem.x = layout.value[index].x
-      dragItem.y = layout.value[index].y
-    } else {
-      gridLayout.value.dragEvent('dragend', dropId, newPos.x, newPos.y, dragItem.h, dragItem.w)
-      layout.value = layout.value.filter(item => item.i !== dropId)
-    }
+      if (mouseInGrid) {
+        gridLayout.value.dragEvent('dragstart', dropId, newPos.x, newPos.y, dragItem.h, dragItem.w)
+        dragItem.i = String(index)
+        dragItem.x = currentPage.value.blocks[index].x
+        dragItem.y = currentPage.value.blocks[index].y
+      } else {
+        gridLayout.value.dragEvent('dragend', dropId, newPos.x, newPos.y, dragItem.h, dragItem.w)
+        currentPage.value.blocks = currentPage.value.blocks.filter(item => item.i !== dropId)
+      }
+
   }
 })
 
@@ -327,18 +302,25 @@ function dragEnd() {
   if (mouseInGrid) {
     // alert(`Dropped element props:\n${JSON.stringify(dragItem, ['x', 'y', 'w', 'h'], 2)}`)
     gridLayout.value.dragEvent('dragend', dropId, dragItem.x, dragItem.y, dragItem.h, dragItem.w)
-    layout.value = layout.value.filter(item => item.i !== dropId)
+
+    currentPage.value.blocks = currentPage.value.blocks.filter(item => item.i !== dropId)
   } else {
     return
   }
 
-  layout.value.push({
+  // 获取拖拽传递的数据
+  const moveData = {
+    ...controlStore.moveVisualData,
     x: dragItem.x,
     y: dragItem.y,
     w: dragItem.w,
     h: dragItem.h,
-    i: dragItem.i,
-  })
+    i: dragItem.i
+  }
+
+  currentPage.value.blocks.push(moveData)
+  controlStore.setMoveVisualData(null)
+
   gridLayout.value.dragEvent('dragend', dragItem.i, dragItem.x, dragItem.y, dragItem.h, dragItem.w)
 
   const item = gridLayout.value.getItem(dropId)
@@ -579,38 +561,50 @@ watch(currentScale, () => {
   emits('changeScale', currentScale.value)
 })
 
-watch(() => controlStore.draggingVisualKey, (v) => {
-  dragging()
-})
-
-watch(() => controlStore.isDragging, (v) => {
-  console.log('dragEnd');
-  
-  if(!v) {
-    dragEnd()
-  }
-})
-
 defineExpose({
   setScale,
   getScale,
   setWrapPositionSize,
+  drag: dragging,
+  dragEnd
 })
 </script>
 
 <template>
-  <div class="edit-control-container">
-    <div class="wrap-container" ref="wrapper">
-      <GridLayout ref="gridLayout" v-model:layout="layout" :row-height="30">
-        <template #item="{ item }">
-          <span class="text">{{ `${item.i}${item.static ? "- Static" : ""}` }}</span>
+  <div :class="$style['edit-control-container']">
+    <div :class="$style['wrap-container']" ref="wrapper">
+      <GridLayout
+        class="h-full w-full"
+        ref="gridLayout"
+        v-model:layout="currentPage.blocks"
+        :row-height="30"
+      >
+        <template #item="{ item }: { item: VisualEditorBlockData }">
+          <CompRender
+            :key="item._vid"
+            :element="item"
+            :style="{
+              pointerEvents: Object.keys(item.props?.slots || {}).length ? 'auto' : 'none',
+            }"
+          >
+            <template v-for="(value, slotKey) in item.props?.slots" :key="slotKey" #[slotKey]>
+              <SlotItem
+                v-model:children="value.children"
+                v-model:drag="drag"
+                :slot-key="slotKey"
+                :on-contextmenu-block="onContextmenuBlock"
+                :select-comp="selectComp"
+                :delete-comp="deleteComp"
+              />
+            </template>
+          </CompRender>
         </template>
       </GridLayout>
     </div>
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style lang="scss" module>
 .edit-control-container {
   width: 100%;
   height: 100%;
@@ -624,54 +618,5 @@ defineExpose({
     border-radius: var(--el-border-radius-base);
     overflow: hidden;
   }
-}
-</style>
-
-<style scoped>
-.vgl-layout {
-  background-color: #eee;
-}
-
-:deep(.vgl-item:not(.vgl-item--placeholder)) {
-  background-color: #ccc;
-  border: 1px solid black;
-}
-
-:deep(.vgl-item--resizing) {
-  opacity: 90%;
-}
-
-:deep(.vgl-item--static) {
-  background-color: #cce;
-}
-
-.text {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  margin: auto;
-  font-size: 24px;
-  text-align: center;
-}
-
-.layout-json {
-  padding: 10px;
-  margin-top: 10px;
-  background-color: #ddd;
-  border: 1px solid black;
-}
-
-.columns {
-  columns: 120px;
-}
-
-.droppable-element {
-  width: 150px;
-  padding: 10px;
-  margin: 10px 0;
-  text-align: center;
-  background-color: #fdd;
-  border: 1px solid black;
 }
 </style>

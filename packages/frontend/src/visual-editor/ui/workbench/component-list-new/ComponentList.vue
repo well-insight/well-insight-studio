@@ -12,6 +12,12 @@ import { useControlStore } from "@/stores";
 
 const activeComp = ref("基础组件");
 
+const emits = defineEmits<{
+  dragStart: [value: VisualEditorComponent, index: number],
+  drag: [k: string],
+  dragEnd: [],
+}>()
+
 const controlStore = useControlStore();
 
 const widgets = computed(() => {
@@ -40,18 +46,24 @@ const widgets = computed(() => {
   ];
 });
 
-function dragStart(visual: VisualEditorComponent, index: number) {
+function dragStart(e: DragEvent, visual: VisualEditorComponent, index: number) {
+  e.dataTransfer?.setData('text/plain', visual.key)
+  e.dataTransfer!.effectAllowed = 'move'
   controlStore.setIsDragging(true);
   controlStore.setMoveVisualData(createNewBlock(cloneDeep(visual)));
+  emits('dragStart', visual, index)
 }
 
 function dragging() {
   controlStore.setDraggingVisualKey((new Date()).getTime().toString())
+  emits('drag', controlStore.draggingVisualKey)
 }
 
 function dragEnd() {
   controlStore.setIsDragging(false);
+  emits('dragEnd')
 }
+
 </script>
 
 <template>
@@ -65,9 +77,9 @@ function dragEnd() {
       :key="i"
       placement="right"
       transition="el-zoom-in-left"
-      :width="300"
+      :width="260"
       :popper-class="$style['component-popover']"
-      :teleported="false"
+      :teleported="true"
     >
       <template #reference>
         <el-button text class="h-[40px] w-[40px] p-[6px]">
@@ -81,7 +93,7 @@ function dragEnd() {
             class="flex w-full cursor-pointer items-center gap-2 rounded-[4px] px-2 py-2"
             :class="$style['component-item']"
             draggable="true"
-            @dragstart="dragStart(w, i)"
+            @dragstart="(e) => dragStart(e, w, i)"
             @drag="dragging"
             @dragend="dragEnd"
           >

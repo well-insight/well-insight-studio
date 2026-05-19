@@ -4,11 +4,12 @@ import type { ContentTypeEnum, RequestEnum } from "@/enums/httpEnum";
 import { inject, provide } from "vue";
 import { useDotProp } from "@/visual-editor/hooks/useDotProp";
 import { generateNanoid } from "@/visual-editor/lib";
+import type { GridItemProps } from "grid-layout-plus";
 
 /**
  * @description 组件属性
  */
-export interface VisualEditorBlockData {
+export interface VisualEditorBlockData extends GridItemProps {
   /** 组件id 时间戳, 组件唯一标识 */
   _vid: string;
   /** 组件所属的模块（基础组件、容器组件） */
@@ -21,10 +22,10 @@ export interface VisualEditorBlockData {
   adjustPosition: boolean;
   /** 当前是否为选中状态 */
   focus: boolean;
-  w: number | string;
-  h: number | string;
-  x: number | string;
-  y: number | string;
+  w: number;
+  h: number;
+  x: number;
+  y: number;
   /** 当前组件的样式 */
   styles: CSSProperties & {
     tempPadding?: string;
@@ -264,7 +265,7 @@ export function createNewBlock(
     adjustPosition: true,
     focus: false,
     w: component.props?.width || 2,
-    h: component.props?.height || 2,
+    h: component.props?.height || 4,
     styles: {
       display: "flex",
       justifyContent: "center",

@@ -6,7 +6,7 @@ import RightAttributePanel from "@/visual-editor/ui/workbench/right-attribute-pa
 import { CloseBold, Plus } from "@element-plus/icons-vue";
 import { onClickOutside } from "@vueuse/core";
 import { storeToRefs } from "pinia";
-import { computed, onUnmounted, ref } from "vue";
+import { computed, onUnmounted, ref, useTemplateRef } from "vue";
 import MobileWrapper from "./MobileWrapper.vue";
 import PcWrapper from "./PcWrapper.vue";
 import { ComponentList } from "../../workbench/component-list-new";
@@ -34,6 +34,8 @@ const scaleValue = computed({
 });
 
 const floatingPanelRef = ref<HTMLElement | null>(null);
+
+const wrapperRef = useTemplateRef("wrapperRef");
 
 onClickOutside(floatingPanelRef, () => {
   if (controlStore.floatingSettingVisible) {
@@ -63,10 +65,14 @@ onUnmounted(() => {
 
     <div class="simulator-editor">
       <div class="mr-4 flex h-full w-[100px] items-center justify-center">
-        <ComponentList></ComponentList>
+        <ComponentList
+          @drag-start="() => wrapperRef?.drag()"
+          @drag="() => wrapperRef?.drag()"
+          @drag-end="() => wrapperRef?.dragEnd()"
+        />
       </div>
       <div class="h-full w-0 flex-auto">
-        <PcWrapper />
+        <PcWrapper ref="wrapperRef" />
       </div>
 
       <transition name="floating-setting-panel">
