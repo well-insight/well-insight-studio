@@ -11,8 +11,10 @@ export const useControlStore = defineStore("useControlStore", {
      */
     customComponentsVisible: false,
     moveVisualData: null,
+    isDragging: false,
+    draggingVisualKey: '',
     editScale: 1,
-    layoutCollapse: false,
+    layoutCollapse: true,
     settingCollapse: true,
     asideCollapse: false,
     floatingSettingVisible: false,
@@ -22,16 +24,24 @@ export const useControlStore = defineStore("useControlStore", {
     setMoveVisualData(v: VisualEditorBlockData | null) {
       this.moveVisualData = v || null;
     },
+    setIsDragging(v: boolean) {
+      this.isDragging = v;
+    },
+    setDraggingVisualKey(k: string) {
+      this.draggingVisualKey = k
+    }
   },
 });
 
 export interface ControlStoreState {
   customComponentsVisible: boolean;
   moveVisualData: VisualEditorBlockData | null;
+  isDragging: boolean;
   editScale?: number;
   layoutCollapse: boolean;
   settingCollapse: boolean;
   asideCollapse: boolean;
   floatingSettingVisible: boolean;
   floatingSettingActiveTab: string;
+  draggingVisualKey?: string
 }

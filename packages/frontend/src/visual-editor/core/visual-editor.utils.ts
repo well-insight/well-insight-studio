@@ -21,8 +21,8 @@ export interface VisualEditorBlockData {
   adjustPosition: boolean;
   /** 当前是否为选中状态 */
   focus: boolean;
-  width: number | string;
-  height: number | string;
+  w: number | string;
+  h: number | string;
   x: number | string;
   y: number | string;
   /** 当前组件的样式 */
@@ -263,8 +263,8 @@ export function createNewBlock(
     label: component!.label,
     adjustPosition: true,
     focus: false,
-    width: component.props?.width || 300,
-    height: component.props?.height || 200,
+    w: component.props?.width || 2,
+    h: component.props?.height || 2,
     styles: {
       display: "flex",
       justifyContent: "center",

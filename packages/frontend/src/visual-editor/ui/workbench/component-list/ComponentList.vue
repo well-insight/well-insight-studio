@@ -60,7 +60,7 @@ function cloneDog(comp: VisualEditorComponent) {
   <div class="w-full h-full">
     <el-tabs v-model="activeComp" tab-position="left" class="h-full border-around-1" :class="$style.tabs">
       <el-tab-pane v-for="(e, i) in widgets" :key="i" class="h-full w-full" :label="e.title" :name="e.title">
-        <el-scrollbar @end-reached="loadMore">
+        <el-scrollbar>
           <DraggableTransitionGroup
             v-model="e.widgets"
             :class="$style['list-group']"

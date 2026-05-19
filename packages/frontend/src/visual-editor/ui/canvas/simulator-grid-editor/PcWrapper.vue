@@ -15,15 +15,15 @@ import MonacoEditor from '@/visual-editor/ui/shared/monaco-editor/MonacoEditor'
 import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
 import { useMouseInElement, useResizeObserver } from '@vueuse/core'
 import { vLoading } from 'element-plus'
-import { cloneDeep, debounce } from 'lodash-es'
+import { cloneDeep, debounce, throttle } from 'lodash-es'
 import { storeToRefs } from 'pinia'
-import { computed, nextTick, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { AttrSettingsToolbar } from '@/visual-editor/ui/workbench/attr-settings-toolbar'
 import CompRender from './comp-render'
 import SlotItem from './SlotItem.vue'
 import { useAnimate } from '@/hooks/useAnimate'
-import { GridLayout, GridItem } from 'grid-layout-plus'
+import { GridLayout, GridItem, GridItemProps } from 'grid-layout-plus'
 
 defineOptions({
   name: 'SimulatorEditor',
@@ -41,27 +41,17 @@ const emits = defineEmits<{
   changeScale: [value: number]
 }>()
 
-const layout = reactive([
-  { x: 0, y: 0, w: 2, h: 2, i: '0', static: false },
-  { x: 2, y: 0, w: 2, h: 4, i: '1', static: true },
-  { x: 4, y: 0, w: 2, h: 5, i: '2', static: false },
-  { x: 6, y: 0, w: 2, h: 3, i: '3', static: false },
-  { x: 8, y: 0, w: 2, h: 3, i: '4', static: false },
-  { x: 10, y: 0, w: 2, h: 3, i: '5', static: false },
-  { x: 0, y: 5, w: 2, h: 5, i: '6', static: false },
-  { x: 2, y: 5, w: 2, h: 5, i: '7', static: false },
-  { x: 4, y: 5, w: 2, h: 5, i: '8', static: false },
-  { x: 6, y: 3, w: 2, h: 4, i: '9', static: true },
-  { x: 8, y: 4, w: 2, h: 4, i: '10', static: false },
-  { x: 10, y: 4, w: 2, h: 4, i: '11', static: false },
-  { x: 0, y: 10, w: 2, h: 5, i: '12', static: false },
-  { x: 2, y: 10, w: 2, h: 5, i: '13', static: false },
-  { x: 4, y: 8, w: 2, h: 4, i: '14', static: false },
-  { x: 6, y: 8, w: 2, h: 4, i: '15', static: false },
-  { x: 8, y: 10, w: 2, h: 5, i: '16', static: false },
-  { x: 10, y: 4, w: 2, h: 2, i: '17', static: false },
-  { x: 0, y: 9, w: 2, h: 3, i: '18', static: false },
-  { x: 2, y: 6, w: 2, h: 2, i: '19', static: false },
+const layout = ref<GridItemProps[]>([
+  { x: 0, y: 0, w: 2, h: 2, i: '0' },
+  { x: 2, y: 0, w: 2, h: 4, i: '1' },
+  { x: 4, y: 0, w: 2, h: 5, i: '2' },
+  { x: 6, y: 0, w: 2, h: 3, i: '3' },
+  { x: 8, y: 0, w: 2, h: 3, i: '4' },
+  { x: 10, y: 0, w: 2, h: 3, i: '5' },
+  { x: 0, y: 5, w: 2, h: 5, i: '6' },
+  { x: 2, y: 5, w: 2, h: 5, i: '7' },
+  { x: 4, y: 5, w: 2, h: 5, i: '8' },
+  { x: 5, y: 10, w: 4, h: 3, i: '9' },
 ])
 
 const currentScale = ref(props?.scale)
@@ -241,6 +231,124 @@ const editCanvasStyle = computed(() => {
     cursor: isEnterSpace.value ? 'grab' : 'auto',
   } as CSSProperties
 })
+
+const wrapper = ref<HTMLElement>()
+const gridLayout = ref<InstanceType<typeof GridLayout>>()
+
+onMounted(() => {
+  document.addEventListener('dragover', syncMousePosition)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('dragover', syncMousePosition)
+})
+
+const mouseAt = { x: -1, y: -1 }
+
+function syncMousePosition(event: MouseEvent) {
+  mouseAt.x = event.clientX
+  mouseAt.y = event.clientY
+}
+
+const dropId = 'drop'
+const dragItem = { x: -1, y: -1, w: 2, h: 2, i: '' }
+
+const dragging = throttle(() => {
+  const parentRect = wrapper.value?.getBoundingClientRect()
+
+
+  if (!parentRect || !gridLayout.value) return
+
+  const mouseInGrid =
+    mouseAt.x > parentRect.left &&
+    mouseAt.x < parentRect.right &&
+    mouseAt.y > parentRect.top &&
+    mouseAt.y < parentRect.bottom
+
+  console.log('拖拽', mouseInGrid);
+
+
+  if (mouseInGrid && !layout.value.find(item => item.i === dropId)) {
+    layout.value.push({
+      x: (layout.value.length * 2) % 12,
+      y: layout.value.length + 12, // puts it at the bottom
+      w: 2,
+      h: 2,
+      i: dropId,
+    })
+  }
+
+
+
+  const index = layout.value.findIndex(item => item.i === dropId)
+
+  console.log(index, 'dragging');
+  
+
+  if (index !== -1) {
+    const item = gridLayout.value.getItem(dropId)
+
+
+    if (!item) return
+
+    try {
+      item.wrapper.style.display = 'none'
+    } catch (e) {}
+
+    Object.assign(item.state, {
+      top: mouseAt.y - parentRect.top,
+      left: mouseAt.x - parentRect.left,
+    })
+    const newPos = item.calcXY(mouseAt.y - parentRect.top, mouseAt.x - parentRect.left)
+
+    if (mouseInGrid) {
+      gridLayout.value.dragEvent('dragging', dropId, newPos.x, newPos.y, dragItem.h, dragItem.w)
+      dragItem.i = String(index)
+      dragItem.x = layout.value[index].x
+      dragItem.y = layout.value[index].y
+    } else {
+      gridLayout.value.dragEvent('dragend', dropId, newPos.x, newPos.y, dragItem.h, dragItem.w)
+      layout.value = layout.value.filter(item => item.i !== dropId)
+    }
+  }
+})
+
+function dragEnd() {
+  const parentRect = wrapper.value?.getBoundingClientRect()
+
+  if (!parentRect || !gridLayout.value) return
+
+  const mouseInGrid =
+    mouseAt.x > parentRect.left &&
+    mouseAt.x < parentRect.right &&
+    mouseAt.y > parentRect.top &&
+    mouseAt.y < parentRect.bottom
+
+  if (mouseInGrid) {
+    // alert(`Dropped element props:\n${JSON.stringify(dragItem, ['x', 'y', 'w', 'h'], 2)}`)
+    gridLayout.value.dragEvent('dragend', dropId, dragItem.x, dragItem.y, dragItem.h, dragItem.w)
+    layout.value = layout.value.filter(item => item.i !== dropId)
+  } else {
+    return
+  }
+
+  layout.value.push({
+    x: dragItem.x,
+    y: dragItem.y,
+    w: dragItem.w,
+    h: dragItem.h,
+    i: dragItem.i,
+  })
+  gridLayout.value.dragEvent('dragend', dragItem.i, dragItem.x, dragItem.y, dragItem.h, dragItem.w)
+
+  const item = gridLayout.value.getItem(dropId)
+
+  if (!item) return
+
+  try {
+    item.wrapper.style.display = ''
+  } catch (e) {}
+}
 
 function elementDrop(e: DragEvent) {
   e.preventDefault() // 必须！
@@ -471,6 +579,18 @@ watch(currentScale, () => {
   emits('changeScale', currentScale.value)
 })
 
+watch(() => controlStore.draggingVisualKey, (v) => {
+  dragging()
+})
+
+watch(() => controlStore.isDragging, (v) => {
+  console.log('dragEnd');
+  
+  if(!v) {
+    dragEnd()
+  }
+})
+
 defineExpose({
   setScale,
   getScale,
@@ -480,8 +600,8 @@ defineExpose({
 
 <template>
   <div class="edit-control-container">
-    <div class="wrap-container">
-      <GridLayout v-model:layout="layout" :row-height="30">
+    <div class="wrap-container" ref="wrapper">
+      <GridLayout ref="gridLayout" v-model:layout="layout" :row-height="30">
         <template #item="{ item }">
           <span class="text">{{ `${item.i}${item.static ? "- Static" : ""}` }}</span>
         </template>
@@ -504,5 +624,54 @@ defineExpose({
     border-radius: var(--el-border-radius-base);
     overflow: hidden;
   }
+}
+</style>
+
+<style scoped>
+.vgl-layout {
+  background-color: #eee;
+}
+
+:deep(.vgl-item:not(.vgl-item--placeholder)) {
+  background-color: #ccc;
+  border: 1px solid black;
+}
+
+:deep(.vgl-item--resizing) {
+  opacity: 90%;
+}
+
+:deep(.vgl-item--static) {
+  background-color: #cce;
+}
+
+.text {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: auto;
+  font-size: 24px;
+  text-align: center;
+}
+
+.layout-json {
+  padding: 10px;
+  margin-top: 10px;
+  background-color: #ddd;
+  border: 1px solid black;
+}
+
+.columns {
+  columns: 120px;
+}
+
+.droppable-element {
+  width: 150px;
+  padding: 10px;
+  margin: 10px 0;
+  text-align: center;
+  background-color: #fdd;
+  border: 1px solid black;
 }
 </style>
