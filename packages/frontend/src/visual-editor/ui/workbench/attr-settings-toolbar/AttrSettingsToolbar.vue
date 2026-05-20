@@ -19,7 +19,7 @@
               <div class="toolbar-item-row">
                 <span class="toolbar-item-title">宽度</span>
                 <div class="toolbar-item-content">
-                  <el-input-number size="small" :min="0" v-model="currentBlock.width" />
+                  <el-input-number size="small" :min="1" v-model="gridWidth" />
                 </div>
               </div>
             </el-dropdown-item>
@@ -27,7 +27,7 @@
               <div class="toolbar-item-row">
                 <span class="toolbar-item-title">高度</span>
                 <div class="toolbar-item-content">
-                  <el-input-number size="small" :min="0" v-model="currentBlock.width" />
+                  <el-input-number size="small" :min="1" v-model="gridHeight" />
                 </div>
               </div>
             </el-dropdown-item>
@@ -235,6 +235,29 @@ const { visualConfig, currentBlock } = useVisualData();
 const componentItem = computed(() => {
   const componentKey = currentBlock.value?.componentKey;
   return componentKey ? visualConfig.componentMap[componentKey] : null;
+});
+
+/** 网格布局：w/h；自由布局：width/height */
+const gridWidth = computed({
+  get: () => currentBlock.value?.w ?? currentBlock.value?.width ?? 2,
+  set(val: number) {
+    if (!currentBlock.value?._vid) return;
+    currentBlock.value.w = val;
+    if ("width" in currentBlock.value) {
+      currentBlock.value.width = val;
+    }
+  },
+});
+
+const gridHeight = computed({
+  get: () => currentBlock.value?.h ?? currentBlock.value?.height ?? 2,
+  set(val: number) {
+    if (!currentBlock.value?._vid) return;
+    currentBlock.value.h = val;
+    if ("height" in currentBlock.value) {
+      currentBlock.value.height = val;
+    }
+  },
 });
 
 const compPaddingAttrs = ["paddingTop", "paddingLeft", "paddingRight", "paddingBottom"];

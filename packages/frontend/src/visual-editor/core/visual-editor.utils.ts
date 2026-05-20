@@ -257,8 +257,11 @@ export function createNewBlock(
   component: VisualEditorComponent,
   config?: Partial<VisualEditorBlockData>,
 ): VisualEditorBlockData {
+  const _vid = config?._vid ?? `vid_${generateNanoid()}`
   return {
-    _vid: `vid_${generateNanoid()}`,
+    _vid,
+    /** grid-layout-plus 唯一键，默认与 _vid 一致 */
+    i: config?.i ?? _vid,
     moduleName: component.moduleName,
     componentKey: component!.key,
     label: component!.label,
@@ -292,6 +295,8 @@ export function createNewBlock(
     events: component.events || [], // 事件集合
     model: {},
     ...config,
+    _vid,
+    i: config?.i ?? _vid,
   } as VisualEditorBlockData;
 }
 

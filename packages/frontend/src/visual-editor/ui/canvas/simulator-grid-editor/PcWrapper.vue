@@ -52,7 +52,7 @@ const { globalProperties } = useGlobalProperties()
 
 const controlStore = useControlStore()
 
-const { editScale, floatingSettingVisible } = storeToRefs(controlStore)
+const { floatingSettingVisible } = storeToRefs(controlStore)
 
 const drag = ref(false)
 
@@ -183,6 +183,11 @@ function keyEvent() {
 }
 
 onMounted(() => {
+  currentPage.value.blocks.forEach((block) => {
+    if (!block.i) {
+      block.i = block._vid
+    }
+  })
   setWrapPositionSize()
   keyEvent()
 
@@ -206,18 +211,19 @@ const editCanvasStyle = computed(() => {
   const normalizedBgImage = bgImage ? `url(${bgImage})` : 'none'
   const normalizedBgRepeat = bgRepeat || 'no-repeat'
   const normalizedBgSize = bgSize || 'cover'
-  console.log('画布全局样式', bgImage, bgColor, pageSize, bgRepeat, bgSize )
   return {
-    width: `${pageSize?.width || 0}px`,
-    height: `${pageSize?.height || 0}px`,
+    width: '100%',
+    height: '100%',
     backgroundColor: normalizedBgColor,
     backgroundImage: normalizedBgImage,
     backgroundRepeat: normalizedBgRepeat,
     backgroundSize: normalizedBgSize,
-    transform: `scale(${currentScale.value})`,
     cursor: isEnterSpace.value ? 'grab' : 'auto',
   } as CSSProperties
 })
+
+const isBlockSelected = (block: VisualEditorBlockData) =>
+  !!currentBlock.value?._vid && currentBlock.value._vid === block._vid
 
 const wrapper = ref<HTMLElement>()
 const gridLayout = ref<InstanceType<typeof GridLayout>>()
@@ -238,11 +244,10 @@ function syncMousePosition(event: MouseEvent) {
 }
 
 const dropId = 'drop'
-const dragItem = { x: -1, y: -1, w: 2, h: 2, i: '' }
+const dragItem = { x: -1, y: -1, w: 2, h: 4, i: '' }
 
 const dragging = throttle(() => {
   const parentRect = wrapper.value?.getBoundingClientRect()
-  console.log('拖动中', { mouseAt, parentRect })
 
   if (!parentRect || !gridLayout.value) return
 
@@ -315,10 +320,11 @@ function dragEnd() {
     y: dragItem.y,
     w: dragItem.w,
     h: dragItem.h,
-    i: dragItem.i
+    i: controlStore.moveVisualData?._vid ?? controlStore.moveVisualData?.i,
   }
 
   currentPage.value.blocks.push(moveData)
+  selectComp(moveData)
   controlStore.setMoveVisualData(null)
 
   gridLayout.value.dragEvent('dragend', dragItem.i, dragItem.x, dragItem.y, dragItem.h, dragItem.w)
@@ -399,6 +405,10 @@ function handleSlotsFocus(block: VisualEditorBlockData, _vid: string) {
  */
 function deSelectComp() {
   floatingSettingVisible.value = false
+  currentPage.value.blocks.forEach((block) => {
+    block.focus = false
+    block.focusWithChild = false
+  })
   setCurrentBlock(null)
 }
 
@@ -407,18 +417,37 @@ function deSelectComp() {
  * @param element
  */
 function selectComp(element: VisualEditorBlockData) {
-  setTimeout(() => {
-    // 选中组件关闭组件选择抽屉
-    controlStore.customComponentsVisible = false
+  if (!element?._vid) {
+    return
+  }
+  // 选中组件关闭组件选择抽屉
+  controlStore.customComponentsVisible = false
 
-    setCurrentBlock(element)
-    currentPage.value.blocks.forEach((block) => {
-      block.focus = element._vid === block._vid
-      block.focusWithChild = false
-      handleSlotsFocus(block, element._vid)
-      element.focusWithChild = false
-    })
+  setCurrentBlock(element)
+  currentPage.value.blocks.forEach((block) => {
+    block.focus = element._vid === block._vid
+    block.focusWithChild = false
+    handleSlotsFocus(block, element._vid)
+    element.focusWithChild = false
   })
+}
+
+function onCanvasMousedown(e: MouseEvent) {
+  const target = e.target as HTMLElement
+  if (
+    target.classList.contains('edit-canvas')
+    || target.classList.contains('edit-canvas-inner')
+    || target.classList.contains('vgl-layout')
+  ) {
+    deSelectComp()
+  }
+}
+
+function onLayoutUpdated() {
+  const focused = currentPage.value.blocks.find(item => item._vid === currentBlock.value?._vid)
+  if (focused) {
+    setCurrentBlock(focused)
+  }
 }
 
 /**
@@ -573,33 +602,62 @@ defineExpose({
 <template>
   <div :class="$style['edit-control-container']">
     <div :class="$style['wrap-container']" ref="wrapper">
-      <GridLayout
-        class="h-full w-full"
-        ref="gridLayout"
-        v-model:layout="currentPage.blocks"
-        :row-height="30"
+      <div
+        ref="canvasRef"
+        v-loading="visualLoading"
+        class="edit-canvas"
+        :style="editCanvasStyle"
+        @mousedown="onCanvasMousedown"
       >
-        <template #item="{ item }: { item: VisualEditorBlockData }">
-          <CompRender
-            :key="item._vid"
-            :element="item"
-            :style="{
-              pointerEvents: Object.keys(item.props?.slots || {}).length ? 'auto' : 'none',
-            }"
+        <div class="edit-canvas-inner">
+          <GridLayout
+            class="grid-layout-canvas"
+            ref="gridLayout"
+            v-model:layout="currentPage.blocks"
+            :row-height="30"
+            :margin="[8, 8]"
+            @layout-updated="onLayoutUpdated"
           >
-            <template v-for="(value, slotKey) in item.props?.slots" :key="slotKey" #[slotKey]>
-              <SlotItem
-                v-model:children="value.children"
-                v-model:drag="drag"
-                :slot-key="slotKey"
-                :on-contextmenu-block="onContextmenuBlock"
-                :select-comp="selectComp"
-                :delete-comp="deleteComp"
-              />
+            <template #item="{ item }: { item: VisualEditorBlockData }">
+              <div
+                :key="item._vid"
+                :data-label="item.label"
+                class="list-group-item"
+                :class="{
+                  focus: item.focus,
+                  focusWithChild: item.focusWithChild,
+                  drag,
+                  'has-slot': !!Object.keys(item.props?.slots || {}).length,
+                  [`list-group-item-${item._vid}`]: true,
+                }"
+                @mousedown.stop="selectComp(item)"
+                @contextmenu.stop.prevent="onContextmenuBlock($event, item)"
+              >
+                <div v-if="isBlockSelected(item)" class="grid-item-toolbar" @mousedown.stop>
+                  <AttrSettingsToolbar />
+                </div>
+                <CompRender
+                  :element="item"
+                  :style="{
+                    pointerEvents: Object.keys(item.props?.slots || {}).length ? 'auto' : 'none',
+                  }"
+                >
+                  <template v-for="(value, slotKey) in item.props?.slots" :key="slotKey" #[slotKey]>
+                    <SlotItem
+                      v-model:children="value.children"
+                      v-model:drag="drag"
+                      :slot-key="slotKey"
+                      :on-contextmenu-block="onContextmenuBlock"
+                      :select-comp="selectComp"
+                      :delete-comp="deleteComp"
+                    />
+                  </template>
+                </CompRender>
+              </div>
             </template>
-          </CompRender>
-        </template>
-      </GridLayout>
+          </GridLayout>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -614,9 +672,95 @@ defineExpose({
     width: 100%;
     height: 100%;
     box-shadow: 0 8px 10px #00000012;
-    background-color: var(--el-bg-color);
+    background-color: #f5f5f5;
     border-radius: var(--el-border-radius-base);
     overflow: hidden;
   }
+}
+</style>
+
+<style lang="scss" scoped>
+@use "./func.scss" as *;
+
+.edit-canvas-scroll {
+  display: flex;
+  justify-content: center;
+  min-height: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.edit-canvas {
+  position: relative;
+  flex-shrink: 0;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 8%);
+  border-radius: var(--el-border-radius-base);
+  overflow: visible;
+}
+
+.edit-canvas-inner {
+  width: 100%;
+  height: 100%;
+  min-height: inherit;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.grid-layout-canvas {
+  width: 100%;
+  min-height: 100%;
+}
+
+.list-group-item {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  box-sizing: border-box;
+  cursor: pointer;
+  border-radius: 6px;
+  box-shadow: rgba(6, 30, 53, 0.1) 0 1px 2px 1px;
+  background-color: #fff;
+  overflow: hidden;
+
+  &.focus {
+    @include showComponentBorder;
+  }
+
+  &.focusWithChild {
+    @include showContainerBorder;
+  }
+
+  &:hover:not(.focus) {
+    @include showComponentBorder;
+  }
+
+  &:hover::after,
+  &.focus::after {
+    opacity: 1;
+    transition: opacity 0.2s;
+    @include showCompLabel(left);
+  }
+}
+
+.grid-item-toolbar {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 20;
+  // transform: translate(-50%, calc(-100% - 8px));
+  pointer-events: auto;
+  white-space: nowrap;
+}
+
+:deep(.vgl-item) {
+  transition: box-shadow 0.15s ease;
+}
+
+:deep(.vgl-item--resizing),
+:deep(.vgl-item--dragging) {
+  z-index: 10;
 }
 </style>

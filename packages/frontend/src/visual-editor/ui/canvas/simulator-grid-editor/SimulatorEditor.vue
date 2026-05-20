@@ -6,7 +6,7 @@ import RightAttributePanel from "@/visual-editor/ui/workbench/right-attribute-pa
 import { CloseBold, Plus } from "@element-plus/icons-vue";
 import { onClickOutside } from "@vueuse/core";
 import { storeToRefs } from "pinia";
-import { computed, onUnmounted, ref, useTemplateRef } from "vue";
+import { onUnmounted, ref, useTemplateRef } from "vue";
 import MobileWrapper from "./MobileWrapper.vue";
 import PcWrapper from "./PcWrapper.vue";
 import { ComponentList } from "../../workbench/component-list-new";
@@ -22,17 +22,6 @@ const { currentApp } = storeToRefs(workspaceStore);
 const controlStore = useControlStore();
 const { floatingSettingVisible } = storeToRefs(controlStore);
 
-const { editScale } = storeToRefs(controlStore);
-
-const scaleValue = computed({
-  get() {
-    return editScale.value * 100;
-  },
-  set(v: number) {
-    editScale.value = v / 100;
-  },
-});
-
 const floatingPanelRef = ref<HTMLElement | null>(null);
 
 const wrapperRef = useTemplateRef("wrapperRef");
@@ -42,10 +31,6 @@ onClickOutside(floatingPanelRef, () => {
     controlStore.floatingSettingVisible = false;
   }
 });
-
-function changeScale(s: number) {
-  editScale.value = s;
-}
 
 function triggerShowComponents() {
   controlStore.customComponentsVisible = !controlStore.customComponentsVisible;
@@ -91,8 +76,8 @@ onUnmounted(() => {
     </div>
 
     <!-- 添加按钮 -->
-    <el-button
-      class="absolute right-6 bottom-[75px] h-[60px]! w-[60px]!"
+    <!-- <el-button
+      class="absolute right-6 bottom-6 h-[60px]! w-[60px]!"
       type="primary"
       circle
       @click="triggerShowComponents"
@@ -100,14 +85,7 @@ onUnmounted(() => {
       <el-icon size="30px">
         <Plus />
       </el-icon>
-    </el-button>
-
-    <!-- 底部控制栏 -->
-    <div class="flex h-[50px] w-full items-center justify-end px-4">
-      <el-space>
-        <el-slider v-model="scaleValue" :min="10" class="w-[300px]" show-input />
-      </el-space>
-    </div>
+    </el-button> -->
   </div>
 </template>
 

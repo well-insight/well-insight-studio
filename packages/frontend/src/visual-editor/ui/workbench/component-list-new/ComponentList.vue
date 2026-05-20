@@ -13,10 +13,10 @@ import { useControlStore } from "@/stores";
 const activeComp = ref("基础组件");
 
 const emits = defineEmits<{
-  dragStart: [value: VisualEditorComponent, index: number],
-  drag: [k: string],
-  dragEnd: [],
-}>()
+  dragStart: [value: VisualEditorComponent, index: number];
+  drag: [k: string];
+  dragEnd: [];
+}>();
 
 const controlStore = useControlStore();
 
@@ -47,23 +47,22 @@ const widgets = computed(() => {
 });
 
 function dragStart(e: DragEvent, visual: VisualEditorComponent, index: number) {
-  e.dataTransfer?.setData('text/plain', visual.key)
-  e.dataTransfer!.effectAllowed = 'move'
+  e.dataTransfer?.setData("text/plain", visual.key);
+  e.dataTransfer!.effectAllowed = "move";
   controlStore.setIsDragging(true);
   controlStore.setMoveVisualData(createNewBlock(cloneDeep(visual)));
-  emits('dragStart', visual, index)
+  emits("dragStart", visual, index);
 }
 
 function dragging() {
-  controlStore.setDraggingVisualKey((new Date()).getTime().toString())
-  emits('drag', controlStore.draggingVisualKey)
+  controlStore.setDraggingVisualKey(new Date().getTime().toString());
+  emits("drag", controlStore.draggingVisualKey);
 }
 
 function dragEnd() {
   controlStore.setIsDragging(false);
-  emits('dragEnd')
+  emits("dragEnd");
 }
-
 </script>
 
 <template>
