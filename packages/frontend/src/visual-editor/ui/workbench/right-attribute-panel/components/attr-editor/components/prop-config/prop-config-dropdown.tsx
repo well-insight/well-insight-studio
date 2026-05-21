@@ -58,7 +58,11 @@ export const PropConfig = defineComponent({
             propObj[prop] = `${propObj[prop]}`;
           }
           return (
-            <ElInput size={uiSize} v-model={propObj[prop]} placeholder={propConfig.tips || propConfig.label} />
+            <ElInput
+              size={uiSize}
+              v-model={propObj[prop]}
+              placeholder={propConfig.tips || propConfig.label}
+            />
           );
         },
         [VisualEditorPropsType.inputNumber]: () => {
@@ -67,7 +71,9 @@ export const PropConfig = defineComponent({
           return <ElInputNumber size={uiSize} v-model={propObj[prop]} />;
         },
         [VisualEditorPropsType.switch]: () => <ElSwitch size={uiSize} v-model={propObj[prop]} />,
-        [VisualEditorPropsType.color]: () => <ElColorPicker size={uiSize} v-model={propObj[prop]} />,
+        [VisualEditorPropsType.color]: () => (
+          <ElColorPicker size={uiSize} v-model={propObj[prop]} />
+        ),
         [VisualEditorPropsType.crossSortable]: () => (
           <CrossSortableOptionsEditor
             v-model={propObj[prop]}
@@ -76,7 +82,12 @@ export const PropConfig = defineComponent({
           />
         ),
         [VisualEditorPropsType.select]: () => (
-          <ElSelect size={uiSize} v-model={propObj[prop]} valueKey="value" multiple={propConfig.multiple}>
+          <ElSelect
+            size={uiSize}
+            v-model={propObj[prop]}
+            valueKey="value"
+            multiple={propConfig.multiple}
+          >
             {propConfig.options?.map((opt) => (
               <ElOption label={opt.label} style={{ fontFamily: opt.value }} value={opt.value} />
             ))}

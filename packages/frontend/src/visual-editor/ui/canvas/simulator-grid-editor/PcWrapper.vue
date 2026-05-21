@@ -12,14 +12,17 @@ import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { generateNanoid } from '@/visual-editor/lib'
 import { $$dropdown, DropdownOption } from '@/visual-editor/lib/dropdown-service'
 import MonacoEditor from '@/visual-editor/ui/shared/monaco-editor/MonacoEditor'
-import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
+import { getBlockAnimationElement, type VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
+import {
+  getBlockTitleInlineStyle,
+  isInnerBlockTitle,
+} from '@/visual-editor/core/visual-editor.utils'
 import { useMouseInElement, useResizeObserver } from '@vueuse/core'
 import { vLoading } from 'element-plus'
 import { cloneDeep, debounce, throttle } from 'lodash-es'
 import { storeToRefs } from 'pinia'
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { AttrSettingsToolbar } from '@/visual-editor/ui/workbench/attr-settings-toolbar'
 import CompRender from './comp-render'
 import SlotItem from './SlotItem.vue'
 import { useAnimate } from '@/hooks/useAnimate'
@@ -221,9 +224,6 @@ const editCanvasStyle = computed(() => {
     cursor: isEnterSpace.value ? 'grab' : 'auto',
   } as CSSProperties
 })
-
-const isBlockSelected = (block: VisualEditorBlockData) =>
-  !!currentBlock.value?._vid && currentBlock.value._vid === block._vid
 
 const wrapper = ref<HTMLElement>()
 const gridLayout = ref<InstanceType<typeof GridLayout>>()
@@ -570,7 +570,7 @@ function initAnimate() {
   }))
 
   animations.forEach(({ _vid, animations }) => {
-    const anmiationEl = document.querySelector(`.list-group-item-${_vid}`)?.firstChild?.firstChild as HTMLElement
+    const anmiationEl = getBlockAnimationElement(_vid)
     useAnimate(anmiationEl, animations)
   })
 
@@ -628,31 +628,46 @@ defineExpose({
                   focusWithChild: item.focusWithChild,
                   drag,
                   'has-slot': !!Object.keys(item.props?.slots || {}).length,
+                  'has-inner-title': item.showTitle === true && isInnerBlockTitle(item.titleStyle),
                   [`list-group-item-${item._vid}`]: true,
                 }"
                 @mousedown.stop="selectComp(item)"
                 @contextmenu.stop.prevent="onContextmenuBlock($event, item)"
               >
-                <div v-if="isBlockSelected(item)" class="grid-item-toolbar" @mousedown.stop>
-                  <AttrSettingsToolbar />
-                </div>
-                <CompRender
-                  :element="item"
-                  :style="{
-                    pointerEvents: Object.keys(item.props?.slots || {}).length ? 'auto' : 'none',
-                  }"
+                <div
+                  v-if="item.showTitle === true && isInnerBlockTitle(item.titleStyle)"
+                  class="block-title-inner"
+                  :style="getBlockTitleInlineStyle(item.titleStyle)"
                 >
-                  <template v-for="(value, slotKey) in item.props?.slots" :key="slotKey" #[slotKey]>
-                    <SlotItem
-                      v-model:children="value.children"
-                      v-model:drag="drag"
-                      :slot-key="slotKey"
-                      :on-contextmenu-block="onContextmenuBlock"
-                      :select-comp="selectComp"
-                      :delete-comp="deleteComp"
-                    />
-                  </template>
-                </CompRender>
+                  {{ item.label }}
+                </div>
+                <div class="list-group-item__body">
+                  <span
+                    v-if="item.showTitle === true && !isInnerBlockTitle(item.titleStyle)"
+                    class="block-title-outer"
+                    :class="`block-title-outer--${item.titleStyle?.position || 'outer-left'}`"
+                    :style="getBlockTitleInlineStyle(item.titleStyle)"
+                  >
+                    {{ item.label }}
+                  </span>
+                  <CompRender
+                    :element="item"
+                    :style="{
+                      pointerEvents: Object.keys(item.props?.slots || {}).length ? 'auto' : 'none',
+                    }"
+                  >
+                    <template v-for="(value, slotKey) in item.props?.slots" :key="slotKey" #[slotKey]>
+                      <SlotItem
+                        v-model:children="value.children"
+                        v-model:drag="drag"
+                        :slot-key="slotKey"
+                        :on-contextmenu-block="onContextmenuBlock"
+                        :select-comp="selectComp"
+                        :delete-comp="deleteComp"
+                      />
+                    </template>
+                  </CompRender>
+                </div>
               </div>
             </template>
           </GridLayout>
@@ -716,43 +731,97 @@ defineExpose({
   width: 100%;
   height: 100%;
   display: flex;
+  flex-direction: column;
   align-items: stretch;
-  justify-content: stretch;
   box-sizing: border-box;
   cursor: pointer;
   border-radius: 6px;
   box-shadow: rgba(6, 30, 53, 0.1) 0 1px 2px 1px;
   background-color: #fff;
   overflow: hidden;
+  outline: none;
 
-  &.focus {
-    @include showComponentBorder;
+  /* 选中/悬停描边置于最上层，避免被内部内容背景遮盖 */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 2px solid transparent;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 30;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
   }
 
-  &.focusWithChild {
-    @include showContainerBorder;
+  &:hover:not(.focus)::after {
+    border-color: var(--el-color-primary-light-5);
   }
 
-  &:hover:not(.focus) {
-    @include showComponentBorder;
-  }
-
-  &:hover::after,
   &.focus::after {
-    opacity: 1;
-    transition: opacity 0.2s;
-    @include showCompLabel(left);
+    border-color: var(--el-color-primary);
+  }
+
+  &.focusWithChild:not(.focus)::after {
+    border: 2px dashed var(--el-color-primary-light-7);
+  }
+
+  &.focusWithChild::before {
+    display: none;
   }
 }
 
-.grid-item-toolbar {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  z-index: 20;
-  // transform: translate(-50%, calc(-100% - 8px));
-  pointer-events: auto;
+.list-group-item__body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 卡片内顶部标题（参考图：左上、加粗、深色） */
+.block-title-inner {
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+  line-height: 1.4;
+  text-align: left;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+/* 编辑态外侧角标（可选） */
+.block-title-outer {
+  position: absolute;
+  z-index: 5;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.block-title-outer--outer-left {
+  top: 0;
+  left: -3px;
+  transform: translate(-100%, 0);
+}
+
+.block-title-outer--outer-right {
+  top: 0;
+  right: -3px;
+  transform: translate(100%, 0);
+}
+
+.block-title-outer--outer-top {
+  top: 2px;
+  left: 0;
+  transform: translate(0, -100%);
+}
+
+:deep(.vgl-item:has(.list-group-item.focus)) {
+  z-index: 12;
 }
 
 :deep(.vgl-item) {

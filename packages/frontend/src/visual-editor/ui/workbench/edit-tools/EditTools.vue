@@ -92,12 +92,13 @@ function openFloatingSetting() {
 </script>
 
 <template>
-  <div class="border-bottom-1 flex h-full w-full items-center justify-between overflow-hidden px-4">
-    <div class="flex h-full items-center">
+  <div class="border-bottom-1 flex h-full w-full items-center gap-2 overflow-hidden px-4">
+    <div class="flex h-full min-w-0 flex-1 items-center gap-2 overflow-hidden">
       <PageSettingButton />
+      <slot name="center" />
     </div>
 
-    <div class="flex h-full items-center">
+    <div class="flex h-full shrink-0 items-center">
       <el-button text :icon="RefreshLeft" />
       <el-button text :icon="RefreshRight" />
       <el-divider direction="vertical" />

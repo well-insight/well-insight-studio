@@ -1,5 +1,8 @@
 <template>
-  <div v-if="currentBlock?._vid && componentItem" class="toolbar-wrapper">
+  <div
+    v-if="currentBlock?._vid && componentItem"
+    :class="['toolbar-wrapper', variant === 'dock' && 'toolbar-wrapper--dock']"
+  >
     <el-dropdown
       trigger="click"
       placement="bottom"
@@ -8,7 +11,7 @@
       popper-class="toolbar-dropdown"
       :hide-on-click="false"
     >
-      <el-button size="small" text :icon="Setting">
+      <el-button text :icon="Setting">
         <span>基础配置</span>
         <el-icon><CaretBottom /></el-icon>
       </el-button>
@@ -17,9 +20,40 @@
           <el-dropdown-menu>
             <el-dropdown-item>
               <div class="toolbar-item-row">
+                <span class="toolbar-item-title">组件名称</span>
+                <div class="toolbar-item-content">
+                  <el-input
+                    v-model="currentBlock.label"
+                    clearable
+                    placeholder="请输入组件名称"
+                    maxlength="32"
+                  />
+                </div>
+              </div>
+            </el-dropdown-item>
+            <el-dropdown-item>
+              <div class="toolbar-item-row">
+                <span class="toolbar-item-title">展示标题</span>
+                <div class="toolbar-item-content">
+                  <el-switch v-model="showTitle" />
+                </div>
+              </div>
+            </el-dropdown-item>
+            <TextStyleConfig
+              v-if="showTitle"
+              v-model="titleStyle"
+              layout="dropdown"
+              show-position
+              show-background
+              show-border-radius
+              size="default"
+              :teleported="false"
+            />
+            <el-dropdown-item>
+              <div class="toolbar-item-row">
                 <span class="toolbar-item-title">宽度</span>
                 <div class="toolbar-item-content">
-                  <el-input-number size="small" :min="1" v-model="gridWidth" />
+                  <el-input-number :min="1" v-model="gridWidth" />
                 </div>
               </div>
             </el-dropdown-item>
@@ -27,7 +61,7 @@
               <div class="toolbar-item-row">
                 <span class="toolbar-item-title">高度</span>
                 <div class="toolbar-item-content">
-                  <el-input-number size="small" :min="1" v-model="gridHeight" />
+                  <el-input-number :min="1" v-model="gridHeight" />
                 </div>
               </div>
             </el-dropdown-item>
@@ -35,7 +69,7 @@
               <div class="toolbar-item-row">
                 <span class="toolbar-item-title">背景颜色</span>
                 <div class="toolbar-item-content">
-                  <el-color-picker size="small" v-model="currentBlock.styles.backgroundColor" />
+                  <el-color-picker v-model="currentBlock.styles.backgroundColor" />
                 </div>
               </div>
             </el-dropdown-item>
@@ -52,7 +86,6 @@
                 <span class="toolbar-item-title">图片重复</span>
                 <div class="toolbar-item-content">
                   <el-select
-                    size="small"
                     v-model="currentBlock.styles.backgroundRepeat"
                     clearable
                     :teleported="false"
@@ -70,7 +103,6 @@
                 <span class="toolbar-item-title">图片大小</span>
                 <div class="toolbar-item-content">
                   <el-select
-                    size="small"
                     v-model="currentBlock.styles.backgroundSize"
                     clearable
                     :teleported="false"
@@ -98,7 +130,7 @@
       :hide-on-click="false"
       popper-class="toolbar-dropdown"
     >
-      <el-button size="small" text :icon="Grid">
+      <el-button text :icon="Grid">
         <span>组件配置</span>
         <el-icon><CaretBottom /></el-icon>
       </el-button>
@@ -122,7 +154,7 @@
       :hide-on-click="false"
       popper-class="toolbar-dropdown"
     >
-      <el-button size="small" text :icon="BrushFilled">
+      <el-button text :icon="BrushFilled">
         <span>样式设置</span>
         <el-icon><CaretBottom /></el-icon>
       </el-button>
@@ -133,7 +165,7 @@
               <div class="toolbar-item-row">
                 <span class="toolbar-item-title">水平对齐</span>
                 <div class="toolbar-item-content">
-                  <el-radio-group v-model="currentBlock.styles.justifyContent" size="small">
+                  <el-radio-group v-model="currentBlock.styles.justifyContent">
                     <el-radio-button label="flex-start">左</el-radio-button>
                     <el-radio-button label="center">中</el-radio-button>
                     <el-radio-button label="flex-end">右</el-radio-button>
@@ -145,7 +177,7 @@
               <div class="toolbar-item-row">
                 <span class="toolbar-item-title">垂直对齐</span>
                 <div class="toolbar-item-content">
-                  <el-radio-group v-model="currentBlock.styles.alignItems" size="small">
+                  <el-radio-group v-model="currentBlock.styles.alignItems">
                     <el-radio-button label="flex-start">上</el-radio-button>
                     <el-radio-button label="center">中</el-radio-button>
                     <el-radio-button label="flex-end">下</el-radio-button>
@@ -157,7 +189,7 @@
               <div class="toolbar-item-row">
                 <span class="toolbar-item-title">组件内边距</span>
                 <div class="toolbar-item-content">
-                  <FormatInputNumber size="small" v-model="compPadding" />
+                  <FormatInputNumber v-model="compPadding" />
                 </div>
               </div>
             </el-dropdown-item>
@@ -168,7 +200,7 @@
 
     <el-divider direction="vertical"></el-divider>
 
-    <el-button size="small" text :icon="VideoPlay" @click="openAnimatePanel">
+    <el-button text :icon="VideoPlay" @click="openAnimatePanel">
       <span>动画</span>
     </el-button>
 
@@ -181,7 +213,7 @@
       :hide-on-click="false"
       popper-class="toolbar-dropdown toolbar-dropdown-panel"
     >
-      <el-button size="small" text :icon="DataLine">
+      <el-button text :icon="DataLine">
         <span>事件 </span>
         <el-icon><CaretBottom /></el-icon>
       </el-button>
@@ -196,13 +228,7 @@
 
     <el-divider direction="vertical"></el-divider>
     <el-tooltip content="更多选项" placement="bottom">
-      <el-button
-        size="small"
-        text
-        :icon="MoreFilled"
-        class="toolbar-more-btn"
-        @click="openMorePanel"
-      />
+      <el-button text :icon="MoreFilled" class="toolbar-more-btn" @click="openMorePanel" />
     </el-tooltip>
   </div>
 </template>
@@ -211,6 +237,7 @@
 import { useControlStore } from "@/stores/controlStore";
 import { useVisualData } from "@/visual-editor/hooks/useVisualData";
 import { FormatInputNumber } from "@/visual-editor/ui/shared/format-input-number";
+import { TextStyleConfig } from "@/visual-editor/ui/shared/text-style-config";
 import { EventAction } from "@/visual-editor/ui/workbench/right-attribute-panel/components";
 import { PropConfig } from "@/visual-editor/ui/workbench/right-attribute-panel/components/attr-editor/components/prop-config/prop-config-dropdown";
 import ImageUpload from "@/visual-editor/ui/workbench/right-attribute-panel/components/page-setting/ImageUpload.vue";
@@ -223,11 +250,24 @@ import {
   Setting,
   VideoPlay,
 } from "@element-plus/icons-vue";
+import {
+  defaultTextStyleConfig,
+  type TextStyleConfig as TextStyleConfigValue,
+} from "@/visual-editor/core/visual-editor.utils";
 import { computed, watch } from "vue";
+import { de } from "element-plus/es/locale/index.mjs";
 
-const props = withDefaults(defineProps<{ virualRef?: any }>(), {
-  virualRef: null,
-});
+const props = withDefaults(
+  defineProps<{
+    virualRef?: any;
+    /** default: 自由布局浮层；dock: 网格编辑器顶部上下文栏 */
+    variant?: "default" | "dock";
+  }>(),
+  {
+    virualRef: null,
+    variant: "default",
+  },
+);
 
 const controlStore = useControlStore();
 const { visualConfig, currentBlock } = useVisualData();
@@ -235,6 +275,25 @@ const { visualConfig, currentBlock } = useVisualData();
 const componentItem = computed(() => {
   const componentKey = currentBlock.value?.componentKey;
   return componentKey ? visualConfig.componentMap[componentKey] : null;
+});
+
+const showTitle = computed({
+  get: () => currentBlock.value?.showTitle === true,
+  set(val: boolean) {
+    if (!currentBlock.value?._vid) return;
+    currentBlock.value.showTitle = val;
+    if (val && !currentBlock.value.titleStyle) {
+      currentBlock.value.titleStyle = defaultTextStyleConfig();
+    }
+  },
+});
+
+const titleStyle = computed({
+  get: () => currentBlock.value?.titleStyle ?? defaultTextStyleConfig(),
+  set(val: TextStyleConfigValue) {
+    if (!currentBlock.value?._vid) return;
+    currentBlock.value.titleStyle = val;
+  },
 });
 
 /** 网格布局：w/h；自由布局：width/height */
@@ -380,6 +439,26 @@ function openAnimatePanel() {
   width: 30px;
   min-width: 30px;
   padding: 0 !important;
+}
+
+.toolbar-wrapper--dock {
+  box-shadow: none;
+  padding: 0;
+  background: transparent;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  align-items: center;
+  height: 32px;
+
+  :deep(.el-button) {
+    height: 32px;
+    padding: 0 8px;
+  }
+
+  :deep(.el-divider--vertical) {
+    height: 18px;
+    margin: 0 2px;
+  }
 }
 </style>
 

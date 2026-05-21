@@ -40,6 +40,10 @@ export interface VisualEditorBlockData extends GridItemProps {
   draggable: boolean;
   /** 是否显示组件样式配置项 */
   showStyleConfig?: boolean;
+  /** 编辑态是否展示组件标题 */
+  showTitle?: boolean;
+  /** 组件标题样式 */
+  titleStyle?: BlockTitleStyle;
   /** 动画集 */
   animations?: Animation[];
   /** 组件动作集合 */
@@ -248,6 +252,110 @@ export interface VisualEditorComponent {
   styles?: CSSProperties;
 }
 
+/** inner: 卡片内顶部标题（默认）；outer-*: 编辑态外侧角标 */
+export type BlockTitlePosition = "inner" | "outer-left" | "outer-top" | "outer-right";
+
+/** 通用文本/标题样式配置（字体、颜色、背景等） */
+export interface TextStyleConfig {
+  fontSize?: string;
+  fontWeight?: string | number;
+  color?: string;
+  backgroundColor?: string;
+  borderRadius?: string;
+  padding?: string;
+  position?: BlockTitlePosition;
+}
+
+/** @deprecated 使用 TextStyleConfig */
+export type BlockTitleStyle = TextStyleConfig;
+
+export function defaultTextStyleConfig(): TextStyleConfig {
+  return {
+    fontSize: "14px",
+    fontWeight: "600",
+    color: "#303133",
+    backgroundColor: "transparent",
+    borderRadius: "0",
+    padding: "12px 12px 8px",
+    position: "inner",
+  };
+}
+
+/** 画布上用于执行 animate.css 的 DOM（comp-render 根节点） */
+export function getBlockAnimationElement(vid?: string | null): HTMLElement | null {
+  if (!vid) {
+    return null;
+  }
+
+  const byRenderClass = document.querySelector(
+    `.comp-render-${vid}`,
+  ) as HTMLElement | null;
+  if (byRenderClass) {
+    return byRenderClass;
+  }
+
+  const inGridItem = document.querySelector(
+    `.list-group-item-${vid} .list-group-item__body .comp-render-root`,
+  ) as HTMLElement | null;
+  if (inGridItem) {
+    return inGridItem;
+  }
+
+  const ref = (window as Window & { $$refs?: Record<string, { $el?: HTMLElement } | HTMLElement> })
+    .$$refs?.[vid];
+  const refEl = (ref && "$el" in ref ? ref.$el : ref) as HTMLElement | undefined;
+  if (refEl) {
+    return (
+      (refEl.querySelector?.(".comp-render-root") as HTMLElement | null)
+      ?? (refEl.closest?.(".list-group-item")?.querySelector(
+        ".comp-render-root",
+      ) as HTMLElement | null)
+      ?? refEl
+    );
+  }
+
+  return document.querySelector(
+    `.list-group-item-${vid} .list-group-item__body .comp-render-root`,
+  ) as HTMLElement | null;
+}
+
+/** 是否为卡片内顶部标题（参考图样式） */
+export function isInnerBlockTitle(titleStyle?: TextStyleConfig) {
+  const pos = titleStyle?.position;
+  if (!pos || pos === "inner" || (pos as string) === "top") {
+    return true;
+  }
+  return false;
+}
+
+/** @deprecated 使用 defaultTextStyleConfig */
+export const defaultBlockTitleStyle = defaultTextStyleConfig;
+
+export function getBlockTitleInlineStyle(titleStyle?: TextStyleConfig): CSSProperties {
+  const ts = { ...defaultTextStyleConfig(), ...titleStyle };
+  const inner = isInnerBlockTitle(ts);
+  const style: CSSProperties = {
+    fontSize: ts.fontSize,
+    fontWeight: ts.fontWeight,
+    color: ts.color || (inner ? "#303133" : "#ffffff"),
+    padding: ts.padding,
+  };
+
+  if (inner) {
+    if (ts.backgroundColor && ts.backgroundColor !== "transparent") {
+      style.backgroundColor = ts.backgroundColor;
+    }
+    if (ts.borderRadius && ts.borderRadius !== "0") {
+      style.borderRadius = ts.borderRadius;
+    }
+  } else {
+    style.backgroundColor = ts.backgroundColor || "var(--el-color-primary)";
+    style.borderRadius = ts.borderRadius || "3px";
+  }
+
+  return style;
+}
+
 export interface VisualEditorMarkLines {
   x: { left: number; showLeft: number }[];
   y: { top: number; showTop: number }[];
@@ -259,9 +367,6 @@ export function createNewBlock(
 ): VisualEditorBlockData {
   const _vid = config?._vid ?? `vid_${generateNanoid()}`
   return {
-    _vid,
-    /** grid-layout-plus 唯一键，默认与 _vid 一致 */
-    i: config?.i ?? _vid,
     moduleName: component.moduleName,
     componentKey: component!.key,
     label: component!.label,
@@ -290,6 +395,7 @@ export function createNewBlock(
     }, {}),
     draggable: component.draggable ?? true, // 是否可以拖拽
     showStyleConfig: component.showStyleConfig ?? true, // 是否显示组件样式配置
+    showTitle: false,
     animations: [], // 动画集
     actions: [], // 动作集合
     events: component.events || [], // 事件集合

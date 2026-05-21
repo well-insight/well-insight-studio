@@ -8,6 +8,7 @@ import { onClickOutside } from "@vueuse/core";
 import { storeToRefs } from "pinia";
 import { onUnmounted, ref, useTemplateRef } from "vue";
 import MobileWrapper from "./MobileWrapper.vue";
+import BlockSettingsBar from "./BlockSettingsBar.vue";
 import PcWrapper from "./PcWrapper.vue";
 import { ComponentList } from "../../workbench/component-list-new";
 
@@ -44,21 +45,24 @@ onUnmounted(() => {
 
 <template>
   <div class="simulator-container">
-    <div class="h-[50px] w-full">
-      <EditTools />
+    <div class="h-[50px] w-full shrink-0">
+      <EditTools>
+        <template #center>
+          <BlockSettingsBar />
+        </template>
+      </EditTools>
     </div>
 
     <div class="simulator-editor">
-      <div class="mr-4 flex h-full w-[100px] items-center justify-center">
+      <div class="mr-4 flex h-full w-[100px] shrink-0 items-center justify-center">
         <ComponentList
           @drag-start="() => wrapperRef?.drag()"
           @drag="() => wrapperRef?.drag()"
           @drag-end="() => wrapperRef?.dragEnd()"
         />
       </div>
-      <div class="h-full w-0 flex-auto">
+      <div class="simulator-canvas-area">
         <PcWrapper ref="wrapperRef" />
-      </div>
 
       <transition name="floating-setting-panel">
         <div v-if="floatingSettingVisible" ref="floatingPanelRef" class="floating-setting-panel">
@@ -73,6 +77,7 @@ onUnmounted(() => {
           </div>
         </div>
       </transition>
+      </div>
     </div>
 
     <!-- 添加按钮 -->
@@ -117,6 +122,14 @@ onUnmounted(() => {
   justify-content: center;
   position: relative;
   flex-direction: column;
+}
+
+.simulator-canvas-area {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .simulator-editor {

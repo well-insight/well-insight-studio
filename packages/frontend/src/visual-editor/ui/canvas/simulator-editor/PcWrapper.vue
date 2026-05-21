@@ -12,7 +12,7 @@ import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { generateNanoid } from '@/visual-editor/lib'
 import { $$dropdown, DropdownOption } from '@/visual-editor/lib/dropdown-service'
 import MonacoEditor from '@/visual-editor/ui/shared/monaco-editor/MonacoEditor'
-import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
+import { getBlockAnimationElement, type VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
 import { useMouseInElement, useResizeObserver } from '@vueuse/core'
 import { vLoading } from 'element-plus'
 import { cloneDeep, debounce } from 'lodash-es'
@@ -427,7 +427,7 @@ function initAnimate() {
   }))
 
   animations.forEach(({ _vid, animations }) => {
-    const anmiationEl = document.querySelector(`.list-group-item-${_vid}`)?.firstChild?.firstChild as HTMLElement
+    const anmiationEl = getBlockAnimationElement(_vid)
     useAnimate(anmiationEl, animations)
   })
 

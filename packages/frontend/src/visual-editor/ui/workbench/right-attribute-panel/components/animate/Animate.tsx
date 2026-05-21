@@ -1,6 +1,6 @@
 import { useAnimate } from "@/hooks/useAnimate";
 import { useVisualData } from "@/visual-editor/hooks/useVisualData";
-import type { Animation } from "@/visual-editor/visual-editor.utils";
+import { getBlockAnimationElement, type Animation } from "@/visual-editor/visual-editor.utils";
 import { CaretRight, Delete, Plus, VideoPlay } from "@element-plus/icons-vue";
 import { onClickOutside } from "@vueuse/core";
 import { ElButton, ElIcon, ElSwitch, ElTabPane, ElTabs, ElTooltip } from "element-plus";
@@ -37,12 +37,7 @@ export const Animate = defineComponent({
      * @description 运行动画
      */
     const runAnimation = (animation: Animation | Animation[] = []) => {
-      let animateEl =
-        (window.$$refs[currentBlock.value._vid]?.$el as HTMLElement) ??
-        (window.$$refs[currentBlock.value._vid] as HTMLElement);
-
-      animateEl = animateEl?.closest(".list-group-item")?.firstChild?.firstChild as HTMLElement;
-
+      const animateEl = getBlockAnimationElement(currentBlock.value?._vid);
       if (animateEl) {
         useAnimate(animateEl, animation);
       }
