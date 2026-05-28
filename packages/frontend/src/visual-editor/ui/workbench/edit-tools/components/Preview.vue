@@ -1,43 +1,67 @@
 <script setup lang="ts">
-import type { DrawerProps } from 'element-plus'
-import type { CSSProperties } from 'vue'
-import { computed } from 'vue'
-import SimulatorEditorPreview from '@/visual-editor/ui/canvas/simulator-editor-preview/SimulatorEditorPreview.vue'
+import type { DrawerProps } from "element-plus";
+import type { CSSProperties } from "vue";
+import { computed, toRaw, toValue, watch } from "vue";
+import { useWorkspaceStore } from "@/stores/workspaceStore";
+import { localKey, useVisualData } from "@/visual-editor/hooks/useVisualData";
+import SimulatorEditorPreview from "@/visual-editor/ui/canvas/simulator-editor-preview/SimulatorEditorPreview.vue";
 
-// 定义组件Props
 interface Props {
-  /** 设备类型：pc/mobile */
-  device?: 'pc' | 'mobile'
+  device?: "pc" | "mobile";
 }
 
-// 定义Props并设置默认值
 const props = withDefaults(defineProps<Props & Partial<DrawerProps>>(), {
-  device: 'pc',
-  direction: 'btt'
-})
+  device: "pc",
+  direction: "btt",
+});
 
-const modelValue = defineModel<boolean>({ required: true })
+const modelValue = defineModel<boolean>({ required: true });
 
-// 计算属性：抽屉展开方向（从下往上）
-const drawerDirection = computed<DrawerProps['direction']>(() => 'btt')
+const { overrideProject, jsonData } = useVisualData();
+const workspaceStore = useWorkspaceStore();
 
-// 计算属性：抽屉尺寸（适配不同设备）
-const drawerSize = computed(() => (props.device === 'pc' ? '95%' : '95%'))
+const drawerDirection = "btt" as DrawerProps["direction"];
+const drawerSize = "95%";
 
-const deviceStyle = computed<CSSProperties>(() => {
-  const width = props?.device === 'pc' ? '100%' : '374px'
-  return {
-    width,
-    height: '100%'
+const deviceStyle = computed<CSSProperties>(() => ({
+  width: props.device === "pc" ? "100%" : "374px",
+  height: "100%",
+}));
+
+/** 打开预览前写入最新 schema，并同步到编辑器内存 */
+function syncPreviewData() {
+  const snapshot = JSON.stringify(toRaw(toValue(jsonData)));
+  try {
+    sessionStorage.setItem(localKey, snapshot);
+    const appId = workspaceStore.currentApp?.id;
+    if (appId != null && String(appId) !== "") {
+      sessionStorage.setItem(`${localKey}_${appId}`, snapshot);
+    }
+  } catch {
+    /* ignore quota */
   }
-})
+  overrideProject(snapshot);
+}
+
+watch(modelValue, (open) => {
+  if (open) {
+    syncPreviewData();
+  }
+});
 </script>
 
 <template>
-  <el-drawer v-model="modelValue" :direction="drawerDirection" title="预览" :size="drawerSize" class="preview-drawer">
-    <div class="w-full h-full flex items-center justify-center">
-      <el-card :class="$style.card" :style="deviceStyle">
-        <SimulatorEditorPreview />
+  <el-drawer
+    v-model="modelValue"
+    :direction="drawerDirection"
+    title="预览"
+    :size="drawerSize"
+    class="preview-drawer"
+    destroy-on-close
+  >
+    <div class="flex h-full w-full items-center justify-center">
+      <el-card :class="$style.card" :style="deviceStyle" shadow="never">
+        <SimulatorEditorPreview v-if="modelValue" :active="modelValue" />
       </el-card>
     </div>
   </el-drawer>
@@ -45,5 +69,23 @@ const deviceStyle = computed<CSSProperties>(() => {
 
 <style lang="scss" module>
 .card {
+  height: 100%;
+  border: none;
+
+  :global(.el-card__body) {
+    height: 100%;
+    padding: 12px;
+    box-sizing: border-box;
+  }
+}
+</style>
+
+<style lang="scss">
+.preview-drawer {
+  .el-drawer__body {
+    padding: 0;
+    height: calc(100% - 56px);
+    overflow: hidden;
+  }
 }
 </style>

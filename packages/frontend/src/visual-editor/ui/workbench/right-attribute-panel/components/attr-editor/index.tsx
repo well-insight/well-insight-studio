@@ -120,7 +120,7 @@ export const AttrEditor = defineComponent({
             content.push(
               <>
                 <AttrEditorCard header='组件配置' class='mb-3'>
-                  <PropConfig component={component} block={currentBlock.value} />
+                  <PropConfig component={component} block={currentBlock.value} exclude-dataset />
                 </AttrEditorCard>
               </>
             )

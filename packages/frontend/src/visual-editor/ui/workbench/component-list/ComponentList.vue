@@ -11,7 +11,7 @@ import { visualConfig } from '@/visual.config'
 const activeComp = ref('基础组件')
 
 const widgets = computed(() => {
-  const { baseWidgets, containerComponents, formWidgets } = visualConfig.componentModules
+  const { baseWidgets, containerComponents, formWidgets, chartWidgets } = visualConfig.componentModules
   return [
     {
       title: '基础组件',
@@ -23,7 +23,7 @@ const widgets = computed(() => {
     },
     {
       title: '图表组件',
-      widgets: []
+      widgets: chartWidgets
     },
     {
       title: '容器组件',

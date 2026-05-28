@@ -18,7 +18,11 @@ export enum VisualEditorPropsType {
   /**
    * 图片上传
    */
-  imageUpload = 'ImageUpload'
+  imageUpload = 'ImageUpload',
+  /** 数据集绑定 */
+  datasetBind = 'DatasetBind',
+  /** 数据集字段（依赖 datasetBind 所选数据集） */
+  datasetField = 'DatasetField',
 }
 
 export type VisualEditorProps = {
@@ -43,6 +47,9 @@ export type VisualEditorProps = {
   min?: number
 } & {
   table?: VisualEditorTableOption
+} & {
+  /** datasetField 类型：关联的数据集 id 属性名，默认 datasetId */
+  datasetProp?: string
 }
 
 /* ---------------------------------------modelBind------------------------------------------- */
@@ -62,6 +69,50 @@ export function createEditorModelBindProp({
     label,
     tips,
     defaultValue
+  }
+}
+
+/* ---------------------------------------datasetBind------------------------------------------- */
+interface EditorDatasetBindProp {
+  label?: string
+  defaultValue?: string
+  tips?: string
+}
+
+export function createEditorDatasetBindProp({
+  label = '绑定数据集',
+  defaultValue = '',
+  tips = '选择数据集模块中已创建的数据集',
+}: EditorDatasetBindProp = {}): VisualEditorProps {
+  return {
+    type: VisualEditorPropsType.datasetBind,
+    label,
+    tips,
+    defaultValue,
+  }
+}
+
+/* ---------------------------------------datasetField------------------------------------------- */
+interface EditorDatasetFieldProp {
+  label: string
+  defaultValue?: string
+  tips?: string
+  /** 关联的数据集 id 属性名 */
+  datasetProp?: string
+}
+
+export function createEditorDatasetFieldProp({
+  label,
+  defaultValue = '',
+  tips,
+  datasetProp = 'datasetId',
+}: EditorDatasetFieldProp): VisualEditorProps {
+  return {
+    type: VisualEditorPropsType.datasetField,
+    label,
+    tips,
+    datasetProp,
+    defaultValue,
   }
 }
 

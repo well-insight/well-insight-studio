@@ -9,5 +9,4 @@ Object.entries(modules).forEach(([key, module]) => {
   components[name] = module?.default || module
 })
 
-console.log(components, 'chart-widgets')
 export default components

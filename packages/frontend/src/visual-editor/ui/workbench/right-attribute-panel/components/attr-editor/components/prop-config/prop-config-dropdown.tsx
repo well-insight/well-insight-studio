@@ -22,6 +22,8 @@ import {
 import { cloneDeep } from "lodash-es";
 import type { Component, PropType } from "vue";
 import { computed, defineComponent } from "vue";
+import PropDatasetBindTrigger from "@/visual-editor/ui/shared/dataset-bind/PropDatasetBindTrigger.vue";
+import { isDatasetConfigProp } from "@/utils/datasetBinding";
 import { CrossSortableOptionsEditor, ImageUploadEditor, TablePropEditor } from "..";
 
 export const PropConfig = defineComponent({
@@ -34,9 +36,15 @@ export const PropConfig = defineComponent({
       type: Object as PropType<VisualEditorBlockData>,
       default: () => ({}),
     },
+    /** 工具栏「组件配置」：仅常规项 */
     commonOnly: {
       type: Boolean,
       default: false,
+    },
+    /** 侧栏「组件配置」：排除旧版集中式数据集表单项 */
+    excludeDataset: {
+      type: Boolean,
+      default: true,
     },
   },
   setup(props) {
@@ -138,7 +146,10 @@ export const PropConfig = defineComponent({
     ]);
 
     return () => {
-      const propEntries = Object.entries(props.component.props ?? {}).filter(([, propConfig]) => {
+      const propEntries = Object.entries(props.component.props ?? {}).filter(([propName, propConfig]) => {
+        if (props.excludeDataset && isDatasetConfigProp(propName, propConfig)) {
+          return false;
+        }
         if (!props.commonOnly) {
           return true;
         }
@@ -165,8 +176,14 @@ export const PropConfig = defineComponent({
                   </ElTooltip>
                 )}
               </span>
-              <div key={props.block._vid + propName} class="toolbar-item-content">
-                {renderPropItem(propName, propConfig)}
+              <div key={props.block._vid + propName} class="toolbar-item-content flex items-center gap-4px">
+                <div class="min-w-0 flex-1">{renderPropItem(propName, propConfig)}</div>
+                <PropDatasetBindTrigger
+                  block={props.block}
+                  propName={propName}
+                  propLabel={propConfig.label}
+                  propConfig={propConfig}
+                />
               </div>
             </div>
           </ElDropdownItem>

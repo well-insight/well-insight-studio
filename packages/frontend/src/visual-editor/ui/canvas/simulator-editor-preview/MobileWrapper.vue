@@ -17,8 +17,15 @@ import DraggableTransitionGroup from './DraggableTransitionGroup.vue'
 import SlotItem from './SlotItem.vue'
 
 defineOptions({
-  name: 'SimulatorEditor',
+  name: 'MobilePreviewWrapper',
 })
+
+withDefaults(
+  defineProps<{
+    active?: boolean
+  }>(),
+  { active: true },
+)
 
 const wrapperRef = useTemplateRef('wrapperRef')
 const contentRef = useTemplateRef('contentRef')

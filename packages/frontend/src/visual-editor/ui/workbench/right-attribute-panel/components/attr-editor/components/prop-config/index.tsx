@@ -20,6 +20,8 @@ import { computed, defineComponent } from 'vue'
 import { useDotProp } from '@/visual-editor/hooks/useDotProp'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { VisualEditorPropsType } from '@/visual-editor/visual-editor.props'
+import PropDatasetBindTrigger from '@/visual-editor/ui/shared/dataset-bind/PropDatasetBindTrigger.vue'
+import { isDatasetConfigProp } from '@/utils/datasetBinding'
 import { CrossSortableOptionsEditor, ImageUploadEditor, TablePropEditor } from '..'
 
 export const PropConfig = defineComponent({
@@ -31,6 +33,10 @@ export const PropConfig = defineComponent({
     block: {
       type: Object as PropType<VisualEditorBlockData>,
       default: () => ({})
+    },
+    excludeDataset: {
+      type: Boolean,
+      default: true
     }
   },
   setup(props) {
@@ -96,14 +102,21 @@ export const PropConfig = defineComponent({
               <ImageUploadEditor v-model={propObj[prop]} propConfig={propConfig}></ImageUploadEditor>
             </>
           )
-        }
+        },
       }
 
       return renderFunc[propConfig.type]?.()
     }
 
     return () => {
-      return Object.entries(props.component.props ?? {}).map(([propName, propConfig]) => (
+      const propEntries = Object.entries(props.component.props ?? {}).filter(([propName, propConfig]) => {
+        if (props.excludeDataset && isDatasetConfigProp(propName, propConfig)) {
+          return false
+        }
+        return true
+      })
+
+      return propEntries.map(([propName, propConfig]) => (
         <>
           <ElFormItem
             key={props.block._vid + propName}
@@ -134,7 +147,17 @@ export const PropConfig = defineComponent({
                   </ElSpace>
                 </>
               ),
-              default: () => renderPropItem(propName, propConfig)
+              default: () => (
+                <div class='flex w-full items-center gap-8px'>
+                  <div class='min-w-0 flex-1'>{renderPropItem(propName, propConfig)}</div>
+                  <PropDatasetBindTrigger
+                    block={props.block}
+                    propName={propName}
+                    propLabel={propConfig.label}
+                    propConfig={propConfig}
+                  />
+                </div>
+              )
             }}
           </ElFormItem>
         </>

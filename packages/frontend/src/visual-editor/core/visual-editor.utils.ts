@@ -34,6 +34,8 @@ export interface VisualEditorBlockData extends GridItemProps {
   hasResize: boolean;
   /** 组件的设计属性 */
   props: Record<string, any>;
+  /** 各配置项的数据集绑定（配置项 prop 名 -> 绑定信息） */
+  datasetBindings?: import("@/utils/datasetBinding").BlockDatasetBindings;
   /** 绑定的字段 */
   model: Record<string, string>;
   /** 组件是否可以被拖拽 */
@@ -372,8 +374,8 @@ export function createNewBlock(
     label: component!.label,
     adjustPosition: true,
     focus: false,
-    w: component.props?.width || 2,
-    h: component.props?.height || 4,
+    w: component.props?.width || (component.moduleName === "chartWidgets" ? 6 : 2),
+    h: component.props?.height || (component.moduleName === "chartWidgets" ? 8 : 4),
     styles: {
       display: "flex",
       justifyContent: "center",
@@ -400,6 +402,7 @@ export function createNewBlock(
     actions: [], // 动作集合
     events: component.events || [], // 事件集合
     model: {},
+    datasetBindings: {},
     ...config,
     _vid,
     i: config?.i ?? _vid,
@@ -435,7 +438,8 @@ export const VisualDragProvider = (() => {
 export interface ComponentModules {
   baseWidgets: VisualEditorComponent[]; // 基础组件
   containerComponents: VisualEditorComponent[]; // 容器组件
-  formWidgets: VisualEditorComponent[]; // 容器组件
+  formWidgets: VisualEditorComponent[]; // 表单组件
+  chartWidgets: VisualEditorComponent[]; // 图表组件
 }
 /**
  * @description 创建编辑器配置
@@ -446,6 +450,7 @@ export function createVisualEditorConfig() {
     baseWidgets: [],
     containerComponents: [],
     formWidgets: [],
+    chartWidgets: [],
   };
   // const componentList: VisualEditorComponent[] = []
   const componentMap: Record<string, VisualEditorComponent> = {};

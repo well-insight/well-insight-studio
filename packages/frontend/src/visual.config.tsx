@@ -7,6 +7,8 @@ import pcWidgets from './packages/pc'
 import { useWorkspaceStoreWithout } from './stores/workspaceStore'
 
 import { createVisualEditorConfig } from './visual-editor/visual-editor.utils'
+import type { VisualEditorComponent } from './visual-editor/visual-editor.utils'
+import { injectDatasetBindingProps } from './utils/datasetBinding'
 
 const workspaceStore = useWorkspaceStoreWithout()
 
@@ -17,15 +19,23 @@ export const visualConfig = createVisualEditorConfig()
 registryVisual()
 
 function registryVisual() {
-  const { baseWidgets, containerComponent, formWidgets } = pcWidgets
+  const { baseWidgets, containerComponent, formWidgets, chartWidgets } = pcWidgets
   // const { baseWidgets, containerComponent, formWidgets } = isPcApp ? pcWidgets : mobileWidgets
   // 注册基础控件
-  Object.entries(baseWidgets).forEach(([name, widget]) => visualConfig.registry('baseWidgets', name, widget))
-  // 注册容器组件
+  const register = (
+    moduleName: Parameters<typeof visualConfig.registry>[0],
+    name: string,
+    widget: VisualEditorComponent,
+  ) => {
+    visualConfig.registry(moduleName, name, injectDatasetBindingProps(widget))
+  }
+
+  Object.entries(baseWidgets).forEach(([name, widget]) => register('baseWidgets', name, widget))
   Object.entries(containerComponent).forEach(([name, widget]) =>
-    visualConfig.registry('containerComponents', name, widget)
+    register('containerComponents', name, widget),
   )
-  Object.entries(formWidgets).forEach(([name, widget]) => visualConfig.registry('formWidgets', name, widget))
+  Object.entries(formWidgets).forEach(([name, widget]) => register('formWidgets', name, widget))
+  Object.entries(chartWidgets).forEach(([name, widget]) => register('chartWidgets', name, widget))
 
   console.log(
     `%c成功加载组件数量:${Object.keys(visualConfig.componentMap).length}`,
