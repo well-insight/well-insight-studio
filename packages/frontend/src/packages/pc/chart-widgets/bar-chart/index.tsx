@@ -12,13 +12,13 @@ export default {
   moduleName: "chartWidgets",
   label: "柱状图",
   icon: "component-chart",
-  description: "通过配置项右侧图标绑定数据集字段，以柱状图展示分类与数值。",
+  description: "在右侧「数据配置」中选择数据源，拖入维度与指标字段展示柱状图。",
   preview: () => (
     <div class="h-80px w-full px-8px py-6px">
       <BarChartView compact width={220} height={68} showRefresh={false} />
     </div>
   ),
-  render: ({ styles, props }) => {
+  render: ({ styles, props, block }) => {
     return () => (
       <div style={{ width: "100%", height: "100%", ...styles }}>
         <ElAutoResizer>
@@ -26,9 +26,7 @@ export default {
             default: (size: { width: number; height: number }) => (
               <BarChartView
                 title={props.title}
-                datasetId={props.datasetId}
-                categoryField={props.categoryField}
-                valueField={props.valueField}
+                bindings={block.datasetBindings}
                 barColor={props.barColor}
                 useSampleData={props.useSampleData}
                 showRefresh={props.showRefresh}
@@ -46,12 +44,12 @@ export default {
     categoryField: createEditorInputProp({
       label: "分类字段",
       defaultValue: "",
-      tips: "点击右侧图标绑定数据集列（X 轴）",
+      tips: "由数据配置中的维度字段自动同步",
     }),
     valueField: createEditorInputProp({
       label: "数值字段",
       defaultValue: "",
-      tips: "点击右侧图标绑定数据集列（Y 轴）",
+      tips: "由数据配置中的指标字段自动同步",
     }),
     barColor: createEditorColorProp({ label: "柱条颜色", defaultValue: "#409EFF" }),
     useSampleData: createEditorSwitchProp({

@@ -1,8 +1,9 @@
-import type { PropType } from 'vue'
-import type { VisualEditorBlockData, VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
-import { CirclePlus, Rank, Remove } from '@element-plus/icons-vue'
-import { useVModel } from '@vueuse/core'
+import type { PropType } from "vue";
+import type { VisualEditorBlockData, VisualEditorComponent } from "@/visual-editor/visual-editor.utils";
+import { CirclePlus, Plus, Rank, Remove } from "@element-plus/icons-vue";
+import { useVModel } from "@vueuse/core";
 import {
+  ElButton,
   ElCheckbox,
   ElCheckboxGroup,
   ElCollapse,
@@ -11,158 +12,234 @@ import {
   ElIcon,
   ElInput,
   ElTabPane,
-  ElTabs
-} from 'element-plus'
-import { cloneDeep } from 'lodash-es'
-import { computed, defineComponent, reactive } from 'vue'
-import Draggable from 'vuedraggable'
-import { useVisualData } from '@/visual-editor/hooks/useVisualData'
-import { isObject } from '@/visual-editor/lib/is'
-import { PropConfig } from '../prop-config'
+  ElTabs,
+} from "element-plus";
+import { cloneDeep } from "lodash-es";
+import { computed, defineComponent, reactive } from "vue";
+import Draggable from "vuedraggable";
+import { useVisualData } from "@/visual-editor/hooks/useVisualData";
+import { isObject } from "@/visual-editor/lib/is";
+import { PropConfig } from "../prop-config";
+import styles from "./cross-sortable-options-editor.module.scss";
 
 interface OptionItem extends LabelValue {
-  component?: VisualEditorComponent
-  block?: VisualEditorBlockData
+  component?: VisualEditorComponent;
+  block?: VisualEditorBlockData;
 }
 
 export const CrossSortableOptionsEditor = defineComponent({
   props: {
     modelValue: {
       type: Array as PropType<(string | OptionItem)[]>,
-      default: () => []
+      default: () => [],
     },
-    multiple: Boolean, // 是否多选
-    showItemPropsConfig: Boolean // 是否多选
+    multiple: Boolean,
+    showItemPropsConfig: Boolean,
   },
   setup(props, { emit }) {
-    const { currentBlock } = useVisualData()
+    const { currentBlock } = useVisualData();
 
     const state = reactive({
-      list: useVModel(props, 'modelValue', emit),
-      drag: false
-    })
+      list: useVModel(props, "modelValue", emit),
+      drag: false,
+    });
+
+    const hasObjectItems = computed(() => state.list.some((item) => isObject(item)));
 
     const checkList = computed({
       get: () => {
-        const value = currentBlock.value.props.modelValue
-        return Array.isArray(value) ? value : [...new Set(value?.split(','))]
+        const value = currentBlock.value.props.modelValue;
+        return Array.isArray(value) ? value : [...new Set(value?.split(","))];
       },
       set(value) {
-        currentBlock.value.props.modelValue = value
-      }
-    })
+        currentBlock.value.props.modelValue = value;
+      },
+    });
 
-    const dragOptions = computed(() => {
-      return {
-        animation: 200,
-        group: 'description',
-        disabled: false,
-        ghostClass: 'ghost'
-      }
-    })
+    const dragOptions = computed(() => ({
+      animation: 200,
+      group: "description",
+      disabled: false,
+      ghostClass: styles.ghost,
+    }));
 
-    /**
-     * @description 复选框值改变时触发
-     */
-    const onChange = (val: any[]) => {
-      val = val.filter(item => item !== '')
-      val = props.multiple ? val : val.filter(n => !currentBlock.value.props.modelValue?.includes(n))
-      currentBlock.value.props.modelValue = val.join(',')
+    const onChange = (val: string[]) => {
+      let next = val.filter((item) => item !== "");
+      if (!props.multiple) {
+        next = next.filter((n) => !currentBlock.value.props.modelValue?.includes(n));
+      }
+      currentBlock.value.props.modelValue = next.join(",");
+    };
+
+    function createNewItem(length: number): OptionItem | string {
+      if (hasObjectItems.value || state.list.length === 0) {
+        const template = state.list.find((item) => isObject(item)) as OptionItem | undefined;
+        return Object.assign(cloneDeep(template ?? { label: "", value: "" }), {
+          label: `选项${length}`,
+          value: String(length),
+        });
+      }
+      return "";
     }
 
-    /**
-     * @param {number} index - 在某项之前新增一项
-     */
-    const incrementOption = (index: number) => {
-      const length = state.list.length + 1
-      const newItem = state.list.some(item => isObject(item))
-        ? Object.assign(cloneDeep(state.list[0]), {
-            label: `选项${length}`,
-            value: `选项${length}`
-          })
-        : ''
-      state.list.splice(index + 1, 0, newItem)
+    function incrementOption(index: number) {
+      const length = state.list.length + 1;
+      state.list.splice(index + 1, 0, createNewItem(length));
+    }
+
+    function appendOption() {
+      const length = state.list.length + 1;
+      state.list.push(createNewItem(length));
     }
 
     return () => (
-      <div>
-        <ElCheckboxGroup modelValue={checkList.value} style={{ fontSize: 'inherit' }} onChange={onChange}>
+      <div class={styles.panel}>
+        {hasObjectItems.value && (
+          <div class={styles.header}>
+            <span />
+            <span class={styles.headerCol}>显示文字</span>
+            <span class={styles.headerCol}>绑定值</span>
+            <span />
+          </div>
+        )}
+
+        <ElCheckboxGroup modelValue={checkList.value} onChange={onChange}>
           <Draggable
-            tag='ul'
+            tag="ul"
             list={state.list}
-            class='list-group'
+            class={styles.list}
             component-data={{
-              tag: 'ul',
-              type: 'transition-group',
-              name: !state.drag ? 'flip-list' : null
+              tag: "ul",
+              type: "transition-group",
+              name: !state.drag ? "flip-list" : null,
             }}
-            handle='.handle'
+            handle={`.${styles.handle}`}
             {...dragOptions.value}
-            itemKey=''
+            itemKey=""
             onStart={() => (state.drag = true)}
             onEnd={() => (state.drag = false)}
           >
             {{
-              item: ({ element, index }) => (
-                <div class='flex items-center justify-between'>
-                  <ElIcon class='handle cursor-move'>
-                    <Rank></Rank>
-                  </ElIcon>
-                  {isObject(element) ? (
-                    <>
-                      <ElCheckbox label={element.value} class='ml-5px'></ElCheckbox>
-                      label:
+              item: ({ element, index }: { element: string | OptionItem; index: number }) =>
+                isObject(element) ? (
+                  <li class={[styles.row, state.drag && styles.rowDragging]}>
+                    <div class={styles.rowLead}>
+                      <span class={styles.handle}>
+                        <ElIcon size={14}>
+                          <Rank />
+                        </ElIcon>
+                      </span>
+                      <ElCheckbox label={element.value} />
+                    </div>
+                    <div class={styles.rowField}>
                       <ElInput
                         v-model={element.label}
-                        class='my-12px mx-3px'
-                        style={{ width: '108px' }}
-                        size='small'
-                      ></ElInput>
-                      value:
+                        size="small"
+                        placeholder="显示文字"
+                        clearable
+                      />
+                    </div>
+                    <div class={styles.rowField}>
                       <ElInput
                         v-model={element.value}
-                        class='my-12px mx-3px'
-                        style={{ width: '106px' }}
-                        size='small'
-                      ></ElInput>
-                    </>
-                  ) : (
-                    <ElInput
-                      v-model={state.list[index]}
-                      class='m-12px'
-                      style={{ width: '270px' }}
-                      size='small'
-                    ></ElInput>
-                  )}
-                  <div class='flex flex-col'>
-                    <ElIcon class='hover:text-blue-400 cursor-pointer' onClick={() => incrementOption(index)}>
-                      <CirclePlus></CirclePlus>
-                    </ElIcon>
-                    <ElIcon class='hover:text-red-500 cursor-pointer' onClick={() => state.list.splice(index, 1)}>
-                      <Remove></Remove>
-                    </ElIcon>
-                  </div>
-                </div>
-              )
+                        size="small"
+                        placeholder="绑定值"
+                        clearable
+                      />
+                    </div>
+                    <div class={styles.rowActions}>
+                      <button
+                        type="button"
+                        class={[styles.actionBtn, styles.actionBtnAdd]}
+                        title="在下方新增"
+                        onClick={() => incrementOption(index)}
+                      >
+                        <ElIcon size={14}>
+                          <CirclePlus />
+                        </ElIcon>
+                      </button>
+                      <button
+                        type="button"
+                        class={[styles.actionBtn, styles.actionBtnRemove]}
+                        title="删除"
+                        onClick={() => state.list.splice(index, 1)}
+                      >
+                        <ElIcon size={14}>
+                          <Remove />
+                        </ElIcon>
+                      </button>
+                    </div>
+                  </li>
+                ) : (
+                  <li class={[styles.row, styles.rowText, state.drag && styles.rowDragging]}>
+                    <span class={styles.handle}>
+                      <ElIcon size={14}>
+                        <Rank />
+                      </ElIcon>
+                    </span>
+                    <div class={styles.rowField}>
+                      <ElInput
+                        v-model={state.list[index]}
+                        size="small"
+                        placeholder="请输入选项文字"
+                        clearable
+                      />
+                    </div>
+                    <div class={styles.rowActions}>
+                      <button
+                        type="button"
+                        class={[styles.actionBtn, styles.actionBtnAdd]}
+                        title="在下方新增"
+                        onClick={() => incrementOption(index)}
+                      >
+                        <ElIcon size={14}>
+                          <CirclePlus />
+                        </ElIcon>
+                      </button>
+                      <button
+                        type="button"
+                        class={[styles.actionBtn, styles.actionBtnRemove]}
+                        title="删除"
+                        onClick={() => state.list.splice(index, 1)}
+                      >
+                        <ElIcon size={14}>
+                          <Remove />
+                        </ElIcon>
+                      </button>
+                    </div>
+                  </li>
+                ),
             }}
           </Draggable>
         </ElCheckboxGroup>
-        {props.showItemPropsConfig && (
-          <ElCollapse>
-            <ElCollapseItem title='选项配置'>
-              <ElTabs type='border-card'>
-                {state.list.map((item: OptionItem) => (
-                  <ElTabPane label={item.label} key={item.label}>
-                    <ElForm labelPosition='left' size='small'>
-                      <PropConfig component={item.component} block={item.block} />
-                    </ElForm>
-                  </ElTabPane>
-                ))}
-              </ElTabs>
-            </ElCollapseItem>
-          </ElCollapse>
+
+        <div class={styles.footer}>
+          <ElButton class={styles.addBtn} size="small" plain onClick={appendOption}>
+            <ElIcon class="mr-4px">
+              <Plus />
+            </ElIcon>
+            添加选项
+          </ElButton>
+        </div>
+
+        {props.showItemPropsConfig && state.list.some((item) => isObject(item)) && (
+          <div class={styles.advanced}>
+            <ElCollapse>
+              <ElCollapseItem title="高级：单项属性配置">
+                <ElTabs type="border-card">
+                  {(state.list as OptionItem[]).map((item, idx) => (
+                    <ElTabPane label={item.label || `选项${idx + 1}`} key={`${item.value}-${idx}`}>
+                      <ElForm labelPosition="left" size="small">
+                        <PropConfig component={item.component} block={item.block} />
+                      </ElForm>
+                    </ElTabPane>
+                  ))}
+                </ElTabs>
+              </ElCollapseItem>
+            </ElCollapse>
+          </div>
         )}
       </div>
-    )
-  }
-})
+    );
+  },
+});

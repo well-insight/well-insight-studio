@@ -1,34 +1,47 @@
 import type { ApiDatasetRow } from "@/api/dataset";
-import { fetchDatasetRowsPage } from "@/api/dataset";
+import { fetchDatasetDetail, fetchDatasetRowsPage } from "@/api/dataset";
 import {
-  type ChartBarDatum,
-  rowsToBarChartData,
+  type BlockDatasetBindings,
+  buildFieldNameToIdMap,
+} from "@/utils/datasetBinding";
+import { resolveChartBarData } from "@/utils/datasetBindingResolve";
+import {
+  type ChartDatum,
   SAMPLE_BAR_CHART_DATA,
 } from "@/utils/datasetChart";
 import { type MaybeRefOrGetter, computed, ref, toValue, watch } from "vue";
 
 export interface UseDatasetChartDataOptions {
-  datasetId: MaybeRefOrGetter<string | undefined>;
-  categoryField: MaybeRefOrGetter<string | undefined>;
-  valueField: MaybeRefOrGetter<string | undefined>;
+  bindings?: MaybeRefOrGetter<BlockDatasetBindings | undefined>;
   /** 未绑定数据集时是否使用示例数据 */
   useSampleData?: MaybeRefOrGetter<boolean>;
   /** 单次拉取最大行数 */
   maxRows?: number;
 }
 
+function isChartBindingReady(bind: { datasetId?: string; field?: string } | undefined) {
+  return Boolean(bind?.datasetId?.trim() && bind?.field?.trim());
+}
+
 export function useDatasetChartData(options: UseDatasetChartDataOptions) {
-  const data = ref<ChartBarDatum[]>([]);
+  const data = ref<ChartDatum[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
   const total = ref(0);
 
-  const canLoadFromDataset = computed(() => {
-    const id = toValue(options.datasetId)?.trim();
-    const cat = toValue(options.categoryField)?.trim();
-    const val = toValue(options.valueField)?.trim();
-    return Boolean(id && cat && val);
-  });
+  const categoryBinding = computed(() => toValue(options.bindings)?.categoryField);
+  const valueBinding = computed(() => toValue(options.bindings)?.valueField);
+
+  const canLoadFromDataset = computed(() =>
+    isChartBindingReady(categoryBinding.value) && isChartBindingReady(valueBinding.value),
+  );
+
+  const datasetId = computed(
+    () =>
+      categoryBinding.value?.datasetId?.trim() ||
+      valueBinding.value?.datasetId?.trim() ||
+      "",
+  );
 
   async function load() {
     if (!canLoadFromDataset.value) {
@@ -42,16 +55,23 @@ export function useDatasetChartData(options: UseDatasetChartDataOptions) {
       return;
     }
 
-    const datasetId = toValue(options.datasetId)!.trim();
-    const categoryField = toValue(options.categoryField)!.trim();
-    const valueField = toValue(options.valueField)!.trim();
+    const id = datasetId.value;
     loading.value = true;
     error.value = null;
 
     try {
       const pageSize = options.maxRows ?? 200;
-      const { rows, total: rowTotal } = await fetchDatasetRowsPage(datasetId, 1, pageSize);
-      data.value = rowsToBarChartData(rows as ApiDatasetRow[], categoryField, valueField);
+      const [{ rows, total: rowTotal }, detail] = await Promise.all([
+        fetchDatasetRowsPage(id, 1, pageSize),
+        fetchDatasetDetail(id),
+      ]);
+      const nameToId = buildFieldNameToIdMap(detail.fields);
+      data.value = resolveChartBarData(
+        categoryBinding.value,
+        valueBinding.value,
+        rows as ApiDatasetRow[],
+        nameToId,
+      );
       total.value = rowTotal;
       if (data.value.length === 0) {
         error.value = "当前数据集无可用数据";
@@ -66,14 +86,12 @@ export function useDatasetChartData(options: UseDatasetChartDataOptions) {
   }
 
   watch(
-    () => [
-      toValue(options.datasetId),
-      toValue(options.categoryField),
-      toValue(options.valueField),
-      toValue(options.useSampleData),
-    ],
+    () => ({
+      bindings: toValue(options.bindings),
+      useSampleData: toValue(options.useSampleData),
+    }),
     () => void load(),
-    { immediate: true },
+    { immediate: true, deep: true },
   );
 
   return {

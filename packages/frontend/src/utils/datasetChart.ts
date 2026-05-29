@@ -1,12 +1,16 @@
 import type { ApiDatasetRow } from "@/api/dataset";
+import { rowFieldValue } from "@/utils/datasetBinding";
 
-export interface ChartBarDatum {
+export interface ChartDatum {
   category: string;
   value: number;
 }
 
+/** @deprecated 使用 ChartDatum */
+export type ChartBarDatum = ChartDatum;
+
 /** 示例数据：未绑定数据集时在编辑器中展示 */
-export const SAMPLE_BAR_CHART_DATA: ChartBarDatum[] = [
+export const SAMPLE_BAR_CHART_DATA: ChartDatum[] = [
   { category: "一月", value: 120 },
   { category: "二月", value: 200 },
   { category: "三月", value: 150 },
@@ -35,12 +39,13 @@ export function rowsToBarChartData(
   rows: ApiDatasetRow[],
   categoryField: string,
   valueField: string,
-): ChartBarDatum[] {
+  nameToId?: Record<string, string>,
+): ChartDatum[] {
   if (!categoryField || !valueField) {
     return [];
   }
   return rows.map((row) => ({
-    category: formatCategory(row.values[categoryField]),
-    value: parseNumericValue(row.values[valueField]),
+    category: formatCategory(rowFieldValue(row, categoryField, nameToId)),
+    value: parseNumericValue(rowFieldValue(row, valueField, nameToId)),
   }));
 }

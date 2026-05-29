@@ -39,6 +39,13 @@ img {
   overflow: auto;
 }
 
+/* 全屏弹窗不受全局 max-height 限制 */
+.el-dialog.is-fullscreen .el-dialog__body,
+.adaptive-dialog.adaptive-dialog--fullscreen .el-dialog__body {
+  max-height: none;
+  overflow: hidden;
+}
+
 .h5-preview .el-dialog__body {
   overflow: hidden;
 }

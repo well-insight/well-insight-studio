@@ -1,22 +1,19 @@
-import type { ApiDatasetRow } from "@/api/dataset";
-import { fetchDatasetRowsPage } from "@/api/dataset";
+import type { ApiDatasetRow, ApiDatasetField } from "@/api/dataset";
+import { fetchDatasetDetail, fetchDatasetRowsPage } from "@/api/dataset";
 import type { VisualEditorBlockData } from "@/visual-editor/visual-editor.utils";
+import { resolveBindingToPropValue } from "@/utils/datasetBindingResolve";
 import {
   type BlockDatasetBindings,
   type PropDatasetBinding,
-  coerceDatasetValue,
+  buildFieldNameToIdMap,
   collectDatasetIdsFromBindings,
-  isDatasetBound,
-  isPropDatasetBound,
-  pickDatasetRow,
-  rowFieldValue,
-  rowsToSelectOptions,
-  rowsToSlides,
+  isBlockDatasetBound,
+  syncChartPropsFromBindings,
 } from "@/utils/datasetBinding";
-import { COMPONENT_DATASET_MAP } from "@/utils/datasetBinding";
 import { type MaybeRefOrGetter, computed, ref, toValue, watch } from "vue";
 
 const rowsCache = new Map<string, Promise<ApiDatasetRow[]>>();
+const fieldsCache = new Map<string, Promise<ApiDatasetField[]>>();
 
 async function loadDatasetRows(datasetId: string, max = 200): Promise<ApiDatasetRow[]> {
   let pending = rowsCache.get(datasetId);
@@ -32,18 +29,18 @@ async function loadDatasetRows(datasetId: string, max = 200): Promise<ApiDataset
   }
 }
 
-function getValueTypeForProp(componentKey: string, propName: string): "string" | "number" | "boolean" {
-  const cfg = COMPONENT_DATASET_MAP[componentKey];
-  if (cfg?.valueProp === propName && cfg.valueType) {
-    return cfg.valueType;
+async function loadDatasetFields(datasetId: string): Promise<ApiDatasetField[]> {
+  let pending = fieldsCache.get(datasetId);
+  if (!pending) {
+    pending = fetchDatasetDetail(datasetId).then((d) => d.fields ?? []);
+    fieldsCache.set(datasetId, pending);
   }
-  if (propName === "percentage" || propName === "modelValue" && componentKey === "slider") {
-    return "number";
+  try {
+    return await pending;
+  } catch (e) {
+    fieldsCache.delete(datasetId);
+    throw e;
   }
-  if (componentKey === "switch" && propName === "modelValue") {
-    return "boolean";
-  }
-  return "string";
 }
 
 function applyBindingToProps(
@@ -52,69 +49,9 @@ function applyBindingToProps(
   bind: PropDatasetBinding,
   rows: ApiDatasetRow[],
   componentKey: string,
+  nameToId: Record<string, string>,
 ) {
-  const field = bind.field.trim();
-  const labelField = (bind.labelField?.trim() || field).trim();
-  const mode = bind.mode ?? (propName === "options" || propName === "slides" ? "rows" : "cell");
-
-  if (mode === "rows") {
-    if (propName === "slides") {
-      p.slides = rowsToSlides(rows, field, labelField);
-    } else if (propName === "options") {
-      p.options = rowsToSelectOptions(rows, labelField, field);
-    }
-    return;
-  }
-
-  const row = pickDatasetRow(rows, bind.rowIndex ?? 0);
-  const raw = rowFieldValue(row, field);
-  p[propName] = coerceDatasetValue(raw, getValueTypeForProp(componentKey, propName));
-}
-
-function applyLegacyBindings(
-  p: Record<string, unknown>,
-  componentKey: string,
-  rows: ApiDatasetRow[],
-) {
-  const cfg = COMPONENT_DATASET_MAP[componentKey];
-  if (!cfg || !isDatasetBound(p)) {
-    return;
-  }
-
-  const field = String(p.datasetField ?? "").trim();
-  const rowIndex = Number(p.datasetRowIndex ?? 0);
-  const labelField = String(p.datasetLabelField ?? "").trim() || field;
-
-  if (cfg.kind === "slides" && p.datasetAsSlides !== false) {
-    p.slides = rowsToSlides(rows, field, labelField);
-    return;
-  }
-  if (cfg.kind === "options" && p.datasetAsOptions === true) {
-    p[cfg.optionsProp ?? "options"] = rowsToSelectOptions(rows, labelField, field);
-  }
-  if (cfg.valueProp) {
-    const row = pickDatasetRow(rows, rowIndex);
-    p[cfg.valueProp] = coerceDatasetValue(
-      rowFieldValue(row, field),
-      cfg.valueType ?? "string",
-    );
-  }
-}
-
-function applyChartBindings(
-  p: Record<string, unknown>,
-  bindings: BlockDatasetBindings,
-) {
-  const cat = bindings.categoryField;
-  const val = bindings.valueField;
-  if (cat?.datasetId && cat.field) {
-    p.datasetId = cat.datasetId;
-    p.categoryField = cat.field;
-  }
-  if (val?.datasetId && val.field) {
-    p.datasetId = val.datasetId;
-    p.valueField = val.field;
-  }
+  p[propName] = resolveBindingToPropValue(bind, propName, rows, nameToId, componentKey);
 }
 
 /**
@@ -126,24 +63,12 @@ export function useDatasetResolvedProps(
 ) {
   const key = computed(() => toValue(componentKey));
   const blockRef = computed(() => toValue(block));
-  const rawProps = computed(() => blockRef.value?.props ?? {});
   const bindings = computed(() => blockRef.value?.datasetBindings ?? {});
 
-  const datasetIds = computed(() => {
-    const ids = collectDatasetIdsFromBindings(bindings.value);
-    const legacyId = String(rawProps.value.datasetId ?? "").trim();
-    if (legacyId && !ids.includes(legacyId)) {
-      ids.push(legacyId);
-    }
-    for (const b of Object.values(bindings.value)) {
-      if (b?.datasetId && !ids.includes(b.datasetId)) {
-        ids.push(b.datasetId);
-      }
-    }
-    return ids;
-  });
+  const datasetIds = computed(() => collectDatasetIdsFromBindings(bindings.value));
 
   const rowsByDatasetId = ref<Record<string, ApiDatasetRow[]>>({});
+  const fieldMapsByDatasetId = ref<Record<string, Record<string, string>>>({});
   const loading = ref(false);
   const error = ref<string | null>(null);
 
@@ -151,6 +76,7 @@ export function useDatasetResolvedProps(
     const ids = datasetIds.value;
     if (ids.length === 0) {
       rowsByDatasetId.value = {};
+      fieldMapsByDatasetId.value = {};
       error.value = null;
       return;
     }
@@ -158,11 +84,21 @@ export function useDatasetResolvedProps(
     error.value = null;
     try {
       const entries = await Promise.all(
-        ids.map(async (id) => [id, await loadDatasetRows(id)] as const),
+        ids.map(async (id) => {
+          const [rows, fields] = await Promise.all([
+            loadDatasetRows(id),
+            loadDatasetFields(id),
+          ]);
+          return [id, rows, buildFieldNameToIdMap(fields)] as const;
+        }),
       );
-      rowsByDatasetId.value = Object.fromEntries(entries);
+      rowsByDatasetId.value = Object.fromEntries(entries.map(([id, rows]) => [id, rows]));
+      fieldMapsByDatasetId.value = Object.fromEntries(
+        entries.map(([id, , nameToId]) => [id, nameToId]),
+      );
     } catch (e) {
       rowsByDatasetId.value = {};
+      fieldMapsByDatasetId.value = {};
       error.value = e instanceof Error ? e.message : "加载数据集失败";
     } finally {
       loading.value = false;
@@ -173,8 +109,9 @@ export function useDatasetResolvedProps(
   watch(bindings, () => void loadAll(), { deep: true });
 
   const resolvedProps = computed(() => {
-    const p = { ...rawProps.value } as Record<string, unknown>;
+    const p = { ...(blockRef.value?.props ?? {}) } as Record<string, unknown>;
     const map = rowsByDatasetId.value;
+    const fieldMaps = fieldMapsByDatasetId.value;
     const b = bindings.value;
     const compKey = key.value;
 
@@ -182,35 +119,27 @@ export function useDatasetResolvedProps(
       if (!bind?.datasetId?.trim() || !bind?.field?.trim()) {
         continue;
       }
-      const rows = map[bind.datasetId] ?? [];
       if (compKey === "bar-chart" && (propName === "categoryField" || propName === "valueField")) {
         continue;
       }
-      applyBindingToProps(p, propName, bind, rows, compKey);
+      const rows = map[bind.datasetId] ?? [];
+      const nameToId = fieldMaps[bind.datasetId] ?? {};
+      applyBindingToProps(p, propName, bind, rows, compKey, nameToId);
     }
 
     if (compKey === "bar-chart") {
-      applyChartBindings(p, b);
-    } else {
-      const legacyId = String(p.datasetId ?? "").trim();
-      if (legacyId && map[legacyId]) {
-        applyLegacyBindings(p, compKey, map[legacyId]);
-      }
+      syncChartPropsFromBindings(p, b);
     }
 
     return p;
   });
 
-  const datasetBound = computed(() => {
-    const b = bindings.value;
-    return (
-      Object.keys(b).some((k) => isPropDatasetBound(blockRef.value, k)) || isDatasetBound(rawProps.value)
-    );
-  });
+  const datasetBound = computed(() => isBlockDatasetBound(blockRef.value));
 
   function refreshDataset() {
     for (const id of datasetIds.value) {
       rowsCache.delete(id);
+      fieldsCache.delete(id);
     }
     return loadAll();
   }

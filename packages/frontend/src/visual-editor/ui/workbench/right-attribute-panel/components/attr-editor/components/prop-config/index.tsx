@@ -20,8 +20,8 @@ import { computed, defineComponent } from 'vue'
 import { useDotProp } from '@/visual-editor/hooks/useDotProp'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { VisualEditorPropsType } from '@/visual-editor/visual-editor.props'
+import { isChartBindProp } from '@/utils/datasetBinding'
 import PropDatasetBindTrigger from '@/visual-editor/ui/shared/dataset-bind/PropDatasetBindTrigger.vue'
-import { isDatasetConfigProp } from '@/utils/datasetBinding'
 import { CrossSortableOptionsEditor, ImageUploadEditor, TablePropEditor } from '..'
 
 export const PropConfig = defineComponent({
@@ -33,10 +33,6 @@ export const PropConfig = defineComponent({
     block: {
       type: Object as PropType<VisualEditorBlockData>,
       default: () => ({})
-    },
-    excludeDataset: {
-      type: Boolean,
-      default: true
     }
   },
   setup(props) {
@@ -109,14 +105,15 @@ export const PropConfig = defineComponent({
     }
 
     return () => {
-      const propEntries = Object.entries(props.component.props ?? {}).filter(([propName, propConfig]) => {
-        if (props.excludeDataset && isDatasetConfigProp(propName, propConfig)) {
-          return false
-        }
-        return true
-      })
+      const componentKey = props.block.componentKey;
+      const propEntries = Object.entries(props.component.props ?? {}).filter(
+        ([propName]) => !isChartBindProp(propName, componentKey),
+      );
 
-      return propEntries.map(([propName, propConfig]) => (
+      return propEntries.map(([propName, propConfig]) => {
+        const isOptions = propConfig.type === VisualEditorPropsType.crossSortable
+
+        return (
         <>
           <ElFormItem
             key={props.block._vid + propName}
@@ -133,35 +130,47 @@ export const PropConfig = defineComponent({
             {{
               label: () => (
                 <>
-                  <ElSpace>
-                    {propConfig.label}
-                    {propConfig.tips && (
-                      <ElTooltip placement='left-start' popper-class='max-w-200px' content={propConfig.tips}>
-                        <div>
-                          <ElIcon>
-                            <Warning />
-                          </ElIcon>
-                        </div>
-                      </ElTooltip>
+                  <div class='flex w-full items-center justify-between gap-8px'>
+                    <ElSpace>
+                      {propConfig.label}
+                      {propConfig.tips && (
+                        <ElTooltip placement='left-start' popper-class='max-w-200px' content={propConfig.tips}>
+                          <div>
+                            <ElIcon>
+                              <Warning />
+                            </ElIcon>
+                          </div>
+                        </ElTooltip>
+                      )}
+                    </ElSpace>
+                    {isOptions && (
+                      <PropDatasetBindTrigger
+                        block={props.block}
+                        propName={propName}
+                        propLabel={propConfig.label}
+                        propConfig={propConfig}
+                      />
                     )}
-                  </ElSpace>
+                  </div>
                 </>
               ),
               default: () => (
-                <div class='flex w-full items-center gap-8px'>
+                <div class='flex w-full items-start gap-8px'>
                   <div class='min-w-0 flex-1'>{renderPropItem(propName, propConfig)}</div>
-                  <PropDatasetBindTrigger
-                    block={props.block}
-                    propName={propName}
-                    propLabel={propConfig.label}
-                    propConfig={propConfig}
-                  />
+                  {!isOptions && (
+                    <PropDatasetBindTrigger
+                      block={props.block}
+                      propName={propName}
+                      propLabel={propConfig.label}
+                      propConfig={propConfig}
+                    />
+                  )}
                 </div>
               )
             }}
           </ElFormItem>
         </>
-      ))
+      )})
     }
   }
 })

@@ -2,14 +2,13 @@ import type { VisualEditorComponent } from "@/visual-editor/visual-editor.utils"
 import { ElFormItem, ElOption, ElSelect } from "element-plus";
 import { useGlobalProperties } from "@/hooks/useGlobalProperties";
 import {
-  createEditorCrossSortableProp,
   createEditorInputNumberProp,
   createEditorInputProp,
   createEditorModelBindProp,
   createEditorSelectProp,
   createEditorSwitchProp,
 } from "@/visual-editor/visual-editor.props";
-import { createFieldProps } from "../createFieldProps";
+import { createFieldProps, createFormOptionsProp } from "../createFieldProps";
 
 // 尺寸选项
 const sizeOptions = [
@@ -105,17 +104,7 @@ export default {
     label: createEditorInputProp({ label: "表单项标签", defaultValue: "下拉框" }),
 
     // 选项配置（可拖拽排序）
-    options: createEditorCrossSortableProp({
-      label: "选项列表",
-      labelPosition: "top",
-      multiple: true,
-      showItemPropsConfig: true,
-      defaultValue: [
-        { value: "1", label: "选项一" },
-        { value: "2", label: "选项二" },
-        { value: "3", label: "选项三" },
-      ],
-    }),
+    options: createFormOptionsProp(),
 
     // 选择模式
     multiple: createEditorSwitchProp({ label: "多选", defaultValue: false }),

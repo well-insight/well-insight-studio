@@ -8,7 +8,6 @@ import { useWorkspaceStoreWithout } from './stores/workspaceStore'
 
 import { createVisualEditorConfig } from './visual-editor/visual-editor.utils'
 import type { VisualEditorComponent } from './visual-editor/visual-editor.utils'
-import { injectDatasetBindingProps } from './utils/datasetBinding'
 
 const workspaceStore = useWorkspaceStoreWithout()
 
@@ -27,7 +26,7 @@ function registryVisual() {
     name: string,
     widget: VisualEditorComponent,
   ) => {
-    visualConfig.registry(moduleName, name, injectDatasetBindingProps(widget))
+    visualConfig.registry(moduleName, name, widget)
   }
 
   Object.entries(baseWidgets).forEach(([name, widget]) => register('baseWidgets', name, widget))

@@ -3,12 +3,11 @@ import { ElCheckbox, ElCheckboxGroup, ElFormItem } from "element-plus";
 import { computed } from "vue";
 import { useGlobalProperties } from "@/hooks/useGlobalProperties";
 import {
-  createEditorCrossSortableProp,
   createEditorInputProp,
   createEditorModelBindProp,
   createEditorSelectProp,
 } from "@/visual-editor/visual-editor.props";
-import { createFieldProps } from "../createFieldProps";
+import { createFieldProps, createFormOptionsProp } from "../createFieldProps";
 
 export default {
   key: "checkbox",
@@ -75,10 +74,8 @@ export default {
     }),
     name: createEditorModelBindProp({ label: "字段绑定", defaultValue: "" }),
     label: createEditorInputProp({ label: "表单项标签", defaultValue: "复选框" }),
-    options: createEditorCrossSortableProp({
-      label: "默认选项",
-      labelPosition: "top",
-      multiple: true,
+    options: createFormOptionsProp({
+      label: "选项列表",
       defaultValue: [
         { label: "胡萝卜", value: "carrot" },
         { label: "白菜", value: "cabbage" },

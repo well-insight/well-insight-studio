@@ -13,6 +13,8 @@ import {
 import { computed, defineComponent, watch } from 'vue'
 import { FormatInputNumber } from '@/visual-editor/ui/shared/format-input-number'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
+import { isChartComponent } from '@/utils/datasetBinding'
+import ChartDatasetBindPanel from '@/visual-editor/ui/shared/dataset-bind/ChartDatasetBindPanel.vue'
 import { AttrEditorCard } from './components/attr-editor-card'
 import { PropConfig } from './components/prop-config'
 
@@ -119,6 +121,11 @@ export const AttrEditor = defineComponent({
 
             content.push(
               <>
+                {isChartComponent(componentKey) && (
+                  <AttrEditorCard header='数据配置' class='mb-3'>
+                    <ChartDatasetBindPanel block={currentBlock.value} />
+                  </AttrEditorCard>
+                )}
                 <AttrEditorCard header='组件配置' class='mb-3'>
                   <PropConfig component={component} block={currentBlock.value} exclude-dataset />
                 </AttrEditorCard>

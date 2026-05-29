@@ -3,8 +3,8 @@ import type { VisualEditorBlockData } from "@/visual-editor/visual-editor.utils"
 import type { PropDatasetBinding } from "@/utils/datasetBinding";
 import {
   getPropDatasetBinding,
+  isListProp,
   isPropDatasetBound,
-  isRowsModeProp,
   shouldShowPropDatasetBind,
 } from "@/utils/datasetBinding";
 import type { VisualEditorProps } from "@/visual-editor/visual-editor.props";
@@ -22,14 +22,16 @@ const props = defineProps<{
 const dialogVisible = ref(false);
 
 const showBind = computed(() =>
-  props.propConfig ? shouldShowPropDatasetBind(props.propName, props.propConfig) : false,
+  props.propConfig
+    ? shouldShowPropDatasetBind(props.propName, props.propConfig, props.block.componentKey)
+    : false,
 );
 
 const binding = computed(() => getPropDatasetBinding(props.block, props.propName));
 
 const isBound = computed(() => isPropDatasetBound(props.block, props.propName));
 
-const allowRowsMode = computed(() => isRowsModeProp(props.propName, props.propConfig));
+const allowListMode = computed(() => isListProp(props.propName, props.propConfig));
 
 function ensureBindings(): Record<string, PropDatasetBinding> {
   if (!props.block.datasetBindings) {
@@ -66,9 +68,11 @@ function onClear() {
     </el-tooltip>
     <DatasetBindDialog
       v-model="dialogVisible"
+      :block="block"
+      :prop-name="propName"
       :initial-binding="binding"
       :prop-label="propLabel"
-      :allow-rows-mode="allowRowsMode"
+      :allow-list-mode="allowListMode"
       @confirm="onConfirm"
       @clear="onClear"
     />

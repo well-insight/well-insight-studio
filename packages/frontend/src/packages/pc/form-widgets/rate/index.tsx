@@ -1,5 +1,6 @@
 import type { VisualEditorComponent } from "@/visual-editor/visual-editor.utils";
 import { ElFormItem, ElRate } from "element-plus";
+import { computed } from "vue";
 import { useGlobalProperties } from "@/hooks/useGlobalProperties";
 import {
   createEditorColorProp,
@@ -9,7 +10,7 @@ import {
   createEditorSelectProp,
   createEditorSwitchProp,
 } from "@/visual-editor/visual-editor.props";
-import { createFieldProps } from "../createFieldProps";
+import { createFieldProps, createFormTextOptionsProp } from "../createFieldProps";
 
 // 图标类型选项（Element Plus 支持）
 const iconClasses = [
@@ -31,6 +32,24 @@ export default {
   ),
   render: ({ styles, block, props }) => {
     const { registerRef } = useGlobalProperties();
+
+    const rateTexts = computed(() => {
+      const raw = props.texts;
+      if (Array.isArray(raw)) {
+        return raw.map((item) => String(item ?? "")).filter(Boolean);
+      }
+      if (typeof raw === "string" && raw.trim()) {
+        try {
+          const parsed = JSON.parse(raw) as unknown;
+          if (Array.isArray(parsed)) {
+            return parsed.map((item) => String(item ?? "")).filter(Boolean);
+          }
+        } catch {
+          return raw.split(",").map((s) => s.trim()).filter(Boolean);
+        }
+      }
+      return undefined;
+    });
 
     return () => (
       <div style={{ width: "100%", height: "100%", ...styles }}>
@@ -57,7 +76,7 @@ export default {
             showText={props.showText}
             showScore={props.showScore}
             textColor={props.textColor}
-            texts={props.texts}
+            texts={rateTexts.value}
             scoreTemplate={props.scoreTemplate}
             clearable={props.clearable}
             size={props.size}
@@ -151,10 +170,9 @@ export default {
       defaultValue: false,
       tips: "显示当前分值，不显示辅助文字",
     }),
-    texts: createEditorInputProp({
-      label: "辅助文字数组",
-      defaultValue: "",
-      tips: '如 ["极差", "失望", "一般", "满意", "惊喜"]，JSON格式',
+    texts: createFormTextOptionsProp({
+      label: "辅助文字",
+      defaultValue: ["极差", "失望", "一般", "满意", "惊喜"],
     }),
     scoreTemplate: createEditorInputProp({
       label: "分数模板",

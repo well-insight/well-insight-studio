@@ -23,7 +23,7 @@ import { cloneDeep } from "lodash-es";
 import type { Component, PropType } from "vue";
 import { computed, defineComponent } from "vue";
 import PropDatasetBindTrigger from "@/visual-editor/ui/shared/dataset-bind/PropDatasetBindTrigger.vue";
-import { isDatasetConfigProp } from "@/utils/datasetBinding";
+import { isChartBindProp } from "@/utils/datasetBinding";
 import { CrossSortableOptionsEditor, ImageUploadEditor, TablePropEditor } from "..";
 
 export const PropConfig = defineComponent({
@@ -40,11 +40,6 @@ export const PropConfig = defineComponent({
     commonOnly: {
       type: Boolean,
       default: false,
-    },
-    /** 侧栏「组件配置」：排除旧版集中式数据集表单项 */
-    excludeDataset: {
-      type: Boolean,
-      default: true,
     },
   },
   setup(props) {
@@ -143,11 +138,16 @@ export const PropConfig = defineComponent({
       VisualEditorPropsType.select,
       VisualEditorPropsType.color,
       VisualEditorPropsType.imageUpload,
+      VisualEditorPropsType.crossSortable,
     ]);
 
+    const isOptionsProp = (propConfig: VisualEditorProps) =>
+      propConfig.type === VisualEditorPropsType.crossSortable;
+
     return () => {
+      const componentKey = props.block.componentKey;
       const propEntries = Object.entries(props.component.props ?? {}).filter(([propName, propConfig]) => {
-        if (props.excludeDataset && isDatasetConfigProp(propName, propConfig)) {
+        if (isChartBindProp(propName, componentKey)) {
           return false;
         }
         if (!props.commonOnly) {
@@ -156,8 +156,49 @@ export const PropConfig = defineComponent({
         return commonTypes.has(propConfig.type);
       });
 
-      return propEntries.map(([propName, propConfig]) => (
-        <>
+      return propEntries.map(([propName, propConfig]) => {
+        const optionsProp = isOptionsProp(propConfig);
+
+        if (optionsProp) {
+          return (
+            <ElDropdownItem key={propName} class="items-start! toolbar-options-item">
+              <div class="toolbar-item-row toolbar-item-row--stack">
+                <div class="toolbar-item-head">
+                  <span class="toolbar-item-title inline-flex items-center gap-1">
+                    <span>{propConfig.label}</span>
+                    {propConfig.tips && (
+                      <ElTooltip
+                        placement="left-start"
+                        popper-class="max-w-200px"
+                        content={propConfig.tips}
+                      >
+                        <div class="inline-flex">
+                          <ElIcon>
+                            <Warning />
+                          </ElIcon>
+                        </div>
+                      </ElTooltip>
+                    )}
+                  </span>
+                  <PropDatasetBindTrigger
+                    block={props.block}
+                    propName={propName}
+                    propLabel={propConfig.label}
+                    propConfig={propConfig}
+                  />
+                </div>
+                <div
+                  key={props.block._vid + propName}
+                  class="toolbar-item-content toolbar-item-content--full"
+                >
+                  {renderPropItem(propName, propConfig)}
+                </div>
+              </div>
+            </ElDropdownItem>
+          );
+        }
+
+        return (
           <ElDropdownItem key={propName} class="items-start!">
             <div class="toolbar-item-row">
               <span class="toolbar-item-title inline-flex items-center gap-1">
@@ -176,7 +217,10 @@ export const PropConfig = defineComponent({
                   </ElTooltip>
                 )}
               </span>
-              <div key={props.block._vid + propName} class="toolbar-item-content flex items-center gap-4px">
+              <div
+                key={props.block._vid + propName}
+                class="toolbar-item-content flex items-center gap-4px"
+              >
                 <div class="min-w-0 flex-1">{renderPropItem(propName, propConfig)}</div>
                 <PropDatasetBindTrigger
                   block={props.block}
@@ -187,8 +231,8 @@ export const PropConfig = defineComponent({
               </div>
             </div>
           </ElDropdownItem>
-        </>
-      ));
+        );
+      });
     };
   },
 });

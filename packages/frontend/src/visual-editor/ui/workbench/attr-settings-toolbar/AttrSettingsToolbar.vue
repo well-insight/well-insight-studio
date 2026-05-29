@@ -136,7 +136,7 @@
       </el-button>
       <template #dropdown>
         <el-scrollbar class="toolbar-dropdown-scroll" max-height="420px">
-          <el-dropdown-menu class="w-[280px]">
+          <el-dropdown-menu class="w-[360px]">
             <PropConfig :component="componentItem" :block="currentBlock" common-only />
           </el-dropdown-menu>
         </el-scrollbar>
@@ -144,6 +144,14 @@
     </el-dropdown>
 
     <el-divider direction="vertical"></el-divider>
+
+    <template v-if="isChartBlock">
+      <el-button text :icon="Connection" @click="chartBindVisible = true">
+        <span>数据配置</span>
+      </el-button>
+      <ChartDatasetBindDialog v-model="chartBindVisible" :block="currentBlock" />
+      <el-divider direction="vertical"></el-divider>
+    </template>
 
     <el-dropdown
       v-if="currentBlock?.showStyleConfig"
@@ -239,11 +247,14 @@ import { useVisualData } from "@/visual-editor/hooks/useVisualData";
 import { FormatInputNumber } from "@/visual-editor/ui/shared/format-input-number";
 import { TextStyleConfig } from "@/visual-editor/ui/shared/text-style-config";
 import { EventAction } from "@/visual-editor/ui/workbench/right-attribute-panel/components";
+import ChartDatasetBindDialog from "@/visual-editor/ui/shared/dataset-bind/ChartDatasetBindDialog.vue";
 import { PropConfig } from "@/visual-editor/ui/workbench/right-attribute-panel/components/attr-editor/components/prop-config/prop-config-dropdown";
 import ImageUpload from "@/visual-editor/ui/workbench/right-attribute-panel/components/page-setting/ImageUpload.vue";
+import { isChartComponent } from "@/utils/datasetBinding";
 import {
   BrushFilled,
   CaretBottom,
+  Connection,
   DataLine,
   Grid,
   MoreFilled,
@@ -254,7 +265,7 @@ import {
   defaultTextStyleConfig,
   type TextStyleConfig as TextStyleConfigValue,
 } from "@/visual-editor/core/visual-editor.utils";
-import { computed, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { de } from "element-plus/es/locale/index.mjs";
 
 const props = withDefaults(
@@ -271,6 +282,14 @@ const props = withDefaults(
 
 const controlStore = useControlStore();
 const { visualConfig, currentBlock } = useVisualData();
+
+const chartBindVisible = ref(false);
+
+const isChartBlock = computed(() =>
+  currentBlock.value?.componentKey
+    ? isChartComponent(currentBlock.value.componentKey)
+    : false,
+);
 
 const componentItem = computed(() => {
   const componentKey = currentBlock.value?.componentKey;
@@ -471,11 +490,11 @@ function openAnimatePanel() {
   overflow: hidden;
 
   .toolbar-dropdown-scroll {
-    width: 280px;
+    width: 360px;
   }
 
   .el-dropdown-menu {
-    width: 280px;
+    width: 360px;
     padding: 8px;
     background: var(--el-bg-color-overlay);
 
@@ -560,6 +579,35 @@ function openAnimatePanel() {
   .toolbar-item-content .el-button-group,
   .toolbar-item-content .el-button {
     margin-left: auto;
+  }
+
+  .toolbar-item-row--stack {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .toolbar-options-item .toolbar-item-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .toolbar-item-content--full {
+    width: 100%;
+    margin-left: 0 !important;
+    justify-content: flex-start !important;
+  }
+
+  .toolbar-item-content--full > * {
+    margin-left: 0 !important;
+    max-width: 100%;
+  }
+
+  .toolbar-options-item .toolbar-item-title {
+    min-width: auto;
   }
 }
 
