@@ -8,9 +8,11 @@ import { computed, nextTick, onMounted, ref, watch } from "vue";
 import {
   getBlockAnimationElement,
   getBlockTitleInlineStyle,
+  getBlockTitleText,
   isInnerBlockTitle,
 } from "@/visual-editor/core/visual-editor.utils";
 import { useVisualData } from "@/visual-editor/hooks/useVisualData";
+import { resolveBlockBorderCss } from "@/utils/blockBorder";
 import CompRender from "./comp-render";
 import PreviewSlotItem from "./PreviewSlotItem.vue";
 
@@ -29,6 +31,10 @@ const props = withDefaults(
 );
 
 const { currentPage } = useVisualData();
+
+function getBlockBorderStyle(item: VisualEditorBlockData): CSSProperties {
+  return resolveBlockBorderCss(item, currentPage.value?.config);
+}
 
 /** 预览专用布局快照，避免拖拽回写编辑态 */
 const previewLayout = ref<VisualEditorBlockData[]>([]);
@@ -123,6 +129,7 @@ onMounted(() => {
               <div
                 :key="item._vid"
                 class="preview-block"
+                :style="getBlockBorderStyle(item)"
                 :class="{
                   'preview-block--inner-title':
                     item.showTitle === true && isInnerBlockTitle(item.titleStyle),
@@ -133,7 +140,7 @@ onMounted(() => {
                   class="preview-block__title-inner"
                   :style="getBlockTitleInlineStyle(item.titleStyle)"
                 >
-                  {{ item.label }}
+                  {{ getBlockTitleText(item) }}
                 </div>
                 <div class="preview-block__body">
                   <span
@@ -142,7 +149,7 @@ onMounted(() => {
                     :class="`preview-block__title-outer--${item.titleStyle?.position || 'outer-left'}`"
                     :style="getBlockTitleInlineStyle(item.titleStyle)"
                   >
-                    {{ item.label }}
+                    {{ getBlockTitleText(item) }}
                   </span>
                   <CompRender :element="item">
                     <template
@@ -208,9 +215,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  border-radius: 6px;
   background-color: #fff;
-  box-shadow: rgba(6, 30, 53, 0.1) 0 1px 2px 1px;
   overflow: hidden;
 }
 

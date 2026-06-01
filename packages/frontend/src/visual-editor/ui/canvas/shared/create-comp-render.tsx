@@ -54,7 +54,6 @@ export function createCompRender(name = "CompRender") {
             width: "100%",
             height: "100%",
             boxSizing: "border-box",
-            borderRadius: "6px",
             overflow: "hidden",
             ...blockStyles.value,
           }}

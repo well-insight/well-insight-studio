@@ -90,6 +90,7 @@ export const PropConfig = defineComponent({
             v-model={propObj[prop]}
             valueKey="value"
             multiple={propConfig.multiple}
+            teleported={false}
           >
             {propConfig.options?.map((opt) => (
               <ElOption label={opt.label} style={{ fontFamily: opt.value }} value={opt.value} />
@@ -104,6 +105,7 @@ export const PropConfig = defineComponent({
             size={uiSize}
             clearable={true}
             class="w-full"
+            teleported={false}
             props={{
               checkStrictly: true,
               children: "entitys",

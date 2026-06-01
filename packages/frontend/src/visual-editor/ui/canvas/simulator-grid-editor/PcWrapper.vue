@@ -15,6 +15,7 @@ import MonacoEditor from '@/visual-editor/ui/shared/monaco-editor/MonacoEditor'
 import { getBlockAnimationElement, type VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
 import {
   getBlockTitleInlineStyle,
+  getBlockTitleText,
   isInnerBlockTitle,
 } from '@/visual-editor/core/visual-editor.utils'
 import { useMouseInElement, useResizeObserver } from '@vueuse/core'
@@ -26,7 +27,12 @@ import { useRoute } from 'vue-router'
 import CompRender from './comp-render'
 import SlotItem from './SlotItem.vue'
 import { useAnimate } from '@/hooks/useAnimate'
+import { resolveBlockBorderCss } from '@/utils/blockBorder'
 import { GridLayout, GridItem, GridItemProps } from 'grid-layout-plus'
+
+function getBlockBorderStyle(item: VisualEditorBlockData): CSSProperties {
+  return resolveBlockBorderCss(item, currentPage.value?.config)
+}
 
 defineOptions({
   name: 'SimulatorEditor',
@@ -50,7 +56,7 @@ const workspaceStore = useWorkspaceStore()
 
 const { currentApp } = storeToRefs(workspaceStore)
 
-const { currentPage, setCurrentBlock, currentBlock, updateCurrentBlock, visualLoading } = useVisualData()
+const { currentPage, setCurrentBlock, currentBlock, updateCurrentBlock, visualLoading, recordHistory } = useVisualData()
 const { globalProperties } = useGlobalProperties()
 
 const controlStore = useControlStore()
@@ -336,6 +342,8 @@ function dragEnd() {
   try {
     item.wrapper.style.display = ''
   } catch (e) {}
+
+  recordHistory()
 }
 
 function elementDrop(e: DragEvent) {
@@ -448,6 +456,7 @@ function onLayoutUpdated() {
   if (focused) {
     setCurrentBlock(focused)
   }
+  recordHistory()
 }
 
 /**
@@ -462,6 +471,7 @@ function deleteComp(block: VisualEditorBlockData, parentBlocks = currentPage.val
     if (delTarget.focus) {
       setCurrentBlock({} as VisualEditorBlockData)
     }
+    recordHistory()
   }
 }
 
@@ -623,6 +633,7 @@ defineExpose({
                 :key="item._vid"
                 :data-label="item.label"
                 class="list-group-item"
+                :style="getBlockBorderStyle(item)"
                 :class="{
                   focus: item.focus,
                   focusWithChild: item.focusWithChild,
@@ -639,7 +650,7 @@ defineExpose({
                   class="block-title-inner"
                   :style="getBlockTitleInlineStyle(item.titleStyle)"
                 >
-                  {{ item.label }}
+                  {{ getBlockTitleText(item) }}
                 </div>
                 <div class="list-group-item__body">
                   <span
@@ -648,7 +659,7 @@ defineExpose({
                     :class="`block-title-outer--${item.titleStyle?.position || 'outer-left'}`"
                     :style="getBlockTitleInlineStyle(item.titleStyle)"
                   >
-                    {{ item.label }}
+                    {{ getBlockTitleText(item) }}
                   </span>
                   <CompRender
                     :element="item"
@@ -735,8 +746,6 @@ defineExpose({
   align-items: stretch;
   box-sizing: border-box;
   cursor: pointer;
-  border-radius: 6px;
-  box-shadow: rgba(6, 30, 53, 0.1) 0 1px 2px 1px;
   background-color: #fff;
   overflow: hidden;
   outline: none;

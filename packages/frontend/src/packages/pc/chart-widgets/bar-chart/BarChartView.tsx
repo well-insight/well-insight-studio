@@ -8,7 +8,6 @@ import { computed, defineComponent, type PropType } from "vue";
 export default defineComponent({
   name: "BarChartView",
   props: {
-    title: { type: String, default: "柱状图" },
     bindings: {
       type: Object as PropType<BlockDatasetBindings | undefined>,
       default: undefined,
@@ -21,19 +20,9 @@ export default defineComponent({
     height: { type: Number as PropType<number>, default: 200 },
   },
   setup(props) {
-    const { data, loading, error, total, canLoadFromDataset, refresh } = useDatasetChartData({
+    const { data, loading, error, refresh } = useDatasetChartData({
       bindings: () => props.bindings,
       useSampleData: () => props.useSampleData,
-    });
-
-    const subtitle = computed(() => {
-      if (canLoadFromDataset.value) {
-        return `已绑定数据集 · ${data.value.length} 项${total.value > data.value.length ? `（共 ${total.value} 行）` : ""}`;
-      }
-      if (props.useSampleData) {
-        return "示例数据 · 可在属性中绑定数据集";
-      }
-      return "请绑定数据集并选择字段";
     });
 
     const chartOption = computed(() =>
@@ -46,30 +35,24 @@ export default defineComponent({
 
     return () => (
       <div
-        class="flex h-full w-full flex-col overflow-hidden rounded-[6px] bg-[var(--el-bg-color)]"
+        class="relative flex h-full w-full flex-col overflow-hidden bg-[var(--el-bg-color)]"
         style={{ minHeight: props.compact ? "80px" : "120px" }}
       >
-        {!props.compact && (
-          <div class="flex shrink-0 items-start justify-between gap-8px px-12px pt-10px">
-            <div class="min-w-0 flex-1">
-              <div class="truncate text-14px font-600 text-[var(--el-text-color-primary)]">
-                {props.title}
-              </div>
-              <div class="mt-2px truncate text-12px text-[var(--el-text-color-secondary)]">
-                {subtitle.value}
-              </div>
-            </div>
-            {props.showRefresh && (
-              <ElButton text size="small" loading={loading.value} onClick={() => void refresh()}>
-                <ElIcon>
-                  <Refresh />
-                </ElIcon>
-              </ElButton>
-            )}
-          </div>
+        {props.showRefresh && !props.compact && (
+          <ElButton
+            text
+            size="small"
+            class="absolute right-8px top-8px z-1"
+            loading={loading.value}
+            onClick={() => void refresh()}
+          >
+            <ElIcon>
+              <Refresh />
+            </ElIcon>
+          </ElButton>
         )}
 
-        <div class="relative min-h-0 flex-1 px-8px pb-8px">
+        <div class="relative min-h-0 flex-1">
           {error.value && data.value.length === 0 ? (
             <ElEmpty description={error.value} image-size={56} />
           ) : data.value.length === 0 && !loading.value ? (

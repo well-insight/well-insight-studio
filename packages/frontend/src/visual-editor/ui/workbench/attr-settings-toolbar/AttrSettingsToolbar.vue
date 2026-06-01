@@ -136,7 +136,7 @@
       </el-button>
       <template #dropdown>
         <el-scrollbar class="toolbar-dropdown-scroll" max-height="420px">
-          <el-dropdown-menu class="w-[360px]">
+          <el-dropdown-menu>
             <PropConfig :component="componentItem" :block="currentBlock" common-only />
           </el-dropdown-menu>
         </el-scrollbar>
@@ -168,7 +168,7 @@
       </el-button>
       <template #dropdown>
         <el-scrollbar class="toolbar-dropdown-scroll" max-height="420px">
-          <el-dropdown-menu class="w-[280px]">
+          <el-dropdown-menu>
             <el-dropdown-item>
               <div class="toolbar-item-row">
                 <span class="toolbar-item-title">水平对齐</span>
@@ -201,6 +201,11 @@
                 </div>
               </div>
             </el-dropdown-item>
+            <BorderStyleConfig
+              v-model="borderOverride"
+              inheritable
+              :teleported="false"
+            />
           </el-dropdown-menu>
         </el-scrollbar>
       </template>
@@ -246,6 +251,8 @@ import { useControlStore } from "@/stores/controlStore";
 import { useVisualData } from "@/visual-editor/hooks/useVisualData";
 import { FormatInputNumber } from "@/visual-editor/ui/shared/format-input-number";
 import { TextStyleConfig } from "@/visual-editor/ui/shared/text-style-config";
+import { BorderStyleConfig } from "@/visual-editor/ui/shared/border-style-config";
+import type { ComponentBorderOverride } from "@/visual-editor/core/visual-editor.utils";
 import { EventAction } from "@/visual-editor/ui/workbench/right-attribute-panel/components";
 import ChartDatasetBindDialog from "@/visual-editor/ui/shared/dataset-bind/ChartDatasetBindDialog.vue";
 import { PropConfig } from "@/visual-editor/ui/workbench/right-attribute-panel/components/attr-editor/components/prop-config/prop-config-dropdown";
@@ -312,6 +319,19 @@ const titleStyle = computed({
   set(val: TextStyleConfigValue) {
     if (!currentBlock.value?._vid) return;
     currentBlock.value.titleStyle = val;
+  },
+});
+
+const borderOverride = computed({
+  get: (): ComponentBorderOverride => {
+    if (!currentBlock.value?.borderOverride) {
+      currentBlock.value.borderOverride = { show: null };
+    }
+    return currentBlock.value.borderOverride;
+  },
+  set(val: ComponentBorderOverride) {
+    if (!currentBlock.value?._vid) return;
+    currentBlock.value.borderOverride = val;
   },
 });
 
@@ -483,6 +503,8 @@ function openAnimatePanel() {
 
 <style>
 .toolbar-dropdown {
+  width: 320px !important;
+  max-width: 320px !important;
   border-radius: 10px !important;
   border: 1px solid var(--el-border-color-light) !important;
   box-shadow: 0 10px 24px rgb(0 0 0 / 10%) !important;
@@ -490,11 +512,11 @@ function openAnimatePanel() {
   overflow: hidden;
 
   .toolbar-dropdown-scroll {
-    width: 360px;
+    width: 320px;
   }
 
   .el-dropdown-menu {
-    width: 360px;
+    width: 320px;
     padding: 8px;
     background: var(--el-bg-color-overlay);
 
@@ -620,7 +642,7 @@ function openAnimatePanel() {
 
 <style scoped>
 .toolbar-panel {
-  width: 460px;
+  width: 320px;
   padding: 12px;
   background: var(--el-bg-color-overlay);
   border-radius: 10px;
@@ -628,7 +650,7 @@ function openAnimatePanel() {
 }
 
 .toolbar-panel-scroll {
-  width: 460px;
+  width: 320px;
 }
 
 .toolbar-panel :deep(.el-card) {

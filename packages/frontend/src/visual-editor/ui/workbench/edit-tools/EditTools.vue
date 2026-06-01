@@ -1,7 +1,5 @@
 <script lang="ts" setup>
 import { updateApplication } from "@/api/application";
-import { SvgIcon } from "@/components/svg-icon";
-import { useControlStore } from "@/stores/controlStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 import { localKey, useVisualData } from "@/visual-editor/hooks/useVisualData";
 import {
@@ -19,17 +17,23 @@ import { storeToRefs } from "pinia";
 import { computed, ref, toRaw, toValue } from "vue";
 import Preview from "./components/Preview.vue";
 import PageSettingButton from "./components/PageSetting.vue";
-import PageRouterSetting from "./components/PageRouterSetting.vue";
 
 const workspaceStore = useWorkspaceStore();
-const controlStore = useControlStore();
 const { currentApp } = storeToRefs(workspaceStore);
-const { floatingSettingVisible } = storeToRefs(controlStore);
 
-const { jsonData } = useVisualData();
+const {
+  jsonData,
+  saveStatus,
+  saveError,
+  isDirty,
+  canUndo,
+  canRedo,
+  saveProject,
+  undo,
+  redo,
+} = useVisualData();
 
 const previewVisible = ref(false);
-const saving = ref(false);
 
 const statusActive = computed({
   get: () => currentApp.value?.status === 1,
@@ -45,26 +49,52 @@ const statusActive = computed({
   },
 });
 
-async function saveAll() {
-  const app = currentApp.value;
-  if (!app?.id) {
-    ElMessage.warning("未找到当前应用");
-    return;
+const saveStatusTooltip = computed(() => {
+  if (saveStatus.value === "saving") {
+    return "保存中…";
   }
-  saving.value = true;
-  try {
-    const schema = JSON.parse(JSON.stringify(toRaw(toValue(jsonData)))) as Record<string, unknown>;
-    await updateApplication(String(app.id), {
-      schema,
-      client_type: app.clientType ?? 1,
-      status: app.status ?? 1,
-    });
-    sessionStorage.setItem(localKey, JSON.stringify(toRaw(toValue(jsonData))));
+  if (saveStatus.value === "error") {
+    return saveError.value || "保存失败";
+  }
+  if (saveStatus.value === "saved") {
+    return "已保存";
+  }
+  if (isDirty.value) {
+    return "有未保存的更改";
+  }
+  return "已同步至服务器";
+});
+
+const saveStatusButtonType = computed(() => {
+  if (saveStatus.value === "error" || isDirty.value) {
+    return "danger";
+  }
+  if (saveStatus.value === "saved") {
+    return "success";
+  }
+  return "info";
+});
+
+async function saveAll() {
+  const ok = await saveProject();
+  if (ok) {
     ElMessage.success("保存成功");
-  } catch (e) {
-    ElMessage.error((e as Error).message || "保存失败");
-  } finally {
-    saving.value = false;
+  } else if (saveError.value) {
+    ElMessage.error(saveError.value);
+  } else {
+    ElMessage.warning("未找到当前应用");
+  }
+}
+
+function handleUndo() {
+  if (!undo()) {
+    ElMessage.info("没有可撤回的操作");
+  }
+}
+
+function handleRedo() {
+  if (!redo()) {
+    ElMessage.info("没有可重做的操作");
   }
 }
 
@@ -85,10 +115,6 @@ function previewPage() {
   sessionStorage.setItem(localKey, JSON.stringify(toRaw(toValue(jsonData))));
   previewVisible.value = true;
 }
-
-function openFloatingSetting() {
-  floatingSettingVisible.value = true;
-}
 </script>
 
 <template>
@@ -99,15 +125,33 @@ function openFloatingSetting() {
     </div>
 
     <div class="flex h-full shrink-0 items-center">
-      <el-button text :icon="RefreshLeft" />
-      <el-button text :icon="RefreshRight" />
+      <el-tooltip content="撤回" placement="bottom">
+        <el-button text :icon="RefreshLeft" :disabled="!canUndo" @click="handleUndo" />
+      </el-tooltip>
+      <el-tooltip content="重做" placement="bottom">
+        <el-button text :icon="RefreshRight" :disabled="!canRedo" @click="handleRedo" />
+      </el-tooltip>
       <el-divider direction="vertical" />
-      <el-button v-if="currentApp?.clientType === 2" text :icon="Iphone" @click="triggerClient" />
+      <!-- <el-button v-if="currentApp?.clientType === 2" text :icon="Iphone" @click="triggerClient" />
       <el-button v-if="currentApp?.clientType === 1" text :icon="Monitor" @click="triggerClient" />
-      <el-button text :icon="Orange" />
-      <el-button text :icon="WarnTriangleFilled" />
+      <el-button text :icon="Orange" /> -->
+      <el-tooltip :content="saveStatusTooltip" placement="bottom">
+        <el-button
+          text
+          :icon="WarnTriangleFilled"
+          :type="saveStatusButtonType"
+          :class="{ 'save-status-btn--pulse': isDirty }"
+        />
+      </el-tooltip>
       <el-divider direction="vertical" />
-      <el-button text :icon="DocumentChecked" :loading="saving" @click="saveAll">保存</el-button>
+      <el-button
+        text
+        :icon="DocumentChecked"
+        :loading="saveStatus === 'saving'"
+        @click="saveAll"
+      >
+        保存
+      </el-button>
       <el-divider direction="vertical" />
       <el-button text :icon="VideoPlay" @click="previewPage">预览</el-button>
       <el-divider direction="vertical" />
@@ -126,6 +170,23 @@ function openFloatingSetting() {
 
   <Preview v-model="previewVisible" :device="currentApp?.clientType === 1 ? 'pc' : 'mobile'" />
 </template>
+
+<style lang="scss" scoped>
+.save-status-btn--pulse {
+  animation: save-status-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes save-status-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.55;
+  }
+}
+</style>
 
 <style lang="scss" module>
 .status {

@@ -5,9 +5,14 @@ import type {
   VisualEditorBlockData,
   VisualEditorModel,
   VisualEditorModelValue,
-  VisualEditorPage
+  VisualEditorPage,
 } from '@/visual-editor/visual-editor.utils'
-import { computed, inject, reactive, readonly, ref, watch } from 'vue'
+import {
+  serializeProjectContent,
+  stripProjectEditorEphemeral,
+} from '@/visual-editor/visual-editor.utils'
+import { defaultComponentBorder } from '@/utils/blockBorder'
+import { computed, inject, nextTick, reactive, readonly, ref, toRaw, watch } from 'vue'
 
 /** 页面路由 path，统一为以 / 开头 */
 export function normalizeEditorPagePath(path: string) {
@@ -16,6 +21,7 @@ export function normalizeEditorPagePath(path: string) {
   return t.startsWith('/') ? t : `/${t}`
 }
 
+import { updateApplication } from '@/api/application'
 import { useRoute } from 'vue-router'
 import { CacheEnum } from '@/enums'
 import { useWorkspaceStoreWithout } from '@/stores/workspaceStore'
@@ -26,6 +32,18 @@ export const localKey = CacheEnum.PAGE_DATA_KEY
 
 // 注入jsonData的key
 export const injectKey: InjectionKey<ReturnType<typeof initVisualData>> = Symbol()
+
+export type VisualSaveStatus = 'idle' | 'saving' | 'saved' | 'error'
+
+const MAX_HISTORY = 50
+
+function cloneProject(data: VisualEditorModelValue): VisualEditorModelValue {
+  return JSON.parse(JSON.stringify(toRaw(data))) as VisualEditorModelValue
+}
+
+function cloneProjectForHistory(data: VisualEditorModelValue): VisualEditorModelValue {
+  return stripProjectEditorEphemeral(cloneProject(data))
+}
 
 interface IState {
   currentBlock: VisualEditorBlockData // 当前正在操作的组件
@@ -60,7 +78,8 @@ export function createNewPage({ title = '新页面', path = '/' }) {
       bgColor: '#ffffff',
       bgImage: '',
       keepAlive: false,
-      pageSize: defaultPageSize()
+      pageSize: defaultPageSize(),
+      componentBorder: defaultComponentBorder(),
     } as PageConfig,
     blocks: [] as VisualEditorBlockData[]
   }
@@ -283,10 +302,191 @@ export function initVisualData() {
     const paths = Object.keys(state.jsonData.pages)
     const path = state.jsonData.pages['/'] ? '/' : paths[0] || '/'
     setCurrentPage(path)
+    resetEditorSession()
   }
 
   function updateVisualLoading(loading: boolean) {
     visualLoading.value = loading
+  }
+
+  const saveStatus = ref<VisualSaveStatus>('idle')
+  const saveError = ref<string | null>(null)
+  const lastSavedSnapshot = ref('')
+  let saveStatusResetTimer: ReturnType<typeof setTimeout> | null = null
+  let pendingSave = false
+
+  const historyStack = ref<VisualEditorModelValue[]>([])
+  const historyIndex = ref(-1)
+  let isApplyingHistory = false
+  let historyReady = false
+  let recordHistoryTimer: ReturnType<typeof setTimeout> | null = null
+  let lastHistoryContent = ''
+
+  const isDirty = computed(() => {
+    void state.jsonData
+    if (!lastSavedSnapshot.value) {
+      return false
+    }
+    return serializeProjectContent(state.jsonData) !== lastSavedSnapshot.value
+  })
+
+  const canUndo = computed(() => historyIndex.value > 0)
+  const canRedo = computed(() => historyIndex.value < historyStack.value.length - 1)
+
+  function syncSavedBaseline() {
+    lastSavedSnapshot.value = serializeProjectContent(state.jsonData)
+  }
+
+  function resetEditorSession() {
+    isApplyingHistory = true
+    historyReady = false
+    if (recordHistoryTimer) {
+      clearTimeout(recordHistoryTimer)
+      recordHistoryTimer = null
+    }
+    historyStack.value = [cloneProjectForHistory(state.jsonData)]
+    historyIndex.value = 0
+    syncSavedBaseline()
+    saveStatus.value = 'idle'
+    saveError.value = null
+    historyReady = true
+    isApplyingHistory = false
+    lastHistoryContent = serializeProjectContent(state.jsonData)
+  }
+
+  function recordHistory() {
+    if (!historyReady || isApplyingHistory) {
+      return
+    }
+    const snap = cloneProjectForHistory(state.jsonData)
+    const current = historyStack.value[historyIndex.value]
+    if (current && serializeProjectContent(current) === serializeProjectContent(snap)) {
+      return
+    }
+    historyStack.value = historyStack.value.slice(0, historyIndex.value + 1)
+    historyStack.value.push(snap)
+    historyIndex.value = historyStack.value.length - 1
+    lastHistoryContent = serializeProjectContent(snap)
+    if (historyStack.value.length > MAX_HISTORY) {
+      historyStack.value.shift()
+      historyIndex.value--
+    }
+  }
+
+  function scheduleRecordHistory(delay = 400) {
+    if (!historyReady || isApplyingHistory) {
+      return
+    }
+    const content = serializeProjectContent(state.jsonData)
+    if (content === lastHistoryContent) {
+      return
+    }
+    if (recordHistoryTimer) {
+      clearTimeout(recordHistoryTimer)
+    }
+    recordHistoryTimer = setTimeout(() => {
+      recordHistoryTimer = null
+      if (serializeProjectContent(state.jsonData) === lastHistoryContent) {
+        return
+      }
+      recordHistory()
+    }, delay)
+  }
+
+  function undo(): boolean {
+    if (!canUndo.value) {
+      return false
+    }
+    if (recordHistoryTimer) {
+      clearTimeout(recordHistoryTimer)
+      recordHistoryTimer = null
+    }
+    isApplyingHistory = true
+    historyIndex.value--
+    state.jsonData = cloneProject(historyStack.value[historyIndex.value])
+    setCurrentPage(route.path)
+    lastHistoryContent = serializeProjectContent(state.jsonData)
+    void nextTick(() => {
+      isApplyingHistory = false
+    })
+    return true
+  }
+
+  function redo(): boolean {
+    if (!canRedo.value) {
+      return false
+    }
+    if (recordHistoryTimer) {
+      clearTimeout(recordHistoryTimer)
+      recordHistoryTimer = null
+    }
+    isApplyingHistory = true
+    historyIndex.value++
+    state.jsonData = cloneProject(historyStack.value[historyIndex.value])
+    setCurrentPage(route.path)
+    lastHistoryContent = serializeProjectContent(state.jsonData)
+    void nextTick(() => {
+      isApplyingHistory = false
+    })
+    return true
+  }
+
+  watch(
+    () => serializeProjectContent(state.jsonData),
+    () => scheduleRecordHistory(),
+  )
+
+  resetEditorSession()
+
+  async function saveProject(): Promise<boolean> {
+    if (saveStatus.value === 'saving') {
+      pendingSave = true
+      return false
+    }
+
+    const app = workspaceStore.currentApp
+    if (!app?.id) {
+      saveStatus.value = 'error'
+      saveError.value = '未找到当前应用'
+      return false
+    }
+
+    saveStatus.value = 'saving'
+    saveError.value = null
+
+    try {
+      const schema = stripProjectEditorEphemeral(
+        cloneProject(state.jsonData),
+      ) as unknown as Record<string, unknown>
+      await updateApplication(String(app.id), {
+        schema,
+        client_type: app.clientType ?? 1,
+        status: app.status ?? 1,
+      })
+      sessionStorage.setItem(localKey, JSON.stringify(schema))
+      syncSavedBaseline()
+      saveStatus.value = 'saved'
+
+      if (saveStatusResetTimer) {
+        clearTimeout(saveStatusResetTimer)
+      }
+      saveStatusResetTimer = setTimeout(() => {
+        if (saveStatus.value === 'saved') {
+          saveStatus.value = 'idle'
+        }
+      }, 2000)
+
+      return true
+    } catch (e) {
+      saveStatus.value = 'error'
+      saveError.value = e instanceof Error ? e.message : '保存失败'
+      return false
+    } finally {
+      if (pendingSave) {
+        pendingSave = false
+        void saveProject()
+      }
+    }
   }
 
   return {
@@ -310,7 +510,16 @@ export function initVisualData() {
     updatePageBlock,
     updateCurrentBlock,
     visualLoading,
-    updateVisualLoading
+    updateVisualLoading,
+    saveStatus: readonly(saveStatus),
+    saveError: readonly(saveError),
+    isDirty,
+    canUndo,
+    canRedo,
+    saveProject,
+    recordHistory,
+    undo,
+    redo,
   }
 }
 

@@ -389,7 +389,6 @@ function chartSize(value: number, min: number) {
                 <template #default="{ width, height }">
                   <BarChartView
                     :bindings="draftBindings"
-                    :title="(block.props?.title as string) || '柱状图'"
                     :bar-color="(block.props?.barColor as string) || '#409EFF'"
                     :use-sample-data="false"
                     :show-refresh="false"

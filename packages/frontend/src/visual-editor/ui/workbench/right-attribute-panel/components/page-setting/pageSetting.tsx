@@ -1,8 +1,10 @@
-import { ElColorPicker, ElForm, ElFormItem, ElOption, ElSelect, ElSwitch } from "element-plus";
+import { ElColorPicker, ElDivider, ElForm, ElFormItem, ElOption, ElSelect, ElSwitch } from "element-plus";
 import { storeToRefs } from "pinia";
 import { computed, defineComponent, reactive } from "vue";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 import { useVisualData } from "@/visual-editor/hooks/useVisualData";
+import { BorderStyleConfig } from "@/visual-editor/ui/shared/border-style-config";
+import { defaultComponentBorder } from "@/utils/blockBorder";
 import DeviceSelect from "./DeviceSelect.vue";
 import ImageUpload from "./ImageUpload.vue";
 
@@ -11,6 +13,18 @@ export const PageSetting = defineComponent({
     const { currentPage } = useVisualData();
 
     const pageConfig = computed(() => currentPage.value.config);
+
+    const componentBorder = computed({
+      get: () => {
+        if (!pageConfig.value.componentBorder) {
+          pageConfig.value.componentBorder = defaultComponentBorder();
+        }
+        return pageConfig.value.componentBorder;
+      },
+      set: (val) => {
+        pageConfig.value.componentBorder = val;
+      },
+    });
 
     const workspaceStore = useWorkspaceStore();
     const { currentApp } = storeToRefs(workspaceStore);
@@ -79,6 +93,16 @@ export const PageSetting = defineComponent({
           <ElFormItem label="路由切换时缓存本页面">
             <ElSwitch size="default" v-model={pageConfig.value.keepAlive} />
           </ElFormItem>
+
+          <ElDivider content-position="left">组件边框（页面默认）</ElDivider>
+          <BorderStyleConfig
+            modelValue={componentBorder.value}
+            onUpdate:modelValue={(val) => {
+              componentBorder.value = val;
+            }}
+            layout="form"
+            teleported={false}
+          />
         </ElForm>
       </>
     );

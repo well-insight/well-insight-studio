@@ -11,10 +11,10 @@ import { CustomComponents } from "@/visual-editor/ui/workbench/component-list";
 import LeftAside from "@/visual-editor/ui/workbench/left-aside/LeftAside.vue";
 import RightAttributePanel from "@/visual-editor/ui/workbench/right-attribute-panel/RightAttributePanel.vue";
 import { onClickOutside } from "@vueuse/core";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import { storeToRefs } from "pinia";
-import { onActivated, onUnmounted, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { onActivated, onBeforeUnmount, onMounted, onUnmounted, ref, watch } from "vue";
+import { onBeforeRouteLeave, useRoute } from "vue-router";
 
 const route = useRoute();
 const workspaceStore = useWorkspaceStore();
@@ -23,7 +23,7 @@ const { appList } = storeToRefs(workspaceStore);
 const controlStore = useControlStore();
 const { layoutCollapse, settingCollapse, floatingSettingVisible } = storeToRefs(controlStore);
 
-const { overrideProject, updateVisualLoading } = useVisualData();
+const { overrideProject, updateVisualLoading, isDirty } = useVisualData();
 
 /** 并发/重复进入时只应用最后一次请求结果 */
 let loadSeq = 0;
@@ -112,6 +112,42 @@ onActivated(() => {
     return;
   }
   loadApplicationById(id);
+});
+
+async function confirmLeaveIfDirty(): Promise<boolean> {
+  if (!isDirty.value) {
+    return true;
+  }
+  try {
+    await ElMessageBox.confirm("当前有未保存的更改，确定要离开吗？", "提示", {
+      confirmButtonText: "离开",
+      cancelButtonText: "取消",
+      type: "warning",
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+onBeforeRouteLeave(async (_to, _from, next) => {
+  const ok = await confirmLeaveIfDirty();
+  next(ok);
+});
+
+function onBeforeUnload(e: BeforeUnloadEvent) {
+  if (isDirty.value) {
+    e.preventDefault();
+    e.returnValue = "";
+  }
+}
+
+onMounted(() => {
+  window.addEventListener("beforeunload", onBeforeUnload);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("beforeunload", onBeforeUnload);
 });
 
 onUnmounted(() => {

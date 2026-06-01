@@ -5,6 +5,7 @@ import { inject, provide } from "vue";
 import { useDotProp } from "@/visual-editor/hooks/useDotProp";
 import { generateNanoid } from "@/visual-editor/lib";
 import type { GridItemProps } from "grid-layout-plus";
+import { isChartComponent } from "@/utils/datasetBinding";
 
 /**
  * @description 组件属性
@@ -46,6 +47,8 @@ export interface VisualEditorBlockData extends GridItemProps {
   showTitle?: boolean;
   /** 组件标题样式 */
   titleStyle?: BlockTitleStyle;
+  /** 组件边框覆盖（未设置项沿用页面 componentBorder） */
+  borderOverride?: ComponentBorderOverride;
   /** 动画集 */
   animations?: Animation[];
   /** 组件动作集合 */
@@ -77,6 +80,24 @@ export interface Action {
 }
 
 /**
+ * @description 组件边框样式（页面全局默认）
+ */
+export interface ComponentBorderStyle {
+  show?: boolean;
+  width?: string;
+  style?: string;
+  color?: string;
+  radius?: string;
+  /** 阴影样式，如：0 2px 8px rgba(0,0,0,0.1) */
+  shadow?: string;
+}
+
+/** 组件级边框覆盖，null/undefined 的 show 表示沿用页面全局 */
+export interface ComponentBorderOverride extends Partial<ComponentBorderStyle> {
+  show?: boolean | null;
+}
+
+/**
  * @description 页面配置
  */
 export interface PageConfig {
@@ -102,6 +123,8 @@ export interface PageConfig {
   bgSize?: string;
   /** 是否缓存当前页面 */
   keepAlive: boolean;
+  /** 页面内组件默认边框 */
+  componentBorder?: ComponentBorderStyle;
 }
 /**
  * @description 页面对象
@@ -321,6 +344,16 @@ export function getBlockAnimationElement(vid?: string | null): HTMLElement | nul
   ) as HTMLElement | null;
 }
 
+export function getBlockTitleText(block: VisualEditorBlockData): string {
+  if (isChartComponent(block.componentKey)) {
+    const title = block.props?.title;
+    if (typeof title === "string" && title.trim()) {
+      return title.trim();
+    }
+  }
+  return block.label;
+}
+
 /** 是否为卡片内顶部标题（参考图样式） */
 export function isInnerBlockTitle(titleStyle?: TextStyleConfig) {
   const pos = titleStyle?.position;
@@ -363,6 +396,48 @@ export interface VisualEditorMarkLines {
   y: { top: number; showTop: number }[];
 }
 
+/** 清除编辑态选中信息，不参与保存/脏检查/操作历史 */
+export function stripBlockEditorEphemeral(block: VisualEditorBlockData): VisualEditorBlockData {
+  const next: VisualEditorBlockData = {
+    ...block,
+    focus: false,
+    focusWithChild: false,
+  };
+  const slots = next.props?.slots as Record<string, { children?: VisualEditorBlockData[] }> | undefined;
+  if (slots) {
+    next.props = { ...next.props };
+    const nextSlots: Record<string, { children?: VisualEditorBlockData[] }> = {};
+    for (const [key, slot] of Object.entries(slots)) {
+      nextSlots[key] = {
+        ...slot,
+        children: slot.children?.map(stripBlockEditorEphemeral),
+      };
+    }
+    next.props.slots = nextSlots;
+  }
+  return next;
+}
+
+export function stripProjectEditorEphemeral(data: VisualEditorModelValue): VisualEditorModelValue {
+  const pages = Object.fromEntries(
+    Object.entries(data.pages).map(([path, page]) => [
+      path,
+      {
+        ...page,
+        blocks: page.blocks.map(stripBlockEditorEphemeral),
+      },
+    ]),
+  ) as VisualEditorModelValue["pages"];
+  return {
+    ...data,
+    pages,
+  };
+}
+
+export function serializeProjectContent(data: VisualEditorModelValue): string {
+  return JSON.stringify(stripProjectEditorEphemeral(data));
+}
+
 export function createNewBlock(
   component: VisualEditorComponent,
   config?: Partial<VisualEditorBlockData>,
@@ -381,11 +456,11 @@ export function createNewBlock(
       justifyContent: "center",
       alignItems: "center",
       backgroundColor: "#ffffff",
-      paddingTop: "12px",
-      paddingRight: "12px",
-      paddingLeft: "12px",
-      paddingBottom: "12px",
-      tempPadding: "12px",
+      paddingTop: "0px",
+      paddingRight: "0px",
+      paddingLeft: "0px",
+      paddingBottom: "0px",
+      tempPadding: "0px",
     },
     hasResize: false,
     props: Object.entries(component.props || {}).reduce((prev: any, [propName, propSchema]) => {
@@ -397,7 +472,8 @@ export function createNewBlock(
     }, {}),
     draggable: component.draggable ?? true, // 是否可以拖拽
     showStyleConfig: component.showStyleConfig ?? true, // 是否显示组件样式配置
-    showTitle: false,
+    showTitle: component.moduleName === "chartWidgets",
+    titleStyle: component.moduleName === "chartWidgets" ? defaultTextStyleConfig() : undefined,
     animations: [], // 动画集
     actions: [], // 动作集合
     events: component.events || [], // 事件集合

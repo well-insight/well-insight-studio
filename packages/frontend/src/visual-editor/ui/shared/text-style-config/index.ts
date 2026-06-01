@@ -5,5 +5,6 @@ export {
   defaultTextStyleConfig,
   defaultBlockTitleStyle,
   getBlockTitleInlineStyle,
+  getBlockTitleText,
   isInnerBlockTitle,
 } from '@/visual-editor/core/visual-editor.utils'

@@ -25,7 +25,6 @@ export default {
           {{
             default: (size: { width: number; height: number }) => (
               <BarChartView
-                title={props.title}
                 bindings={block.datasetBindings}
                 barColor={props.barColor}
                 useSampleData={props.useSampleData}
