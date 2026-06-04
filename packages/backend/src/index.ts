@@ -51,7 +51,7 @@ app.use(
     origin:
       process.env.NODE_ENV === "production"
         ? ["https://yourdomain.com"]
-        : ["http://localhost:5173", "http://localhost:10086"],
+        : ["http://localhost:5173", "http://localhost:10086", "http://localhost:5188"],
     credentials: true,
   }),
 );

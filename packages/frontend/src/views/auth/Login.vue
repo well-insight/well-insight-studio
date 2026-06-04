@@ -247,10 +247,10 @@ const authStore = getAuthStore();
 const mode = ref<AuthMode>("login");
 
 const form = reactive({
-  email: "",
-  username: "",
+  email: "admin",
+  username: "admin",
   displayName: "",
-  password: "",
+  password: "Aa@123456",
   confirmPassword: "",
   captcha: "",
 });

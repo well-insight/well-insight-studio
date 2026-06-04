@@ -4,7 +4,6 @@
     "target": "ESNext",
     "jsx": "preserve",
     "lib": ["es6", "ESNext", "dom"],
-    "baseUrl": ".",
     "module": "ESNext", // 建议配合 ESNext 使用
     "moduleResolution": "bundler", // 替换原来的 "node" 或其他值
     "paths": {
