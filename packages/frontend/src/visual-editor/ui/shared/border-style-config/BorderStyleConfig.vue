@@ -1,5 +1,8 @@
 <script lang="ts" setup>
-import type { ComponentBorderOverride, ComponentBorderStyle } from "@/visual-editor/core/visual-editor.utils";
+import type {
+  ComponentBorderOverride,
+  ComponentBorderStyle,
+} from "@/visual-editor/core/visual-editor.utils";
 import { defaultComponentBorder } from "@/utils/blockBorder";
 import { BoxShadowPickerField } from "@/components/box-shadow-picker";
 import { useVModel } from "@vueuse/core";
@@ -30,9 +33,7 @@ const emit = defineEmits<{
 
 const border = useVModel(props, "modelValue", emit);
 
-const shadowEmptyLabel = computed(() =>
-  props.inheritable ? "沿用页面" : "",
-);
+const shadowEmptyLabel = computed(() => (props.inheritable ? "沿用页面" : ""));
 
 const borderStyleOptions = [
   { label: "实线", value: "solid" },
@@ -85,9 +86,9 @@ if (!props.inheritable) {
         <span class="border-style-config__label">显示边框</span>
         <div class="border-style-config__control">
           <el-radio-group v-if="inheritable" v-model="showMode" :size="size">
-            <el-radio-button label="inherit">沿用页面</el-radio-button>
-            <el-radio-button label="show">显示</el-radio-button>
-            <el-radio-button label="hide">隐藏</el-radio-button>
+            <el-radio-button value="inherit">沿用页面</el-radio-button>
+            <el-radio-button value="show">显示</el-radio-button>
+            <el-radio-button value="hide">隐藏</el-radio-button>
           </el-radio-group>
           <el-switch v-else v-model="border.show" />
         </div>
@@ -164,14 +165,18 @@ if (!props.inheritable) {
   <el-form v-else label-position="left" :label-width="96">
     <el-form-item label="显示边框">
       <el-radio-group v-if="inheritable" v-model="showMode" :size="size">
-        <el-radio-button label="inherit">沿用页面</el-radio-button>
-        <el-radio-button label="show">显示</el-radio-button>
-        <el-radio-button label="hide">隐藏</el-radio-button>
+        <el-radio-button value="inherit">沿用页面</el-radio-button>
+        <el-radio-button value="show">显示</el-radio-button>
+        <el-radio-button value="hide">隐藏</el-radio-button>
       </el-radio-group>
       <el-switch v-else v-model="border.show" />
     </el-form-item>
     <el-form-item label="边框宽度">
-      <el-input v-model="border.width" :size="size" :placeholder="inheritable ? '沿用页面' : '如 1px'" />
+      <el-input
+        v-model="border.width"
+        :size="size"
+        :placeholder="inheritable ? '沿用页面' : '如 1px'"
+      />
     </el-form-item>
     <el-form-item label="边框样式">
       <el-select
@@ -193,7 +198,11 @@ if (!props.inheritable) {
       <el-color-picker v-model="border.color" :size="size" show-alpha color-format="hex" />
     </el-form-item>
     <el-form-item label="圆角">
-      <el-input v-model="border.radius" :size="size" :placeholder="inheritable ? '沿用页面' : '如 6px'" />
+      <el-input
+        v-model="border.radius"
+        :size="size"
+        :placeholder="inheritable ? '沿用页面' : '如 6px'"
+      />
     </el-form-item>
     <el-form-item label="阴影">
       <BoxShadowPickerField

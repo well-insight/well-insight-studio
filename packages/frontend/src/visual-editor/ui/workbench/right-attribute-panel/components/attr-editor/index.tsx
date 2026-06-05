@@ -1,11 +1,7 @@
-import { Warning } from '@element-plus/icons-vue'
 import {
-  ElDivider,
   ElForm,
   ElFormItem,
-  ElIcon,
   ElInput,
-  ElInputNumber,
   ElPopover,
   ElRadioButton,
   ElRadioGroup
@@ -138,16 +134,16 @@ export const AttrEditor = defineComponent({
                   <AttrEditorCard header='样式配置'>
                     <ElFormItem label='水平对齐方式' labelWidth='auto'>
                       <ElRadioGroup v-model={currentBlock.value.styles.justifyContent}>
-                        <ElRadioButton label='flex-start'>左对齐</ElRadioButton>
-                        <ElRadioButton label='center'>居中</ElRadioButton>
-                        <ElRadioButton label='flex-end'>右对齐</ElRadioButton>
+                        <ElRadioButton value='flex-start'>左对齐</ElRadioButton>
+                        <ElRadioButton value='center'>居中</ElRadioButton>
+                        <ElRadioButton value='flex-end'>右对齐</ElRadioButton>
                       </ElRadioGroup>
                     </ElFormItem>
                     <ElFormItem label='垂直对齐方式' labelWidth='auto'>
                       <ElRadioGroup v-model={currentBlock.value.styles.alignItems}>
-                        <ElRadioButton label='flex-start'>上对齐</ElRadioButton>
-                        <ElRadioButton label='center'>居中</ElRadioButton>
-                        <ElRadioButton label='flex-end'>下对齐</ElRadioButton>
+                        <ElRadioButton value='flex-start'>上对齐</ElRadioButton>
+                        <ElRadioButton value='center'>居中</ElRadioButton>
+                        <ElRadioButton value='flex-end'>下对齐</ElRadioButton>
                       </ElRadioGroup>
                     </ElFormItem>
                     <ElFormItem label='组件内边距'>

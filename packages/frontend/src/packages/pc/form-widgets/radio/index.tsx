@@ -45,8 +45,8 @@ export default {
   preview: () => (
     <ElFormItem label="单选框" style={{ width: "100%" }}>
       <ElRadioGroup modelValue="1">
-        <ElRadio label="1">选项一</ElRadio>
-        <ElRadio label="2">选项二</ElRadio>
+        <ElRadio value="1">选项一</ElRadio>
+        <ElRadio value="2">选项二</ElRadio>
       </ElRadioGroup>
     </ElFormItem>
   ),
@@ -84,10 +84,11 @@ export default {
             {props.options?.map((item: RadioOption) => (
               <RadioComponent
                 key={item.value}
-                label={item.value}
+                value={item.value}
                 disabled={item.disabled || props.disabled}
-                border={props.border}
-                size={props.size}
+                {...(props.buttonStyle !== 'button' && {
+                  border: props.border,
+                })}
               >
                 {item.label}
               </RadioComponent>

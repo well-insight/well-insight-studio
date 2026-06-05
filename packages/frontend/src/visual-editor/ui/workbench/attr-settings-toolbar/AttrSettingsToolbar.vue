@@ -174,9 +174,9 @@
                 <span class="toolbar-item-title">水平对齐</span>
                 <div class="toolbar-item-content">
                   <el-radio-group v-model="currentBlock.styles.justifyContent">
-                    <el-radio-button label="flex-start">左</el-radio-button>
-                    <el-radio-button label="center">中</el-radio-button>
-                    <el-radio-button label="flex-end">右</el-radio-button>
+                    <el-radio-button value="flex-start">左</el-radio-button>
+                    <el-radio-button value="center">中</el-radio-button>
+                    <el-radio-button value="flex-end">右</el-radio-button>
                   </el-radio-group>
                 </div>
               </div>
@@ -186,9 +186,9 @@
                 <span class="toolbar-item-title">垂直对齐</span>
                 <div class="toolbar-item-content">
                   <el-radio-group v-model="currentBlock.styles.alignItems">
-                    <el-radio-button label="flex-start">上</el-radio-button>
-                    <el-radio-button label="center">中</el-radio-button>
-                    <el-radio-button label="flex-end">下</el-radio-button>
+                    <el-radio-button value="flex-start">上</el-radio-button>
+                    <el-radio-button value="center">中</el-radio-button>
+                    <el-radio-button value="flex-end">下</el-radio-button>
                   </el-radio-group>
                 </div>
               </div>
@@ -201,11 +201,7 @@
                 </div>
               </div>
             </el-dropdown-item>
-            <BorderStyleConfig
-              v-model="borderOverride"
-              inheritable
-              :teleported="false"
-            />
+            <BorderStyleConfig v-model="borderOverride" inheritable :teleported="false" />
           </el-dropdown-menu>
         </el-scrollbar>
       </template>
@@ -293,9 +289,7 @@ const { visualConfig, currentBlock } = useVisualData();
 const chartBindVisible = ref(false);
 
 const isChartBlock = computed(() =>
-  currentBlock.value?.componentKey
-    ? isChartComponent(currentBlock.value.componentKey)
-    : false,
+  currentBlock.value?.componentKey ? isChartComponent(currentBlock.value.componentKey) : false,
 );
 
 const componentItem = computed(() => {

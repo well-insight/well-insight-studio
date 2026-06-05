@@ -41,8 +41,8 @@ export function useTools() {
           content: () => (
             <>
               <ElRadioGroup v-model={state.coverRadio}>
-                <ElRadio label='current'>覆盖当前页面</ElRadio>
-                <ElRadio label='all'>覆盖整个项目</ElRadio>
+                <ElRadio value='current'>覆盖当前页面</ElRadio>
+                <ElRadio value='all'>覆盖整个项目</ElRadio>
               </ElRadioGroup>
               <MonacoEditor
                 onChange={importJsonChange}
