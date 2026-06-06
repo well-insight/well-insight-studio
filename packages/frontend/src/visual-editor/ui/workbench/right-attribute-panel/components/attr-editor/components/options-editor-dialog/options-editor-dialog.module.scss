@@ -1,0 +1,82 @@
+.dialogBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: -16px;
+}
+
+/* ── 列头 ── */
+.columnHeader {
+  display: grid;
+  grid-template-columns: 48px 1fr 1fr 56px;
+  gap: 12px;
+  align-items: center;
+  padding: 0 16px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--el-text-color-secondary);
+  flex-shrink: 0;
+}
+
+.columnHeader > span {
+  min-width: 0;
+}
+
+/* ── 滚动区域 ── */
+.scrollArea {
+  flex: 1;
+  max-height: 380px;
+  min-height: 120px;
+  border-top: 1px solid var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: var(--el-fill-color-lighter);
+}
+
+.scrollArea :global(.el-scrollbar__view) {
+  padding: 12px 16px;
+}
+
+/* ── 底部操作栏 ── */
+.bottomBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 0;
+  flex-shrink: 0;
+}
+
+.addBtn {
+  font-size: 13px;
+}
+
+/* ── 高级配置区域 ── */
+.advancedSection {
+  padding: 12px 16px 0;
+  flex-shrink: 0;
+}
+
+.advancedSection :global(.el-collapse) {
+  border: none;
+}
+
+.advancedSection :global(.el-collapse-item__header) {
+  height: 36px;
+  line-height: 36px;
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+  border: none;
+  background: transparent;
+  padding: 0 4px;
+}
+
+.advancedSection :global(.el-collapse-item__wrap) {
+  border: none;
+  background: transparent;
+}
+
+/* ── 弹窗底部按钮 ── */
+.dialogFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}

@@ -24,7 +24,7 @@ import type { Component, PropType } from "vue";
 import { computed, defineComponent } from "vue";
 import PropDatasetBindTrigger from "@/visual-editor/ui/shared/dataset-bind/PropDatasetBindTrigger.vue";
 import { isChartBindProp } from "@/utils/datasetBinding";
-import { CrossSortableOptionsEditor, ImageUploadEditor, TablePropEditor } from "..";
+import { ImageUploadEditor, OptionsEditorDialog, TablePropEditor } from "..";
 
 export const PropConfig = defineComponent({
   props: {
@@ -78,10 +78,11 @@ export const PropConfig = defineComponent({
           <ElColorPicker size={uiSize} v-model={propObj[prop]} />
         ),
         [VisualEditorPropsType.crossSortable]: () => (
-          <CrossSortableOptionsEditor
+          <OptionsEditorDialog
             v-model={propObj[prop]}
             multiple={propConfig.multiple}
             showItemPropsConfig={propConfig.showItemPropsConfig}
+            label={propConfig.label}
           />
         ),
         [VisualEditorPropsType.select]: () => (

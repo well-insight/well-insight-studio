@@ -35,6 +35,8 @@ export const CrossSortableOptionsEditor = defineComponent({
     },
     multiple: Boolean,
     showItemPropsConfig: Boolean,
+    /** 紧凑模式：隐藏外层面板、表头、底部按钮、高级配置，仅展示可拖拽列表 */
+    compact: Boolean,
   },
   setup(props, { emit }) {
     const { currentBlock } = useVisualData();
@@ -93,8 +95,8 @@ export const CrossSortableOptionsEditor = defineComponent({
     }
 
     return () => (
-      <div class={styles.panel}>
-        {hasObjectItems.value && (
+      <div class={[styles.panel, props.compact && styles.panelCompact]}>
+        {hasObjectItems.value && !props.compact && (
           <div class={styles.header}>
             <span />
             <span class={styles.headerCol}>显示文字</span>
@@ -213,16 +215,18 @@ export const CrossSortableOptionsEditor = defineComponent({
           </Draggable>
         </ElCheckboxGroup>
 
-        <div class={styles.footer}>
-          <ElButton class={styles.addBtn} size="small" plain onClick={appendOption}>
-            <ElIcon class="mr-4px">
-              <Plus />
-            </ElIcon>
-            添加选项
-          </ElButton>
-        </div>
+        {!props.compact && (
+          <div class={styles.footer}>
+            <ElButton class={styles.addBtn} size="small" plain onClick={appendOption}>
+              <ElIcon class="mr-4px">
+                <Plus />
+              </ElIcon>
+              添加选项
+            </ElButton>
+          </div>
+        )}
 
-        {props.showItemPropsConfig && state.list.some((item) => isObject(item)) && (
+        {props.showItemPropsConfig && !props.compact && state.list.some((item) => isObject(item)) && (
           <div class={styles.advanced}>
             <ElCollapse>
               <ElCollapseItem title="高级：单项属性配置">

@@ -49,7 +49,7 @@ async function confirmLogout() {
 
 <template>
   <div class="user-footer" :class="{ 'user-footer--collapsed': collapse }">
-    <el-dropdown trigger="click" placement="right-end" class="user-footer__dropdown">
+    <el-dropdown trigger="hover" placement="right-end" class="user-footer__dropdown">
       <div class="user-footer__trigger" role="button" tabindex="0">
         <el-tooltip v-if="collapse" :content="displayName" placement="right">
           <el-avatar :size="34" class="user-footer__avatar shrink-0">
