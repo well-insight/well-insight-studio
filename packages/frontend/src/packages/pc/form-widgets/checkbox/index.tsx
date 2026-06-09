@@ -44,18 +44,18 @@ export default {
           {...props} // 其他可能传递给 FormItem 的属性（如 error、size 等）
         >
           <ElCheckboxGroup
+            {...props} // 包含 direction 等属性，但 ElCheckboxGroup 原生不支持 direction，需通过类处理
             ref={(el) => registerRef(el, block._vid)}
             v-model={checkList.value}
-            {...props} // 包含 direction 等属性，但 ElCheckboxGroup 原生不支持 direction，需通过类处理
             class={{
               "is-vertical": props.direction === "vertical",
             }}
             onChange={(val) => props.onChange?.(val)} // 触发自定义 change 事件
           >
-            {props.options?.map((item) => (
+            {props.options?.map((item: { value: string; label: string }) => (
               <ElCheckbox
                 key={item.value}
-                label={item.value}
+                value={item.value}
                 border={false} // 可选，与 Vant 样式接近
                 style={{ marginBottom: "5px" }}
               >

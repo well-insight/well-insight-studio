@@ -21,17 +21,8 @@ import PageSettingButton from "./components/PageSetting.vue";
 const workspaceStore = useWorkspaceStore();
 const { currentApp } = storeToRefs(workspaceStore);
 
-const {
-  jsonData,
-  saveStatus,
-  saveError,
-  isDirty,
-  canUndo,
-  canRedo,
-  saveProject,
-  undo,
-  redo,
-} = useVisualData();
+const { jsonData, saveStatus, saveError, isDirty, canUndo, canRedo, saveProject, undo, redo } =
+  useVisualData();
 
 const previewVisible = ref(false);
 
@@ -73,6 +64,16 @@ const saveStatusButtonType = computed(() => {
     return "success";
   }
   return "info";
+});
+
+const saveStatusColor = computed(() => {
+  if (saveStatus.value === "error" || isDirty.value) {
+    return `var(--el-color-danger)`;
+  }
+  if (saveStatus.value === "saved") {
+    return `var(--el-color-success)`;
+  }
+  return `var(--el-color-info)`;
 });
 
 async function saveAll() {
@@ -121,7 +122,11 @@ function previewPage() {
   <div class="border-bottom-1 flex h-full w-full items-center gap-2 overflow-hidden px-4">
     <div class="flex h-full min-w-0 flex-1 items-center gap-2 overflow-hidden">
       <PageSettingButton />
-      <slot name="center" />
+      <div class="w-0 flex-auto">
+        <el-scrollbar class="h-full w-full">
+          <slot name="center" />
+        </el-scrollbar>
+      </div>
     </div>
 
     <div class="flex h-full shrink-0 items-center">
@@ -135,23 +140,21 @@ function previewPage() {
       <!-- <el-button v-if="currentApp?.clientType === 2" text :icon="Iphone" @click="triggerClient" />
       <el-button v-if="currentApp?.clientType === 1" text :icon="Monitor" @click="triggerClient" />
       <el-button text :icon="Orange" /> -->
-      <el-tooltip :content="saveStatusTooltip" placement="bottom">
+      <!-- <el-tooltip :content="saveStatusTooltip" placement="bottom">
         <el-button
           text
           :icon="WarnTriangleFilled"
           :type="saveStatusButtonType"
           :class="{ 'save-status-btn--pulse': isDirty }"
         />
+      </el-tooltip> -->
+      <!-- <el-divider direction="vertical" /> -->
+      <el-tooltip :content="saveStatusTooltip" placement="bottom">
+        <el-button text :icon="DocumentChecked" :loading="saveStatus === 'saving'" @click="saveAll">
+          <el-badge is-dot :offset="[10, 0]" :color="saveStatusColor"> 保存 </el-badge>
+        </el-button>
       </el-tooltip>
-      <el-divider direction="vertical" />
-      <el-button
-        text
-        :icon="DocumentChecked"
-        :loading="saveStatus === 'saving'"
-        @click="saveAll"
-      >
-        保存
-      </el-button>
+
       <el-divider direction="vertical" />
       <el-button text :icon="VideoPlay" @click="previewPage">预览</el-button>
       <el-divider direction="vertical" />

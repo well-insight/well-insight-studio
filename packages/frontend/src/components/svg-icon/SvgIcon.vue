@@ -97,7 +97,7 @@ function handleClick(e: MouseEvent) {
 // SCSS 变量
 $svg-icon-default-color: currentColor;
 $svg-icon-disabled-opacity: 0.5;
-$svg-icon-hover-color: var(--el-primary-color);
+$svg-icon-hover-color: var(--el-color-primary);
 $svg-icon-transition-duration: 0.2s;
 
 // 基础样式
