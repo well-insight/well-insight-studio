@@ -114,6 +114,12 @@ importers:
       '@vant/touch-emulator':
         specifier: ^1.5.0
         version: 1.5.0
+      '@vexip-ui/hooks':
+        specifier: ^2.9.4
+        version: 2.9.4(vue@3.5.33(typescript@6.0.3))
+      '@vexip-ui/utils':
+        specifier: ^2.16.4
+        version: 2.16.4
       '@visactor/vtable':
         specifier: 1.26.0
         version: 1.26.0
@@ -156,6 +162,9 @@ importers:
       gsap:
         specifier: ^3.15.0
         version: 3.15.0
+      interactjs:
+        specifier: ^1.10.27
+        version: 1.10.27
       lodash-es:
         specifier: ^4.18.1
         version: 4.18.1
