@@ -1,30 +1,30 @@
 <script setup lang="ts">
-import type { ApiDatasetField } from "@/api/dataset";
-import type { DatasetBindingFilter, DatasetFilterOperator } from "@/utils/datasetBinding";
-import { DATASET_FILTER_OP_OPTIONS } from "@/utils/datasetBinding";
-import { Delete, Plus } from "@element-plus/icons-vue";
+import type { ApiDatasetField } from '@/api/dataset'
+import type { DatasetBindingFilter, DatasetFilterOperator } from '@/utils/datasetBinding'
+import { Delete, Plus } from '@element-plus/icons-vue'
+import { DATASET_FILTER_OP_OPTIONS } from '@/utils/datasetBinding'
 
 const props = defineProps<{
-  fields: ApiDatasetField[];
-  disabled?: boolean;
-}>();
+  fields: ApiDatasetField[]
+  disabled?: boolean
+}>()
 
-const filters = defineModel<DatasetBindingFilter[]>({ default: () => [] });
+const filters = defineModel<DatasetBindingFilter[]>({ default: () => [] })
 
 function addFilter() {
-  const first = props.fields[0]?.name ?? "";
+  const first = props.fields[0]?.name ?? ''
   filters.value = [
     ...filters.value,
-    { field: first, operator: "eq" as DatasetFilterOperator, value: "" },
-  ];
+    { field: first, operator: 'eq' as DatasetFilterOperator, value: '' },
+  ]
 }
 
 function removeFilter(index: number) {
-  filters.value = filters.value.filter((_, i) => i !== index);
+  filters.value = filters.value.filter((_, i) => i !== index)
 }
 
 function needsValue(op: DatasetFilterOperator) {
-  return !DATASET_FILTER_OP_OPTIONS.find((o) => o.value === op)?.noValue;
+  return !DATASET_FILTER_OP_OPTIONS.find(o => o.value === op)?.noValue
 }
 </script>
 
@@ -83,7 +83,9 @@ function needsValue(op: DatasetFilterOperator) {
       class="bind-filters__add"
       @click="addFilter"
     >
-      <el-icon class="mr-4px"><Plus /></el-icon>
+      <el-icon class="mr-4px">
+        <Plus />
+      </el-icon>
       添加筛选条件
     </el-button>
   </div>

@@ -9,36 +9,36 @@ const DEFAULTMENU = {
     hoverTextColor: '#298DF8',
     disabledTextColor: 'rgba(65, 80, 88, 0.4)',
     bgColor: '#fff',
-    hoverBgColor: '#F2F2F2'
-  }
+    hoverBgColor: '#F2F2F2',
+  },
 }
 export default {
   name: 'SketchRuler',
   components: {
-    RulerWrapper
+    RulerWrapper,
   },
   props: {
     scale: {
       type: Number,
-      default: 1
+      default: 1,
     },
     ratio: {
       type: Number,
-      default: window.devicePixelRatio || 1
+      default: window.devicePixelRatio || 1,
     },
     thick: {
       type: Number,
-      default: 16
+      default: 16,
     },
     width: Number,
     height: Number,
     startX: {
       type: Number,
-      default: 0
+      default: 0,
     },
     startY: {
       type: Number,
-      default: 0
+      default: 0,
     },
     shadow: {
       type: Object,
@@ -47,43 +47,43 @@ export default {
           x: 200,
           y: 100,
           width: 200,
-          height: 400
+          height: 400,
         }
-      }
+      },
     },
     horLineArr: {
       type: Array,
       default: () => {
         return [100, 200]
-      }
+      },
     },
     verLineArr: {
       type: Array,
       default: () => {
         return [100, 200]
-      }
+      },
     },
     cornerActive: Boolean,
     lang: String,
     isOpenMenuFeature: {
       type: Boolean,
-      default: false
+      default: false,
     },
     handleShowRuler: {
       type: Function,
       default: () => {
         return () => {}
-      }
+      },
     },
     isShowReferLine: {
       type: Boolean,
-      default: true
+      default: true,
     },
     handleShowReferLine: {
       type: Function,
       default: () => {
         return () => {}
-      }
+      },
     },
     palette: {
       type: Object,
@@ -97,14 +97,14 @@ export default {
           lineColor: 'var(--el-color-primary)',
           borderColor: '#DADADC',
           cornerActiveColor: 'rgb(235, 86, 72, 0.6)',
-          menu: DEFAULTMENU
+          menu: DEFAULTMENU,
         }
-      }
-    }
+      },
+    },
   },
   data() {
     return {
-      vertical: true
+      vertical: true,
     }
   },
   computed: {
@@ -117,12 +117,12 @@ export default {
         width: `${this.thick}px`,
         height: `${this.thick}px`,
         borderRight: `1px solid ${this.palette.borderColor}`,
-        borderBottom: `1px solid ${this.palette.borderColor}`
+        borderBottom: `1px solid ${this.palette.borderColor}`,
       }
     },
     canvasConfigs() {
-      const { bgColor, longfgColor, shortfgColor, fontColor, shadowColor, lineColor, borderColor, cornerActiveColor } =
-        this.palette
+      const { bgColor, longfgColor, shortfgColor, fontColor, shadowColor, lineColor, borderColor, cornerActiveColor }
+        = this.palette
       return {
         ratio: this.ratio,
         bgColor,
@@ -132,9 +132,9 @@ export default {
         shadowColor,
         lineColor,
         borderColor,
-        cornerActiveColor
+        cornerActiveColor,
       }
-    }
+    },
   },
   methods: {
     onCornerClick(e) {
@@ -147,10 +147,10 @@ export default {
     fetchRefs() {
       return {
         h: this.$refs.hRuler,
-        v: this.$refs.vRuler
+        v: this.$refs.vRuler,
       }
-    }
-  }
+    },
+  },
 }
 </script>
 

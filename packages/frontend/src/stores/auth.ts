@@ -1,17 +1,20 @@
-import { defineStore } from 'pinia'
 import type { AuthUser } from '@/api/auth'
+import { defineStore } from 'pinia'
 import { store } from '@/stores/pinia'
 
 const TOKEN_KEY = 'well-cube-auth-token'
 const USER_KEY = 'well-cube-auth-user'
 
 function readStoredUser(): AuthUser | null {
-  if (typeof localStorage === 'undefined') return null
+  if (typeof localStorage === 'undefined')
+    return null
   try {
     const raw = localStorage.getItem(USER_KEY)
-    if (!raw) return null
+    if (!raw)
+      return null
     return JSON.parse(raw) as AuthUser
-  } catch {
+  }
+  catch {
     return null
   }
 }
@@ -24,14 +27,18 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     setToken(token: string) {
       this.token = token
-      if (typeof localStorage === 'undefined') return
-      if (token) localStorage.setItem(TOKEN_KEY, token)
+      if (typeof localStorage === 'undefined')
+        return
+      if (token)
+        localStorage.setItem(TOKEN_KEY, token)
       else localStorage.removeItem(TOKEN_KEY)
     },
     setUser(user: AuthUser | null) {
       this.user = user
-      if (typeof localStorage === 'undefined') return
-      if (user) localStorage.setItem(USER_KEY, JSON.stringify(user))
+      if (typeof localStorage === 'undefined')
+        return
+      if (user)
+        localStorage.setItem(USER_KEY, JSON.stringify(user))
       else localStorage.removeItem(USER_KEY)
     },
     loginSuccess(token: string, user: AuthUser) {

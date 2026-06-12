@@ -1,45 +1,45 @@
 <script lang="ts" setup>
-import { storeToRefs } from "pinia";
-import { nextTick, onMounted, ref, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import SvgIcon from "@/components/svg-icon/SvgIcon.vue";
-import { useWorkspaceStore } from "@/stores/workspaceStore";
+import { storeToRefs } from 'pinia'
+import { nextTick, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import SvgIcon from '@/components/svg-icon/SvgIcon.vue'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 
-defineProps<{ collapse?: boolean }>();
+defineProps<{ collapse?: boolean }>()
 
-const route = useRoute();
-const router = useRouter();
+const route = useRoute()
+const router = useRouter()
 
-const workspaceStore = useWorkspaceStore();
+const workspaceStore = useWorkspaceStore()
 
-const { menuList } = storeToRefs(workspaceStore);
+const { menuList } = storeToRefs(workspaceStore)
 
-const currentMenuPath = ref(route?.path);
+const currentMenuPath = ref(route?.path)
 
 onMounted(() => {
   nextTick(() => {
-    currentMenuPath.value = menuList.value?.find((e) => route?.path?.includes(e?.path))?.path;
-  });
-});
+    currentMenuPath.value = menuList.value?.find(e => route?.path?.includes(e?.path))?.path
+  })
+})
 
 function changeMenu(index: string) {
-  router.replace(index);
+  router.replace(index)
 }
 
 function updateCurrentMenu() {
-  const currentMenu = menuList.value?.find((e) => route?.path?.includes(e?.path));
+  const currentMenu = menuList.value?.find(e => route?.path?.includes(e?.path))
   if (currentMenu) {
-    workspaceStore.setCurrentMenu(currentMenu);
+    workspaceStore.setCurrentMenu(currentMenu)
   }
 }
 
 watch(
   () => route?.path,
   () => {
-    updateCurrentMenu();
+    updateCurrentMenu()
   },
   { immediate: true },
-);
+)
 </script>
 
 <template>

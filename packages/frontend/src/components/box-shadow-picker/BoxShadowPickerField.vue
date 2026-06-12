@@ -1,81 +1,82 @@
 <script lang="ts" setup>
-import { DEFAULT_CARD_SHADOW } from "@/utils/blockBorder";
-import { ArrowRight } from "@element-plus/icons-vue";
-import { computed, ref, watch } from "vue";
-import BoxShadowPicker from "./BoxShadowPicker.vue";
+import { ArrowRight } from '@element-plus/icons-vue'
+import { computed, ref, watch } from 'vue'
+import { DEFAULT_CARD_SHADOW } from '@/utils/blockBorder'
+import BoxShadowPicker from './BoxShadowPicker.vue'
 
 const props = withDefaults(
   defineProps<{
-    modelValue?: string;
-    size?: "small" | "default";
-    placeholder?: string;
+    modelValue?: string
+    size?: 'small' | 'default'
+    placeholder?: string
     /** 值为空时显示沿用/未设置提示 */
-    emptyLabel?: string;
+    emptyLabel?: string
   }>(),
   {
-    modelValue: "",
-    size: "default",
-    placeholder: "点击配置阴影",
-    emptyLabel: "",
+    modelValue: '',
+    size: 'default',
+    placeholder: '点击配置阴影',
+    emptyLabel: '',
   },
-);
+)
 
 const emit = defineEmits<{
-  "update:modelValue": [value: string];
-}>();
+  'update:modelValue': [value: string]
+}>()
 
-const dialogVisible = ref(false);
-const draftShadow = ref("");
+const dialogVisible = ref(false)
+const draftShadow = ref('')
 
 watch(dialogVisible, (open) => {
   if (open) {
-    draftShadow.value = props.modelValue?.trim() || DEFAULT_CARD_SHADOW;
+    draftShadow.value = props.modelValue?.trim() || DEFAULT_CARD_SHADOW
   }
-});
+})
 
 const previewShadow = computed(() => {
-  const v = props.modelValue?.trim();
-  if (!v) return "none";
-  return v;
-});
+  const v = props.modelValue?.trim()
+  if (!v)
+    return 'none'
+  return v
+})
 
 const summaryText = computed(() => {
-  const v = props.modelValue?.trim();
+  const v = props.modelValue?.trim()
   if (!v) {
-    return props.emptyLabel || props.placeholder;
+    return props.emptyLabel || props.placeholder
   }
-  if (v === "none") {
-    return "无阴影";
+  if (v === 'none') {
+    return '无阴影'
   }
-  return "已配置阴影";
-});
+  return '已配置阴影'
+})
 
-const hasValue = computed(() => Boolean(props.modelValue?.trim()));
+const hasValue = computed(() => Boolean(props.modelValue?.trim()))
 
 function openDialog() {
-  dialogVisible.value = true;
+  dialogVisible.value = true
 }
 
 function applyDraft() {
-  emit("update:modelValue", draftShadow.value.trim() || DEFAULT_CARD_SHADOW);
-  dialogVisible.value = false;
+  emit('update:modelValue', draftShadow.value.trim() || DEFAULT_CARD_SHADOW)
+  dialogVisible.value = false
 }
 
 function setNoShadow() {
-  draftShadow.value = "none";
-  emit("update:modelValue", "none");
-  dialogVisible.value = false;
+  draftShadow.value = 'none'
+  emit('update:modelValue', 'none')
+  dialogVisible.value = false
 }
 
 function resetDefault() {
-  draftShadow.value = DEFAULT_CARD_SHADOW;
-  emit("update:modelValue", DEFAULT_CARD_SHADOW);
-  dialogVisible.value = false;
+  draftShadow.value = DEFAULT_CARD_SHADOW
+  emit('update:modelValue', DEFAULT_CARD_SHADOW)
+  dialogVisible.value = false
 }
 
 function clearShadow() {
-  emit("update:modelValue", "");
-  dialogVisible.value = false;
+  emit('update:modelValue', '')
+  dialogVisible.value = false
 }
 </script>
 
@@ -92,7 +93,9 @@ function clearShadow() {
           {{ modelValue }}
         </span>
       </span>
-      <el-icon class="box-shadow-field__arrow"><ArrowRight /></el-icon>
+      <el-icon class="box-shadow-field__arrow">
+        <ArrowRight />
+      </el-icon>
     </button>
 
     <el-button
@@ -129,12 +132,20 @@ function clearShadow() {
       <template #footer>
         <div class="box-shadow-field__footer">
           <div class="box-shadow-field__footer-left">
-            <el-button text type="danger" @click="setNoShadow">无阴影</el-button>
-            <el-button text @click="resetDefault">恢复默认</el-button>
+            <el-button text type="danger" @click="setNoShadow">
+              无阴影
+            </el-button>
+            <el-button text @click="resetDefault">
+              恢复默认
+            </el-button>
           </div>
           <div class="box-shadow-field__footer-right">
-            <el-button @click="dialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="applyDraft">确定</el-button>
+            <el-button @click="dialogVisible = false">
+              取消
+            </el-button>
+            <el-button type="primary" @click="applyDraft">
+              确定
+            </el-button>
           </div>
         </div>
       </template>
@@ -161,7 +172,9 @@ function clearShadow() {
   border-radius: var(--el-border-radius-base);
   background: var(--el-fill-color-blank);
   cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   text-align: left;
 }
 

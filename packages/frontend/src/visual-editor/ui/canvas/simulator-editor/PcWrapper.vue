@@ -1,9 +1,17 @@
 <script lang="tsx" setup>
 import type { CSSProperties } from 'vue'
 
+import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
+import { useMouseInElement, useResizeObserver } from '@vueuse/core'
+import { vLoading } from 'element-plus'
+import { cloneDeep, debounce } from 'lodash-es'
+import { storeToRefs } from 'pinia'
+import { computed, nextTick, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import MarkLine from '@/components/Editor/MarkLine.vue'
 import SketchRule from '@/components/Ruler/sketchRuler.vue'
 import { VueDragResizeRotate } from '@/components/vue3-drag-resize-rotate'
+import { useAnimate } from '@/hooks/useAnimate'
 import { useGlobalProperties } from '@/hooks/useGlobalProperties'
 import { useControlStore } from '@/stores/controlStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
@@ -12,17 +20,10 @@ import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { generateNanoid } from '@/visual-editor/lib'
 import { $$dropdown, DropdownOption } from '@/visual-editor/lib/dropdown-service'
 import MonacoEditor from '@/visual-editor/ui/shared/monaco-editor/MonacoEditor'
-import { getBlockAnimationElement, type VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
-import { useMouseInElement, useResizeObserver } from '@vueuse/core'
-import { vLoading } from 'element-plus'
-import { cloneDeep, debounce } from 'lodash-es'
-import { storeToRefs } from 'pinia'
-import { computed, nextTick, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
-import { useRoute } from 'vue-router'
 import { AttrSettingsToolbar } from '@/visual-editor/ui/workbench/attr-settings-toolbar'
+import { getBlockAnimationElement } from '@/visual-editor/visual-editor.utils'
 import CompRender from './comp-render'
 import SlotItem from './SlotItem.vue'
-import { useAnimate } from '@/hooks/useAnimate'
 
 defineOptions({
   name: 'SimulatorEditor',
@@ -205,7 +206,7 @@ const editCanvasStyle = computed(() => {
   const normalizedBgImage = bgImage ? `url(${bgImage})` : 'none'
   const normalizedBgRepeat = bgRepeat || 'no-repeat'
   const normalizedBgSize = bgSize || 'cover'
-  console.log('画布全局样式', bgImage, bgColor, pageSize, bgRepeat, bgSize )
+  console.log('画布全局样式', bgImage, bgColor, pageSize, bgRepeat, bgSize)
   return {
     width: `${pageSize?.width || 0}px`,
     height: `${pageSize?.height || 0}px`,
@@ -430,11 +431,10 @@ function initAnimate() {
     const anmiationEl = getBlockAnimationElement(_vid)
     useAnimate(anmiationEl, animations)
   })
-
 }
 
 watch(visualLoading, (value, oldValue) => {
-  if(!value && oldValue) {
+  if (!value && oldValue) {
     initAnimate()
   }
 })
@@ -500,12 +500,11 @@ defineExpose({
                 <template #default="{ enabled }">
                   <div
                     :data-label="outElement.label"
-                    :class="{
+                    class="list-group-item" :class="{
                       focus: outElement.focus && enabled,
                       focusWithChild: outElement.focusWithChild && enabled,
                       drag,
                       ['has-slot']: !!Object.keys(outElement.props.slots || {}).length,
-                      ['list-group-item']: true,
                       [`list-group-item-${outElement._vid}`]: true,
                     }"
                     @contextmenu.stop.prevent="onContextmenuBlock($event, outElement)"
@@ -538,7 +537,7 @@ defineExpose({
                 </template>
 
                 <template #toolbar>
-                  <AttrSettingsToolbar></AttrSettingsToolbar>
+                  <AttrSettingsToolbar />
                 </template>
               </VueDragResizeRotate>
             </template>
@@ -572,9 +571,7 @@ defineExpose({
 .edit-control-container {
   width: 100%;
   height: 100%;
-  background-image:
-    linear-gradient(#fafafc 14px, transparent 0),
-    linear-gradient(90deg, transparent 14px, #373739 0);
+  background-image: linear-gradient(#fafafc 14px, transparent 0), linear-gradient(90deg, transparent 14px, #373739 0);
   background-color: #fff;
   background-size:
     15px 15px,
@@ -722,7 +719,7 @@ defineExpose({
 </style>
 
 <style lang="scss" scoped>
-@use "./func.scss" as *;
+@use './func.scss' as *;
 
 .drag-resize-rotate-normal {
   border: none;
@@ -752,7 +749,7 @@ defineExpose({
   }
 
   &:not(.has-slot) {
-    content: "";
+    content: '';
   }
 
   &.focusWithChild {

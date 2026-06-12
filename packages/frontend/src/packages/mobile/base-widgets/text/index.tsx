@@ -4,7 +4,7 @@ import {
   createEditorColorProp,
   createEditorInputNumberProp,
   createEditorInputProp,
-  createEditorSelectProp
+  createEditorSelectProp,
 } from '@/visual-editor/visual-editor.props'
 import { fontArr } from './fontArr'
 
@@ -23,7 +23,7 @@ export default {
           color: props.color,
           fontSize: `${Number.parseFloat(props.size)}px`,
           fontFamily: props.font,
-          ...styles
+          ...styles,
         }}
       >
         {props.text || '默认文本'}
@@ -36,7 +36,7 @@ export default {
     color: createEditorColorProp({ label: '字体颜色' }),
     size: createEditorInputNumberProp({
       label: '字体大小',
-      defaultValue: 16
-    })
-  }
+      defaultValue: 16,
+    }),
+  },
 } as VisualEditorComponent

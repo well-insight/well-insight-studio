@@ -30,8 +30,8 @@ const props = withDefaults(
     containerSize: '100%',
     transitionDuration: 0.3,
     triggerSize: 18,
-    bgColor: '#ffffff'
-  }
+    bgColor: '#ffffff',
+  },
 )
 
 // 定义事件
@@ -48,7 +48,7 @@ const triggerRotate = computed(() => {
     left: 0,
     right: 180,
     top: 90,
-    bottom: 270
+    bottom: 270,
   }
   return rotateMap[props.direction]
 })
@@ -62,10 +62,10 @@ function toggleCollapse() {
 // 监听默认收缩状态变化
 watch(
   () => props.defaultCollapsed,
-  newVal => {
+  (newVal) => {
     collapsed.value = newVal
   },
-  { immediate: true }
+  { immediate: true },
 )
 </script>
 
@@ -82,7 +82,7 @@ watch(
       // 动态宽/高（收缩/展开）
       direction === 'left' || direction === 'right'
         ? `w-${collapsed ? `${collapseSize}px` : `${expandSize}px`}`
-        : `h-${collapsed ? `${collapseSize}px` : `${expandSize}px`}`
+        : `h-${collapsed ? `${collapseSize}px` : `${expandSize}px`}`,
     ]"
   >
     <!-- 侧边栏主体 -->
@@ -97,11 +97,11 @@ watch(
           ? `w-${collapsed ? `${collapseSize}px` : `${expandSize}px`} h-full`
           : `w-full h-${collapsed ? `${collapseSize}px` : `${expandSize}px`}`,
         // 收缩状态样式
-        collapsed && '!p-0'
+        collapsed && '!p-0',
       ]"
       :style="{
         '--sidebar-bg': bgColor,
-        '--sidebar-transition': `all ${transitionDuration}s ease`
+        '--sidebar-transition': `all ${transitionDuration}s ease`,
       }"
     >
       <!-- 侧边栏内容插槽 -->
@@ -114,7 +114,7 @@ watch(
           // 布局方式
           `flex ${direction === 'left' || direction === 'right' ? 'flex-col' : 'flex-row'}`,
           // 收缩状态适配
-          collapsed && 'justify-center gap-1'
+          collapsed && 'justify-center gap-1',
         ]"
       >
         <slot />
@@ -134,7 +134,7 @@ watch(
                 ? 'bottom-2'
                 : 'top-2',
           // 垂直居中/水平居中
-          direction === 'left' || direction === 'right' ? 'bottom-4' : 'right-4'
+          direction === 'left' || direction === 'right' ? 'bottom-4' : 'right-4',
         ]"
         :title="collapsed ? '展开' : '收起'"
         :style="{ transform: `rotate(${triggerRotate}deg)` }"

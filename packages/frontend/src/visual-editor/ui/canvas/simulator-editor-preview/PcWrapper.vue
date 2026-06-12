@@ -1,111 +1,111 @@
 <script lang="ts" setup>
-import type { CSSProperties } from "vue";
-import type { VisualEditorBlockData } from "@/visual-editor/visual-editor.utils";
-import { useAnimate } from "@/hooks/useAnimate";
-import { GridLayout } from "grid-layout-plus";
-import { cloneDeep } from "lodash-es";
-import { computed, nextTick, onMounted, ref, watch } from "vue";
+import type { CSSProperties } from 'vue'
+import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
+import { GridLayout } from 'grid-layout-plus'
+import { cloneDeep } from 'lodash-es'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { useAnimate } from '@/hooks/useAnimate'
+import { resolveBlockBorderCss } from '@/utils/blockBorder'
 import {
   getBlockAnimationElement,
   getBlockTitleInlineStyle,
   getBlockTitleText,
   isInnerBlockTitle,
-} from "@/visual-editor/core/visual-editor.utils";
-import { useVisualData } from "@/visual-editor/hooks/useVisualData";
-import { resolveBlockBorderCss } from "@/utils/blockBorder";
-import CompRender from "./comp-render";
-import PreviewSlotItem from "./PreviewSlotItem.vue";
+} from '@/visual-editor/core/visual-editor.utils'
+import { useVisualData } from '@/visual-editor/hooks/useVisualData'
+import CompRender from './comp-render'
+import PreviewSlotItem from './PreviewSlotItem.vue'
 
 defineOptions({
-  name: "PcPreviewWrapper",
-});
+  name: 'PcPreviewWrapper',
+})
 
 const props = withDefaults(
   defineProps<{
     /** 预览抽屉是否打开，用于同步布局快照 */
-    active?: boolean;
+    active?: boolean
   }>(),
   {
     active: true,
   },
-);
+)
 
-const { currentPage } = useVisualData();
+const { currentPage } = useVisualData()
 
 function getBlockBorderStyle(item: VisualEditorBlockData): CSSProperties {
-  return resolveBlockBorderCss(item, currentPage.value?.config);
+  return resolveBlockBorderCss(item, currentPage.value?.config)
 }
 
 /** 预览专用布局快照，避免拖拽回写编辑态 */
-const previewLayout = ref<VisualEditorBlockData[]>([]);
+const previewLayout = ref<VisualEditorBlockData[]>([])
 
 function buildPreviewLayout() {
-  const blocks = currentPage.value?.blocks ?? [];
-  previewLayout.value = cloneDeep(blocks).map((block) => ({
+  const blocks = currentPage.value?.blocks ?? []
+  previewLayout.value = cloneDeep(blocks).map(block => ({
     ...block,
     i: block.i ?? block._vid,
     static: true,
     focus: false,
     focusWithChild: false,
-  }));
+  }))
 }
 
 const editCanvasStyle = computed(() => {
-  const config = currentPage.value?.config;
-  const bgColor = config?.bgColor || "#ffffff";
-  const bgImage = config?.bgImage ? `url(${config.bgImage})` : "none";
+  const config = currentPage.value?.config
+  const bgColor = config?.bgColor || '#ffffff'
+  const bgImage = config?.bgImage ? `url(${config.bgImage})` : 'none'
   return {
-    width: "100%",
+    width: '100%',
     minHeight: `${config?.pageSize?.height || 720}px`,
     backgroundColor: bgColor,
     backgroundImage: bgImage,
-    backgroundRepeat: config?.bgRepeat || "no-repeat",
-    backgroundSize: config?.bgSize || "cover",
-    boxSizing: "border-box",
-  } as CSSProperties;
-});
+    backgroundRepeat: config?.bgRepeat || 'no-repeat',
+    backgroundSize: config?.bgSize || 'cover',
+    boxSizing: 'border-box',
+  } as CSSProperties
+})
 
 function initAnimations() {
-  const blocks = previewLayout.value;
+  const blocks = previewLayout.value
   blocks
-    .filter((block) => block.animations?.length)
+    .filter(block => block.animations?.length)
     .forEach((block) => {
-      const el = getBlockAnimationElement(block._vid);
+      const el = getBlockAnimationElement(block._vid)
       if (el) {
-        useAnimate(el, block.animations);
+        useAnimate(el, block.animations)
       }
-    });
+    })
 }
 
 watch(
   () => props.active,
   (open) => {
     if (open) {
-      buildPreviewLayout();
+      buildPreviewLayout()
       nextTick(() => {
-        setTimeout(initAnimations, 300);
-      });
+        setTimeout(initAnimations, 300)
+      })
     }
   },
   { immediate: true },
-);
+)
 
 watch(
   () => currentPage.value?.blocks,
   () => {
     if (props.active) {
-      buildPreviewLayout();
+      buildPreviewLayout()
     }
   },
   { deep: true },
-);
+)
 
 onMounted(() => {
   if (props.active) {
-    buildPreviewLayout();
-    nextTick(() => setTimeout(initAnimations, 300));
+    buildPreviewLayout()
+    nextTick(() => setTimeout(initAnimations, 300))
   }
-});
+})
 </script>
 
 <template>
@@ -164,7 +164,9 @@ onMounted(() => {
               </div>
             </template>
           </GridLayout>
-          <div v-else :class="$style.empty">当前页面暂无组件</div>
+          <div v-else :class="$style.empty">
+            当前页面暂无组件
+          </div>
         </div>
       </div>
     </el-scrollbar>

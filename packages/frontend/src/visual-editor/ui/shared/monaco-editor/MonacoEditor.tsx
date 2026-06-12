@@ -12,26 +12,26 @@ export default defineComponent({
     code: {
       // 代码
       type: String as PropType<string>,
-      required: true
+      required: true,
     },
     layout: {
       // 布局
       type: Object as PropType<Monaco.editor.IDimension>,
       required: true,
-      default: () => ({})
+      default: () => ({}),
     },
     options: {
       type: Object as PropType<Monaco.editor.IStandaloneEditorConstructionOptions>,
-      default: () => ({})
+      default: () => ({}),
     },
     vid: [String, Number],
     onChange: {
-      type: Function as PropType<(value: string, event: Monaco.editor.IModelContentChangedEvent) => void>
+      type: Function as PropType<(value: string, event: Monaco.editor.IModelContentChangedEvent) => void>,
     },
     title: {
       type: String as PropType<string>,
-      default: ''
-    }
+      default: '',
+    },
   },
   setup(props) {
     // 需要一个shallowRef: 只监听value，不关心实际对象
@@ -46,7 +46,7 @@ export default defineComponent({
         () => {
           editorRef.value!.getAction('editor.action.formatDocument').run()
         },
-        { timeout: 800 }
+        { timeout: 800 },
       )
     }
 
@@ -59,17 +59,17 @@ export default defineComponent({
         formatOnPaste: true, // 当粘贴的时候自动进行一次格式化代码
         tabSize: 2, // tab缩进长度
         minimap: {
-          enabled: false // 不需要小的缩略图
+          enabled: false, // 不需要小的缩略图
         },
         fontFamily: '微软雅黑', // 字体
         // automaticLayout: true, //编辑器自适应布局，可能会影响性能
         overviewRulerBorder: false,
         scrollBeyondLastLine: false, // 滚动配置，溢出才滚动
-        ...props.options
+        ...props.options,
       })
 
       // 如果代码有变化，会在这里监听到，当受到外部数据改变时，不需要触发change事件
-      subscription = editorRef.value.onDidChangeModelContent(event => {
+      subscription = editorRef.value.onDidChangeModelContent((event) => {
         if (!preventTriggerChangeEvent) {
           // getValue: 获取编辑器中的所有文本
           props.onChange?.(editorRef.value!.getValue(), event)
@@ -108,10 +108,10 @@ export default defineComponent({
             [
               {
                 range: model.getFullModelRange(),
-                text: props.code
-              }
+                text: props.code,
+              },
             ],
-            () => null
+            () => null,
           )
         }
 
@@ -135,5 +135,5 @@ export default defineComponent({
         </div>
       )
     }
-  }
+  },
 })

@@ -7,25 +7,26 @@ import type {
   VisualEditorModelValue,
   VisualEditorPage,
 } from '@/visual-editor/visual-editor.utils'
+import { computed, inject, nextTick, reactive, readonly, ref, toRaw, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { updateApplication } from '@/api/application'
+
+import { CacheEnum } from '@/enums'
+import { useWorkspaceStoreWithout } from '@/stores/workspaceStore'
+import { defaultComponentBorder } from '@/utils/blockBorder'
 import {
   serializeProjectContent,
   stripProjectEditorEphemeral,
 } from '@/visual-editor/visual-editor.utils'
-import { defaultComponentBorder } from '@/utils/blockBorder'
-import { computed, inject, nextTick, reactive, readonly, ref, toRaw, watch } from 'vue'
+import { visualConfig } from '@/visual.config'
 
 /** 页面路由 path，统一为以 / 开头 */
 export function normalizeEditorPagePath(path: string) {
   const t = (path || '').trim()
-  if (!t) return '/'
+  if (!t)
+    return '/'
   return t.startsWith('/') ? t : `/${t}`
 }
-
-import { updateApplication } from '@/api/application'
-import { useRoute } from 'vue-router'
-import { CacheEnum } from '@/enums'
-import { useWorkspaceStoreWithout } from '@/stores/workspaceStore'
-import { visualConfig } from '@/visual.config'
 
 // 保存到本地JSON数据的key
 export const localKey = CacheEnum.PAGE_DATA_KEY
@@ -58,12 +59,12 @@ function defaultPageSize() {
     ? {
         name: '',
         width: 375,
-        height: 667
+        height: 667,
       }
     : {
         name: '',
         width: 1920,
-        height: 1080
+        height: 1080,
       }
 }
 
@@ -81,7 +82,7 @@ export function createNewPage({ title = '新页面', path = '/' }) {
       pageSize: defaultPageSize(),
       componentBorder: defaultComponentBorder(),
     } as PageConfig,
-    blocks: [] as VisualEditorBlockData[]
+    blocks: [] as VisualEditorBlockData[],
   }
 }
 
@@ -89,20 +90,20 @@ function defaultValue(): VisualEditorModelValue {
   return {
     pages: {
       // 页面
-      '/': createNewPage({ title: '首页' })
+      '/': createNewPage({ title: '首页' }),
     },
     models: [], // 模型实体集合
     actions: {
       // 动作集合
       fetch: {
         name: '接口请求',
-        apis: []
+        apis: [],
       },
       dialog: {
         name: '对话框',
-        handlers: []
-      }
-    }
+        handlers: [],
+      },
+    },
   }
 }
 
@@ -120,15 +121,15 @@ export function initVisualData() {
 
   /**
    * 获取visualData时可能会在组件内被多次调用，使用ref包裹loading状态避免重复请求数据
-    * 例如：在Animate组件中，点击添加动画集时会调用useVisualData获取currentBlock的值，此时如果loading状态没有被ref包裹，则会重复请求数据，导致性能问题
-    * 目前的解决方案是在useVisualData中使用ref包裹loading状态，确保在数据加载完成之前不会重复请求数据
-   * */
+   * 例如：在Animate组件中，点击添加动画集时会调用useVisualData获取currentBlock的值，此时如果loading状态没有被ref包裹，则会重复请求数据，导致性能问题
+   * 目前的解决方案是在useVisualData中使用ref包裹loading状态，确保在数据加载完成之前不会重复请求数据
+   */
   const visualLoading = ref(false)
 
   const state: IState = reactive({
     jsonData,
     currentPage,
-    currentBlock: currentPage?.blocks?.find(item => item.focus) ?? ({} as VisualEditorBlockData)
+    currentBlock: currentPage?.blocks?.find(item => item.focus) ?? ({} as VisualEditorBlockData),
   })
   const paths = Object.keys(jsonData.pages)
 
@@ -142,11 +143,11 @@ export function initVisualData() {
   // 路由变化时更新当前操作的页面
   watch(
     () => route.path,
-    url => setCurrentPage(url)
+    url => setCurrentPage(url),
   )
 
   // 更新 page（路径比较必须规范化，否则 `foo` 与 `/foo` 会误判为改名并误删）
-  const updatePage = ({ newPath = '', oldPath, page }: { newPath?: string; oldPath: string; page: Partial<VisualEditorPage> }) => {
+  const updatePage = ({ newPath = '', oldPath, page }: { newPath?: string, oldPath: string, page: Partial<VisualEditorPage> }) => {
     const o = getPrefixPath(oldPath)
     const existing = state.jsonData.pages[o]
     if (!existing) {
@@ -158,7 +159,8 @@ export function initVisualData() {
       state.jsonData.pages[n] = merged
       delete state.jsonData.pages[o]
       setCurrentPage(n)
-    } else {
+    }
+    else {
       Object.assign(existing, page)
       existing.path = n
     }
@@ -188,8 +190,8 @@ export function initVisualData() {
     delete state.jsonData.pages[p]
     const rest = Object.keys(state.jsonData.pages)
     const prefer = redirectPath ? getPrefixPath(redirectPath) : ''
-    const next =
-      (prefer && state.jsonData.pages[prefer] ? prefer : null) || rest[0] || '/'
+    const next
+      = (prefer && state.jsonData.pages[prefer] ? prefer : null) || rest[0] || '/'
     setCurrentPage(next)
     return true
   }
@@ -250,8 +252,9 @@ export function initVisualData() {
     const apis = Array.isArray(api) ? api : [api]
     if (isCover) {
       fetch.apis = apis
-    } else {
-      apis.forEach(apiItem => {
+    }
+    else {
+      apis.forEach((apiItem) => {
         const target = fetch.apis.find(item => item.key == apiItem.key)
         target && Object.assign(target, api)
       })
@@ -285,8 +288,9 @@ export function initVisualData() {
     const models = Array.isArray(model) ? model : [model]
     if (isCover) {
       jsonData.models = models
-    } else {
-      models.forEach(modelItem => {
+    }
+    else {
+      models.forEach((modelItem) => {
         const index = jsonData.models.findIndex(item => item.key == modelItem.key)
         if (index !== -1) {
           state.jsonData.models.splice(index, 1, modelItem)
@@ -297,8 +301,8 @@ export function initVisualData() {
 
   // 使用自定义JSON覆盖整个项目
   const overrideProject = (incoming: VisualEditorModelValue | string) => {
-    state.jsonData =
-      typeof incoming === 'string' ? (JSON.parse(incoming) as VisualEditorModelValue) : incoming
+    state.jsonData
+      = typeof incoming === 'string' ? (JSON.parse(incoming) as VisualEditorModelValue) : incoming
     const paths = Object.keys(state.jsonData.pages)
     const path = state.jsonData.pages['/'] ? '/' : paths[0] || '/'
     setCurrentPage(path)
@@ -477,11 +481,13 @@ export function initVisualData() {
       }, 2000)
 
       return true
-    } catch (e) {
+    }
+    catch (e) {
       saveStatus.value = 'error'
       saveError.value = e instanceof Error ? e.message : '保存失败'
       return false
-    } finally {
+    }
+    finally {
       if (pendingSave) {
         pendingSave = false
         void saveProject()
@@ -531,18 +537,18 @@ export const useVisualData = () => inject<ReturnType<typeof initVisualData>>(inj
 export const fieldTypes = [
   {
     label: '字符串',
-    value: 'string'
+    value: 'string',
   },
   {
     label: '数字',
-    value: 'number'
+    value: 'number',
   },
   {
     label: '数组',
-    value: 'array'
+    value: 'array',
   },
   {
     label: '布尔值',
-    value: 'boolean'
-  }
+    value: 'boolean',
+  },
 ]

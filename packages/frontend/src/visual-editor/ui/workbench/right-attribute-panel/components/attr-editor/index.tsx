@@ -4,13 +4,13 @@ import {
   ElInput,
   ElPopover,
   ElRadioButton,
-  ElRadioGroup
+  ElRadioGroup,
 } from 'element-plus'
 import { computed, defineComponent, watch } from 'vue'
-import { FormatInputNumber } from '@/visual-editor/ui/shared/format-input-number'
-import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { isChartComponent } from '@/utils/datasetBinding'
+import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import ChartDatasetBindPanel from '@/visual-editor/ui/shared/dataset-bind/ChartDatasetBindPanel.vue'
+import { FormatInputNumber } from '@/visual-editor/ui/shared/format-input-number'
 import { AttrEditorCard } from './components/attr-editor-card'
 import { PropConfig } from './components/prop-config'
 
@@ -31,10 +31,11 @@ export const AttrEditor = defineComponent({
           if (Reflect.has(currentBlock.value, 'styles')) {
             currentBlock.value.styles.tempPadding = val[0]
           }
-        } else {
+        }
+        else {
           currentBlock.value.styles.tempPadding = ''
         }
-      }
+      },
     )
 
     /**
@@ -45,7 +46,7 @@ export const AttrEditor = defineComponent({
       set(val) {
         compPaddingAttrs.forEach(item => (currentBlock.value.styles[item] = val))
         currentBlock.value.styles.tempPadding = val
-      }
+      },
     })
 
     // 表单项
@@ -57,19 +58,19 @@ export const AttrEditor = defineComponent({
         console.log('props.block:', currentBlock.value)
         content.push(
           <>
-            <ElFormItem label='组件标识' labelWidth='70px'>
+            <ElFormItem label="组件标识" labelWidth="70px">
               <ElPopover
                 width={200}
-                trigger='hover'
-                effect='dark'
+                trigger="hover"
+                effect="dark"
                 content={`你可以利用该组件ID。对该组件进行获取和设置其属性，组件可用属性可在控制台输入：$$refs.${currentBlock.value._vid} 进行查看`}
               >
                 {{
-                  reference: () => <ElInput disabled v-model={currentBlock.value._vid}></ElInput>
+                  reference: () => <ElInput disabled v-model={currentBlock.value._vid}></ElInput>,
                 }}
               </ElPopover>
             </ElFormItem>
-          </>
+          </>,
         )
         if (component) {
           if (component.props) {
@@ -77,103 +78,103 @@ export const AttrEditor = defineComponent({
             if (currentBlock.value?.showStyleConfig) {
               content.push(
                 <>
-                  <AttrEditorCard header='基础配置' class='mb-3'>
-                    <el-space class='w-full'>
-                      <ElFormItem label='宽度' labelWidth='40px'>
-                        <ElInput type='number' v-model={currentBlock.value.width} class='w-full'>
+                  <AttrEditorCard header="基础配置" class="mb-3">
+                    <el-space class="w-full">
+                      <ElFormItem label="宽度" labelWidth="40px">
+                        <ElInput type="number" v-model={currentBlock.value.width} class="w-full">
                           {{
-                            suffix: () => <span>px</span>
+                            suffix: () => <span>px</span>,
                           }}
                         </ElInput>
                       </ElFormItem>
-                      <ElFormItem label='高度' labelWidth='40px'>
-                        <ElInput v-model={currentBlock.value.height} type='number' class='w-full'>
+                      <ElFormItem label="高度" labelWidth="40px">
+                        <ElInput v-model={currentBlock.value.height} type="number" class="w-full">
                           {{
-                            suffix: () => <span>px</span>
+                            suffix: () => <span>px</span>,
                           }}
                         </ElInput>
                       </ElFormItem>
                     </el-space>
-                    <el-space class='w-full'>
-                      <ElFormItem label='X' labelWidth='40px' labelPosition='right'>
-                        <ElInput type='number' v-model={currentBlock.value.x}>
+                    <el-space class="w-full">
+                      <ElFormItem label="X" labelWidth="40px" labelPosition="right">
+                        <ElInput type="number" v-model={currentBlock.value.x}>
                           {{
-                            suffix: () => <span>px</span>
+                            suffix: () => <span>px</span>,
                           }}
                         </ElInput>
                       </ElFormItem>
-                      <ElFormItem label='Y' labelWidth='40px' labelPosition='right'>
-                        <ElInput type='number' v-model={currentBlock.value.y}>
+                      <ElFormItem label="Y" labelWidth="40px" labelPosition="right">
+                        <ElInput type="number" v-model={currentBlock.value.y}>
                           {{
-                            suffix: () => <span>px</span>
+                            suffix: () => <span>px</span>,
                           }}
                         </ElInput>
                       </ElFormItem>
                     </el-space>
                   </AttrEditorCard>
-                </>
+                </>,
               )
             }
 
             content.push(
               <>
                 {isChartComponent(componentKey) && (
-                  <AttrEditorCard header='数据配置' class='mb-3'>
+                  <AttrEditorCard header="数据配置" class="mb-3">
                     <ChartDatasetBindPanel block={currentBlock.value} />
                   </AttrEditorCard>
                 )}
-                <AttrEditorCard header='组件配置' class='mb-3'>
+                <AttrEditorCard header="组件配置" class="mb-3">
                   <PropConfig component={component} block={currentBlock.value} exclude-dataset />
                 </AttrEditorCard>
-              </>
+              </>,
             )
 
             if (currentBlock.value?.showStyleConfig) {
               content.push(
                 <>
-                  <AttrEditorCard header='样式配置'>
-                    <ElFormItem label='水平对齐方式' labelWidth='auto'>
+                  <AttrEditorCard header="样式配置">
+                    <ElFormItem label="水平对齐方式" labelWidth="auto">
                       <ElRadioGroup v-model={currentBlock.value.styles.justifyContent}>
-                        <ElRadioButton value='flex-start'>左对齐</ElRadioButton>
-                        <ElRadioButton value='center'>居中</ElRadioButton>
-                        <ElRadioButton value='flex-end'>右对齐</ElRadioButton>
+                        <ElRadioButton value="flex-start">左对齐</ElRadioButton>
+                        <ElRadioButton value="center">居中</ElRadioButton>
+                        <ElRadioButton value="flex-end">右对齐</ElRadioButton>
                       </ElRadioGroup>
                     </ElFormItem>
-                    <ElFormItem label='垂直对齐方式' labelWidth='auto'>
+                    <ElFormItem label="垂直对齐方式" labelWidth="auto">
                       <ElRadioGroup v-model={currentBlock.value.styles.alignItems}>
-                        <ElRadioButton value='flex-start'>上对齐</ElRadioButton>
-                        <ElRadioButton value='center'>居中</ElRadioButton>
-                        <ElRadioButton value='flex-end'>下对齐</ElRadioButton>
+                        <ElRadioButton value="flex-start">上对齐</ElRadioButton>
+                        <ElRadioButton value="center">居中</ElRadioButton>
+                        <ElRadioButton value="flex-end">下对齐</ElRadioButton>
                       </ElRadioGroup>
                     </ElFormItem>
-                    <ElFormItem label='组件内边距'>
+                    <ElFormItem label="组件内边距">
                       <FormatInputNumber v-model={compPadding.value} />
                     </ElFormItem>
                     <ElFormItem>
-                      <div class='w-full'>
-                        <div class='grid grid-cols-3 gap-2 w-full bg-gray-100 p-20px items-center'>
+                      <div class="w-full">
+                        <div class="grid grid-cols-3 gap-2 w-full bg-gray-100 p-20px items-center">
                           <FormatInputNumber
                             v-model={currentBlock.value.styles.paddingTop}
-                            class='!w-100px col-span-full col-start-2'
+                            class="!w-100px col-span-full col-start-2"
                           />
                           <FormatInputNumber
                             v-model={currentBlock.value.styles.paddingLeft}
-                            class='!w-100px col-span-1'
+                            class="!w-100px col-span-1"
                           />
-                          <div class='bg-white col-span-1 h-40px'></div>
+                          <div class="bg-white col-span-1 h-40px"></div>
                           <FormatInputNumber
                             v-model={currentBlock.value.styles.paddingRight}
-                            class='!w-100px col-span-1'
+                            class="!w-100px col-span-1"
                           />
                           <FormatInputNumber
                             v-model={currentBlock.value.styles.paddingBottom}
-                            class='!w-100px col-span-full col-start-2'
+                            class="!w-100px col-span-full col-start-2"
                           />
                         </div>
                       </div>
                     </ElFormItem>
                   </AttrEditorCard>
-                </>
+                </>,
               )
             }
           }
@@ -181,7 +182,7 @@ export const AttrEditor = defineComponent({
       }
       return (
         <>
-          <ElForm labelPosition='left'>{content}</ElForm>
+          <ElForm labelPosition="left">{content}</ElForm>
         </>
       )
     }
@@ -191,5 +192,5 @@ export const AttrEditor = defineComponent({
         <FormEditor />
       </>
     )
-  }
+  },
 })

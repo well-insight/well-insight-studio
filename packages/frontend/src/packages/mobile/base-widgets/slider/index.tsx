@@ -6,7 +6,7 @@ import {
   createEditorInputNumberProp,
   createEditorInputProp,
   createEditorModelBindProp,
-  createEditorSwitchProp
+  createEditorSwitchProp,
 } from '@/visual-editor/visual-editor.props'
 import { createFieldProps } from './createFieldProps'
 
@@ -15,7 +15,7 @@ export default {
   moduleName: 'baseWidgets',
   label: '表单项类型 - 滑块',
   preview: () => (
-    <Field name='rate' label='滑块' labelWidth={50} v-slots={{ input: () => <Slider modelValue={3} /> }}></Field>
+    <Field name="rate" label="滑块" labelWidth={50} v-slots={{ input: () => <Slider modelValue={3} /> }}></Field>
   ),
   render: ({ styles, block, props }) => {
     const { registerRef } = useGlobalProperties()
@@ -26,7 +26,7 @@ export default {
           {...omit(props, 'size')}
           name={Array.isArray(props.name) ? [...props.name].pop() : props.name}
           v-slots={{
-            input: () => <Slider ref={el => registerRef(el, block._vid)} {...props} v-model={props.modelValue}></Slider>
+            input: () => <Slider ref={el => registerRef(el, block._vid)} {...props} v-model={props.modelValue}></Slider>,
           }}
         />
       </div>
@@ -40,12 +40,12 @@ export default {
     max: createEditorInputNumberProp({ label: '最大值', defaultValue: 10 }),
     size: createEditorInputNumberProp({ label: '图标大小' }),
     range: createEditorSwitchProp({ label: '是否开启双滑块模式' }),
-    ...createFieldProps()
+    ...createFieldProps(),
   },
   resize: {
-    width: true
+    width: true,
   },
   model: {
-    default: '绑定字段'
-  }
+    default: '绑定字段',
+  },
 } as VisualEditorComponent

@@ -11,7 +11,7 @@ function beforeUpload(file: File) {
     return false
   }
   const fileReader = new FileReader()
-  fileReader.onload = event => {
+  fileReader.onload = (event) => {
     currentImage.value = event.target?.result as string
   }
   fileReader.readAsDataURL(file)
@@ -29,11 +29,13 @@ function beforeUpload(file: File) {
           <el-icon class="el-icon--upload !text-[20px]">
             <UploadFilled />
           </el-icon>
-          <div class="el-upload__text !text-[12px]">拖拽文件或 <em>点击上传</em></div>
+          <div class="el-upload__text !text-[12px]">
+            拖拽文件或 <em>点击上传</em>
+          </div>
         </template>
       </div>
     </ElUpload>
-    <ElInput size="default" v-model="currentImage" placeholder="图片地址" clearable />
+    <ElInput v-model="currentImage" size="default" placeholder="图片地址" clearable />
   </div>
 </template>
 

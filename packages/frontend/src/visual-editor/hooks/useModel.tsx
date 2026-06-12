@@ -3,7 +3,7 @@ import { defineComponent, ref, watch } from 'vue'
 export function useModel<T>(getter: () => T, emitter: (val: T) => void) {
   const state = ref(getter()) as { value: T }
 
-  watch(getter, val => {
+  watch(getter, (val) => {
     if (val !== state.value) {
       state.value = val
     }
@@ -18,25 +18,25 @@ export function useModel<T>(getter: () => T, emitter: (val: T) => void) {
         state.value = val
         emitter(val)
       }
-    }
+    },
   }
 }
 
 export const TestUseModel = defineComponent({
   props: {
-    modelValue: { type: String }
+    modelValue: { type: String },
   },
   emits: ['update:modelValue'],
   setup(props, ctx) {
     const model = useModel(
       () => props.modelValue,
-      val => ctx.emit('update:modelValue', val)
+      val => ctx.emit('update:modelValue', val),
     )
     return () => (
       <div>
         自定义的输入框
-        <input type='text' v-model={model.value} />
+        <input type="text" v-model={model.value} />
       </div>
     )
-  }
+  },
 })

@@ -39,7 +39,8 @@ async function confirmLogout() {
       cancelButtonText: '取消',
       type: 'warning',
     })
-  } catch {
+  }
+  catch {
     return
   }
   authStore.logout()
@@ -72,8 +73,12 @@ async function confirmLogout() {
       <template #dropdown>
         <el-dropdown-menu>
           <el-dropdown-item v-if="user" disabled class="user-footer__menu-head">
-            <div class="user-footer__menu-title">{{ displayName }}</div>
-            <div v-if="userEmail" class="user-footer__menu-sub">{{ userEmail }}</div>
+            <div class="user-footer__menu-title">
+              {{ displayName }}
+            </div>
+            <div v-if="userEmail" class="user-footer__menu-sub">
+              {{ userEmail }}
+            </div>
           </el-dropdown-item>
           <el-dropdown-item divided @click="confirmLogout">
             <el-icon class="align-middle mr-1">

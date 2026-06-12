@@ -8,10 +8,11 @@ export function createEvent() {
     },
     off: (cb: SimplyListener) => {
       const index = listeners.indexOf(cb)
-      if (index > -1) listeners.splice(index, 1)
+      if (index > -1)
+        listeners.splice(index, 1)
     },
     emit: () => {
       listeners.forEach(item => item())
-    }
+    },
   }
 }

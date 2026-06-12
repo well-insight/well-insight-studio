@@ -6,7 +6,7 @@ export default {
   name: 'RulerWrapper',
   components: {
     CanvasRuler,
-    LineRuler
+    LineRuler,
   },
   props: {
     vertical: Boolean,
@@ -22,13 +22,13 @@ export default {
     palette: Object,
     isShowReferLine: Boolean,
     onShowRightMenu: Function,
-    handleShowReferLine: Function
+    handleShowReferLine: Function,
   },
   data() {
     return {
       isDraggingLine: false,
       showIndicator: false,
-      value: 0
+      value: 0,
     }
   },
   computed: {
@@ -40,19 +40,19 @@ export default {
       const hContainer = {
         width: `calc(100% - ${this.thick}px)`,
         height: `${this.thick + 1}px`,
-        left: `${this.thick}` + 'px'
+        left: `${this.thick}` + 'px',
       }
       const vContainer = {
         width: `${this.thick + 1}px`,
         height: `calc(100% - ${this.thick}px)`,
-        top: `${this.thick}` + 'px'
+        top: `${this.thick}` + 'px',
       }
       return this.vertical ? vContainer : hContainer
     },
     lineStyle() {
       return {
         borderTop: `1px solid ${this.palette.lineColor}`,
-        cursor: this.isShowReferLine ? 'ns-resize' : 'none'
+        cursor: this.isShowReferLine ? 'ns-resize' : 'none',
       }
     },
     indicatorStyle() {
@@ -63,9 +63,9 @@ export default {
       boderKey = this.vertical ? 'borderBottom' : 'borderLeft'
       return {
         [positionKey]: `${indicatorOffset}px`,
-        [boderKey]: `1px solid ${this.palette.lineColor}`
+        [boderKey]: `1px solid ${this.palette.lineColor}`,
       }
-    }
+    },
   },
   methods: {
     handleNewLine(value) {
@@ -98,7 +98,8 @@ export default {
 
       if (offset < 0 || offset > maxOffset) {
         this.handleLineRemove(index)
-      } else {
+      }
+      else {
         this.lines[index] = value
         this.$emit('onLineChange', this.lines, this.vertical)
       }
@@ -106,8 +107,8 @@ export default {
     handleLineRemove(index) {
       this.lines.splice(index, 1)
       this.$emit('onLineChange', this.lines, this.vertical)
-    }
-  }
+    },
+  },
 }
 </script>
 

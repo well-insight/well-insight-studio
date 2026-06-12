@@ -1,18 +1,18 @@
 <script lang="ts" setup>
-import type { PropType } from "vue";
-import type { VisualEditorBlockData } from "@/visual-editor/visual-editor.utils";
-import CompRender from "./comp-render";
+import type { PropType } from 'vue'
+import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
+import CompRender from './comp-render'
 
 defineOptions({
-  name: "PreviewSlotItem",
-});
+  name: 'PreviewSlotItem',
+})
 
 defineProps({
   children: {
     type: Array as PropType<VisualEditorBlockData[]>,
     default: () => [],
   },
-});
+})
 </script>
 
 <template>

@@ -1,38 +1,32 @@
 <script lang="tsx" setup>
 import type { CSSProperties } from 'vue'
 
-import MarkLine from '@/components/Editor/MarkLine.vue'
-import SketchRule from '@/components/Ruler/sketchRuler.vue'
-import { VueDragResizeRotate } from '@/components/vue3-drag-resize-rotate'
+import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
+import { useMouseInElement, useResizeObserver } from '@vueuse/core'
+import { vLoading } from 'element-plus'
+import { GridLayout } from 'grid-layout-plus'
+import { cloneDeep, debounce, throttle } from 'lodash-es'
+import { storeToRefs } from 'pinia'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { useAnimate } from '@/hooks/useAnimate'
 import { useGlobalProperties } from '@/hooks/useGlobalProperties'
 import { useControlStore } from '@/stores/controlStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
-import { useModal } from '@/visual-editor/hooks/useModal'
-import { useVisualData } from '@/visual-editor/hooks/useVisualData'
-import { generateNanoid } from '@/visual-editor/lib'
-import { $$dropdown, DropdownOption } from '@/visual-editor/lib/dropdown-service'
-import MonacoEditor from '@/visual-editor/ui/shared/monaco-editor/MonacoEditor'
-import { getBlockAnimationElement, type VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
+import { resolveBlockBorderCss } from '@/utils/blockBorder'
 import {
   getBlockTitleInlineStyle,
   getBlockTitleText,
   isInnerBlockTitle,
 } from '@/visual-editor/core/visual-editor.utils'
-import { useMouseInElement, useResizeObserver } from '@vueuse/core'
-import { vLoading } from 'element-plus'
-import { cloneDeep, debounce, throttle } from 'lodash-es'
-import { storeToRefs } from 'pinia'
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useModal } from '@/visual-editor/hooks/useModal'
+import { useVisualData } from '@/visual-editor/hooks/useVisualData'
+import { generateNanoid } from '@/visual-editor/lib'
+import { $$dropdown, DropdownOption } from '@/visual-editor/lib/dropdown-service'
+import MonacoEditor from '@/visual-editor/ui/shared/monaco-editor/MonacoEditor'
+import { getBlockAnimationElement } from '@/visual-editor/visual-editor.utils'
 import CompRender from './comp-render'
 import SlotItem from './SlotItem.vue'
-import { useAnimate } from '@/hooks/useAnimate'
-import { resolveBlockBorderCss } from '@/utils/blockBorder'
-import { GridLayout, GridItem, GridItemProps } from 'grid-layout-plus'
-
-function getBlockBorderStyle(item: VisualEditorBlockData): CSSProperties {
-  return resolveBlockBorderCss(item, currentPage.value?.config)
-}
 
 defineOptions({
   name: 'SimulatorEditor',
@@ -49,6 +43,10 @@ const props = withDefaults(defineProps<{
 const emits = defineEmits<{
   changeScale: [value: number]
 }>()
+
+function getBlockBorderStyle(item: VisualEditorBlockData): CSSProperties {
+  return resolveBlockBorderCss(item, currentPage.value?.config)
+}
 
 const currentScale = ref(props?.scale)
 
@@ -255,15 +253,16 @@ const dragItem = { x: -1, y: -1, w: 2, h: 4, i: '' }
 const dragging = throttle(() => {
   const parentRect = wrapper.value?.getBoundingClientRect()
 
-  if (!parentRect || !gridLayout.value) return
+  if (!parentRect || !gridLayout.value)
+    return
 
-  const mouseInGrid =
-    mouseAt.x > parentRect.left &&
-    mouseAt.x < parentRect.right &&
-    mouseAt.y > parentRect.top &&
-    mouseAt.y < parentRect.bottom
+  const mouseInGrid
+    = mouseAt.x > parentRect.left
+      && mouseAt.x < parentRect.right
+      && mouseAt.y > parentRect.top
+      && mouseAt.y < parentRect.bottom
 
-  if (mouseInGrid && !currentPage.value.blocks.find(item => item.i === dropId)) {
+  if (mouseInGrid && !currentPage.value.blocks.some(item => item.i === dropId)) {
     const moveData = { ...controlStore.moveVisualData, x: (currentPage.value.blocks.length * 2) % 12, y: currentPage.value.blocks.length + 12, w: 2, h: 2, i: dropId }
 
     currentPage.value.blocks.push(moveData)
@@ -274,11 +273,13 @@ const dragging = throttle(() => {
   if (index !== -1) {
     const item = gridLayout.value.getItem(dropId)
 
-    if (!item) return
+    if (!item)
+      return
 
     try {
       item.wrapper.style.display = 'none'
-    } catch (e) {}
+    }
+    catch (e) {}
 
     Object.assign(item.state, {
       top: mouseAt.y - parentRect.top,
@@ -286,36 +287,38 @@ const dragging = throttle(() => {
     })
     const newPos = item.calcXY(mouseAt.y - parentRect.top, mouseAt.x - parentRect.left)
 
-      if (mouseInGrid) {
-        gridLayout.value.dragEvent('dragstart', dropId, newPos.x, newPos.y, dragItem.h, dragItem.w)
-        dragItem.i = String(index)
-        dragItem.x = currentPage.value.blocks[index].x
-        dragItem.y = currentPage.value.blocks[index].y
-      } else {
-        gridLayout.value.dragEvent('dragend', dropId, newPos.x, newPos.y, dragItem.h, dragItem.w)
-        currentPage.value.blocks = currentPage.value.blocks.filter(item => item.i !== dropId)
-      }
-
+    if (mouseInGrid) {
+      gridLayout.value.dragEvent('dragstart', dropId, newPos.x, newPos.y, dragItem.h, dragItem.w)
+      dragItem.i = String(index)
+      dragItem.x = currentPage.value.blocks[index].x
+      dragItem.y = currentPage.value.blocks[index].y
+    }
+    else {
+      gridLayout.value.dragEvent('dragend', dropId, newPos.x, newPos.y, dragItem.h, dragItem.w)
+      currentPage.value.blocks = currentPage.value.blocks.filter(item => item.i !== dropId)
+    }
   }
 })
 
 function dragEnd() {
   const parentRect = wrapper.value?.getBoundingClientRect()
 
-  if (!parentRect || !gridLayout.value) return
+  if (!parentRect || !gridLayout.value)
+    return
 
-  const mouseInGrid =
-    mouseAt.x > parentRect.left &&
-    mouseAt.x < parentRect.right &&
-    mouseAt.y > parentRect.top &&
-    mouseAt.y < parentRect.bottom
+  const mouseInGrid
+    = mouseAt.x > parentRect.left
+      && mouseAt.x < parentRect.right
+      && mouseAt.y > parentRect.top
+      && mouseAt.y < parentRect.bottom
 
   if (mouseInGrid) {
     // alert(`Dropped element props:\n${JSON.stringify(dragItem, ['x', 'y', 'w', 'h'], 2)}`)
     gridLayout.value.dragEvent('dragend', dropId, dragItem.x, dragItem.y, dragItem.h, dragItem.w)
 
     currentPage.value.blocks = currentPage.value.blocks.filter(item => item.i !== dropId)
-  } else {
+  }
+  else {
     return
   }
 
@@ -337,11 +340,13 @@ function dragEnd() {
 
   const item = gridLayout.value.getItem(dropId)
 
-  if (!item) return
+  if (!item)
+    return
 
   try {
     item.wrapper.style.display = ''
-  } catch (e) {}
+  }
+  catch (e) {}
 
   recordHistory()
 }
@@ -583,11 +588,10 @@ function initAnimate() {
     const anmiationEl = getBlockAnimationElement(_vid)
     useAnimate(anmiationEl, animations)
   })
-
 }
 
 watch(visualLoading, (value, oldValue) => {
-  if(!value && oldValue) {
+  if (!value && oldValue) {
     initAnimate()
   }
 })
@@ -605,13 +609,13 @@ defineExpose({
   getScale,
   setWrapPositionSize,
   drag: dragging,
-  dragEnd
+  dragEnd,
 })
 </script>
 
 <template>
   <div :class="$style['edit-control-container']">
-    <div :class="$style['wrap-container']" ref="wrapper">
+    <div ref="wrapper" :class="$style['wrap-container']">
       <div
         ref="canvasRef"
         v-loading="visualLoading"
@@ -621,9 +625,9 @@ defineExpose({
       >
         <div class="edit-canvas-inner">
           <GridLayout
-            class="grid-layout-canvas"
             ref="gridLayout"
             v-model:layout="currentPage.blocks"
+            class="grid-layout-canvas"
             :row-height="30"
             :margin="[8, 8]"
             @layout-updated="onLayoutUpdated"
@@ -635,8 +639,8 @@ defineExpose({
                 class="list-group-item"
                 :style="getBlockBorderStyle(item)"
                 :class="{
-                  focus: item.focus,
-                  focusWithChild: item.focusWithChild,
+                  'focus': item.focus,
+                  'focusWithChild': item.focusWithChild,
                   drag,
                   'has-slot': !!Object.keys(item.props?.slots || {}).length,
                   'has-inner-title': item.showTitle === true && isInnerBlockTitle(item.titleStyle),
@@ -706,7 +710,7 @@ defineExpose({
 </style>
 
 <style lang="scss" scoped>
-@use "./func.scss" as *;
+@use './func.scss' as *;
 
 .edit-canvas-scroll {
   display: flex;

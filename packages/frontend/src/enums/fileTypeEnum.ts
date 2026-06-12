@@ -6,5 +6,5 @@ export enum FileTypeEnum {
   // 图片
   PNG = 'image/png',
   JPEG = 'image/jpeg',
-  GIF = 'image/gif'
+  GIF = 'image/gif',
 }

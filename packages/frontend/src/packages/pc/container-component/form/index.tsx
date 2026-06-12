@@ -1,14 +1,14 @@
-import type { VisualEditorComponent } from "@/visual-editor/visual-editor.utils";
-import { Button, Field, Form } from "vant";
-import { renderSlot, useSlots } from "vue";
-import { useGlobalProperties } from "@/hooks/useGlobalProperties";
-import { compProps } from "./compProps";
+import type { VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
+import { Button, Field, Form } from 'vant'
+import { renderSlot, useSlots } from 'vue'
+import { useGlobalProperties } from '@/hooks/useGlobalProperties'
+import { compProps } from './compProps'
 
 export default {
-  key: "form",
-  moduleName: "containerComponents",
-  label: "表单容器",
-  icon: "comp-icon-form",
+  key: 'form',
+  moduleName: 'containerComponents',
+  label: '表单容器',
+  icon: 'comp-icon-form',
   preview: () => (
     <Form>
       <Field name="用户名" label="用户名" placeholder="用户名" />
@@ -21,33 +21,33 @@ export default {
     </Form>
   ),
   render({ props, styles, block }) {
-    const slots = useSlots();
-    const { registerRef } = useGlobalProperties();
+    const slots = useSlots()
+    const { registerRef } = useGlobalProperties()
 
     const onSubmit = (values) => {
-      console.log("onSubmit:", values);
-    };
+      console.log('onSubmit:', values)
+    }
 
     return () => (
       <div style={styles}>
         <Form
-          ref={(el) => registerRef(el, block._vid)}
+          ref={el => registerRef(el, block._vid)}
           {...props}
-          style={{ width: "100%" }}
+          style={{ width: '100%' }}
           onSubmit={onSubmit}
         >
-          {renderSlot(slots, "default")}
+          {renderSlot(slots, 'default')}
         </Form>
       </div>
-    );
+    )
   },
   resize: {
     height: true,
     width: true,
   },
   events: [
-    { label: "提交表单且验证通过后触发", value: "submit" },
-    { label: "提交表单且验证不通过后触发", value: "failed" },
+    { label: '提交表单且验证通过后触发', value: 'submit' },
+    { label: '提交表单且验证不通过后触发', value: 'failed' },
   ],
   props: compProps,
-} as VisualEditorComponent;
+} as VisualEditorComponent

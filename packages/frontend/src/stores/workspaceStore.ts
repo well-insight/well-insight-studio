@@ -1,17 +1,17 @@
-import { defineStore } from "pinia";
-import { ApiDatasetListItem } from "@/api/dataset";
-import { store } from "./pinia";
+import type { ApiDatasetListItem } from '@/api/dataset'
+import { defineStore } from 'pinia'
+import { store } from './pinia'
 
-export const useWorkspaceStore = defineStore("useWorkspaceStore", {
+export const useWorkspaceStore = defineStore('useWorkspaceStore', {
   state: (): WorkspaceState => ({
     workspaceList: [
       {
-        id: "001",
-        title: "默认工作空间",
+        id: '001',
+        title: '默认工作空间',
       },
       {
-        id: "002",
-        title: "我的自定义工作空间",
+        id: '002',
+        title: '我的自定义工作空间',
       },
     ],
     currentWorkspace: undefined,
@@ -19,44 +19,44 @@ export const useWorkspaceStore = defineStore("useWorkspaceStore", {
     currentApp: undefined,
     menuList: [
       {
-        path: "/project/application",
-        title: "应用集",
+        path: '/project/application',
+        title: '应用集',
         meta: {
-          icon: "application",
+          icon: 'application',
         },
       },
       {
-        path: "/project/dataset",
-        title: "数据集",
+        path: '/project/dataset',
+        title: '数据集',
         meta: {
-          icon: "dataset",
+          icon: 'dataset',
         },
       },
       {
-        path: "/project/api",
-        title: "数据连接",
+        path: '/project/api',
+        title: '数据连接',
         meta: {
-          icon: "api",
+          icon: 'api',
         },
       },
       {
-        path: "/project/automation",
-        title: "自动化",
+        path: '/project/automation',
+        title: '自动化',
         meta: {
-          icon: "automation",
+          icon: 'automation',
         },
       },
     ],
     currentMenu: undefined,
     screens: [
       {
-        id: "screen_001",
-        workspaceAppId: "001001",
+        id: 'screen_001',
+        workspaceAppId: '001001',
         showNavigation: true,
-        width: "Large",
+        width: 'Large',
         props: {
-          _id: "c39c18ed570a649018b7d17e36a99861e",
-          _component: "@budibase/standard-components/container",
+          _id: 'c39c18ed570a649018b7d17e36a99861e',
+          _component: '@budibase/standard-components/container',
           _styles: {
             normal: {},
             hover: {},
@@ -65,26 +65,26 @@ export const useWorkspaceStore = defineStore("useWorkspaceStore", {
           },
           _children: [
             {
-              _id: "ccbe8a7e124104e9590a26c543e48160e",
-              _component: "@budibase/standard-components/gridblock",
+              _id: 'ccbe8a7e124104e9590a26c543e48160e',
+              _component: '@budibase/standard-components/gridblock',
               _styles: {
                 normal: {
-                  "--grid-desktop-col-end": 13,
-                  "--grid-desktop-row-end": 21,
-                  "--grid-desktop-row-start": 3,
-                  "--grid-desktop-col-start": 1,
+                  '--grid-desktop-col-end': 13,
+                  '--grid-desktop-row-end': 21,
+                  '--grid-desktop-row-start': 3,
+                  '--grid-desktop-col-start': 1,
                 },
                 hover: {},
                 active: {},
               },
-              _instanceName: "New Table",
+              _instanceName: 'New Table',
               table: {
-                label: "Employees",
-                tableId: "ta_bb_employee",
-                resourceId: "ta_bb_employee",
-                type: "table",
+                label: 'Employees',
+                tableId: 'ta_bb_employee',
+                resourceId: 'ta_bb_employee',
+                type: 'table',
               },
-              initialSortOrder: "Ascending",
+              initialSortOrder: 'Ascending',
               allowAddRows: true,
               allowEditRows: true,
               allowDeleteRows: true,
@@ -92,53 +92,53 @@ export const useWorkspaceStore = defineStore("useWorkspaceStore", {
               quiet: false,
             },
             {
-              _id: "c98eb8a1ca9454063b46ffa27607639fa",
-              _component: "@budibase/standard-components/button",
+              _id: 'c98eb8a1ca9454063b46ffa27607639fa',
+              _component: '@budibase/standard-components/button',
               _styles: {
                 normal: {
-                  "--grid-desktop-col-end": 3,
-                  "--grid-desktop-h-align": "center",
-                  "--grid-desktop-row-end": 3,
+                  '--grid-desktop-col-end': 3,
+                  '--grid-desktop-h-align': 'center',
+                  '--grid-desktop-row-end': 3,
                 },
                 hover: {},
                 active: {},
               },
-              _instanceName: "New Button",
-              text: "添加",
-              type: "cta",
-              size: "M",
-              gap: "S",
-              icon: "plus",
+              _instanceName: 'New Button',
+              text: '添加',
+              type: 'cta',
+              size: 'M',
+              gap: 'S',
+              icon: 'plus',
               disabled: false,
               onClick: [
                 {
-                  parameters: {
-                    type: "screen",
-                    url: "/inventory/new",
+                  'parameters': {
+                    type: 'screen',
+                    url: '/inventory/new',
                     peek: true,
                   },
-                  "##eventHandlerType": "Navigate To",
-                  id: "YqwIo-zR_",
+                  '##eventHandlerType': 'Navigate To',
+                  'id': 'YqwIo-zR_',
                 },
               ],
             },
           ],
-          _instanceName: "Blank screen",
-          layout: "grid",
-          direction: "column",
-          hAlign: "stretch",
-          vAlign: "top",
-          size: "grow",
-          gap: "M",
+          _instanceName: 'Blank screen',
+          layout: 'grid',
+          direction: 'column',
+          hAlign: 'stretch',
+          vAlign: 'top',
+          size: 'grow',
+          gap: 'M',
         },
         routing: {
-          route: "/data-show1",
-          roleId: "BASIC",
+          route: '/data-show1',
+          roleId: 'BASIC',
           homeScreen: false,
         },
-        name: "screen-id",
-        createdAt: "2026-01-05T17:35:41.116Z",
-        updatedAt: "2026-01-11T03:36:47.196Z",
+        name: 'screen-id',
+        createdAt: '2026-01-05T17:35:41.116Z',
+        updatedAt: '2026-01-11T03:36:47.196Z',
         pluginAdded: false,
       },
     ],
@@ -147,98 +147,98 @@ export const useWorkspaceStore = defineStore("useWorkspaceStore", {
   }),
   actions: {
     setWorkspaceList(list: Workspace[]) {
-      this.workspaceList = list;
+      this.workspaceList = list
     },
     setCurrentWorkspace(workspace: Workspace) {
-      this.currentWorkspace = workspace;
+      this.currentWorkspace = workspace
     },
     setAppList(list: WorkspaceApp[]) {
-      this.appList = list;
+      this.appList = list
     },
     setCurrentApp(app: WorkspaceApp | null | undefined) {
-      this.currentApp = app ?? undefined;
+      this.currentApp = app ?? undefined
     },
     setCurrentMenu(menu: SimpleMenuOption) {
-      this.currentMenu = menu;
+      this.currentMenu = menu
     },
     setScreens(s: AppScreen[]) {
-      this.screens = s;
+      this.screens = s
     },
     setCurrentScreen(s: AppScreen) {
-      this.currentScreen = s;
+      this.currentScreen = s
     },
     setCurrentDataset(dataset: ApiDatasetListItem) {
-      this.currentDataset = dataset;
+      this.currentDataset = dataset
     },
   },
-});
+})
 
 export function useWorkspaceStoreWithout() {
-  return useWorkspaceStore(store);
+  return useWorkspaceStore(store)
 }
 
 export interface Workspace {
-  title: string;
-  id: string | number;
+  title: string
+  id: string | number
 }
 
 export interface WorkspaceApp {
-  id: string | number;
-  workspaceId?: string | number;
-  title: string;
-  status?: number;
-  lastUpdated?: string;
+  id: string | number
+  workspaceId?: string | number
+  title: string
+  status?: number
+  lastUpdated?: string
   /** 设备类型：1 PC，2 移动端 */
-  clientType?: number;
-  starred?: boolean;
+  clientType?: number
+  starred?: boolean
 }
 
 export interface AppScreen {
-  id: string;
-  workspaceAppId: string;
-  showNavigation: boolean;
-  width: string;
-  props: ScreenProps;
-  routing: ScreenRouting;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-  pluginAdded: boolean;
+  id: string
+  workspaceAppId: string
+  showNavigation: boolean
+  width: string
+  props: ScreenProps
+  routing: ScreenRouting
+  name: string
+  createdAt: string
+  updatedAt: string
+  pluginAdded: boolean
 }
 
 export interface ScreenProps {
-  id: string;
-  instanceName: string;
-  component: string;
-  styles: Record<string, any>;
-  children: ScreenProps[];
-  [p: string]: string | number | any;
+  id: string
+  instanceName: string
+  component: string
+  styles: Record<string, any>
+  children: ScreenProps[]
+  [p: string]: string | number | any
 }
 
 export interface ScreenRouting {
-  route: string;
-  roleId: string;
-  homeScreen: boolean;
+  route: string
+  roleId: string
+  homeScreen: boolean
 }
 
 export interface SimpleMenuOption {
-  path: string;
-  title: string;
+  path: string
+  title: string
   meta: {
-    icon?: string;
-  };
-  children?: Array<Omit<SimpleMenuOption, "children">>; // 避免深度递归
-  [key: string]: unknown;
+    icon?: string
+  }
+  children?: Array<Omit<SimpleMenuOption, 'children'>> // 避免深度递归
+  [key: string]: unknown
 }
 
 export interface WorkspaceState {
-  workspaceList?: Workspace[];
-  currentWorkspace?: Workspace;
-  appList?: WorkspaceApp[];
-  currentApp?: WorkspaceApp;
-  menuList?: SimpleMenuOption[];
-  currentMenu?: SimpleMenuOption;
-  screens?: AppScreen[];
-  currentScreen?: AppScreen;
-  currentDataset?: ApiDatasetListItem;
+  workspaceList?: Workspace[]
+  currentWorkspace?: Workspace
+  appList?: WorkspaceApp[]
+  currentApp?: WorkspaceApp
+  menuList?: SimpleMenuOption[]
+  currentMenu?: SimpleMenuOption
+  screens?: AppScreen[]
+  currentScreen?: AppScreen
+  currentDataset?: ApiDatasetListItem
 }

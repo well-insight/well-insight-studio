@@ -1,2 +1,2 @@
-export { default as AdaptiveDialog } from "./AdaptiveDialog.vue";
-export type { AdaptiveDialogMode } from "./types";
+export { default as AdaptiveDialog } from './AdaptiveDialog.vue'
+export type { AdaptiveDialogMode } from './types'

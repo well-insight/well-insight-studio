@@ -1,10 +1,15 @@
 // 标尺中每小格代表的宽度(根据scale的不同实时变化)
 function getGridSize(scale: any) {
-  if (scale <= 0.25) return 40
-  if (scale <= 0.5) return 20
-  if (scale <= 1) return 10
-  if (scale <= 2) return 5
-  if (scale <= 4) return 2
+  if (scale <= 0.25)
+    return 40
+  if (scale <= 0.5)
+    return 20
+  if (scale <= 1)
+    return 10
+  if (scale <= 2)
+    return 5
+  if (scale <= 4)
+    return 2
   return 1
 }
 

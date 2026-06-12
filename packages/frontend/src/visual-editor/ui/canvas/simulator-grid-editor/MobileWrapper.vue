@@ -7,11 +7,11 @@ import { computed, ref, useTemplateRef, watchEffect } from 'vue'
 import { useGlobalProperties } from '@/hooks/useGlobalProperties'
 import { useControlStore } from '@/stores/controlStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
-import MonacoEditor from '@/visual-editor/ui/shared/monaco-editor/MonacoEditor'
 import { useModal } from '@/visual-editor/hooks/useModal'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { generateNanoid } from '@/visual-editor/lib'
 import { $$dropdown, DropdownOption } from '@/visual-editor/lib/dropdown-service'
+import MonacoEditor from '@/visual-editor/ui/shared/monaco-editor/MonacoEditor'
 import CompRender from './comp-render'
 import DraggableTransitionGroup from './DraggableTransitionGroup.vue'
 import SlotItem from './SlotItem.vue'
@@ -263,7 +263,7 @@ function triggerShowComponents() {
 </template>
 
 <style lang="scss" scoped>
-@use "./func.scss" as *;
+@use './func.scss' as *;
 
 .simulator-container {
   display: flex;
@@ -331,7 +331,7 @@ function triggerShowComponents() {
   }
 
   &:not(.has-slot) {
-    content: "";
+    content: '';
   }
 
   &.focusWithChild {

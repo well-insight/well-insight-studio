@@ -14,11 +14,11 @@ export default defineComponent({
   icon: Suitcase,
   order: 4,
   setup() {
-    const log = evt => {
+    const log = (evt) => {
       window.console.log(evt)
     }
     // 克隆组件
-    const cloneDog = comp => {
+    const cloneDog = (comp) => {
       console.log('当前拖拽的组件：', comp)
       const newComp = cloneDeep(comp)
       return createNewBlock(newComp)
@@ -33,7 +33,7 @@ export default defineComponent({
           list={visualConfig.componentModules.containerComponents}
           group={{ name: 'components', pull: 'clone', put: false }}
           clone={cloneDog}
-          item-key='_vid'
+          item-key="_vid"
           onChange={log}
         >
           {{
@@ -41,10 +41,10 @@ export default defineComponent({
               <div class={styles.listGroupItem} data-label={element.label}>
                 {element.preview()}
               </div>
-            )
+            ),
           }}
         </Draggable>
       </>
     )
-  }
+  },
 })

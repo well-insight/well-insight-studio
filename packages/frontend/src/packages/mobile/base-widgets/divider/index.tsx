@@ -6,46 +6,46 @@ import {
   createEditorColorProp,
   createEditorInputProp,
   createEditorSelectProp,
-  createEditorSwitchProp
+  createEditorSwitchProp,
 } from '@/visual-editor/visual-editor.props'
 
 export default {
   key: 'divider',
   moduleName: 'baseWidgets',
   label: '分割线',
-  preview: () => <Divider style='width:190px'>文本</Divider>,
+  preview: () => <Divider style="width:190px">文本</Divider>,
   render: ({ props, block, styles }) => {
     const { registerRef } = useGlobalProperties()
 
     const style = computed(() => ({
       width: '100%',
       color: props['text-color'],
-      borderColor: props['divider-color']
+      borderColor: props['divider-color'],
     }))
 
     return () => (
       <div style={styles}>
         <Divider ref={el => registerRef(el, block._vid)} {...props} style={style.value}>
           {{
-            default: () => props.text
+            default: () => props.text,
           }}
         </Divider>
       </div>
     )
   },
   props: {
-    text: createEditorInputProp({ label: '展示文本', defaultValue: '文本' }),
+    'text': createEditorInputProp({ label: '展示文本', defaultValue: '文本' }),
     'content-position': createEditorSelectProp({
       label: '文本位置',
       options: [
         { label: '左边', value: 'left' },
         { label: '中间', value: 'center' },
-        { label: '右边', value: 'right' }
+        { label: '右边', value: 'right' },
       ],
-      defaultValue: 'center'
+      defaultValue: 'center',
     }),
-    dashed: createEditorSwitchProp({ label: '是否为虚线' }),
+    'dashed': createEditorSwitchProp({ label: '是否为虚线' }),
     'text-color': createEditorColorProp({ label: '文本颜色' }),
-    'divider-color': createEditorColorProp({ label: '分割线颜色' })
-  }
+    'divider-color': createEditorColorProp({ label: '分割线颜色' }),
+  },
 } as VisualEditorComponent

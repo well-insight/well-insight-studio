@@ -1,4 +1,5 @@
-import { Edit, Plus } from "@element-plus/icons-vue";
+import type { PropType } from 'vue'
+import { Edit, Plus } from '@element-plus/icons-vue'
 import {
   ElButton,
   ElCollapse,
@@ -6,12 +7,11 @@ import {
   ElDialog,
   ElIcon,
   ElScrollbar,
-} from "element-plus";
-import { cloneDeep } from "lodash-es";
-import type { PropType } from "vue";
-import { computed, defineComponent, ref } from "vue";
-import { CrossSortableOptionsEditor } from "../cross-sortable-options-editor/cross-sortable-options-editor";
-import styles from "./options-editor-dialog.module.scss";
+} from 'element-plus'
+import { cloneDeep } from 'lodash-es'
+import { computed, defineComponent, ref } from 'vue'
+import { CrossSortableOptionsEditor } from '../cross-sortable-options-editor/cross-sortable-options-editor'
+import styles from './options-editor-dialog.module.scss'
 
 export const OptionsEditorDialog = defineComponent({
   props: {
@@ -23,37 +23,38 @@ export const OptionsEditorDialog = defineComponent({
     showItemPropsConfig: Boolean,
     label: {
       type: String,
-      default: "选项列表",
+      default: '选项列表',
     },
   },
-  emits: ["update:modelValue"],
+  emits: ['update:modelValue'],
   setup(props, { emit }) {
-    const visible = ref(false);
-    const localData = ref<(string | Record<string, any>)[]>([]);
+    const visible = ref(false)
+    const localData = ref<(string | Record<string, any>)[]>([])
 
-    const optionCount = computed(() => props.modelValue?.length ?? 0);
+    const optionCount = computed(() => props.modelValue?.length ?? 0)
 
     const triggerText = computed(() => {
-      if (optionCount.value === 0) return "未配置";
-      return `${optionCount.value}个选项`;
-    });
+      if (optionCount.value === 0)
+        return '未配置'
+      return `${optionCount.value}个选项`
+    })
 
     // 打开弹窗时克隆数据
     function openDialog() {
-      localData.value = cloneDeep(props.modelValue ?? []);
-      visible.value = true;
+      localData.value = cloneDeep(props.modelValue ?? [])
+      visible.value = true
     }
 
     // 确认：提交修改
     function handleConfirm() {
-      emit("update:modelValue", cloneDeep(localData.value));
-      visible.value = false;
+      emit('update:modelValue', cloneDeep(localData.value))
+      visible.value = false
     }
 
     // 取消：丢弃修改
     function handleCancel() {
-      localData.value = [];
-      visible.value = false;
+      localData.value = []
+      visible.value = false
     }
 
     return () => (
@@ -103,11 +104,11 @@ export const OptionsEditorDialog = defineComponent({
                     size="small"
                     plain
                     onClick={() => {
-                      const len = (localData.value?.length ?? 0) + 1;
+                      const len = (localData.value?.length ?? 0) + 1
                       localData.value = [
                         ...(localData.value ?? []),
                         { label: `选项${len}`, value: String(len) },
-                      ];
+                      ]
                     }}
                   >
                     <ElIcon class="mr-4px">
@@ -142,7 +143,6 @@ export const OptionsEditorDialog = defineComponent({
           }}
         </ElDialog>
       </>
-    );
+    )
   },
-});
-
+})

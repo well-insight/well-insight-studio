@@ -7,7 +7,7 @@ import { useModal } from '@/visual-editor/hooks/useModal'
 import {
   createNewPage,
   normalizeEditorPagePath,
-  useVisualData
+  useVisualData,
 } from '@/visual-editor/hooks/useVisualData'
 
 defineOptions({
@@ -56,13 +56,13 @@ const currentNodeKey = ref('')
 
 watch(
   pages,
-  list => {
+  (list) => {
     const keys = list.map(p => p.path)
     if (!currentNodeKey.value || !keys.includes(currentNodeKey.value)) {
       currentNodeKey.value = keys[0] ?? ''
     }
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 )
 
 // 点击当前节点
@@ -103,10 +103,11 @@ function showOparateModal() {
               updatePage({
                 newPath: path,
                 oldPath,
-                page: { title }
+                page: { title },
               })
               currentNodeKey.value = normalizeEditorPagePath(path)
-            } else {
+            }
+            else {
               const routePath = normalizeEditorPagePath(path)
               const ok = incrementPage(path, createNewPage({ title, path: routePath }))
               if (!ok) {
@@ -179,8 +180,7 @@ function setDefaultPage(_data: PageTreeNode) {
   >
     <template #default="{ node, data }">
       <span class="custom-tree-node">
-        <span
-          >{{ node.label }}（{{ data.path }}）
+        <span>{{ node.label }}（{{ data.path }}）
           <template v-if="data.isDefault">
             <el-tag size="default">默认</el-tag>
           </template>

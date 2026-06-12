@@ -1,35 +1,35 @@
 <script setup lang="ts">
-import type { VisualEditorBlockData } from "@/visual-editor/visual-editor.utils";
+import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
+import { Connection } from '@element-plus/icons-vue'
+import { computed, ref } from 'vue'
 import {
   getChartBindings,
   isChartDataBound,
-} from "@/utils/datasetBinding";
-import ChartDatasetBindDialog from "./ChartDatasetBindDialog.vue";
-import { Connection } from "@element-plus/icons-vue";
-import { computed, ref } from "vue";
+} from '@/utils/datasetBinding'
+import ChartDatasetBindDialog from './ChartDatasetBindDialog.vue'
 
 const props = defineProps<{
-  block: VisualEditorBlockData;
-}>();
+  block: VisualEditorBlockData
+}>()
 
-const dialogVisible = ref(false);
+const dialogVisible = ref(false)
 
-const chartBindings = computed(() => getChartBindings(props.block.datasetBindings));
+const chartBindings = computed(() => getChartBindings(props.block.datasetBindings))
 
-const isBound = computed(() => isChartDataBound(props.block));
+const isBound = computed(() => isChartDataBound(props.block))
 
 const summaryLines = computed(() => {
-  const lines: { label: string; value: string; type: "dimension" | "metric" }[] = [];
-  const dim = chartBindings.value.dimension;
-  const met = chartBindings.value.metric;
+  const lines: { label: string, value: string, type: 'dimension' | 'metric' }[] = []
+  const dim = chartBindings.value.dimension
+  const met = chartBindings.value.metric
   if (dim?.field) {
-    lines.push({ label: "维度", value: dim.field, type: "dimension" });
+    lines.push({ label: '维度', value: dim.field, type: 'dimension' })
   }
   if (met?.field) {
-    lines.push({ label: "指标", value: met.field, type: "metric" });
+    lines.push({ label: '指标', value: met.field, type: 'metric' })
   }
-  return lines;
-});
+  return lines
+})
 </script>
 
 <template>
@@ -49,7 +49,9 @@ const summaryLines = computed(() => {
       选择数据源，将字段拖入维度与指标区域以驱动图表展示。
     </p>
     <el-button type="primary" plain class="chart-bind-panel__btn" @click="dialogVisible = true">
-      <el-icon class="mr-4px"><Connection /></el-icon>
+      <el-icon class="mr-4px">
+        <Connection />
+      </el-icon>
       {{ isBound ? "修改图表数据" : "配置图表数据" }}
     </el-button>
     <ChartDatasetBindDialog v-model="dialogVisible" :block="block" />

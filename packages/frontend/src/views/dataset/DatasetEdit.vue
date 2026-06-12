@@ -1,75 +1,83 @@
 <script setup lang="ts">
-import { ArrowLeft, Plus } from "@element-plus/icons-vue";
-import { computed, onUnmounted, ref, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import DatasetTable from "./DatasetTable.vue";
-import { ApiDatasetListItem, fetchDatasetDetail } from "@/api/dataset";
-import { useWorkspaceStore } from "@/stores/workspaceStore";
+import type { ApiDatasetListItem } from '@/api/dataset'
+import { ArrowLeft, Plus } from '@element-plus/icons-vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { fetchDatasetDetail } from '@/api/dataset'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
+import DatasetTable from './DatasetTable.vue'
 
-const route = useRoute();
-const router = useRouter();
-const workspaceStore = useWorkspaceStore();
+const route = useRoute()
+const router = useRouter()
+const workspaceStore = useWorkspaceStore()
 
 const datasetId = computed(() => {
-  const raw = route.params.id;
-  const s = Array.isArray(raw) ? raw.join("/") : raw;
-  const id = String(s || "").trim();
-  return id || null;
-});
+  const raw = route.params.id
+  const s = Array.isArray(raw) ? raw.join('/') : raw
+  const id = String(s || '').trim()
+  return id || null
+})
 
-const datasetTitle = ref("");
-const datasetTableRef = ref<InstanceType<typeof DatasetTable> | null>(null);
-const canAddDatasetRow = ref(false);
+const datasetTitle = ref('')
+const datasetTableRef = ref<InstanceType<typeof DatasetTable> | null>(null)
+const canAddDatasetRow = ref(false)
 
 function onAddRowStateChange(payload: { canAdd: boolean }) {
-  canAddDatasetRow.value = payload.canAdd;
+  canAddDatasetRow.value = payload.canAdd
 }
 
 function triggerAddRow() {
-  datasetTableRef.value?.openCreateRow();
+  datasetTableRef.value?.openCreateRow()
 }
 
 async function refreshTitle() {
-  const id = datasetId.value;
+  const id = datasetId.value
   if (id == null) {
-    datasetTitle.value = "";
-    return;
+    datasetTitle.value = ''
+    return
   }
   try {
-    const d = await fetchDatasetDetail(id);
-    workspaceStore.setCurrentDataset(d as unknown as ApiDatasetListItem);
-    datasetTitle.value = d.name;
-  } catch {
-    datasetTitle.value = "";
+    const d = await fetchDatasetDetail(id)
+    workspaceStore.setCurrentDataset(d as unknown as ApiDatasetListItem)
+    datasetTitle.value = d.name
+  }
+  catch {
+    datasetTitle.value = ''
   }
 }
 
-watch(datasetId, () => void refreshTitle(), { immediate: true });
+watch(datasetId, () => void refreshTitle(), { immediate: true })
 
 function goBack() {
-  router.push({ name: "Dataset" });
+  router.push({ name: 'Dataset' })
 }
 
 onUnmounted(() => {
-  workspaceStore.setCurrentDataset(null);
-});
+  workspaceStore.setCurrentDataset(null)
+})
 </script>
 
 <template>
   <div :class="$style.page">
     <header :class="$style.header">
       <div :class="$style.headerLeft">
-        <el-button type="primary" bg text :icon="ArrowLeft" @click="goBack"> 返回 </el-button>
+        <el-button type="primary" bg text :icon="ArrowLeft" @click="goBack">
+          返回
+        </el-button>
         <h1 :class="$style.title">
           {{ datasetTitle || "数据集数据" }}
         </h1>
       </div>
       <div :class="$style.headerRight">
-        <el-button type="primary" :icon="Plus" @click="triggerAddRow"> 新增行 </el-button>
+        <el-button type="primary" :icon="Plus" @click="triggerAddRow">
+          新增行
+        </el-button>
       </div>
     </header>
     <div :class="$style.body">
-      <p v-if="datasetId == null" :class="$style.badId">链接无效，请从数据集列表进入。</p>
+      <p v-if="datasetId == null" :class="$style.badId">
+        链接无效，请从数据集列表进入。
+      </p>
       <DatasetTable
         v-else
         ref="datasetTableRef"

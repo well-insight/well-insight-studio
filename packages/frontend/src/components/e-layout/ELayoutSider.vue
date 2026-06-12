@@ -26,8 +26,8 @@ const props = withDefaults(
     collapseMode: 'width',
     position: 'left',
     bordered: false,
-    style: () => ({})
-  }
+    style: () => ({}),
+  },
 )
 
 const emit = defineEmits<{
@@ -41,7 +41,8 @@ function toggleCollapsed() {
 const triggerIcon = computed(() => {
   if (props.position === 'left') {
     return props.collapsed ? ArrowRight : ArrowLeft
-  } else {
+  }
+  else {
     return props.collapsed ? ArrowLeft : ArrowRight
   }
 })
@@ -53,12 +54,13 @@ const siderContainerStyle = computed<CSSProperties>(() => {
     boxSizing: 'border-box',
     overflow: 'visible',
     position: 'relative',
-    ...props.style
+    ...props.style,
   }
 
   if (props.collapseMode === 'width') {
     baseStyle.width = `${props.collapsed ? props.collapsedWidth : props.width}px`
-  } else {
+  }
+  else {
     baseStyle.width = `${props.width}px`
   }
   return baseStyle
@@ -69,16 +71,18 @@ const contentWrapperStyle = computed<CSSProperties>(() => {
     width: '100%',
     height: '100%',
     overflow: 'hidden',
-    transition: props.collapseMode === 'transform' ? 'transform 0.2s ease-in-out' : 'none'
+    transition: props.collapseMode === 'transform' ? 'transform 0.2s ease-in-out' : 'none',
   }
 
   if (props.collapseMode === 'transform' && props.collapsed) {
     if (props.position === 'left') {
       baseWrapperStyle.transform = 'translateX(-100%)'
-    } else {
+    }
+    else {
       baseWrapperStyle.transform = 'translateX(100%)'
     }
-  } else {
+  }
+  else {
     baseWrapperStyle.transform = 'translateX(0)'
   }
   return baseWrapperStyle
@@ -94,8 +98,8 @@ const contentWrapperStyle = computed<CSSProperties>(() => {
       {
         'e-layout-sider--collapsed': collapsed,
         'e-layout-sider--bordered': bordered,
-        [`e-layout-sider--mode-${collapseMode}`]: true
-      }
+        [`e-layout-sider--mode-${collapseMode}`]: true,
+      },
     ]"
   >
     <!-- 边框线 -->

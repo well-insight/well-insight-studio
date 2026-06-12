@@ -10,7 +10,8 @@ function getRegistry(instance) {
 export function $on(instance, event, fn) {
   if (Array.isArray(event)) {
     event.forEach(e => $on(instance, e, fn))
-  } else {
+  }
+  else {
     const events = getRegistry(instance)
     ;(events[event] || (events[event] = [])).push(fn)
   }

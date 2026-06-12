@@ -6,6 +6,6 @@ export function useDotProp(originObj, propName) {
   return {
     prop,
     propObj,
-    isDotProp
+    isDotProp,
   }
 }

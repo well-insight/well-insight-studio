@@ -2,80 +2,85 @@
 import type {
   ComponentBorderOverride,
   ComponentBorderStyle,
-} from "@/visual-editor/core/visual-editor.utils";
-import { defaultComponentBorder } from "@/utils/blockBorder";
-import { BoxShadowPickerField } from "@/components/box-shadow-picker";
-import { useVModel } from "@vueuse/core";
-import { computed } from "vue";
+} from '@/visual-editor/core/visual-editor.utils'
+import { useVModel } from '@vueuse/core'
+import { computed } from 'vue'
+import { BoxShadowPickerField } from '@/components/box-shadow-picker'
+import { defaultComponentBorder } from '@/utils/blockBorder'
 
-export type BorderStyleConfigLayout = "dropdown" | "form";
+export type BorderStyleConfigLayout = 'dropdown' | 'form'
 
 const props = withDefaults(
   defineProps<{
-    modelValue: ComponentBorderStyle | ComponentBorderOverride;
-    layout?: BorderStyleConfigLayout;
-    size?: "small" | "default";
-    teleported?: boolean;
+    modelValue: ComponentBorderStyle | ComponentBorderOverride
+    layout?: BorderStyleConfigLayout
+    size?: 'small' | 'default'
+    teleported?: boolean
     /** 组件级配置：显示「沿用页面」选项 */
-    inheritable?: boolean;
+    inheritable?: boolean
   }>(),
   {
-    layout: "dropdown",
-    size: "default",
+    layout: 'dropdown',
+    size: 'default',
     teleported: false,
     inheritable: false,
   },
-);
+)
 
 const emit = defineEmits<{
-  "update:modelValue": [value: ComponentBorderStyle | ComponentBorderOverride];
-}>();
+  'update:modelValue': [value: ComponentBorderStyle | ComponentBorderOverride]
+}>()
 
-const border = useVModel(props, "modelValue", emit);
+const border = useVModel(props, 'modelValue', emit)
 
-const shadowEmptyLabel = computed(() => (props.inheritable ? "沿用页面" : ""));
+const shadowEmptyLabel = computed(() => (props.inheritable ? '沿用页面' : ''))
 
 const borderStyleOptions = [
-  { label: "实线", value: "solid" },
-  { label: "虚线", value: "dashed" },
-  { label: "点线", value: "dotted" },
-  { label: "无", value: "none" },
-];
+  { label: '实线', value: 'solid' },
+  { label: '虚线', value: 'dashed' },
+  { label: '点线', value: 'dotted' },
+  { label: '无', value: 'none' },
+]
 
 const showMode = computed({
   get: () => {
     if (!props.inheritable) {
-      return border.value.show ? "show" : "hide";
+      return border.value.show ? 'show' : 'hide'
     }
     if (border.value.show === null || border.value.show === undefined) {
-      return "inherit";
+      return 'inherit'
     }
-    return border.value.show ? "show" : "hide";
+    return border.value.show ? 'show' : 'hide'
   },
-  set(val: "inherit" | "show" | "hide") {
+  set(val: 'inherit' | 'show' | 'hide') {
     if (!props.inheritable) {
-      border.value.show = val === "show";
-      return;
+      border.value.show = val === 'show'
+      return
     }
-    if (val === "inherit") {
-      border.value.show = null;
-      return;
+    if (val === 'inherit') {
+      border.value.show = null
+      return
     }
-    border.value.show = val === "show";
+    border.value.show = val === 'show'
   },
-});
+})
 
 function ensureDefaults() {
-  const d = defaultComponentBorder();
-  if (!border.value.width) border.value.width = d.width;
-  if (!border.value.style) border.value.style = d.style;
-  if (!border.value.color) border.value.color = d.color;
-  if (!border.value.radius) border.value.radius = d.radius;
-  if (!border.value.shadow) border.value.shadow = d.shadow;
+  const d = defaultComponentBorder()
+  if (!border.value.width)
+    border.value.width = d.width
+  if (!border.value.style)
+    border.value.style = d.style
+  if (!border.value.color)
+    border.value.color = d.color
+  if (!border.value.radius)
+    border.value.radius = d.radius
+  if (!border.value.shadow)
+    border.value.shadow = d.shadow
 }
 
 if (!props.inheritable) {
-  ensureDefaults();
+  ensureDefaults()
 }
 </script>
 
@@ -86,9 +91,15 @@ if (!props.inheritable) {
         <span class="border-style-config__label">显示边框</span>
         <div class="border-style-config__control">
           <el-radio-group v-if="inheritable" v-model="showMode" :size="size">
-            <el-radio-button value="inherit">沿用页面</el-radio-button>
-            <el-radio-button value="show">显示</el-radio-button>
-            <el-radio-button value="hide">隐藏</el-radio-button>
+            <el-radio-button value="inherit">
+              沿用页面
+            </el-radio-button>
+            <el-radio-button value="show">
+              显示
+            </el-radio-button>
+            <el-radio-button value="hide">
+              隐藏
+            </el-radio-button>
           </el-radio-group>
           <el-switch v-else v-model="border.show" />
         </div>
@@ -165,9 +176,15 @@ if (!props.inheritable) {
   <el-form v-else label-position="left" :label-width="96">
     <el-form-item label="显示边框">
       <el-radio-group v-if="inheritable" v-model="showMode" :size="size">
-        <el-radio-button value="inherit">沿用页面</el-radio-button>
-        <el-radio-button value="show">显示</el-radio-button>
-        <el-radio-button value="hide">隐藏</el-radio-button>
+        <el-radio-button value="inherit">
+          沿用页面
+        </el-radio-button>
+        <el-radio-button value="show">
+          显示
+        </el-radio-button>
+        <el-radio-button value="hide">
+          隐藏
+        </el-radio-button>
       </el-radio-group>
       <el-switch v-else v-model="border.show" />
     </el-form-item>

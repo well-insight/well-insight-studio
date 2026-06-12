@@ -1,10 +1,10 @@
 import type { RequestEnum } from '@/enums/httpEnum'
 import type { FetchApiItem, VisualEditorModel } from '@/visual-editor/visual-editor.utils'
 import { ElMessage } from 'element-plus'
-import MonacoEditor from '@/visual-editor/ui/shared/monaco-editor/MonacoEditor'
 import { useModal } from '@/visual-editor/hooks/useModal'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { generateNanoid } from '@/visual-editor/lib'
+import MonacoEditor from '@/visual-editor/ui/shared/monaco-editor/MonacoEditor'
 
 /**
  * @description 导入丝袜哥, eg: 简单的解析代码，需要根据自己需要完善
@@ -19,21 +19,21 @@ export function importSwaggerJson(swagger: any) {
     const modelItem: VisualEditorModel = {
       name,
       key: generateNanoid(),
-      entitys: []
+      entitys: [],
     }
     Object.entries<any>(properties).forEach(([field, property]) => {
       modelItem.entitys.push({
         key: field,
         name: property.description || field,
         type: property.type,
-        value: ''
+        value: '',
       })
     })
     models.push(modelItem)
   })
   const apis: FetchApiItem[] = []
   Object.entries(swagger.paths).forEach(([url]) => {
-    Object.keys(swagger.paths[url]).forEach(method => {
+    Object.keys(swagger.paths[url]).forEach((method) => {
       const apiUrlObj = swagger.paths[url][method]
       const model = apiUrlObj.parameters?.[0]?.schema?.$ref?.split('/').pop()
       const bindTarget = model ? models.find(item => item.name == model) : undefined
@@ -44,12 +44,12 @@ export function importSwaggerJson(swagger: any) {
         options: {
           url, // 请求的url
           method: method.toLocaleUpperCase() as RequestEnum, // 请求的方法
-          contentType: apiUrlObj.produces[0] || apiUrlObj.consumes[0] // 请求的内容类型
+          contentType: apiUrlObj.produces[0] || apiUrlObj.consumes[0], // 请求的内容类型
         },
         data: {
           bind: bindTarget?.key || '', // 请求绑定对应的某个实体
-          recv: '' // 响应的结果绑定到某个实体上
-        }
+          recv: '', // 响应的结果绑定到某个实体上
+        },
       }
       apis.push(api)
     })
@@ -64,11 +64,12 @@ export function useImportSwaggerJsonModal() {
   const { updateModel, updateFetchApi } = useVisualData()
 
   const shema = {}
-  const handleSchemaChange = val => {
+  const handleSchemaChange = (val) => {
     try {
       const newObj = JSON.parse(val)
       Object.assign(shema, newObj)
-    } catch (e) {
+    }
+    catch (e) {
       console.log('JSON格式有误：', e)
     }
   }
@@ -77,10 +78,10 @@ export function useImportSwaggerJsonModal() {
       useModal({
         title: '导入swagger JSON (支持swagger: 2.0)',
         props: {
-          width: 760
+          width: 760,
         },
         content: () => (
-          <MonacoEditor code='' layout={{ width: 700, height: 600 }} vid={-1} onChange={handleSchemaChange} title='' />
+          <MonacoEditor code="" layout={{ width: 700, height: 600 }} vid={-1} onChange={handleSchemaChange} title="" />
         ),
         onConfirm: () => {
           try {
@@ -89,10 +90,11 @@ export function useImportSwaggerJsonModal() {
             updateFetchApi(apis, true)
             ElMessage.success('导入成功！')
             console.log({ models, apis }, '导入的swagger')
-          } catch (e) {
+          }
+          catch (e) {
             ElMessage.success('导入失败！请检查swagger JSON是否有误！')
           }
-        }
-      })
+        },
+      }),
   }
 }

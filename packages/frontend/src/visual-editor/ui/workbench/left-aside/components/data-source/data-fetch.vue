@@ -187,11 +187,17 @@ function editApiItem(apiItem: FetchApiItem) {
 
 <template>
   <div class="!mb-10px">
-    <ElButton type="primary" @click="showModelMoal"> 添加 </ElButton>
-    <ElButton type="warning" @click="showImportSwaggerJsonModal"> 导入swagger </ElButton>
+    <ElButton type="primary" @click="showModelMoal">
+      添加
+    </ElButton>
+    <ElButton type="warning" @click="showImportSwaggerJsonModal">
+      导入swagger
+    </ElButton>
     <el-popconfirm title="确定要删除全部接口吗？" @confirm="updateFetchApi([], true)">
       <template #reference>
-        <ElButton type="danger"> 清空 </ElButton>
+        <ElButton type="danger">
+          清空
+        </ElButton>
       </template>
     </el-popconfirm>
   </div>

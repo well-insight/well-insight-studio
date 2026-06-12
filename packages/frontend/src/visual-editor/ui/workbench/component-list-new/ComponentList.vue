@@ -1,67 +1,64 @@
 <script lang="ts" setup>
-import type { ScrollbarDirection } from "element-plus";
-
-import type { VisualEditorComponent } from "@/visual-editor/visual-editor.utils";
-import { cloneDeep, isString } from "lodash-es";
-import { computed, ref } from "vue";
-import DraggableTransitionGroup from "@/visual-editor/ui/canvas/simulator-editor/DraggableTransitionGroup.vue";
-import { createNewBlock } from "@/visual-editor/visual-editor.utils";
-import { visualConfig } from "@/visual.config";
-import { SvgIcon } from "@/components/svg-icon";
-import { useControlStore } from "@/stores";
-
-const activeComp = ref("基础组件");
+import type { VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
+import { cloneDeep, isString } from 'lodash-es'
+import { computed, ref } from 'vue'
+import { SvgIcon } from '@/components/svg-icon'
+import { useControlStore } from '@/stores'
+import { createNewBlock } from '@/visual-editor/visual-editor.utils'
+import { visualConfig } from '@/visual.config'
 
 const emits = defineEmits<{
-  dragStart: [value: VisualEditorComponent, index: number];
-  drag: [k: string];
-  dragEnd: [];
-}>();
+  dragStart: [value: VisualEditorComponent, index: number]
+  drag: [k: string]
+  dragEnd: []
+}>()
 
-const controlStore = useControlStore();
+const activeComp = ref('基础组件')
+
+const controlStore = useControlStore()
 
 const widgets = computed(() => {
-  const { baseWidgets, containerComponents, formWidgets, chartWidgets } = visualConfig.componentModules;
+  const { baseWidgets, containerComponents, formWidgets, chartWidgets } = visualConfig.componentModules
   return [
     {
-      title: "基础组件",
-      icon: "component-base",
+      title: '基础组件',
+      icon: 'component-base',
       widgets: baseWidgets,
     },
     {
-      title: "表单组件",
-      icon: "component-form",
+      title: '表单组件',
+      icon: 'component-form',
       widgets: formWidgets,
     },
     {
-      title: "图表组件",
-      icon: "component-chart",
+      title: '图表组件',
+      icon: 'component-chart',
       widgets: chartWidgets,
     },
     {
-      title: "容器组件",
-      icon: "component-content",
+      title: '容器组件',
+      icon: 'component-content',
       widgets: containerComponents,
     },
-  ];
-});
+  ]
+})
 
 function dragStart(e: DragEvent, visual: VisualEditorComponent, index: number) {
-  e.dataTransfer?.setData("text/plain", visual.key);
-  e.dataTransfer!.effectAllowed = "move";
-  controlStore.setIsDragging(true);
-  controlStore.setMoveVisualData(createNewBlock(cloneDeep(visual)));
-  emits("dragStart", visual, index);
+  e.dataTransfer?.setData('text/plain', visual.key)
+  e.dataTransfer!.effectAllowed = 'move'
+  controlStore.setIsDragging(true)
+  controlStore.setMoveVisualData(createNewBlock(cloneDeep(visual)))
+  emits('dragStart', visual, index)
 }
 
 function dragging() {
-  controlStore.setDraggingVisualKey(new Date().getTime().toString());
-  emits("drag", controlStore.draggingVisualKey);
+  controlStore.setDraggingVisualKey(Date.now().toString())
+  emits('drag', controlStore.draggingVisualKey)
 }
 
 function dragEnd() {
-  controlStore.setIsDragging(false);
-  emits("dragEnd");
+  controlStore.setIsDragging(false)
+  emits('dragEnd')
 }
 </script>
 
@@ -72,8 +69,8 @@ function dragEnd() {
   >
     <el-popover
       v-for="(e, i) in widgets"
-      trigger="hover"
       :key="i"
+      trigger="hover"
       placement="right"
       transition="el-zoom-in-left"
       :width="260"
@@ -82,7 +79,7 @@ function dragEnd() {
     >
       <template #reference>
         <el-button text class="h-[40px] w-[40px] p-[6px]">
-          <svg-icon :size="18" :name="e.icon"></svg-icon>
+          <SvgIcon :size="18" :name="e.icon" />
         </el-button>
       </template>
 
@@ -97,11 +94,15 @@ function dragEnd() {
             @dragend="dragEnd"
           >
             <el-button class="h-[45px] w-[45px]" text bg>
-              <svg-icon v-if="isString(w?.icon)" :size="35" :name="w?.icon"></svg-icon>
+              <SvgIcon v-if="isString(w?.icon)" :size="35" :name="w?.icon" />
             </el-button>
             <div class="flex h-full w-0 flex-auto flex-col items-start self-start">
-              <el-text class="self-start text-[16px]">{{ w.label }}</el-text>
-              <el-text class="self-start text-[12px]">{{ w.description }}</el-text>
+              <el-text class="self-start text-[16px]">
+                {{ w.label }}
+              </el-text>
+              <el-text class="self-start text-[12px]">
+                {{ w.description }}
+              </el-text>
             </div>
           </div>
         </template>

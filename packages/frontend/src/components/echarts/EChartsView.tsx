@@ -1,9 +1,10 @@
-import { defineComponent, onBeforeUnmount, onMounted, ref, shallowRef, watch, type PropType } from "vue";
-import type { EChartsOption } from "echarts";
-import { echarts, ensureEChartsRegistered } from "./register";
+import type { EChartsOption } from 'echarts'
+import type { PropType } from 'vue'
+import { defineComponent, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { echarts, ensureEChartsRegistered } from './register'
 
 export default defineComponent({
-  name: "EChartsView",
+  name: 'EChartsView',
   props: {
     option: {
       type: Object as PropType<EChartsOption>,
@@ -15,70 +16,71 @@ export default defineComponent({
     },
   },
   setup(props) {
-    const containerRef = ref<HTMLDivElement | null>(null);
-    const chartRef = shallowRef<echarts.ECharts | null>(null);
-    let resizeObserver: ResizeObserver | null = null;
+    const containerRef = ref<HTMLDivElement | null>(null)
+    const chartRef = shallowRef<echarts.ECharts | null>(null)
+    let resizeObserver: ResizeObserver | null = null
 
     function syncLoading() {
       if (!chartRef.value) {
-        return;
+        return
       }
       if (props.loading) {
-        chartRef.value.showLoading({ text: "" });
-      } else {
-        chartRef.value.hideLoading();
+        chartRef.value.showLoading({ text: '' })
+      }
+      else {
+        chartRef.value.hideLoading()
       }
     }
 
     function renderChart() {
       if (!chartRef.value) {
-        return;
+        return
       }
-      chartRef.value.setOption(props.option, { notMerge: true });
-      syncLoading();
+      chartRef.value.setOption(props.option, { notMerge: true })
+      syncLoading()
     }
 
     function initChart() {
-      const el = containerRef.value;
+      const el = containerRef.value
       if (!el) {
-        return;
+        return
       }
-      ensureEChartsRegistered();
-      chartRef.value?.dispose();
-      chartRef.value = echarts.init(el);
-      renderChart();
+      ensureEChartsRegistered()
+      chartRef.value?.dispose()
+      chartRef.value = echarts.init(el)
+      renderChart()
     }
 
     onMounted(() => {
-      initChart();
-      const el = containerRef.value;
+      initChart()
+      const el = containerRef.value
       if (!el) {
-        return;
+        return
       }
       resizeObserver = new ResizeObserver(() => {
-        chartRef.value?.resize();
-      });
-      resizeObserver.observe(el);
-    });
+        chartRef.value?.resize()
+      })
+      resizeObserver.observe(el)
+    })
 
     watch(
       () => props.option,
       () => renderChart(),
       { deep: true },
-    );
+    )
 
     watch(
       () => props.loading,
       () => syncLoading(),
-    );
+    )
 
     onBeforeUnmount(() => {
-      resizeObserver?.disconnect();
-      resizeObserver = null;
-      chartRef.value?.dispose();
-      chartRef.value = null;
-    });
+      resizeObserver?.disconnect()
+      resizeObserver = null
+      chartRef.value?.dispose()
+      chartRef.value = null
+    })
 
-    return () => <div ref={containerRef} class="h-full w-full min-h-0" />;
+    return () => <div ref={containerRef} class="h-full w-full min-h-0" />
   },
-});
+})

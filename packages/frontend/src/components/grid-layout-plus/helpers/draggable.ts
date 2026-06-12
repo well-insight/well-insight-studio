@@ -6,8 +6,8 @@ export function getControlPosition(e: MouseEvent) {
 // Get from offsetParent
 export function offsetXYFromParentOf(evt: MouseEvent) {
   const offsetParent = (evt.target as HTMLElement)?.offsetParent || document.body
-  const offsetParentRect =
-    (evt as any).offsetParent === document.body
+  const offsetParentRect
+    = (evt as any).offsetParent === document.body
       ? { left: 0, top: 0 }
       : offsetParent.getBoundingClientRect()
 
@@ -35,7 +35,8 @@ export function createCoreData(lastX: number, lastY: number, x: number, y: numbe
       x,
       y,
     }
-  } else {
+  }
+  else {
     // Otherwise calculate proper values.
     return {
       deltaX: x - lastX,

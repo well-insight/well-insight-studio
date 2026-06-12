@@ -10,7 +10,7 @@ import {
   ElInput,
   ElOption,
   ElPopconfirm,
-  ElSelect
+  ElSelect,
 } from 'element-plus'
 import { cloneDeep } from 'lodash-es'
 import { computed, defineComponent, reactive, ref } from 'vue'
@@ -29,7 +29,7 @@ function createEmptyActionHandle() {
   return {
     key: generateNanoid(),
     name: '',
-    link: []
+    link: [],
   }
 }
 
@@ -41,7 +41,7 @@ function createEmptyAction(): Action {
     key: generateNanoid(),
     name: '',
     event: '',
-    handle: [createEmptyActionHandle()]
+    handle: [createEmptyActionHandle()],
   }
 }
 
@@ -56,7 +56,7 @@ export const EventAction = defineComponent({
 
     const state = reactive<IState>({
       activeNames: [],
-      ruleForm: createEmptyAction()
+      ruleForm: createEmptyAction(),
     })
 
     /**
@@ -66,7 +66,7 @@ export const EventAction = defineComponent({
       {
         label: '全局',
         value: 'global',
-        children: Object.keys(jsonData.value.actions).map(actionKey => {
+        children: Object.keys(jsonData.value.actions).map((actionKey) => {
           const item = cloneDeep(jsonData.value.actions[actionKey])
           item.value = actionKey
           item.label = item.name
@@ -77,14 +77,14 @@ export const EventAction = defineComponent({
             return item
           })
           return item
-        })
+        }),
       },
       {
         label: '组件',
         value: 'component',
         children: cloneDeep(currentPage.value.blocks)
           .filter(item => item.actions?.length)
-          .map(item => {
+          .map((item) => {
             item.value = item._vid
             item.children = (item.actions || []).map((item: any) => {
               item.label = item.name
@@ -92,8 +92,8 @@ export const EventAction = defineComponent({
               return item
             })
             return item
-          })
-      }
+          }),
+      },
     ])
 
     /**
@@ -154,28 +154,28 @@ export const EventAction = defineComponent({
         title: `${operateType}动作`,
         props: { width: 600 },
         content: () => (
-          <ElForm model={state.ruleForm} ref={ruleFormRef} label-width='100px'>
+          <ElForm model={state.ruleForm} ref={ruleFormRef} label-width="100px">
             <ElFormItem
-              label='事件'
-              prop='event'
+              label="事件"
+              prop="event"
               rules={[{ required: true, message: '请选择事件', trigger: 'change' }]}
             >
-              <ElSelect v-model={state.ruleForm.event} class='w-full'>
+              <ElSelect v-model={state.ruleForm.event} class="w-full">
                 {currentBlock.value.events?.map(eventItem => (
                   <ElOption key={eventItem.value} label={eventItem.label} value={eventItem.value}></ElOption>
                 ))}
               </ElSelect>
             </ElFormItem>
             <ElFormItem
-              label='事件名称'
-              prop='name'
+              label="事件名称"
+              prop="name"
               rules={[{ required: true, message: '请输入事件名称', trigger: 'change' }]}
             >
-              <ElInput v-model={state.ruleForm.name} placeholder='请输入事件名称'></ElInput>
+              <ElInput v-model={state.ruleForm.name} placeholder="请输入事件名称"></ElInput>
             </ElFormItem>
             {!state.ruleForm.handle?.length && (
               <ElFormItem>
-                <ElButton onClick={addActionHanleItem} type='primary'>
+                <ElButton onClick={addActionHanleItem} type="primary">
                   添加动作
                 </ElButton>
               </ElFormItem>
@@ -183,42 +183,43 @@ export const EventAction = defineComponent({
             {state.ruleForm.handle.map((handleItem, index) => (
               <ElCard
                 key={handleItem.key}
-                shadow='hover'
-                class='mt-10px'
+                shadow="hover"
+                class="mt-10px"
                 v-slots={{
                   header: () => (
-                    <div class='flex justify-between'>
+                    <div class="flex justify-between">
                       <ElFormItem
-                        label='动作名称'
+                        label="动作名称"
                         prop={`handle.${index}.name`}
                         rules={[{ required: true, message: '请输入动作名称', trigger: 'change' }]}
                       >
-                        <ElInput v-model={handleItem.name} placeholder='请输入动作名称'></ElInput>
+                        <ElInput v-model={handleItem.name} placeholder="请输入动作名称"></ElInput>
                       </ElFormItem>
                       <div>
-                        <ElButton onClick={() => deleteActionHandleItem(index)} type='danger'>
+                        <ElButton onClick={() => deleteActionHandleItem(index)} type="danger">
                           删除
                         </ElButton>
-                        <ElButton onClick={addActionHanleItem} type='primary'>
+                        <ElButton onClick={addActionHanleItem} type="primary">
                           添加
                         </ElButton>
                       </div>
                     </div>
-                  )
+                  ),
                 }}
               >
                 <ElFormItem
-                  label='触发的动作'
+                  label="触发的动作"
                   prop={`handle.${index}.link`}
                   rules={[{ required: true, message: '请选择你要触发的动作', trigger: 'change' }]}
                 >
                   <ElCascader
                     clearable={true}
-                    class='w-full'
-                    placeholder='请选择你要触发的动作'
+                    class="w-full"
+                    placeholder="请选择你要触发的动作"
                     v-model={handleItem.link}
                     options={actionOptions.value}
-                  ></ElCascader>
+                  >
+                  </ElCascader>
                 </ElFormItem>
               </ElCard>
             ))}
@@ -226,17 +227,19 @@ export const EventAction = defineComponent({
         ),
         onConfirm: () => {
           return new Promise((resolve, reject) => {
-            ruleFormRef.value?.validate(valid => {
+            ruleFormRef.value?.validate((valid) => {
               if (valid) {
                 const index = currentBlock.value.actions.findIndex(item => item.key == state.ruleForm.key)
                 if (index === -1) {
                   currentBlock.value.actions.push(state.ruleForm)
-                } else {
+                }
+                else {
                   currentBlock.value.actions.splice(index, 1, state.ruleForm)
                 }
                 state.ruleForm = createEmptyAction()
                 resolve('submit!')
-              } else {
+              }
+              else {
                 reject()
                 console.log('error submit!!')
                 return false
@@ -244,37 +247,37 @@ export const EventAction = defineComponent({
             })
           })
         },
-        onCancel: () => (state.ruleForm = createEmptyAction())
+        onCancel: () => (state.ruleForm = createEmptyAction()),
       })
     }
 
     return () => (
       <>
-        <div class='w-full h-full p-[6px]'>
-          <ElButton onClick={addActionItem} disabled={!currentBlock.value.actions} type='primary'>
+        <div class="w-full h-full p-[6px]">
+          <ElButton onClick={addActionItem} disabled={!currentBlock.value.actions} type="primary">
             添加事件
           </ElButton>
 
           {currentBlock.value.actions?.map((actionItem, index) => (
             <ElCard
               key={index}
-              class='mt-[10px]'
+              class="mt-[10px]"
               v-slots={{
                 header: () => (
-                  <div class='flex justify-between'>
+                  <div class="flex justify-between">
                     {actionItem.name}
                     <div>
-                      <ElPopconfirm title='确定要删除该事件吗？' onConfirm={() => deleteActionItem(index)}>
+                      <ElPopconfirm title="确定要删除该事件吗？" onConfirm={() => deleteActionItem(index)}>
                         {{
-                          reference: () => <ElButton type='danger'>删除</ElButton>
+                          reference: () => <ElButton type="danger">删除</ElButton>,
                         }}
                       </ElPopconfirm>
-                      <ElButton onClick={() => showEditActionModal(actionItem)} type='primary'>
+                      <ElButton onClick={() => showEditActionModal(actionItem)} type="primary">
                         编辑
                       </ElButton>
                     </div>
                   </div>
-                )
+                ),
               }}
             >
               <ElCollapse v-model={state.activeNames}>
@@ -286,7 +289,7 @@ export const EventAction = defineComponent({
                           动作路径：
                           {getActionPath(item.link)}
                         </div>
-                      )
+                      ),
                     }}
                   </ElCollapseItem>
                 ))}
@@ -296,5 +299,5 @@ export const EventAction = defineComponent({
         </div>
       </>
     )
-  }
+  },
 })

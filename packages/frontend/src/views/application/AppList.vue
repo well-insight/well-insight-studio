@@ -1,41 +1,41 @@
 <script lang="ts" setup>
-import type { WorkspaceApp } from "@/stores/workspaceStore";
-import type { ApiApplicationListItem } from "@/api/application";
-import { Delete, EditPen, MoreFilled, Plus, Star, StarFilled } from "@element-plus/icons-vue";
-import { ElMessage, ElMessageBox } from "element-plus";
-import { storeToRefs } from "pinia";
-import { onActivated, onMounted, ref, watch } from "vue";
-import { useRouter } from "vue-router";
+import type { ApiApplicationListItem } from '@/api/application'
+import type { WorkspaceApp } from '@/stores/workspaceStore'
+import { Delete, EditPen, MoreFilled, Plus, Star, StarFilled } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { storeToRefs } from 'pinia'
+import { onActivated, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   createApplication,
   deleteApplication,
   fetchApplicationList,
   updateApplication,
-} from "@/api/application";
-import { ButtonTabs } from "@/components/button-tabs";
-import { useWorkspaceStore } from "@/stores/workspaceStore";
+} from '@/api/application'
+import { ButtonTabs } from '@/components/button-tabs'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 
-const router = useRouter();
-const workspaceStore = useWorkspaceStore();
-const { appList } = storeToRefs(workspaceStore);
+const router = useRouter()
+const workspaceStore = useWorkspaceStore()
+const { appList } = storeToRefs(workspaceStore)
 
-const appStatus = ref<"all" | "enable" | "disable">("all");
-const loading = ref(false);
-const createVisible = ref(false);
-const createTitle = ref("");
-const createClientType = ref<1 | 2>(1);
-const renameVisible = ref(false);
-const renameTitle = ref("");
-const renameTargetId = ref<string | null>(null);
+const appStatus = ref<'all' | 'enable' | 'disable'>('all')
+const loading = ref(false)
+const createVisible = ref(false)
+const createTitle = ref('')
+const createClientType = ref<1 | 2>(1)
+const renameVisible = ref(false)
+const renameTitle = ref('')
+const renameTargetId = ref<string | null>(null)
 
 const statusOptions = [
-  { label: "全部应用", value: "all" },
-  { label: "已激活", value: "enable" },
-  { label: "已关闭", value: "disable" },
-];
+  { label: '全部应用', value: 'all' },
+  { label: '已激活', value: 'enable' },
+  { label: '已关闭', value: 'disable' },
+]
 
 function toWorkspaceApp(row: ApiApplicationListItem): WorkspaceApp {
-  const iso = row.lastUpdated || row.updated_at;
+  const iso = row.lastUpdated || row.updated_at
   return {
     id: row.id,
     title: row.title,
@@ -43,120 +43,127 @@ function toWorkspaceApp(row: ApiApplicationListItem): WorkspaceApp {
     clientType: row.client_type,
     starred: row.starred,
     lastUpdated: iso ? iso.slice(0, 10) : undefined,
-  };
+  }
 }
 
 async function loadList() {
-  loading.value = true;
+  loading.value = true
   try {
-    const data = await fetchApplicationList(appStatus.value);
-    workspaceStore.setAppList((data.items || []).map(toWorkspaceApp));
-  } catch (e) {
-    ElMessage.error((e as Error).message || "加载应用列表失败");
-  } finally {
-    loading.value = false;
+    const data = await fetchApplicationList(appStatus.value)
+    workspaceStore.setAppList((data.items || []).map(toWorkspaceApp))
+  }
+  catch (e) {
+    ElMessage.error((e as Error).message || '加载应用列表失败')
+  }
+  finally {
+    loading.value = false
   }
 }
 
 watch(appStatus, () => {
-  loadList();
-});
+  loadList()
+})
 
 onMounted(() => {
-  loadList();
-});
+  loadList()
+})
 
 onActivated(() => {
-  loadList();
-});
+  loadList()
+})
 
 function rowClick(row: WorkspaceApp) {
-  workspaceStore.setCurrentApp(row);
-  router.push({ name: "ApplicationEdit", params: { id: String(row.id) } });
+  workspaceStore.setCurrentApp(row)
+  router.push({ name: 'ApplicationEdit', params: { id: String(row.id) } })
 }
 
 function openCreate() {
-  createTitle.value = "";
-  createClientType.value = 1;
-  createVisible.value = true;
+  createTitle.value = ''
+  createClientType.value = 1
+  createVisible.value = true
 }
 
 async function submitCreate() {
-  const title = createTitle.value.trim();
+  const title = createTitle.value.trim()
   if (!title) {
-    ElMessage.warning("请输入应用名称");
-    return;
+    ElMessage.warning('请输入应用名称')
+    return
   }
   try {
     const created = await createApplication({
       title,
       client_type: createClientType.value,
       status: 1,
-    });
-    createVisible.value = false;
-    ElMessage.success("创建成功");
-    await loadList();
-    const row = toWorkspaceApp(created);
-    workspaceStore.setCurrentApp(row);
-    router.push({ name: "ApplicationEdit", params: { id: String(created.id) } });
-  } catch (e) {
-    ElMessage.error((e as Error).message || "创建失败");
+    })
+    createVisible.value = false
+    ElMessage.success('创建成功')
+    await loadList()
+    const row = toWorkspaceApp(created)
+    workspaceStore.setCurrentApp(row)
+    router.push({ name: 'ApplicationEdit', params: { id: String(created.id) } })
+  }
+  catch (e) {
+    ElMessage.error((e as Error).message || '创建失败')
   }
 }
 
 function openRename(row: WorkspaceApp) {
-  renameTargetId.value = String(row.id);
-  renameTitle.value = row.title;
-  renameVisible.value = true;
+  renameTargetId.value = String(row.id)
+  renameTitle.value = row.title
+  renameVisible.value = true
 }
 
 async function submitRename() {
-  const id = renameTargetId.value;
-  const title = renameTitle.value.trim();
+  const id = renameTargetId.value
+  const title = renameTitle.value.trim()
   if (!id || !title) {
-    ElMessage.warning("请输入应用名称");
-    return;
+    ElMessage.warning('请输入应用名称')
+    return
   }
   try {
-    await updateApplication(id, { title });
-    renameVisible.value = false;
-    ElMessage.success("已更新名称");
-    await loadList();
-  } catch (e) {
-    ElMessage.error((e as Error).message || "更新失败");
+    await updateApplication(id, { title })
+    renameVisible.value = false
+    ElMessage.success('已更新名称')
+    await loadList()
+  }
+  catch (e) {
+    ElMessage.error((e as Error).message || '更新失败')
   }
 }
 
 async function removeApp(row: WorkspaceApp) {
   try {
-    await ElMessageBox.confirm(`确定删除应用「${row.title}」吗？此操作不可恢复。`, "删除应用", {
-      type: "warning",
-      confirmButtonText: "删除",
-      cancelButtonText: "取消",
-    });
-  } catch {
-    return;
+    await ElMessageBox.confirm(`确定删除应用「${row.title}」吗？此操作不可恢复。`, '删除应用', {
+      type: 'warning',
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+    })
+  }
+  catch {
+    return
   }
   try {
-    await deleteApplication(String(row.id));
-    ElMessage.success("已删除");
-    await loadList();
-  } catch (e) {
-    ElMessage.error((e as Error).message || "删除失败");
+    await deleteApplication(String(row.id))
+    ElMessage.success('已删除')
+    await loadList()
+  }
+  catch (e) {
+    ElMessage.error((e as Error).message || '删除失败')
   }
 }
 
 async function toggleStar(row: WorkspaceApp, ev: Event) {
-  ev.stopPropagation();
+  ev.stopPropagation()
   try {
-    await updateApplication(String(row.id), { starred: !row.starred });
-    await loadList();
-  } catch (e) {
-    ElMessage.error((e as Error).message || "操作失败");
+    await updateApplication(String(row.id), { starred: !row.starred })
+    await loadList()
+  }
+  catch (e) {
+    ElMessage.error((e as Error).message || '操作失败')
   }
 }
 
-const starIcon = (row: WorkspaceApp) => (row.starred ? StarFilled : Star);
+const starIcon = (row: WorkspaceApp) => (row.starred ? StarFilled : Star)
 </script>
 
 <template>
@@ -166,7 +173,9 @@ const starIcon = (row: WorkspaceApp) => (row.starred ? StarFilled : Star);
         <ButtonTabs v-model="appStatus" :options="statusOptions" />
       </div>
       <div>
-        <el-button round type="primary" :icon="Plus" @click="openCreate"> 添加应用 </el-button>
+        <el-button round type="primary" :icon="Plus" @click="openCreate">
+          添加应用
+        </el-button>
       </div>
     </div>
     <el-table
@@ -226,22 +235,30 @@ const starIcon = (row: WorkspaceApp) => (row.starred ? StarFilled : Star);
         </el-form-item>
         <el-form-item label="端类型">
           <el-radio-group v-model="createClientType">
-            <el-radio label="PC 端" :value="1"></el-radio>
-            <el-radio label="移动端" :value="2"></el-radio>
+            <el-radio label="PC 端" :value="1" />
+            <el-radio label="移动端" :value="2" />
           </el-radio-group>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="createVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitCreate">创建</el-button>
+        <el-button @click="createVisible = false">
+          取消
+        </el-button>
+        <el-button type="primary" @click="submitCreate">
+          创建
+        </el-button>
       </template>
     </el-dialog>
 
     <el-dialog v-model="renameVisible" title="重命名应用" width="400px" destroy-on-close>
       <el-input v-model="renameTitle" maxlength="200" show-word-limit />
       <template #footer>
-        <el-button @click="renameVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitRename">保存</el-button>
+        <el-button @click="renameVisible = false">
+          取消
+        </el-button>
+        <el-button type="primary" @click="submitRename">
+          保存
+        </el-button>
       </template>
     </el-dialog>
   </div>

@@ -1,63 +1,63 @@
 <script lang="ts" setup>
-import { ButtonTabs } from "@/components/button-tabs";
-import { useControlStore } from "@/stores/controlStore";
-import { useVisualData } from "@/visual-editor/hooks/useVisualData";
-import { debounce } from "lodash-es";
-import { storeToRefs } from "pinia";
-import { ref, watch } from "vue";
-import { Animate, AttrEditor, FormRule } from "./components";
+import { debounce } from 'lodash-es'
+import { storeToRefs } from 'pinia'
+import { ref, watch } from 'vue'
+import { ButtonTabs } from '@/components/button-tabs'
+import { useControlStore } from '@/stores/controlStore'
+import { useVisualData } from '@/visual-editor/hooks/useVisualData'
+import { Animate, AttrEditor, FormRule } from './components'
 
 defineOptions({
-  name: "RightAttributePanel",
-});
+  name: 'RightAttributePanel',
+})
 
-const controlStore = useControlStore();
-const { currentBlock } = useVisualData();
-const { floatingSettingActiveTab } = storeToRefs(controlStore);
+const controlStore = useControlStore()
+const { currentBlock } = useVisualData()
+const { floatingSettingActiveTab } = storeToRefs(controlStore)
 
-const currentActive = ref("attr");
+const currentActive = ref('attr')
 
-const pageListOptions = ref([]);
+const pageListOptions = ref([])
 
 function initPageOptions() {
   const options = [
     {
-      label: "属性",
-      value: "attr",
+      label: '属性',
+      value: 'attr',
     },
     {
-      label: "动画",
-      value: "animate",
+      label: '动画',
+      value: 'animate',
     },
-  ];
+  ]
 
-  if (currentBlock.value?.label?.startsWith("表单")) {
+  if (currentBlock.value?.label?.startsWith('表单')) {
     options.push({
-      label: "规则",
-      value: "form-rule",
-    });
+      label: '规则',
+      value: 'form-rule',
+    })
   }
 
   if (floatingSettingActiveTab.value) {
-    currentActive.value = floatingSettingActiveTab.value;
+    currentActive.value = floatingSettingActiveTab.value
   }
 
-  pageListOptions.value = options;
+  pageListOptions.value = options
 }
 
-const isOpen = ref(true);   
+const isOpen = ref(true)
 
 watch(
   () => currentBlock.value,
   debounce(
     () => {
-      initPageOptions();
+      initPageOptions()
     },
     100,
     { leading: false, trailing: true },
   ),
   { immediate: true },
-);
+)
 </script>
 
 <template>
@@ -81,7 +81,7 @@ watch(
 
 <style lang="scss" module>
 // $boxShadow: -2px 0 4px 0 rgb(0 0 0 / 10%);
-  
+
 .wrapper {
   width: 100%;
   height: 100%;

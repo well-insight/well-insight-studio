@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import SvgIcon from "@/components/svg-icon/SvgIcon.vue";
+import SvgIcon from '@/components/svg-icon/SvgIcon.vue'
 
-defineProps<{ collapse?: boolean }>();
+defineProps<{ collapse?: boolean }>()
 </script>
 
 <template>

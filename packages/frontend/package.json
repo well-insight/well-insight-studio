@@ -20,10 +20,8 @@
     "dev": "cross-env --max_old_space_size=4096 vite",
     "build": "rimraf dist && cross-env NODE_ENV=production vite build",
     "build:no-cache": "pnpm clean:cache && npm run build",
-    "lint": "oxlint --fix",
-    "lint:check": "oxlint",
-    "format": "oxfmt",
-    "format:check": "oxfmt --check"
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@alova/mock": "^2.0.20",
@@ -59,6 +57,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@antfu/eslint-config": "^9.0.0",
     "@commitlint/cli": "^20.5.2",
     "@commitlint/config-conventional": "^20.5.0",
     "@types/lodash-es": "^4.17.12",
@@ -70,6 +69,8 @@
     "commitizen": "^4.3.1",
     "conventional-changelog-cli": "^5.0.0",
     "cross-env": "^10.1.0",
+    "eslint": "^10.4.1",
+    "eslint-plugin-format": "^2.0.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "postcss": "^8.5.12",

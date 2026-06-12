@@ -6,7 +6,7 @@ export enum RequestEnum {
   POST = 'POST',
   PATCH = 'PATCH',
   PUT = 'PUT',
-  DELETE = 'DELETE'
+  DELETE = 'DELETE',
 }
 
 /**
@@ -20,14 +20,14 @@ export enum ContentTypeEnum {
   // form-data 一般配合qs
   FORM_URLENCODED = 'application/x-www-form-urlencoded;charset=UTF-8',
   // form-data  上传
-  FORM_DATA = 'multipart/form-data;charset=UTF-8'
+  FORM_DATA = 'multipart/form-data;charset=UTF-8',
 }
 
 // 模块 Path 前缀分类
 export enum ModuleTypeEnum {
   SYSTEM = 'sys',
   PROJECT = 'project',
-  MOCK = 'mock'
+  MOCK = 'mock',
 }
 
 // 请求结果集
@@ -40,7 +40,7 @@ export enum ResultEnum {
   TIMEOUT = 10042,
   SUCCESS = 200,
   ERROR = -1,
-  TYPE = 'success'
+  TYPE = 'success',
 }
 
 // 数据相关
@@ -50,7 +50,7 @@ export enum RequestDataTypeEnum {
   // 请求数据
   AJAX = 1,
   // 数据池
-  Pond = 2
+  Pond = 2,
 }
 
 // 请求主体类型
@@ -58,13 +58,13 @@ export enum RequestContentTypeEnum {
   // 普通请求
   DEFAULT = 0,
   // SQL请求
-  SQL = 1
+  SQL = 1,
 }
 
 // 头部
 export enum RequestHttpHeaderEnum {
   TOKEN = 'Token',
-  COOKIE = 'Cookie'
+  COOKIE = 'Cookie',
 }
 
 // 请求方法
@@ -73,7 +73,7 @@ export enum RequestHttpEnum {
   POST = 'post',
   PATCH = 'patch',
   PUT = 'put',
-  DELETE = 'delete'
+  DELETE = 'delete',
 }
 
 /**
@@ -87,7 +87,7 @@ export enum RequestHttpIntervalEnum {
   // 时
   HOUR = 'hour',
   // 天
-  DAY = 'day'
+  DAY = 'day',
 }
 
 /**
@@ -97,7 +97,7 @@ export const SelectHttpTimeNameObj = {
   [RequestHttpIntervalEnum.SECOND]: '秒',
   [RequestHttpIntervalEnum.MINUTE]: '分',
   [RequestHttpIntervalEnum.HOUR]: '时',
-  [RequestHttpIntervalEnum.DAY]: '天'
+  [RequestHttpIntervalEnum.DAY]: '天',
 }
 
 /**
@@ -108,7 +108,7 @@ export enum RequestBodyEnum {
   FORM_DATA = 'form-data',
   X_WWW_FORM_URLENCODED = 'x-www-form-urlencoded',
   JSON = 'json',
-  XML = 'xml'
+  XML = 'xml',
 }
 
 /**
@@ -119,7 +119,7 @@ export const RequestBodyEnumList = [
   RequestBodyEnum.FORM_DATA,
   RequestBodyEnum.X_WWW_FORM_URLENCODED,
   RequestBodyEnum.JSON,
-  RequestBodyEnum.XML
+  RequestBodyEnum.XML,
 ]
 
 /**
@@ -128,7 +128,7 @@ export const RequestBodyEnumList = [
 export enum RequestParamsTypeEnum {
   PARAMS = 'Params',
   BODY = 'Body',
-  HEADER = 'Header'
+  HEADER = 'Header',
 }
 
 /**

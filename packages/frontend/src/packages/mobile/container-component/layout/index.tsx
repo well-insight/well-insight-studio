@@ -18,11 +18,11 @@ function createSlots(str: string): SlotItem {
       prev[`slot${index}`] = {
         key: `slot${index}`,
         span: curr,
-        children: []
+        children: [],
       }
       return prev
     },
-    { value: str }
+    { value: str },
   )
 }
 
@@ -31,10 +31,10 @@ export default {
   moduleName: 'containerComponents',
   label: '布局容器',
   preview: () => (
-    <Row gutter='20'>
-      <Col span='8'>span: 8</Col>
-      <Col span='8'>span: 8</Col>
-      <Col span='8'>span: 8</Col>
+    <Row gutter="20">
+      <Col span="8">span: 8</Col>
+      <Col span="8">span: 8</Col>
+      <Col span="8">span: 8</Col>
     </Row>
   ),
   render: ({ props, styles, block, custom }) => {
@@ -72,7 +72,7 @@ export default {
   },
   resize: {
     height: true,
-    width: true
+    width: true,
   },
   props: {
     gutter: createEditorInputProp({ label: '列间隔' }),
@@ -85,9 +85,9 @@ export default {
         { label: '18:6', value: createSlots('18:6') },
         { label: '8:8:8', value: createSlots('8:8:8') },
         { label: '6:12:6', value: createSlots('6:12:6') },
-        { label: '6:6:6:6', value: createSlots('6:6:6:6') }
+        { label: '6:6:6:6', value: createSlots('6:6:6:6') },
       ],
-      defaultValue: createSlots('12:12')
+      defaultValue: createSlots('12:12'),
     }),
     justify: createEditorSelectProp({
       label: '主轴对齐方式',
@@ -96,16 +96,16 @@ export default {
         { label: '居中排列', value: 'center' },
         { label: '均匀对齐', value: 'space-around' },
         { label: '两端对齐', value: 'space-between' },
-        { label: '右对齐', value: 'end' }
-      ]
+        { label: '右对齐', value: 'end' },
+      ],
     }),
     align: createEditorSelectProp({
       label: '交叉轴对齐方式',
       options: [
         { label: '顶部对齐', value: 'top' },
         { label: '垂直居中', value: 'center' },
-        { label: '底部对齐', value: 'bottom' }
-      ]
-    })
-  }
+        { label: '底部对齐', value: 'bottom' },
+      ],
+    }),
+  },
 } as VisualEditorComponent

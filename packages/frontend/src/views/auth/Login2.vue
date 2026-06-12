@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { User, Lock, Key } from '@element-plus/icons-vue'
+import { Key, Lock, User } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { nextTick, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { loginRequest, registerRequest } from '@/api/auth'
-import { getAuthStore } from '@/stores/auth'
-
 import heroImg from '@/assets/login-hero.png'
+
+import { getAuthStore } from '@/stores/auth'
 
 type AuthMode = 'login' | 'register'
 
@@ -37,9 +37,11 @@ function drawCaptcha() {
   captchaAnswer.value = code
 
   const cvs = canvasRef.value
-  if (!cvs) return
+  if (!cvs)
+    return
   const ctx = cvs.getContext('2d')
-  if (!ctx) return
+  if (!ctx)
+    return
 
   const w = cvs.width
   const h = cvs.height
@@ -96,8 +98,8 @@ function validateCaptcha(): boolean {
 
 async function afterAuthSuccess(message: string) {
   ElMessage.success(message)
-  const redirect =
-    typeof route.query.redirect === 'string' && route.query.redirect
+  const redirect
+    = typeof route.query.redirect === 'string' && route.query.redirect
       ? route.query.redirect
       : '/'
   await router.replace(redirect)
@@ -137,7 +139,8 @@ async function onSubmit() {
     }
   }
 
-  if (!validateCaptcha()) return
+  if (!validateCaptcha())
+    return
 
   loading.value = true
   try {
@@ -166,7 +169,8 @@ async function onSubmit() {
     }
     authStore.loginSuccess(result.token, result.user)
     await afterAuthSuccess(result.message)
-  } finally {
+  }
+  finally {
     loading.value = false
   }
 }
@@ -185,7 +189,7 @@ function setMode(next: AuthMode) {
         alt=""
         fetchpriority="high"
         decoding="async"
-      />
+      >
       <div class="login-page__bg-overlay" />
     </div>
 

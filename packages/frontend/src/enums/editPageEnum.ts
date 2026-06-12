@@ -1,12 +1,12 @@
 // 鼠标点击左右键
 export enum MouseEventButton {
   LEFT = 1,
-  RIGHT = 2
+  RIGHT = 2,
 }
 
 // 页面拖拽键名
 export enum DragKeyEnum {
-  DRAG_KEY = 'ChartData'
+  DRAG_KEY = 'ChartData',
 }
 
 // 不同页面保存操作
@@ -14,7 +14,7 @@ export enum SavePageEnum {
   CHART = 'SaveChart',
   CHART_TO_PREVIEW = 'ChartToPreview',
   JSON = 'SaveJSON',
-  CLOSE = 'close'
+  CLOSE = 'close',
 }
 
 // 操作枚举
@@ -58,7 +58,7 @@ export enum MenuEnum {
   // 隐藏
   HIDE = 'hide',
   // 显示
-  SHOW = 'show'
+  SHOW = 'show',
 }
 
 // Win 键盘枚举
@@ -69,7 +69,7 @@ export enum WinKeyboard {
   CTRL_SOURCE_KEY = 'control',
   SHIFT_SOURCE_KEY = 'shift',
   ALT_SOURCE_KEY = 'alt',
-  SPACE = 'Space'
+  SPACE = 'Space',
 }
 
 // Mac 键盘枚举
@@ -81,7 +81,7 @@ export enum MacKeyboard {
   CTRL_SOURCE_KEY = '⌘',
   SHIFT_SOURCE_KEY = '⇧',
   ALT_SOURCE_KEY = '⌥',
-  SPACE = 'Space'
+  SPACE = 'Space',
 }
 
 // 同步状态枚举
@@ -93,5 +93,5 @@ export enum SyncEnum {
   // 成功
   SUCCESS,
   // 失败
-  FAILURE
+  FAILURE,
 }

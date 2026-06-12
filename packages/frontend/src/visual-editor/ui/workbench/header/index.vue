@@ -7,7 +7,7 @@ import Preview from './preview.vue'
 import { useTools } from './useTools'
 
 defineOptions({
-  name: 'PageHeader'
+  name: 'PageHeader',
 })
 
 const isShowH5Preview = ref(false)
@@ -29,7 +29,9 @@ function runPreview() {
     <!--    左侧logo start -->
     <el-col :span="6" class="flex items-center">
       <div class="logo" />
-      <h3 class="font-semibold">H5低代码</h3>
+      <h3 class="font-semibold">
+        H5低代码
+      </h3>
     </el-col>
     <!--    左侧logo end -->
     <!--    中间操作页面部分 start -->
@@ -70,20 +72,20 @@ function runPreview() {
           <el-col :span="6">
             <el-tooltip class="item" effect="dark" content="github" placement="bottom">
               <a href="https://github.com/buqiyuan/vite-vue3-lowcode" target="_blank">
-                <img :src="`${BASE_URL}github.svg`" width="40" height="40" alt="" />
+                <img :src="`${BASE_URL}github.svg`" width="40" height="40" alt="">
               </a>
             </el-tooltip>
           </el-col>
           <el-col :span="6">
             <el-tooltip class="item" effect="dark" content="gitee" placement="bottom">
               <a href="https://gitee.com/buqiyuan/vite-vue3-lowcode" target="_blank">
-                <img :src="`${BASE_URL}gitee.svg`" width="40" height="40" alt="" />
+                <img :src="`${BASE_URL}gitee.svg`" width="40" height="40" alt="">
               </a>
             </el-tooltip>
           </el-col>
         </el-row>
         <template #reference>
-          <img :src="`${BASE_URL}github.svg`" width="40" height="40" alt="" />
+          <img :src="`${BASE_URL}github.svg`" width="40" height="40" alt="">
         </template>
       </el-popover>
     </el-col>

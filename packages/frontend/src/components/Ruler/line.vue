@@ -9,12 +9,12 @@ export default {
     value: Number,
     palette: Object,
     isShowReferLine: Boolean,
-    thick: Number
+    thick: Number,
   },
   data() {
     return {
       startValue: 0,
-      showLine: true
+      showLine: true,
     }
   },
   computed: {
@@ -22,7 +22,8 @@ export default {
       const offset = (this.startValue - this.start) * this.scale
       if (offset < 0) {
         this.showLine = false
-      } else {
+      }
+      else {
         this.showLine = true
       }
       const positionValue = `${offset}px`
@@ -36,13 +37,13 @@ export default {
       const cursorValue = this.isShowReferLine ? (this.vertical ? 'ns-resize' : 'ew-resize') : 'none'
       return {
         cursor: cursorValue,
-        ...border
+        ...border,
       }
     },
     actionStyle() {
       const actionStyle = this.vertical ? { left: `${this.thick}px` } : { top: `${this.thick}px` }
       return actionStyle
-    }
+    },
   },
   mounted() {
     this.initStartValue()
@@ -52,7 +53,7 @@ export default {
       const startD = this.vertical ? e.clientY : e.clientX
       const initValue = this.startValue
       this.$emit('onMouseDown')
-      const onMove = e => {
+      const onMove = (e) => {
         const currentD = this.vertical ? e.clientY : e.clientX
         const newValue = Math.round(initValue + (currentD - startD) / this.scale)
         this.startValue = newValue
@@ -70,8 +71,8 @@ export default {
     },
     initStartValue() {
       this.startValue = this.value
-    }
-  }
+    },
+  },
 }
 </script>
 

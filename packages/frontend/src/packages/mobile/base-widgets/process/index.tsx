@@ -4,14 +4,14 @@ import {
   createEditorColorProp,
   createEditorInputNumberProp,
   createEditorInputProp,
-  createEditorSwitchProp
+  createEditorSwitchProp,
 } from '@/visual-editor/visual-editor.props'
 
 export default {
   key: 'process',
   moduleName: 'baseWidgets',
   label: '进度条',
-  preview: () => <Progress style='width:190px' percentage={50} />,
+  preview: () => <Progress style="width:190px" percentage={50} />,
   render: ({ props, styles }) => {
     const RenderProgress = () => <Progress {...props} pivotText={props.pivotText || undefined} />
 
@@ -30,6 +30,6 @@ export default {
     pivotText: createEditorInputProp({ label: '进度文字内容' }),
     pivotColor: createEditorColorProp({ label: '进度文字背景色', defaultValue: '#1989fa' }),
     textColor: createEditorColorProp({ label: '进度文字颜色', defaultValue: '#ffffff' }),
-    showPivot: createEditorSwitchProp({ label: '是否显示进度文字', defaultValue: true })
-  }
+    showPivot: createEditorSwitchProp({ label: '是否显示进度文字', defaultValue: true }),
+  },
 } as VisualEditorComponent

@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { Menu, ScaleToOriginal, Setting } from '@element-plus/icons-vue'
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
@@ -40,7 +39,9 @@ const childTitle = computed(() => {
           </el-button>
 
           <el-text>{{ currentMenu?.title }}</el-text>
-          <el-text v-if="currentApp"> / {{ currentApp.title }} </el-text>
+          <el-text v-if="currentApp">
+            / {{ currentApp.title }}
+          </el-text>
           <!-- <el-text v-if="childTitle"> / </el-text>
           <el-text v-if="childTitle">{{ childTitle }} </el-text> -->
         </el-space>

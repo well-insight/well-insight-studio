@@ -1,21 +1,22 @@
 <script setup lang="ts">
-import type { ElTree } from "element-plus";
-import {
-  Delete,
-  Folder,
-  FolderOpened,
-  MoreFilled,
-  Plus,
-  Edit,
-} from "@element-plus/icons-vue";
-import { ElMessage, ElMessageBox } from "element-plus";
-import dayjs from "dayjs";
-import { computed, nextTick, onMounted, ref } from "vue";
+import type { ElTree } from 'element-plus'
 import type {
   ApiDatasetListItem,
   ApiFolderTreeNode,
   DatasetFieldType,
-} from "@/api/dataset";
+} from '@/api/dataset'
+import {
+  Delete,
+  Edit,
+  Folder,
+  FolderOpened,
+  MoreFilled,
+  Plus,
+} from '@element-plus/icons-vue'
+import dayjs from 'dayjs'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { computed, nextTick, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   createDataset,
   createDatasetFolder,
@@ -26,102 +27,102 @@ import {
   fetchDatasetFolderTree,
   updateDataset,
   updateDatasetFolder,
-} from "@/api/dataset";
-import { useRouter } from "vue-router";
-import { useWorkspaceStore } from "@/stores/workspaceStore";
-import SvgIcon from "@/components/svg-icon/SvgIcon.vue";
-const router = useRouter();
-type FolderTreeNode = {
-  id: string;
-  label: string;
-  type: "all" | "folder";
-  folderId?: string;
-  description?: string | null;
-  parentFolderId?: string | null;
-  children?: FolderTreeNode[];
-};
+} from '@/api/dataset'
+import SvgIcon from '@/components/svg-icon/SvgIcon.vue'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 
-const workspaceStore = useWorkspaceStore();
+const router = useRouter()
+interface FolderTreeNode {
+  id: string
+  label: string
+  type: 'all' | 'folder'
+  folderId?: string
+  description?: string | null
+  parentFolderId?: string | null
+  children?: FolderTreeNode[]
+}
 
-const treeProps = { children: "children", label: "label" };
-const treeRef = ref<InstanceType<typeof ElTree> | null>(null);
+const workspaceStore = useWorkspaceStore()
 
-const treeLoading = ref(false);
-const listLoading = ref(false);
-const folderRoots = ref<ApiFolderTreeNode[]>([]);
-const allDatasets = ref<ApiDatasetListItem[]>([]);
+const treeProps = { children: 'children', label: 'label' }
+const treeRef = ref<InstanceType<typeof ElTree> | null>(null)
+
+const treeLoading = ref(false)
+const listLoading = ref(false)
+const folderRoots = ref<ApiFolderTreeNode[]>([])
+const allDatasets = ref<ApiDatasetListItem[]>([])
 
 /** 当前选中的目录：全部，或某个 folder id */
-const selectedFolderId = ref<string | "all">("all");
+const selectedFolderId = ref<string | 'all'>('all')
 
-const contextFolderId = ref<string | null>(null);
+const contextFolderId = ref<string | null>(null)
 
-const treeRenderKey = ref(0);
+const treeRenderKey = ref(0)
 /** 目录行「更多」下拉展开时保持显示触发图标（菜单 teleport 到 body 会离开行悬停） */
-const folderDropdownOpenNodeId = ref<string | null>(null);
+const folderDropdownOpenNodeId = ref<string | null>(null)
 
-const folderDialogVisible = ref(false);
-const folderName = ref("");
-const folderSubmitting = ref(false);
+const folderDialogVisible = ref(false)
+const folderName = ref('')
+const folderSubmitting = ref(false)
 
-const folderEditVisible = ref(false);
-const folderEditId = ref<string | null>(null);
-const folderEditName = ref("");
-const folderEditDesc = ref("");
-const folderEditParentId = ref<string | null>(null);
-const folderEditSubmitting = ref(false);
+const folderEditVisible = ref(false)
+const folderEditId = ref<string | null>(null)
+const folderEditName = ref('')
+const folderEditDesc = ref('')
+const folderEditParentId = ref<string | null>(null)
+const folderEditSubmitting = ref(false)
 
-const datasetDialogVisible = ref(false);
-const datasetName = ref("");
-const datasetDesc = ref("");
-const datasetSubmitting = ref(false);
-const datasetFields = ref<{ name: string; field_type: DatasetFieldType }[]>([
-  { name: "列1", field_type: "text" },
-]);
+const datasetDialogVisible = ref(false)
+const datasetName = ref('')
+const datasetDesc = ref('')
+const datasetSubmitting = ref(false)
+const datasetFields = ref<{ name: string, field_type: DatasetFieldType }[]>([
+  { name: '列1', field_type: 'text' },
+])
 
-const editVisible = ref(false);
-const editSubmitting = ref(false);
-const editId = ref<string | null>(null);
-const editName = ref("");
-const editDesc = ref("");
-const editFolderId = ref<string | null>(null);
+const editVisible = ref(false)
+const editSubmitting = ref(false)
+const editId = ref<string | null>(null)
+const editName = ref('')
+const editDesc = ref('')
+const editFolderId = ref<string | null>(null)
 
 function mapFoldersToNodes(folders: ApiFolderTreeNode[]): FolderTreeNode[] {
-  return folders.map((f) => ({
+  return folders.map(f => ({
     id: `folder-${f.id}`,
     label: f.name,
-    type: "folder" as const,
+    type: 'folder' as const,
     folderId: f.id,
     description: f.description,
     parentFolderId: f.parent_id ?? null,
     children: mapFoldersToNodes(f.children || []),
-  }));
+  }))
 }
 
 const treeData = computed<FolderTreeNode[]>(() => {
   return [
-    { id: "__all__", label: "全部", type: "all" },
+    { id: '__all__', label: '全部', type: 'all' },
     ...mapFoldersToNodes(folderRoots.value),
-  ];
-});
+  ]
+})
 
 function flattenFolderOptions(
   folders: ApiFolderTreeNode[],
-  prefix = "",
-): { label: string; value: string }[] {
-  const out: { label: string; value: string }[] = [];
+  prefix = '',
+): { label: string, value: string }[] {
+  const out: { label: string, value: string }[] = []
   for (const f of folders) {
-    out.push({ label: `${prefix}${f.name}`, value: f.id });
+    out.push({ label: `${prefix}${f.name}`, value: f.id })
     if (f.children?.length) {
-      out.push(...flattenFolderOptions(f.children, `${prefix}　`));
+      out.push(...flattenFolderOptions(f.children, `${prefix}　`))
     }
   }
-  return out;
+  return out
 }
 
 const folderSelectOptions = computed(() =>
   flattenFolderOptions(folderRoots.value),
-);
+)
 
 /** 从根到该文件夹的名称路径（不含「全部」） */
 function folderPathSegments(
@@ -130,275 +131,297 @@ function folderPathSegments(
   chain: string[] = [],
 ): string[] | null {
   for (const f of folders) {
-    const next = [...chain, f.name];
-    if (f.id === targetId) return next;
+    const next = [...chain, f.name]
+    if (f.id === targetId)
+      return next
     if (f.children?.length) {
-      const found = folderPathSegments(f.children, targetId, next);
-      if (found) return found;
+      const found = folderPathSegments(f.children, targetId, next)
+      if (found)
+        return found
     }
   }
-  return null;
+  return null
 }
 
 const folderDialogParentPath = computed(() => {
-  const pid = contextFolderId.value;
-  if (pid == null) return "根级";
-  const segs = folderPathSegments(folderRoots.value, pid);
-  return segs?.join(" / ") ?? "（未知目录）";
-});
+  const pid = contextFolderId.value
+  if (pid == null)
+    return '根级'
+  const segs = folderPathSegments(folderRoots.value, pid)
+  return segs?.join(' / ') ?? '（未知目录）'
+})
 
 function findFolderInApiTree(
   folders: ApiFolderTreeNode[],
   id: string,
 ): ApiFolderTreeNode | null {
   for (const f of folders) {
-    if (f.id === id) return f;
+    if (f.id === id)
+      return f
     if (f.children?.length) {
-      const x = findFolderInApiTree(f.children, id);
-      if (x) return x;
+      const x = findFolderInApiTree(f.children, id)
+      if (x)
+        return x
     }
   }
-  return null;
+  return null
 }
 
 function collectDescendantFolderIds(root: ApiFolderTreeNode): Set<string> {
-  const s = new Set<string>();
+  const s = new Set<string>()
   const walk = (n: ApiFolderTreeNode) => {
-    s.add(n.id);
-    for (const c of n.children || []) walk(c);
-  };
-  walk(root);
-  return s;
+    s.add(n.id)
+    for (const c of n.children || []) walk(c)
+  }
+  walk(root)
+  return s
 }
 
 /** 编辑目录时可选的父级（排除自身及子孙，避免循环） */
 const folderEditParentOptions = computed(() => {
-  const flat = flattenFolderOptions(folderRoots.value);
-  const fid = folderEditId.value;
-  if (fid == null) return flat;
-  const node = findFolderInApiTree(folderRoots.value, fid);
+  const flat = flattenFolderOptions(folderRoots.value)
+  const fid = folderEditId.value
+  if (fid == null)
+    return flat
+  const node = findFolderInApiTree(folderRoots.value, fid)
   const blocked = node
     ? collectDescendantFolderIds(node)
-    : new Set<string>([fid]);
-  return flat.filter((o) => !blocked.has(o.value));
-});
+    : new Set<string>([fid])
+  return flat.filter(o => !blocked.has(o.value))
+})
 
 const filteredDatasets = computed(() => {
-  const list = allDatasets.value;
-  if (selectedFolderId.value === "all") {
+  const list = allDatasets.value
+  if (selectedFolderId.value === 'all') {
     return [...list].sort((a, b) =>
       a.updated_at < b.updated_at ? 1 : a.updated_at > b.updated_at ? -1 : 0,
-    );
+    )
   }
-  const fid = selectedFolderId.value;
+  const fid = selectedFolderId.value
   return list
-    .filter((d) => d.folder_id === fid)
+    .filter(d => d.folder_id === fid)
     .sort((a, b) =>
       a.updated_at < b.updated_at ? 1 : a.updated_at > b.updated_at ? -1 : 0,
-    );
-});
+    )
+})
 
 function formatTime(iso: string) {
-  return dayjs(iso).format("YYYY-MM-DD HH:mm");
+  return dayjs(iso).format('YYYY-MM-DD HH:mm')
 }
 
 async function loadData() {
-  treeLoading.value = true;
-  listLoading.value = true;
+  treeLoading.value = true
+  listLoading.value = true
   try {
     const [trees, datasets] = await Promise.all([
       fetchDatasetFolderTree(),
       fetchAllDatasets(),
-    ]);
-    folderRoots.value = Array.isArray(trees) ? trees : [];
-    allDatasets.value = Array.isArray(datasets) ? datasets : [];
-    treeRenderKey.value += 1;
-    await nextTick();
-    const key =
-      selectedFolderId.value === "all"
-        ? "__all__"
-        : `folder-${selectedFolderId.value}`;
-    treeRef.value?.setCurrentKey(key);
-  } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "加载失败");
-    folderRoots.value = [];
-    allDatasets.value = [];
-  } finally {
-    treeLoading.value = false;
-    listLoading.value = false;
+    ])
+    folderRoots.value = Array.isArray(trees) ? trees : []
+    allDatasets.value = Array.isArray(datasets) ? datasets : []
+    treeRenderKey.value += 1
+    await nextTick()
+    const key
+      = selectedFolderId.value === 'all'
+        ? '__all__'
+        : `folder-${selectedFolderId.value}`
+    treeRef.value?.setCurrentKey(key)
+  }
+  catch (e) {
+    ElMessage.error(e instanceof Error ? e.message : '加载失败')
+    folderRoots.value = []
+    allDatasets.value = []
+  }
+  finally {
+    treeLoading.value = false
+    listLoading.value = false
   }
 }
 
 function onFolderDropdownVisible(visible: boolean, data: FolderTreeNode) {
-  folderDropdownOpenNodeId.value =
-    visible && data.type === "folder" ? data.id : null;
+  folderDropdownOpenNodeId.value
+    = visible && data.type === 'folder' ? data.id : null
 }
 
 function onFolderMenuCommand(cmd: string, data: FolderTreeNode) {
-  if (data.type !== "folder") return;
-  if (cmd === "edit") void openFolderEdit(data);
-  else if (cmd === "delete") void confirmDeleteFolder(data);
+  if (data.type !== 'folder')
+    return
+  if (cmd === 'edit')
+    void openFolderEdit(data)
+  else if (cmd === 'delete')
+    void confirmDeleteFolder(data)
 }
 
 function handleFolderTreeClick(data: FolderTreeNode) {
-  if (data.type === "all") {
-    selectedFolderId.value = "all";
-    contextFolderId.value = null;
-  } else {
-    selectedFolderId.value = data.folderId!;
-    contextFolderId.value = data.folderId ?? null;
+  if (data.type === 'all') {
+    selectedFolderId.value = 'all'
+    contextFolderId.value = null
+  }
+  else {
+    selectedFolderId.value = data.folderId!
+    contextFolderId.value = data.folderId ?? null
   }
 }
 
 function openFolderDialog() {
-  folderName.value = "";
-  folderDialogVisible.value = true;
+  folderName.value = ''
+  folderDialogVisible.value = true
 }
 
 async function submitFolder() {
-  const name = folderName.value.trim();
+  const name = folderName.value.trim()
   if (!name) {
-    ElMessage.warning("请输入目录名称");
-    return;
+    ElMessage.warning('请输入目录名称')
+    return
   }
-  folderSubmitting.value = true;
+  folderSubmitting.value = true
   try {
     await createDatasetFolder({
       name,
       parent_id: contextFolderId.value,
       project_id: null,
-    });
-    ElMessage.success("目录已创建");
-    folderDialogVisible.value = false;
-    await loadData();
-    await nextTick();
+    })
+    ElMessage.success('目录已创建')
+    folderDialogVisible.value = false
+    await loadData()
+    await nextTick()
     treeRef.value?.setCurrentKey(
-      selectedFolderId.value === "all"
-        ? "__all__"
+      selectedFolderId.value === 'all'
+        ? '__all__'
         : `folder-${selectedFolderId.value}`,
-    );
-  } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "创建失败");
-  } finally {
-    folderSubmitting.value = false;
+    )
+  }
+  catch (e) {
+    ElMessage.error(e instanceof Error ? e.message : '创建失败')
+  }
+  finally {
+    folderSubmitting.value = false
   }
 }
 
 async function openFolderEdit(data: FolderTreeNode) {
-  if (data.type !== "folder" || data.folderId == null) return;
-  folderEditId.value = data.folderId;
-  folderEditName.value = data.label;
-  folderEditDesc.value = data.description?.trim() ?? "";
-  folderEditParentId.value = data.parentFolderId ?? null;
-  folderEditVisible.value = true;
+  if (data.type !== 'folder' || data.folderId == null)
+    return
+  folderEditId.value = data.folderId
+  folderEditName.value = data.label
+  folderEditDesc.value = data.description?.trim() ?? ''
+  folderEditParentId.value = data.parentFolderId ?? null
+  folderEditVisible.value = true
   try {
-    const detail = await fetchDatasetFolderDetail(data.folderId);
-    folderEditName.value = detail.name;
-    folderEditDesc.value = detail.description?.trim() ?? "";
-    folderEditParentId.value = detail.parent_id ?? null;
-  } catch {
+    const detail = await fetchDatasetFolderDetail(data.folderId)
+    folderEditName.value = detail.name
+    folderEditDesc.value = detail.description?.trim() ?? ''
+    folderEditParentId.value = detail.parent_id ?? null
+  }
+  catch {
     /* 使用树上已有信息 */
   }
 }
 
 async function submitFolderEdit() {
-  const id = folderEditId.value;
-  if (id == null) return;
-  const name = folderEditName.value.trim();
+  const id = folderEditId.value
+  if (id == null)
+    return
+  const name = folderEditName.value.trim()
   if (!name) {
-    ElMessage.warning("请输入目录名称");
-    return;
+    ElMessage.warning('请输入目录名称')
+    return
   }
-  folderEditSubmitting.value = true;
+  folderEditSubmitting.value = true
   try {
     await updateDatasetFolder(id, {
       name,
       description: folderEditDesc.value.trim() || null,
       parent_id: folderEditParentId.value ?? null,
-    });
-    ElMessage.success("已保存");
-    folderEditVisible.value = false;
-    await loadData();
-    await nextTick();
+    })
+    ElMessage.success('已保存')
+    folderEditVisible.value = false
+    await loadData()
+    await nextTick()
     treeRef.value?.setCurrentKey(
-      selectedFolderId.value === "all"
-        ? "__all__"
+      selectedFolderId.value === 'all'
+        ? '__all__'
         : `folder-${selectedFolderId.value}`,
-    );
-  } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "保存失败");
-  } finally {
-    folderEditSubmitting.value = false;
+    )
+  }
+  catch (e) {
+    ElMessage.error(e instanceof Error ? e.message : '保存失败')
+  }
+  finally {
+    folderEditSubmitting.value = false
   }
 }
 
 async function confirmDeleteFolder(data: FolderTreeNode) {
-  if (data.type !== "folder" || data.folderId == null) return;
+  if (data.type !== 'folder' || data.folderId == null)
+    return
   try {
     await ElMessageBox.confirm(
       `确定删除目录「${data.label}」吗？仅空目录可删除；若内含子目录或数据集请先清理。`,
-      "删除目录",
-      { type: "warning", confirmButtonText: "删除", cancelButtonText: "取消" },
-    );
-  } catch {
-    return;
+      '删除目录',
+      { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' },
+    )
+  }
+  catch {
+    return
   }
   try {
-    await deleteDatasetFolder(data.folderId);
-    ElMessage.success("已删除");
+    await deleteDatasetFolder(data.folderId)
+    ElMessage.success('已删除')
     if (selectedFolderId.value === data.folderId) {
-      selectedFolderId.value = "all";
-      contextFolderId.value = null;
+      selectedFolderId.value = 'all'
+      contextFolderId.value = null
     }
     if (contextFolderId.value === data.folderId) {
-      contextFolderId.value = null;
+      contextFolderId.value = null
     }
-    await loadData();
-    await nextTick();
-    treeRef.value?.setCurrentKey("__all__");
-  } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "删除失败");
+    await loadData()
+    await nextTick()
+    treeRef.value?.setCurrentKey('__all__')
+  }
+  catch (e) {
+    ElMessage.error(e instanceof Error ? e.message : '删除失败')
   }
 }
 
 function openDatasetDialog() {
-  datasetName.value = "";
-  datasetDesc.value = "";
-  datasetFields.value = [{ name: "列1", field_type: "text" }];
-  datasetDialogVisible.value = true;
+  datasetName.value = ''
+  datasetDesc.value = ''
+  datasetFields.value = [{ name: '列1', field_type: 'text' }]
+  datasetDialogVisible.value = true
 }
 
 function addFieldRow() {
   datasetFields.value.push({
     name: `列${datasetFields.value.length + 1}`,
-    field_type: "text",
-  });
+    field_type: 'text',
+  })
 }
 
 function removeFieldRow(i: number) {
   if (datasetFields.value.length <= 1) {
-    ElMessage.warning("至少保留一个字段");
-    return;
+    ElMessage.warning('至少保留一个字段')
+    return
   }
-  datasetFields.value.splice(i, 1);
+  datasetFields.value.splice(i, 1)
 }
 
 async function submitDataset() {
-  const name = datasetName.value.trim();
+  const name = datasetName.value.trim()
   if (!name) {
-    ElMessage.warning("请输入数据集名称");
-    return;
+    ElMessage.warning('请输入数据集名称')
+    return
   }
   const fields = datasetFields.value
-    .map((f) => ({ name: f.name.trim(), field_type: f.field_type }))
-    .filter((f) => f.name.length > 0);
+    .map(f => ({ name: f.name.trim(), field_type: f.field_type }))
+    .filter(f => f.name.length > 0)
   if (fields.length === 0) {
-    ElMessage.warning("请填写至少一个有效字段名");
-    return;
+    ElMessage.warning('请填写至少一个有效字段名')
+    return
   }
-  const folder_id =
-    selectedFolderId.value === "all" ? null : selectedFolderId.value;
-  datasetSubmitting.value = true;
+  const folder_id
+    = selectedFolderId.value === 'all' ? null : selectedFolderId.value
+  datasetSubmitting.value = true
   try {
     await createDataset({
       name,
@@ -406,56 +429,62 @@ async function submitDataset() {
       folder_id,
       project_id: null,
       fields: fields.map((f, i) => ({ ...f, sort_order: i })),
-    });
-    ElMessage.success("数据集已创建");
-    datasetDialogVisible.value = false;
-    await loadData();
-  } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "创建失败");
-  } finally {
-    datasetSubmitting.value = false;
+    })
+    ElMessage.success('数据集已创建')
+    datasetDialogVisible.value = false
+    await loadData()
+  }
+  catch (e) {
+    ElMessage.error(e instanceof Error ? e.message : '创建失败')
+  }
+  finally {
+    datasetSubmitting.value = false
   }
 }
 
 function openEdit(ds: ApiDatasetListItem) {
-  editId.value = ds.id;
-  editName.value = ds.name;
-  editDesc.value = ds.description ?? "";
-  editFolderId.value = ds.folder_id;
-  editVisible.value = true;
+  editId.value = ds.id
+  editName.value = ds.name
+  editDesc.value = ds.description ?? ''
+  editFolderId.value = ds.folder_id
+  editVisible.value = true
 }
 
 function toEditPage(ds: ApiDatasetListItem) {
-  workspaceStore.setCurrentDataset(ds);
-  router.push({ name: "DatasetEdit", params: { id: String(ds.id) } });
+  workspaceStore.setCurrentDataset(ds)
+  router.push({ name: 'DatasetEdit', params: { id: String(ds.id) } })
 }
 
 function onDatasetMenuCommand(cmd: string, ds: ApiDatasetListItem) {
-  if (cmd === "delete") void confirmDelete(ds);
+  if (cmd === 'delete')
+    void confirmDelete(ds)
 }
 
 async function submitEdit() {
-  const id = editId.value;
-  if (id == null) return;
-  const name = editName.value.trim();
+  const id = editId.value
+  if (id == null)
+    return
+  const name = editName.value.trim()
   if (!name) {
-    ElMessage.warning("请输入名称");
-    return;
+    ElMessage.warning('请输入名称')
+    return
   }
-  editSubmitting.value = true;
+  editSubmitting.value = true
   try {
     await updateDataset(id, {
       name,
       description: editDesc.value.trim() || null,
       folder_id: editFolderId.value ?? null,
-    });
-    ElMessage.success("已保存");
-    editVisible.value = false;
-    await loadData();
-  } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "保存失败");
-  } finally {
-    editSubmitting.value = false;
+    })
+    ElMessage.success('已保存')
+    editVisible.value = false
+    await loadData()
+  }
+  catch (e) {
+    ElMessage.error(e instanceof Error ? e.message : '保存失败')
+  }
+  finally {
+    editSubmitting.value = false
   }
 }
 
@@ -463,30 +492,32 @@ async function confirmDelete(ds: ApiDatasetListItem) {
   try {
     await ElMessageBox.confirm(
       `确定删除数据集「${ds.name}」吗？此操作不可恢复。`,
-      "删除确认",
+      '删除确认',
       {
-        type: "warning",
-        confirmButtonText: "删除",
-        cancelButtonText: "取消",
+        type: 'warning',
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
       },
-    );
-  } catch {
-    return;
+    )
+  }
+  catch {
+    return
   }
   try {
-    await deleteDataset(ds.id);
-    ElMessage.success("已删除");
-    await loadData();
-  } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : "删除失败");
+    await deleteDataset(ds.id)
+    ElMessage.success('已删除')
+    await loadData()
+  }
+  catch (e) {
+    ElMessage.error(e instanceof Error ? e.message : '删除失败')
   }
 }
 
 onMounted(async () => {
-  await loadData();
-  await nextTick();
-  treeRef.value?.setCurrentKey("__all__");
-});
+  await loadData()
+  await nextTick()
+  treeRef.value?.setCurrentKey('__all__')
+})
 </script>
 
 <template>
@@ -494,10 +525,12 @@ onMounted(async () => {
     <!-- 左侧：目录 -->
     <aside :class="$style.sidebar">
       <div :class="$style.sidebarHeader">
-        <h3 :class="$style.sidebarTitle">目录</h3>
-        <el-button :icon="Plus" plain type="primary" @click="openFolderDialog"
-          >新建目录</el-button
-        >
+        <h3 :class="$style.sidebarTitle">
+          目录
+        </h3>
+        <el-button :icon="Plus" plain type="primary" @click="openFolderDialog">
+          新建目录
+        </el-button>
       </div>
       <div v-loading="treeLoading" :class="$style.treeWrap">
         <el-tree
@@ -557,12 +590,12 @@ onMounted(async () => {
                   </span>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item command="edit"
-                        >编辑目录</el-dropdown-item
-                      >
-                      <el-dropdown-item command="delete" divided
-                        >删除目录</el-dropdown-item
-                      >
+                      <el-dropdown-item command="edit">
+                        编辑目录
+                      </el-dropdown-item>
+                      <el-dropdown-item command="delete" divided>
+                        删除目录
+                      </el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
                 </el-dropdown>
@@ -576,10 +609,12 @@ onMounted(async () => {
     <!-- 右侧：数据集列表 -->
     <div :class="$style.main">
       <div :class="$style.pageHeader">
-        <h2 :class="$style.pageTitle">数据集</h2>
-        <el-button type="primary" round :icon="Plus" @click="openDatasetDialog"
-          >新增数据集</el-button
-        >
+        <h2 :class="$style.pageTitle">
+          数据集
+        </h2>
+        <el-button type="primary" round :icon="Plus" @click="openDatasetDialog">
+          新增数据集
+        </el-button>
       </div>
 
       <div v-loading="listLoading" :class="$style.cardArea">
@@ -605,8 +640,9 @@ onMounted(async () => {
                       type="primary"
                       :icon="Edit"
                       @click.stop="openEdit(ds)"
-                      >编辑</el-button
                     >
+                      编辑
+                    </el-button>
                     <el-button
                       link
                       type="danger"
@@ -643,9 +679,7 @@ onMounted(async () => {
           <template #label>
             <div :class="$style.folderNameLabelRow">
               <span>目录名称</span>
-              <span :class="$style.folderParentHint"
-                >父级目录：{{ folderDialogParentPath }}</span
-              >
+              <span :class="$style.folderParentHint">父级目录：{{ folderDialogParentPath }}</span>
             </div>
           </template>
           <el-input
@@ -657,13 +691,16 @@ onMounted(async () => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="folderDialogVisible = false">取消</el-button>
+        <el-button @click="folderDialogVisible = false">
+          取消
+        </el-button>
         <el-button
           type="primary"
           :loading="folderSubmitting"
           @click="submitFolder"
-          >创建</el-button
         >
+          创建
+        </el-button>
       </template>
     </el-dialog>
 
@@ -707,13 +744,16 @@ onMounted(async () => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="folderEditVisible = false">取消</el-button>
+        <el-button @click="folderEditVisible = false">
+          取消
+        </el-button>
         <el-button
           type="primary"
           :loading="folderEditSubmitting"
           @click="submitFolderEdit"
-          >保存</el-button
         >
+          保存
+        </el-button>
       </template>
     </el-dialog>
 
@@ -781,22 +821,27 @@ onMounted(async () => {
                   </el-space>
                 </el-option>
               </el-select>
-              <el-button text type="danger" @click="removeFieldRow(i)"
-                >删除</el-button
-              >
+              <el-button text type="danger" @click="removeFieldRow(i)">
+                删除
+              </el-button>
             </div>
-            <el-button @click="addFieldRow">添加字段</el-button>
+            <el-button @click="addFieldRow">
+              添加字段
+            </el-button>
           </div>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="datasetDialogVisible = false">取消</el-button>
+        <el-button @click="datasetDialogVisible = false">
+          取消
+        </el-button>
         <el-button
           type="primary"
           :loading="datasetSubmitting"
           @click="submitDataset"
-          >创建</el-button
         >
+          创建
+        </el-button>
       </template>
     </el-dialog>
 
@@ -839,10 +884,12 @@ onMounted(async () => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="editVisible = false">取消</el-button>
-        <el-button type="primary" :loading="editSubmitting" @click="submitEdit"
-          >保存</el-button
-        >
+        <el-button @click="editVisible = false">
+          取消
+        </el-button>
+        <el-button type="primary" :loading="editSubmitting" @click="submitEdit">
+          保存
+        </el-button>
       </template>
     </el-dialog>
   </div>

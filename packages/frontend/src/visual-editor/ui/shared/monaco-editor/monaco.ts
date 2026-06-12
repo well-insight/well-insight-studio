@@ -11,12 +11,14 @@ const global: any = globalThis || window
 
 global.MonacoEnvironment = {
   getWorker(_: string, label: string) {
-    if (label === 'json') return new jsonWorker()
-    if (label === 'css' || label === 'scss' || label === 'less') return new cssWorker()
+    if (label === 'json')
+      return new jsonWorker()
+    if (label === 'css' || label === 'scss' || label === 'less')
+      return new cssWorker()
     // if (label === 'html' || label === 'handlebars' || label === 'razor') return new htmlWorker()
     // if (label === 'typescript' || label === 'javascript') return new tsWorker()
     // return new editorWorker()
-  }
+  },
 }
 
 const languages = Monaco.languages.getLanguages()

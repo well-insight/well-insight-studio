@@ -9,7 +9,7 @@ import {
   onMounted,
   provide,
   reactive,
-  ref
+  ref,
 } from 'vue'
 import { defer } from './defer'
 import './dropdown-sservice.scss'
@@ -23,7 +23,7 @@ const DropdownServiceProvider = (() => {
   const DROPDOWN_SERVICE_PROVIDER = '@@DROPDOWN_SERVICE_PROVIDER'
   return {
     provide: (handler: { onClick: () => void }) => provide(DROPDOWN_SERVICE_PROVIDER, handler),
-    inject: () => inject(DROPDOWN_SERVICE_PROVIDER) as { onClick: () => void }
+    inject: () => inject(DROPDOWN_SERVICE_PROVIDER) as { onClick: () => void },
   }
 })()
 
@@ -42,7 +42,7 @@ const ServiceComponent = defineComponent({
         const dfd = defer()
         onMounted(() => setTimeout(() => dfd.resolve(), 0))
         return dfd.promise
-      })()
+      })(),
     })
 
     const service = (option: DropdownServiceOption) => {
@@ -52,7 +52,8 @@ const ServiceComponent = defineComponent({
         const { top, left, height } = option.reference.getBoundingClientRect()!
         state.top = top + height
         state.left = left
-      } else {
+      }
+      else {
         const { clientX, clientY } = option.reference
         state.left = clientX
         state.top = clientY
@@ -68,19 +69,19 @@ const ServiceComponent = defineComponent({
       },
       hide: () => {
         state.showFlag = false
-      }
+      },
     }
 
     const classes = computed(() => [
       'dropdown-service',
       {
-        'dropdown-service-show': state.showFlag
-      }
+        'dropdown-service-show': state.showFlag,
+      },
     ])
 
     const styles = computed(() => ({
       top: `${state.top}px`,
-      left: `${state.left}px`
+      left: `${state.left}px`,
     }))
 
     Object.assign(ctx.proxy!, { service })
@@ -101,13 +102,13 @@ const ServiceComponent = defineComponent({
         {state.option.content()}
       </div>
     )
-  }
+  },
 })
 
 export const DropdownOption = defineComponent({
   props: {
     label: { type: String },
-    icon: { type: String }
+    icon: { type: String },
   },
   emits: ['click'],
   setup(props, ctx) {
@@ -117,16 +118,16 @@ export const DropdownOption = defineComponent({
       onClick: (e: MouseEvent) => {
         ctx.emit('click', e)
         dropdownClickHandler()
-      }
+      },
     }
 
     return () => (
-      <div class='dropdown-option' onClick={handler.onClick}>
+      <div class="dropdown-option" onClick={handler.onClick}>
         <i class={props.icon} />
         <span>{props.label}</span>
       </div>
     )
-  }
+  },
 })
 
 export const $$dropdown = (() => {

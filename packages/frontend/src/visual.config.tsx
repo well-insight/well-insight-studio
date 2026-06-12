@@ -1,13 +1,12 @@
+import type { VisualEditorComponent } from './visual-editor/visual-editor.utils'
 import { computed } from 'vue'
-import mobileWidgets from './packages/mobile'
 
 import pcWidgets from './packages/pc'
+
 // import baseWidgets from '@/packages/base-widgets'
 // import containerComponent from '@/packages/container-component'
 import { useWorkspaceStoreWithout } from './stores/workspaceStore'
-
 import { createVisualEditorConfig } from './visual-editor/visual-editor.utils'
-import type { VisualEditorComponent } from './visual-editor/visual-editor.utils'
 
 const workspaceStore = useWorkspaceStoreWithout()
 
@@ -38,7 +37,7 @@ function registryVisual() {
 
   console.log(
     `%c成功加载组件数量:${Object.keys(visualConfig.componentMap).length}`,
-    'color:#409EFF;background-color:#ecf5ff;padding:0 10px;line-height:2;margin-bottom:4px;'
+    'color:#409EFF;background-color:#ecf5ff;padding:0 10px;line-height:2;margin-bottom:4px;',
   )
 
   console.log('visualConfig:', visualConfig)

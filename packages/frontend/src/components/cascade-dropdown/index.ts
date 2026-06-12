@@ -1,1 +1,1 @@
-export { default as CascadeDropdown } from "./CascadeDropdown.vue";
+export { default as CascadeDropdown } from './CascadeDropdown.vue'

@@ -6,7 +6,7 @@ const props = withDefaults(
   defineProps<{
     propConfig: VisualEditorProps
   }>(),
-  {}
+  {},
 )
 
 const moduleValue = defineModel<string>({ required: false, default: '' })
@@ -14,7 +14,7 @@ const moduleValue = defineModel<string>({ required: false, default: '' })
 function beforeUpload(file: File) {
   console.log(file, '要上传的文件')
   const fileReader = new FileReader()
-  fileReader.onload = event => {
+  fileReader.onload = (event) => {
     moduleValue.value = event.target?.result as string
   }
   fileReader.readAsDataURL(file)
@@ -30,7 +30,9 @@ function beforeUpload(file: File) {
           <el-icon class="el-icon--upload">
             <UploadFilled />
           </el-icon>
-          <div class="el-upload__text">拖拽文件或 <em>点击上传</em></div>
+          <div class="el-upload__text">
+            拖拽文件或 <em>点击上传</em>
+          </div>
         </template>
       </div>
     </ElUpload>

@@ -1,1 +1,1 @@
-export { default as ColumnField } from "./ColumnField.vue";
+export { default as ColumnField } from './ColumnField.vue'

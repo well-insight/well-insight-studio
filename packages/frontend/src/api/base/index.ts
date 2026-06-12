@@ -1,9 +1,9 @@
-import { request } from "@/utils";
+import { request } from '@/utils'
 
 /**
  * 测试
  * @returns
  */
-export const testApi = () => {
-  return request.get("/lowcode/pages");
-};
+export function testApi() {
+  return request.get('/lowcode/pages')
+}

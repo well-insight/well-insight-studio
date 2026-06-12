@@ -1,23 +1,23 @@
 <script lang="ts" setup>
-import { ref } from "vue";
-import { ButtonTabs } from "@/components/button-tabs";
-import { EventAction } from "@/visual-editor/ui/workbench/right-attribute-panel/components";
-import PageComponent from "./PageComponent.vue";
+import { ref } from 'vue'
+import { ButtonTabs } from '@/components/button-tabs'
+import { EventAction } from '@/visual-editor/ui/workbench/right-attribute-panel/components'
+import PageComponent from './PageComponent.vue'
 // import PageEvent from './PageEvent.vue'
-import PageStore from "./PageStore.vue";
+import PageStore from './PageStore.vue'
 
-const currentActive = ref("component");
+const currentActive = ref('component')
 
 const pageListOptions = ref([
   {
-    label: "组件",
-    value: "component",
+    label: '组件',
+    value: 'component',
   },
   {
-    label: "状态",
-    value: "store",
+    label: '状态',
+    value: 'store',
   },
-]);
+])
 </script>
 
 <template>

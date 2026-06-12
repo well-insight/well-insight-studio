@@ -8,7 +8,7 @@ import {
   createEditorColorProp,
   createEditorCrossSortableProp,
   createEditorInputProp,
-  createEditorSwitchProp
+  createEditorSwitchProp,
 } from '@/visual-editor/visual-editor.props'
 import { createNewBlock } from '@/visual-editor/visual-editor.utils'
 import { getTabbarItem } from './tabbar-item'
@@ -16,16 +16,16 @@ import { getTabbarItem } from './tabbar-item'
 const defaultTabbarItems = [
   {
     icon: 'home-o',
-    title: '首页'
+    title: '首页',
   },
   {
     icon: 'apps-o',
-    title: '导航'
+    title: '导航',
   },
   {
     icon: 'user-o',
-    title: '我的'
-  }
+    title: '我的',
+  },
 ]
 
 export default {
@@ -55,7 +55,8 @@ export default {
         draggableEl.style.width = '100%'
         draggableEl.style.zIndex = '1000'
         dragArea.style.paddingBottom = '56px'
-      } else {
+      }
+      else {
         document.body.style.paddingBottom = '50px'
         const slotEl = compEl?.closest('__slot-item')
         if (slotEl) {
@@ -74,7 +75,7 @@ export default {
 
     return () => (
       <Tabbar ref={el => registerRef(el, block._vid)} v-model={props.modelValue} {...props}>
-        {props.tabs?.map(item => {
+        {props.tabs?.map((item) => {
           const itemProps = item.block?.props
           const url = `${BASE_URL}${props.baseUrl}${itemProps.url}`.replace(/\/{2,}/g, '/')
           return (
@@ -89,18 +90,18 @@ export default {
   props: {
     modelValue: createEditorInputProp({
       label: '当前选中标签的名称或索引值',
-      defaultValue: ''
+      defaultValue: '',
     }),
     tabs: createEditorCrossSortableProp({
       label: '默认选项',
       labelPosition: 'top',
       multiple: false,
       showItemPropsConfig: true,
-      defaultValue: defaultTabbarItems.map(item => {
+      defaultValue: defaultTabbarItems.map((item) => {
         const block = createNewBlock(getTabbarItem())
         block.props.icon = item.icon
         return { label: item.title, value: item.icon, component: getTabbarItem(), block }
-      })
+      }),
     }),
     fixed: createEditorSwitchProp({ label: '是否固定在底部', defaultValue: true }),
     border: createEditorSwitchProp({ label: '是否显示外边框', defaultValue: true }),
@@ -115,15 +116,15 @@ export default {
     // }),
     safeAreaInsetBottom: createEditorSwitchProp({
       label: '是否开启底部安全区适配，设置 fixed 时默认开启',
-      defaultValue: false
-    })
+      defaultValue: false,
+    }),
   },
   events: [
     { label: '点击左侧按钮时触发', value: 'click-left' },
-    { label: '点击右侧按钮时触发', value: 'click-right' }
+    { label: '点击右侧按钮时触发', value: 'click-right' },
   ],
   draggable: false,
   resize: {
-    width: true
-  }
+    width: true,
+  },
 } as VisualEditorComponent

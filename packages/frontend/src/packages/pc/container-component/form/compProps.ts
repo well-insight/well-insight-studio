@@ -2,23 +2,23 @@ import {
   createEditorInputProp,
   createEditorSelectProp,
   createEditorSwitchProp,
-  createEditorTableProp
+  createEditorTableProp,
 } from '@/visual-editor/visual-editor.props'
 
 // 对齐方式
 const alignOptions = [
   {
     label: '左对齐',
-    value: 'left'
+    value: 'left',
   },
   {
     label: '右对齐',
-    value: 'right'
+    value: 'right',
   },
   {
     label: '居中对齐',
-    value: 'center'
-  }
+    value: 'center',
+  },
 ]
 
 export const compProps = {
@@ -28,56 +28,56 @@ export const compProps = {
       options: [
         { label: '显示值', field: 'label' },
         { label: '绑定值', field: 'value' },
-        { label: '备注', field: 'comments' }
+        { label: '备注', field: 'comments' },
       ],
-      showKey: 'label'
+      showKey: 'label',
     },
-    defaultValue: []
+    defaultValue: [],
   }),
-  colon: createEditorSwitchProp({ label: '是否在 label 后面添加冒号' }),
-  disabled: createEditorSwitchProp({ label: '是否禁用表单中的所有输入框' }),
-  errorMessageAlign: createEditorSelectProp({
+  'colon': createEditorSwitchProp({ label: '是否在 label 后面添加冒号' }),
+  'disabled': createEditorSwitchProp({ label: '是否禁用表单中的所有输入框' }),
+  'errorMessageAlign': createEditorSelectProp({
     label: '错误提示文案对齐方式',
     defaultValue: 'left',
-    options: alignOptions
+    options: alignOptions,
   }),
-  inputAlign: createEditorSelectProp({
+  'inputAlign': createEditorSelectProp({
     label: '输入框对齐方式',
     defaultValue: 'left',
-    options: alignOptions
+    options: alignOptions,
   }),
-  labelAlign: createEditorSelectProp({
+  'labelAlign': createEditorSelectProp({
     label: '表单项 label 对齐方式',
     defaultValue: 'left',
-    options: alignOptions
+    options: alignOptions,
   }),
-  labelWidth: createEditorInputProp({ label: '表单项 label 宽度，默认单位为px' }),
-  readonly: createEditorSwitchProp({ label: '是否将表单中的所有输入框设置为只读状态' }),
-  scrollToError: createEditorSwitchProp({
-    label: '在提交表单且校验不通过时滚动至错误的表单项'
+  'labelWidth': createEditorInputProp({ label: '表单项 label 宽度，默认单位为px' }),
+  'readonly': createEditorSwitchProp({ label: '是否将表单中的所有输入框设置为只读状态' }),
+  'scrollToError': createEditorSwitchProp({
+    label: '在提交表单且校验不通过时滚动至错误的表单项',
   }),
-  showError: createEditorSwitchProp({ label: '是否在校验不通过时标红输入框' }),
-  showErrorMessage: createEditorSwitchProp({
-    label: '是否在校验不通过时在输入框下方展示错误提示'
+  'showError': createEditorSwitchProp({ label: '是否在校验不通过时标红输入框' }),
+  'showErrorMessage': createEditorSwitchProp({
+    label: '是否在校验不通过时在输入框下方展示错误提示',
   }),
-  submitOnEnter: createEditorSwitchProp({ label: '是否在按下回车键时提交表单' }),
-  validateFirst: createEditorSwitchProp({ label: '是否在某一项校验不通过时停止校验' }),
-  validateTrigger: createEditorSelectProp({
+  'submitOnEnter': createEditorSwitchProp({ label: '是否在按下回车键时提交表单' }),
+  'validateFirst': createEditorSwitchProp({ label: '是否在某一项校验不通过时停止校验' }),
+  'validateTrigger': createEditorSelectProp({
     label: '表单校验触发时机',
     options: [
       {
         label: 'onChange',
-        value: 'onChange'
+        value: 'onChange',
       },
       {
         label: 'onSubmit',
-        value: 'onSubmit'
+        value: 'onSubmit',
       },
       {
         label: 'onBlur',
-        value: 'onBlur'
-      }
+        value: 'onBlur',
+      },
     ],
-    defaultValue: 'onBlur'
-  })
+    defaultValue: 'onBlur',
+  }),
 }

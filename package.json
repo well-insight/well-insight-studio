@@ -9,7 +9,7 @@
     "build": "pnpm --filter \"./packages/*\" build",
     "build:frontend": "pnpm --filter frontend build",
     "build:backend": "pnpm --filter backend build",
-    "lint": "pnpm --filter \"./packages/*\" lint",
+    "lint": "pnpm --filter \"./packages/frontend\" lint",
     "test": "pnpm --filter \"./packages/*\" test"
   },
   "devDependencies": {

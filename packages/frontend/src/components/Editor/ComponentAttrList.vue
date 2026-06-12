@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'
-import { computed, watchEffect } from 'vue'
+import { computed } from 'vue'
 import customComponents from '@/custom-components'
 import { useDesignStore } from '@/stores/design'
 import AeerListRender from './AttrListRender.vue'

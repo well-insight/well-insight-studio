@@ -1,3 +1,213 @@
+<script setup lang="ts">
+import type { InputInstance } from 'element-plus'
+import { Key, Lock, User } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { computed, nextTick, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { loginRequest, registerRequest } from '@/api/auth'
+import AnimatedCharacters from '@/components/animated-characters/index.vue'
+import { getAuthStore } from '@/stores/auth'
+
+type AuthMode = 'login' | 'register'
+
+const router = useRouter()
+const route = useRoute()
+const authStore = getAuthStore()
+
+const mode = ref<AuthMode>('login')
+
+const form = reactive({
+  email: 'admin',
+  username: 'admin',
+  displayName: '',
+  password: 'Aa@123456',
+  confirmPassword: '',
+  captcha: '',
+})
+
+const passwordInput = useTemplateRef<InputInstance | null>('passwordInput')
+
+const loading = ref(false)
+// 状态
+const showPassword = computed(() => passwordInput.value?.passwordVisible)
+// isTyping: 用户是否正在输入，用于控制动画角色行为
+const isTyping = ref(false)
+let typingTimer: ReturnType<typeof setTimeout> | null = null
+const TYPING_IDLE_TIMEOUT = 2000 // 2秒无输入视为停止输入
+
+function handleInput() {
+  isTyping.value = true
+  if (typingTimer)
+    clearTimeout(typingTimer)
+  typingTimer = setTimeout(() => {
+    isTyping.value = false
+  }, TYPING_IDLE_TIMEOUT)
+}
+
+function handleFocus() {
+  isTyping.value = true
+}
+
+function handleBlur() {
+  isTyping.value = false
+  if (typingTimer) {
+    clearTimeout(typingTimer)
+    typingTimer = null
+  }
+}
+const passwordValue = computed(() => form.password)
+
+const captchaAnswer = ref('')
+const canvasRef = useTemplateRef<HTMLCanvasElement>('captchaCanvas')
+
+function drawCaptcha() {
+  const chars = '0123456789'
+  let code = ''
+  for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)]!
+  captchaAnswer.value = code
+
+  const cvs = canvasRef.value
+  if (!cvs)
+    return
+  const ctx = cvs.getContext('2d')
+  if (!ctx)
+    return
+
+  const w = cvs.width
+  const h = cvs.height
+  ctx.fillStyle = '#e4edf7'
+  ctx.fillRect(0, 0, w, h)
+
+  for (let i = 0; i < 5; i++) {
+    ctx.strokeStyle = `rgba(30, 91, 184, ${0.12 + Math.random() * 0.2})`
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(Math.random() * w, Math.random() * h)
+    ctx.lineTo(Math.random() * w, Math.random() * h)
+    ctx.stroke()
+  }
+
+  ctx.font = 'bold 21px ui-sans-serif, system-ui, sans-serif'
+  ctx.textBaseline = 'middle'
+  for (let i = 0; i < code.length; i++) {
+    ctx.fillStyle = `rgb(${20 + Math.floor(Math.random() * 40)}, ${70 + Math.floor(Math.random() * 60)}, ${150 + Math.floor(Math.random() * 50)})`
+    ctx.save()
+    ctx.translate(14 + i * 24, h / 2)
+    ctx.rotate((Math.random() - 0.5) * 0.45)
+    ctx.fillText(code[i]!, -6, 0)
+    ctx.restore()
+  }
+}
+
+function refreshCaptcha() {
+  form.captcha = ''
+  nextTick(() => drawCaptcha())
+}
+
+onMounted(() => {
+  nextTick(() => drawCaptcha())
+})
+
+watch(mode, () => {
+  form.captcha = ''
+  nextTick(() => drawCaptcha())
+})
+
+function validateCaptcha(): boolean {
+  if (!form.captcha.trim()) {
+    ElMessage.warning('请输入验证码')
+    return false
+  }
+  if (form.captcha.trim() !== captchaAnswer.value) {
+    ElMessage.error('验证码错误')
+    refreshCaptcha()
+    return false
+  }
+  return true
+}
+
+async function afterAuthSuccess(message: string) {
+  ElMessage.success(message)
+  const redirect
+    = typeof route.query.redirect === 'string' && route.query.redirect ? route.query.redirect : '/'
+  await router.replace(redirect)
+}
+
+async function onSubmit() {
+  const accountOrEmail = form.email.trim()
+  const password = form.password
+
+  if (!accountOrEmail) {
+    ElMessage.warning(mode.value === 'login' ? '请输入邮箱或用户名' : '请输入邮箱')
+    return
+  }
+  if (!password) {
+    ElMessage.warning('请输入密码')
+    return
+  }
+
+  if (mode.value === 'register') {
+    const email = accountOrEmail
+    const username = form.username.trim()
+    if (!username) {
+      ElMessage.warning('请输入用户名')
+      return
+    }
+    if (username.length < 2) {
+      ElMessage.warning('用户名至少 2 个字符')
+      return
+    }
+    if (password.length < 6) {
+      ElMessage.warning('密码至少 6 位')
+      return
+    }
+    if (password !== form.confirmPassword) {
+      ElMessage.warning('两次输入的密码不一致')
+      return
+    }
+  }
+
+  if (!validateCaptcha())
+    return
+
+  loading.value = true
+  try {
+    if (mode.value === 'login') {
+      const result = await loginRequest({ account: accountOrEmail, password })
+      if (!result.ok) {
+        ElMessage.error(result.message)
+        refreshCaptcha()
+        return
+      }
+      authStore.loginSuccess(result.token, result.user)
+      await afterAuthSuccess(result.message)
+      return
+    }
+
+    const result = await registerRequest({
+      email: accountOrEmail,
+      username: form.username.trim(),
+      password,
+      display_name: form.displayName.trim() || undefined,
+    })
+    if (!result.ok) {
+      ElMessage.error(result.message)
+      refreshCaptcha()
+      return
+    }
+    authStore.loginSuccess(result.token, result.user)
+    await afterAuthSuccess(result.message)
+  }
+  finally {
+    loading.value = false
+  }
+}
+
+function setMode(next: AuthMode) {
+  mode.value = next
+}
+</script>
+
 <template>
   <div class="login-container">
     <!-- 左侧：品牌视觉区 -->
@@ -228,210 +438,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { loginRequest, registerRequest } from "@/api/auth";
-import AnimatedCharacters from "@/components/animated-characters/index.vue";
-import { getAuthStore } from "@/stores/auth";
-import { Key, Lock, User } from "@element-plus/icons-vue";
-import { ElMessage, type InputInstance } from "element-plus";
-import { computed, nextTick, onMounted, reactive, ref, useTemplateRef, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
-
-type AuthMode = "login" | "register";
-
-const router = useRouter();
-const route = useRoute();
-const authStore = getAuthStore();
-
-const mode = ref<AuthMode>("login");
-
-const form = reactive({
-  email: "admin",
-  username: "admin",
-  displayName: "",
-  password: "Aa@123456",
-  confirmPassword: "",
-  captcha: "",
-});
-
-const passwordInput = useTemplateRef<InputInstance | null>("passwordInput");
-
-const loading = ref(false);
-// 状态
-const showPassword = computed(() => passwordInput.value?.passwordVisible);
-// isTyping: 用户是否正在输入，用于控制动画角色行为
-const isTyping = ref(false);
-let typingTimer: ReturnType<typeof setTimeout> | null = null;
-const TYPING_IDLE_TIMEOUT = 2000; // 2秒无输入视为停止输入
-
-function handleInput() {
-  isTyping.value = true;
-  if (typingTimer) clearTimeout(typingTimer);
-  typingTimer = setTimeout(() => {
-    isTyping.value = false;
-  }, TYPING_IDLE_TIMEOUT);
-}
-
-function handleFocus() {
-  isTyping.value = true;
-}
-
-function handleBlur() {
-  isTyping.value = false;
-  if (typingTimer) {
-    clearTimeout(typingTimer);
-    typingTimer = null;
-  }
-}
-const passwordValue = computed(() => form.password);
-
-const captchaAnswer = ref("");
-const canvasRef = useTemplateRef<HTMLCanvasElement>("captchaCanvas");
-
-function drawCaptcha() {
-  const chars = "0123456789";
-  let code = "";
-  for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)]!;
-  captchaAnswer.value = code;
-
-  const cvs = canvasRef.value;
-  if (!cvs) return;
-  const ctx = cvs.getContext("2d");
-  if (!ctx) return;
-
-  const w = cvs.width;
-  const h = cvs.height;
-  ctx.fillStyle = "#e4edf7";
-  ctx.fillRect(0, 0, w, h);
-
-  for (let i = 0; i < 5; i++) {
-    ctx.strokeStyle = `rgba(30, 91, 184, ${0.12 + Math.random() * 0.2})`;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(Math.random() * w, Math.random() * h);
-    ctx.lineTo(Math.random() * w, Math.random() * h);
-    ctx.stroke();
-  }
-
-  ctx.font = "bold 21px ui-sans-serif, system-ui, sans-serif";
-  ctx.textBaseline = "middle";
-  for (let i = 0; i < code.length; i++) {
-    ctx.fillStyle = `rgb(${20 + Math.floor(Math.random() * 40)}, ${70 + Math.floor(Math.random() * 60)}, ${150 + Math.floor(Math.random() * 50)})`;
-    ctx.save();
-    ctx.translate(14 + i * 24, h / 2);
-    ctx.rotate((Math.random() - 0.5) * 0.45);
-    ctx.fillText(code[i]!, -6, 0);
-    ctx.restore();
-  }
-}
-
-function refreshCaptcha() {
-  form.captcha = "";
-  nextTick(() => drawCaptcha());
-}
-
-onMounted(() => {
-  nextTick(() => drawCaptcha());
-});
-
-watch(mode, () => {
-  form.captcha = "";
-  nextTick(() => drawCaptcha());
-});
-
-function validateCaptcha(): boolean {
-  if (!form.captcha.trim()) {
-    ElMessage.warning("请输入验证码");
-    return false;
-  }
-  if (form.captcha.trim() !== captchaAnswer.value) {
-    ElMessage.error("验证码错误");
-    refreshCaptcha();
-    return false;
-  }
-  return true;
-}
-
-async function afterAuthSuccess(message: string) {
-  ElMessage.success(message);
-  const redirect =
-    typeof route.query.redirect === "string" && route.query.redirect ? route.query.redirect : "/";
-  await router.replace(redirect);
-}
-
-async function onSubmit() {
-  const accountOrEmail = form.email.trim();
-  const password = form.password;
-
-  if (!accountOrEmail) {
-    ElMessage.warning(mode.value === "login" ? "请输入邮箱或用户名" : "请输入邮箱");
-    return;
-  }
-  if (!password) {
-    ElMessage.warning("请输入密码");
-    return;
-  }
-
-  if (mode.value === "register") {
-    const email = accountOrEmail;
-    const username = form.username.trim();
-    if (!username) {
-      ElMessage.warning("请输入用户名");
-      return;
-    }
-    if (username.length < 2) {
-      ElMessage.warning("用户名至少 2 个字符");
-      return;
-    }
-    if (password.length < 6) {
-      ElMessage.warning("密码至少 6 位");
-      return;
-    }
-    if (password !== form.confirmPassword) {
-      ElMessage.warning("两次输入的密码不一致");
-      return;
-    }
-  }
-
-  if (!validateCaptcha()) return;
-
-  loading.value = true;
-  try {
-    if (mode.value === "login") {
-      const result = await loginRequest({ account: accountOrEmail, password });
-      if (!result.ok) {
-        ElMessage.error(result.message);
-        refreshCaptcha();
-        return;
-      }
-      authStore.loginSuccess(result.token, result.user);
-      await afterAuthSuccess(result.message);
-      return;
-    }
-
-    const result = await registerRequest({
-      email: accountOrEmail,
-      username: form.username.trim(),
-      password,
-      display_name: form.displayName.trim() || undefined,
-    });
-    if (!result.ok) {
-      ElMessage.error(result.message);
-      refreshCaptcha();
-      return;
-    }
-    authStore.loginSuccess(result.token, result.user);
-    await afterAuthSuccess(result.message);
-  } finally {
-    loading.value = false;
-  }
-}
-
-function setMode(next: AuthMode) {
-  mode.value = next;
-}
-</script>
 
 <style lang="scss" scoped>
 .login-container {
@@ -724,7 +730,7 @@ function setMode(next: AuthMode) {
 
   &::before,
   &::after {
-    content: "";
+    content: '';
     flex: 1;
     height: 1px;
     background: #e5e7eb;

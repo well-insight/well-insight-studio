@@ -1,55 +1,55 @@
 <script lang="ts" setup>
-import type { TextStyleConfig } from "@/visual-editor/core/visual-editor.utils";
-import { useVModel } from "@vueuse/core";
+import type { TextStyleConfig } from '@/visual-editor/core/visual-editor.utils'
+import { useVModel } from '@vueuse/core'
 
-export type TextStyleConfigLayout = "dropdown" | "form";
+export type TextStyleConfigLayout = 'dropdown' | 'form'
 
 const props = withDefaults(
   defineProps<{
-    modelValue: TextStyleConfig;
+    modelValue: TextStyleConfig
     /** dropdown: 用于工具栏下拉项；form: 用于表单面板 */
-    layout?: TextStyleConfigLayout;
-    size?: "small" | "default";
+    layout?: TextStyleConfigLayout
+    size?: 'small' | 'default'
     /** 下拉内 select 是否 teleport */
-    teleported?: boolean;
-    showPosition?: boolean;
-    showBackground?: boolean;
-    showBorderRadius?: boolean;
-    showPadding?: boolean;
+    teleported?: boolean
+    showPosition?: boolean
+    showBackground?: boolean
+    showBorderRadius?: boolean
+    showPadding?: boolean
     /** 表单项 label 宽度 */
-    labelWidth?: string | number;
+    labelWidth?: string | number
   }>(),
   {
-    layout: "dropdown",
-    size: "default",
+    layout: 'dropdown',
+    size: 'default',
     teleported: false,
     showPosition: false,
     showBackground: true,
     showBorderRadius: true,
     showPadding: false,
-    labelWidth: "auto",
+    labelWidth: 'auto',
   },
-);
+)
 
 const emit = defineEmits<{
-  "update:modelValue": [value: TextStyleConfig];
-}>();
+  'update:modelValue': [value: TextStyleConfig]
+}>()
 
-const style = useVModel(props, "modelValue", emit);
+const style = useVModel(props, 'modelValue', emit)
 
 const fontWeightOptions = [
-  { label: "常规", value: 400 },
-  { label: "中等", value: 500 },
-  { label: "加粗", value: 600 },
-  { label: "特粗", value: 700 },
-];
+  { label: '常规', value: 400 },
+  { label: '中等', value: 500 },
+  { label: '加粗', value: 600 },
+  { label: '特粗', value: 700 },
+]
 
 const positionOptions = [
-  { label: "卡片内顶部", value: "inner" },
-  { label: "外侧-左", value: "outer-left" },
-  { label: "外侧-上", value: "outer-top" },
-  { label: "外侧-右", value: "outer-right" },
-];
+  { label: '卡片内顶部', value: 'inner' },
+  { label: '外侧-左', value: 'outer-left' },
+  { label: '外侧-上', value: 'outer-top' },
+  { label: '外侧-右', value: 'outer-right' },
+]
 </script>
 
 <template>

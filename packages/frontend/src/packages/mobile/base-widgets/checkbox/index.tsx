@@ -6,7 +6,7 @@ import {
   createEditorCrossSortableProp,
   createEditorInputProp,
   createEditorModelBindProp,
-  createEditorSelectProp
+  createEditorSelectProp,
 } from '@/visual-editor/visual-editor.props'
 import { createFieldProps } from './createFieldProps'
 
@@ -15,11 +15,11 @@ export default {
   moduleName: 'baseWidgets',
   label: '表单项类型 - 复选框',
   preview: () => (
-    <CheckboxGroup modelValue={['1']} direction='horizontal'>
-      <Checkbox name='1' shape='square'>
+    <CheckboxGroup modelValue={['1']} direction="horizontal">
+      <Checkbox name="1" shape="square">
         one
       </Checkbox>
-      <Checkbox name='2' shape='square'>
+      <Checkbox name="2" shape="square">
         two
       </Checkbox>
     </CheckboxGroup>
@@ -31,25 +31,25 @@ export default {
       get() {
         return typeof props.modelValue === 'string' ? props.modelValue.split(',') : props.modelValue
       },
-      set: val => (props.modelValue = val)
+      set: val => (props.modelValue = val),
     })
 
     return () => (
       <div style={styles}>
         <Field
           {...props}
-          modelValue=''
+          modelValue=""
           name={Array.isArray(props.name) ? [...props.name].pop() : props.name}
           v-slots={{
             input: () => (
               <CheckboxGroup ref={el => registerRef(el, block._vid)} {...props} v-model={checkList.value}>
                 {props.options?.map(item => (
-                  <Checkbox name={item.value} style={{ marginBottom: '5px' }} shape='square'>
+                  <Checkbox name={item.value} style={{ marginBottom: '5px' }} shape="square">
                     {item.label}
                   </Checkbox>
                 ))}
               </CheckboxGroup>
-            )
+            ),
           }}
         />
       </div>
@@ -58,7 +58,7 @@ export default {
   props: {
     modelValue: createEditorInputProp({
       label: '默认值',
-      defaultValue: []
+      defaultValue: [],
     }),
     name: createEditorModelBindProp({ label: '字段绑定', defaultValue: '' }),
     label: createEditorInputProp({ label: '输入框左侧文本', defaultValue: '复选框' }),
@@ -69,33 +69,33 @@ export default {
       defaultValue: [
         { label: '胡萝卜', value: 'carrot' },
         { label: '白菜', value: 'cabbage' },
-        { label: '猪', value: 'pig' }
-      ]
+        { label: '猪', value: 'pig' },
+      ],
     }),
     direction: createEditorSelectProp({
       label: '排列方向',
       options: [
         {
           label: '水平',
-          value: 'horizontal'
+          value: 'horizontal',
         },
         {
           label: '垂直',
-          value: 'vertical'
-        }
+          value: 'vertical',
+        },
       ],
-      defaultValue: 'horizontal'
+      defaultValue: 'horizontal',
     }),
-    ...createFieldProps()
+    ...createFieldProps(),
   },
   events: [
     { label: '当绑定值变化时触发的事件', value: 'change' },
-    { label: '点击复选框时触发', value: 'click' }
+    { label: '点击复选框时触发', value: 'click' },
   ],
   resize: {
-    width: true
+    width: true,
   },
   model: {
-    default: '绑定字段'
-  }
+    default: '绑定字段',
+  },
 } as VisualEditorComponent

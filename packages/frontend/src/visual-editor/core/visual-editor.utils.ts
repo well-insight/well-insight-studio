@@ -1,100 +1,100 @@
-import type { CSSProperties } from "vue";
-import type { VisualEditorProps } from "./visual-editor.props";
-import type { ContentTypeEnum, RequestEnum } from "@/enums/httpEnum";
-import { inject, provide } from "vue";
-import { useDotProp } from "@/visual-editor/hooks/useDotProp";
-import { generateNanoid } from "@/visual-editor/lib";
-import type { GridItemProps } from "grid-layout-plus";
-import { isChartComponent } from "@/utils/datasetBinding";
+import type { GridItemProps } from 'grid-layout-plus'
+import type { CSSProperties } from 'vue'
+import type { VisualEditorProps } from './visual-editor.props'
+import type { ContentTypeEnum, RequestEnum } from '@/enums/httpEnum'
+import { inject, provide } from 'vue'
+import { isChartComponent } from '@/utils/datasetBinding'
+import { useDotProp } from '@/visual-editor/hooks/useDotProp'
+import { generateNanoid } from '@/visual-editor/lib'
 
 /**
  * @description 组件属性
  */
 export interface VisualEditorBlockData extends GridItemProps {
   /** 组件id 时间戳, 组件唯一标识 */
-  _vid: string;
+  _vid: string
   /** 组件所属的模块（基础组件、容器组件） */
-  moduleName: keyof ComponentModules;
+  moduleName: keyof ComponentModules
   /** 映射 VisualEditorConfig 中 componentMap 的 component对象 */
-  componentKey: string;
+  componentKey: string
   /** 组件标签名称 */
-  label: string;
+  label: string
   /** 是否需要调整位置 */
-  adjustPosition: boolean;
+  adjustPosition: boolean
   /** 当前是否为选中状态 */
-  focus: boolean;
-  w: number;
-  h: number;
-  x: number;
-  y: number;
+  focus: boolean
+  w: number
+  h: number
+  x: number
+  y: number
   /** 当前组件的样式 */
   styles: CSSProperties & {
-    tempPadding?: string;
-  };
+    tempPadding?: string
+  }
   /** 是否调整过宽度或者高度 */
-  hasResize: boolean;
+  hasResize: boolean
   /** 组件的设计属性 */
-  props: Record<string, any>;
+  props: Record<string, any>
   /** 各配置项的数据集绑定（配置项 prop 名 -> 绑定信息） */
-  datasetBindings?: import("@/utils/datasetBinding").BlockDatasetBindings;
+  datasetBindings?: import('@/utils/datasetBinding').BlockDatasetBindings
   /** 绑定的字段 */
-  model: Record<string, string>;
+  model: Record<string, string>
   /** 组件是否可以被拖拽 */
-  draggable: boolean;
+  draggable: boolean
   /** 是否显示组件样式配置项 */
-  showStyleConfig?: boolean;
+  showStyleConfig?: boolean
   /** 编辑态是否展示组件标题 */
-  showTitle?: boolean;
+  showTitle?: boolean
   /** 组件标题样式 */
-  titleStyle?: BlockTitleStyle;
+  titleStyle?: BlockTitleStyle
   /** 组件边框覆盖（未设置项沿用页面 componentBorder） */
-  borderOverride?: ComponentBorderOverride;
+  borderOverride?: ComponentBorderOverride
   /** 动画集 */
-  animations?: Animation[];
+  animations?: Animation[]
   /** 组件动作集合 */
-  actions: Action[];
+  actions: Action[]
   /** 组件事件集合 */
-  events: { label: string; value: string }[];
-  [prop: string]: any;
+  events: { label: string, value: string }[]
+  [prop: string]: any
 }
 /**
  * @description 组件动作事件处理
  */
 export interface ActionHandle {
-  key: string;
-  name: string;
-  link: string[];
+  key: string
+  name: string
+  link: string[]
   data?: {
-    bind?: string;
-    recv?: string;
-  };
+    bind?: string
+    recv?: string
+  }
 }
 /**
  * @description 组件动作
  */
 export interface Action {
-  key: string;
-  name: string;
-  event: string;
-  handle: ActionHandle[];
+  key: string
+  name: string
+  event: string
+  handle: ActionHandle[]
 }
 
 /**
  * @description 组件边框样式（页面全局默认）
  */
 export interface ComponentBorderStyle {
-  show?: boolean;
-  width?: string;
-  style?: string;
-  color?: string;
-  radius?: string;
+  show?: boolean
+  width?: string
+  style?: string
+  color?: string
+  radius?: string
   /** 阴影样式，如：0 2px 8px rgba(0,0,0,0.1) */
-  shadow?: string;
+  shadow?: string
 }
 
 /** 组件级边框覆盖，null/undefined 的 show 表示沿用页面全局 */
 export interface ComponentBorderOverride extends Partial<ComponentBorderStyle> {
-  show?: boolean | null;
+  show?: boolean | null
 }
 
 /**
@@ -105,60 +105,60 @@ export interface PageConfig {
    * 页面尺寸
    */
   pageSize?: {
-    name?: string;
-    width?: number;
-    height?: number;
-  };
+    name?: string
+    width?: number
+    height?: number
+  }
   /** 背景图片 */
-  bgImage: string;
+  bgImage: string
   /** 背景颜色 */
-  bgColor: string;
+  bgColor: string
   /**
    * 背景重复
    */
-  bgRepeat?: string;
+  bgRepeat?: string
   /**
    * 背景大小
    */
-  bgSize?: string;
+  bgSize?: string
   /** 是否缓存当前页面 */
-  keepAlive: boolean;
+  keepAlive: boolean
   /** 页面内组件默认边框 */
-  componentBorder?: ComponentBorderStyle;
+  componentBorder?: ComponentBorderStyle
 }
 /**
  * @description 页面对象
  */
 export interface VisualEditorPage {
   /** 页面标题 */
-  title: string;
+  title: string
   /** 页面路径 */
-  path: string;
+  path: string
   /** 404是重定向到默认页面 */
-  isDefault?: boolean;
+  isDefault?: boolean
   /** 页面配置 */
-  config: PageConfig;
+  config: PageConfig
   /** 当前页面的所有组件 */
-  blocks: VisualEditorBlockData[];
+  blocks: VisualEditorBlockData[]
 }
 /**
  * @description 可以认为是 路由=>页面
  */
 export interface VisualEditorPages {
-  [path: string]: VisualEditorPage;
+  [path: string]: VisualEditorPage
 }
 /**
  * @description 实体类型
  */
 export interface EntityType {
   /** 绑定的字段 输入 */
-  key: string;
+  key: string
   /** 实体名称 输入 */
-  name: string;
+  name: string
   /** 数据类型 选择 */
-  type: string;
+  type: string
   /** 默认值 输入 */
-  value: string;
+  value: string
 }
 
 /**
@@ -166,34 +166,34 @@ export interface EntityType {
  */
 export interface VisualEditorModel {
   /** 数据源名称 */
-  name: string;
+  name: string
   /** 绑定的字段 该字段创建的时候生成 */
-  key: string;
+  key: string
   /** 实体集合 */
-  entitys: EntityType[];
+  entitys: EntityType[]
 }
 /**
  * @description 接口请求对象
  */
 export interface FetchApiItem {
   /**  随机生成的key */
-  key: string;
+  key: string
   /** 随机生成的key */
-  name: string;
+  name: string
   options: {
     /** 请求的url */
-    url: string;
+    url: string
     /** 请求的方法 */
-    method: keyof typeof RequestEnum;
+    method: keyof typeof RequestEnum
     /** 请求的内容类型 */
-    contentType: keyof typeof ContentTypeEnum;
-  };
+    contentType: keyof typeof ContentTypeEnum
+  }
   data: {
     /** 请求绑定对应的某个实体 */
-    bind: string;
+    bind: string
     /** 响应的结果绑定到某个实体上 */
-    recv: string;
-  };
+    recv: string
+  }
 }
 
 /**
@@ -201,199 +201,200 @@ export interface FetchApiItem {
  */
 export interface VisualEditorActions {
   fetch: {
-    name: "接口请求";
-    apis: FetchApiItem[];
-  };
+    name: '接口请求'
+    apis: FetchApiItem[]
+  }
   dialog: {
-    name: "对话框";
-    handlers: [];
-  };
+    name: '对话框'
+    handlers: []
+  }
 }
 /**
  * @description 总的数据集
  */
 export interface VisualEditorModelValue {
   /** 页面 */
-  pages: VisualEditorPages;
+  pages: VisualEditorPages
   /** 实体 */
-  models: VisualEditorModel[];
+  models: VisualEditorModel[]
   /** 动作 */
-  actions: VisualEditorActions;
+  actions: VisualEditorActions
 }
 /**
  * @description 动画项
  */
 export interface Animation {
   /** 动画名称 */
-  label: string;
+  label: string
   /** 动画类名 */
-  value: string;
+  value: string
   /** 动画持续时间 */
-  duration: number;
+  duration: number
   /** 动画延迟多久执行 */
-  delay: number;
+  delay: number
   /** 动画执行次数 */
-  count: number;
+  count: number
   /** 是否无限循环动画 */
-  infinite: boolean;
+  infinite: boolean
 }
 /**
  * @description 单个组件注册规则
  */
 export interface VisualEditorComponent {
   /** 组件name */
-  key: string;
+  key: string
   /** 组件所属模块名称 */
-  moduleName: keyof ComponentModules;
+  moduleName: keyof ComponentModules
   /** 组件唯一id */
-  _vid?: string;
+  _vid?: string
   /** 组件中文名称 */
-  label: string;
+  label: string
   /** 组件预览函数 */
-  preview: () => JSX.Element;
+  preview: () => JSX.Element
   /** 组件图标 */
-  icon?: string | (() => JSX.Element);
+  icon?: string | (() => JSX.Element)
   /** 组件描述 */
-  description?: string;
+  description?: string
   /** 组件渲染函数 */
   render: (data: {
-    props: any;
-    model: any;
-    styles: CSSProperties;
-    block: VisualEditorBlockData;
-    custom: Record<string, any>;
-  }) => () => JSX.Element;
+    props: any
+    model: any
+    styles: CSSProperties
+    block: VisualEditorBlockData
+    custom: Record<string, any>
+  }) => () => JSX.Element
   /** 组件是否可以被拖拽 */
-  draggable?: boolean;
+  draggable?: boolean
   /** 是否显示组件的样式配置项 */
-  showStyleConfig?: boolean;
+  showStyleConfig?: boolean
   /** 组件属性 */
-  props?: Record<string, VisualEditorProps>;
+  props?: Record<string, VisualEditorProps>
   /** 动画集 */
-  animations?: Animation[];
+  animations?: Animation[]
   /** 组件事件集合 */
-  events?: { label: string; value: string }[];
+  events?: { label: string, value: string }[]
   /** 组件样式 */
-  styles?: CSSProperties;
+  styles?: CSSProperties
 }
 
 /** inner: 卡片内顶部标题（默认）；outer-*: 编辑态外侧角标 */
-export type BlockTitlePosition = "inner" | "outer-left" | "outer-top" | "outer-right";
+export type BlockTitlePosition = 'inner' | 'outer-left' | 'outer-top' | 'outer-right'
 
 /** 通用文本/标题样式配置（字体、颜色、背景等） */
 export interface TextStyleConfig {
-  fontSize?: string;
-  fontWeight?: string | number;
-  color?: string;
-  backgroundColor?: string;
-  borderRadius?: string;
-  padding?: string;
-  position?: BlockTitlePosition;
+  fontSize?: string
+  fontWeight?: string | number
+  color?: string
+  backgroundColor?: string
+  borderRadius?: string
+  padding?: string
+  position?: BlockTitlePosition
 }
 
 /** @deprecated 使用 TextStyleConfig */
-export type BlockTitleStyle = TextStyleConfig;
+export type BlockTitleStyle = TextStyleConfig
 
 export function defaultTextStyleConfig(): TextStyleConfig {
   return {
-    fontSize: "14px",
-    fontWeight: "600",
-    color: "#303133",
-    backgroundColor: "transparent",
-    borderRadius: "0",
-    padding: "12px 12px 8px",
-    position: "inner",
-  };
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#303133',
+    backgroundColor: 'transparent',
+    borderRadius: '0',
+    padding: '12px 12px 8px',
+    position: 'inner',
+  }
 }
 
 /** 画布上用于执行 animate.css 的 DOM（comp-render 根节点） */
 export function getBlockAnimationElement(vid?: string | null): HTMLElement | null {
   if (!vid) {
-    return null;
+    return null
   }
 
   const byRenderClass = document.querySelector(
     `.comp-render-${vid}`,
-  ) as HTMLElement | null;
+  ) as HTMLElement | null
   if (byRenderClass) {
-    return byRenderClass;
+    return byRenderClass
   }
 
   const inGridItem = document.querySelector(
     `.list-group-item-${vid} .list-group-item__body .comp-render-root`,
-  ) as HTMLElement | null;
+  ) as HTMLElement | null
   if (inGridItem) {
-    return inGridItem;
+    return inGridItem
   }
 
   const ref = (window as Window & { $$refs?: Record<string, { $el?: HTMLElement } | HTMLElement> })
-    .$$refs?.[vid];
-  const refEl = (ref && "$el" in ref ? ref.$el : ref) as HTMLElement | undefined;
+    .$$refs?.[vid]
+  const refEl = (ref && '$el' in ref ? ref.$el : ref) as HTMLElement | undefined
   if (refEl) {
     return (
-      (refEl.querySelector?.(".comp-render-root") as HTMLElement | null)
-      ?? (refEl.closest?.(".list-group-item")?.querySelector(
-        ".comp-render-root",
+      (refEl.querySelector?.('.comp-render-root') as HTMLElement | null)
+      ?? (refEl.closest?.('.list-group-item')?.querySelector(
+        '.comp-render-root',
       ) as HTMLElement | null)
       ?? refEl
-    );
+    )
   }
 
   return document.querySelector(
     `.list-group-item-${vid} .list-group-item__body .comp-render-root`,
-  ) as HTMLElement | null;
+  ) as HTMLElement | null
 }
 
 export function getBlockTitleText(block: VisualEditorBlockData): string {
   if (isChartComponent(block.componentKey)) {
-    const title = block.props?.title;
-    if (typeof title === "string" && title.trim()) {
-      return title.trim();
+    const title = block.props?.title
+    if (typeof title === 'string' && title.trim()) {
+      return title.trim()
     }
   }
-  return block.label;
+  return block.label
 }
 
 /** 是否为卡片内顶部标题（参考图样式） */
 export function isInnerBlockTitle(titleStyle?: TextStyleConfig) {
-  const pos = titleStyle?.position;
-  if (!pos || pos === "inner" || (pos as string) === "top") {
-    return true;
+  const pos = titleStyle?.position
+  if (!pos || pos === 'inner' || (pos as string) === 'top') {
+    return true
   }
-  return false;
+  return false
 }
 
 /** @deprecated 使用 defaultTextStyleConfig */
-export const defaultBlockTitleStyle = defaultTextStyleConfig;
+export const defaultBlockTitleStyle = defaultTextStyleConfig
 
 export function getBlockTitleInlineStyle(titleStyle?: TextStyleConfig): CSSProperties {
-  const ts = { ...defaultTextStyleConfig(), ...titleStyle };
-  const inner = isInnerBlockTitle(ts);
+  const ts = { ...defaultTextStyleConfig(), ...titleStyle }
+  const inner = isInnerBlockTitle(ts)
   const style: CSSProperties = {
     fontSize: ts.fontSize,
     fontWeight: ts.fontWeight,
-    color: ts.color || (inner ? "#303133" : "#ffffff"),
+    color: ts.color || (inner ? '#303133' : '#ffffff'),
     padding: ts.padding,
-  };
-
-  if (inner) {
-    if (ts.backgroundColor && ts.backgroundColor !== "transparent") {
-      style.backgroundColor = ts.backgroundColor;
-    }
-    if (ts.borderRadius && ts.borderRadius !== "0") {
-      style.borderRadius = ts.borderRadius;
-    }
-  } else {
-    style.backgroundColor = ts.backgroundColor || "var(--el-color-primary)";
-    style.borderRadius = ts.borderRadius || "3px";
   }
 
-  return style;
+  if (inner) {
+    if (ts.backgroundColor && ts.backgroundColor !== 'transparent') {
+      style.backgroundColor = ts.backgroundColor
+    }
+    if (ts.borderRadius && ts.borderRadius !== '0') {
+      style.borderRadius = ts.borderRadius
+    }
+  }
+  else {
+    style.backgroundColor = ts.backgroundColor || 'var(--el-color-primary)'
+    style.borderRadius = ts.borderRadius || '3px'
+  }
+
+  return style
 }
 
 export interface VisualEditorMarkLines {
-  x: { left: number; showLeft: number }[];
-  y: { top: number; showTop: number }[];
+  x: { left: number, showLeft: number }[]
+  y: { top: number, showTop: number }[]
 }
 
 /** 清除编辑态选中信息，不参与保存/脏检查/操作历史 */
@@ -402,20 +403,20 @@ export function stripBlockEditorEphemeral(block: VisualEditorBlockData): VisualE
     ...block,
     focus: false,
     focusWithChild: false,
-  };
-  const slots = next.props?.slots as Record<string, { children?: VisualEditorBlockData[] }> | undefined;
+  }
+  const slots = next.props?.slots as Record<string, { children?: VisualEditorBlockData[] }> | undefined
   if (slots) {
-    next.props = { ...next.props };
-    const nextSlots: Record<string, { children?: VisualEditorBlockData[] }> = {};
+    next.props = { ...next.props }
+    const nextSlots: Record<string, { children?: VisualEditorBlockData[] }> = {}
     for (const [key, slot] of Object.entries(slots)) {
       nextSlots[key] = {
         ...slot,
         children: slot.children?.map(stripBlockEditorEphemeral),
-      };
+      }
     }
-    next.props.slots = nextSlots;
+    next.props.slots = nextSlots
   }
-  return next;
+  return next
 }
 
 export function stripProjectEditorEphemeral(data: VisualEditorModelValue): VisualEditorModelValue {
@@ -427,15 +428,15 @@ export function stripProjectEditorEphemeral(data: VisualEditorModelValue): Visua
         blocks: page.blocks.map(stripBlockEditorEphemeral),
       },
     ]),
-  ) as VisualEditorModelValue["pages"];
+  ) as VisualEditorModelValue['pages']
   return {
     ...data,
     pages,
-  };
+  }
 }
 
 export function serializeProjectContent(data: VisualEditorModelValue): string {
-  return JSON.stringify(stripProjectEditorEphemeral(data));
+  return JSON.stringify(stripProjectEditorEphemeral(data))
 }
 
 export function createNewBlock(
@@ -449,31 +450,31 @@ export function createNewBlock(
     label: component!.label,
     adjustPosition: true,
     focus: false,
-    w: component.props?.width || (component.moduleName === "chartWidgets" ? 6 : 2),
-    h: component.props?.height || (component.moduleName === "chartWidgets" ? 8 : 4),
+    w: component.props?.width || (component.moduleName === 'chartWidgets' ? 6 : 2),
+    h: component.props?.height || (component.moduleName === 'chartWidgets' ? 8 : 4),
     styles: {
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: "#ffffff",
-      paddingTop: "0px",
-      paddingRight: "0px",
-      paddingLeft: "0px",
-      paddingBottom: "0px",
-      tempPadding: "0px",
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: '#ffffff',
+      paddingTop: '0px',
+      paddingRight: '0px',
+      paddingLeft: '0px',
+      paddingBottom: '0px',
+      tempPadding: '0px',
     },
     hasResize: false,
     props: Object.entries(component.props || {}).reduce((prev: any, [propName, propSchema]) => {
-      const { propObj, prop } = useDotProp(prev, propName);
+      const { propObj, prop } = useDotProp(prev, propName)
       if (propSchema?.defaultValue) {
-        propObj[prop] = prev[propName] = propSchema?.defaultValue;
+        propObj[prop] = prev[propName] = propSchema?.defaultValue
       }
-      return prev;
+      return prev
     }, {}),
     draggable: component.draggable ?? true, // 是否可以拖拽
     showStyleConfig: component.showStyleConfig ?? true, // 是否显示组件样式配置
-    showTitle: component.moduleName === "chartWidgets",
-    titleStyle: component.moduleName === "chartWidgets" ? defaultTextStyleConfig() : undefined,
+    showTitle: component.moduleName === 'chartWidgets',
+    titleStyle: component.moduleName === 'chartWidgets' ? defaultTextStyleConfig() : undefined,
     animations: [], // 动画集
     actions: [], // 动作集合
     events: component.events || [], // 事件集合
@@ -482,40 +483,40 @@ export function createNewBlock(
     ...config,
     _vid,
     i: config?.i ?? _vid,
-  } as VisualEditorBlockData;
+  } as VisualEditorBlockData
 }
 
 export interface VisualDragEvent {
   dragstart: {
-    on: (cb: () => void) => void;
-    off: (cb: () => void) => void;
-    emit: () => void;
-  };
+    on: (cb: () => void) => void
+    off: (cb: () => void) => void
+    emit: () => void
+  }
   dragend: {
-    on: (cb: () => void) => void;
-    off: (cb: () => void) => void;
-    emit: () => void;
-  };
+    on: (cb: () => void) => void
+    off: (cb: () => void) => void
+    emit: () => void
+  }
 }
 
 export const VisualDragProvider = (() => {
-  const VISUAL_DRAG_PROVIDER = "@@VISUAL_DRAG_PROVIDER";
+  const VISUAL_DRAG_PROVIDER = '@@VISUAL_DRAG_PROVIDER'
   return {
     provide: (data: VisualDragEvent) => {
-      provide(VISUAL_DRAG_PROVIDER, data);
+      provide(VISUAL_DRAG_PROVIDER, data)
     },
     inject: () => {
-      return inject(VISUAL_DRAG_PROVIDER) as VisualDragEvent;
+      return inject(VISUAL_DRAG_PROVIDER) as VisualDragEvent
     },
-  };
-})();
+  }
+})()
 
 // 组件模块
 export interface ComponentModules {
-  baseWidgets: VisualEditorComponent[]; // 基础组件
-  containerComponents: VisualEditorComponent[]; // 容器组件
-  formWidgets: VisualEditorComponent[]; // 表单组件
-  chartWidgets: VisualEditorComponent[]; // 图表组件
+  baseWidgets: VisualEditorComponent[] // 基础组件
+  containerComponents: VisualEditorComponent[] // 容器组件
+  formWidgets: VisualEditorComponent[] // 表单组件
+  chartWidgets: VisualEditorComponent[] // 图表组件
 }
 /**
  * @description 创建编辑器配置
@@ -527,9 +528,9 @@ export function createVisualEditorConfig() {
     containerComponents: [],
     formWidgets: [],
     chartWidgets: [],
-  };
+  }
   // const componentList: VisualEditorComponent[] = []
-  const componentMap: Record<string, VisualEditorComponent> = {};
+  const componentMap: Record<string, VisualEditorComponent> = {}
   return {
     componentModules,
     componentMap,
@@ -541,25 +542,25 @@ export function createVisualEditorConfig() {
       moduleName: keyof ComponentModules,
       key: string,
       component: {
-        label: string;
-        preview: () => JSX.Element;
+        label: string
+        preview: () => JSX.Element
         render: (data: {
-          props: { [k in keyof Props]: any };
-          model: Partial<{ [k in keyof Model]: any }>;
-          styles: CSSProperties;
-          block: VisualEditorBlockData;
-          custom: Record<string, any>;
-        }) => () => JSX.Element;
-        props?: Props;
-        model?: Model;
-        styles?: CSSProperties;
+          props: { [k in keyof Props]: any }
+          model: Partial<{ [k in keyof Model]: any }>
+          styles: CSSProperties
+          block: VisualEditorBlockData
+          custom: Record<string, any>
+        }) => () => JSX.Element
+        props?: Props
+        model?: Model
+        styles?: CSSProperties
       },
     ) => {
-      const comp = { ...component, key, moduleName };
-      componentModules[moduleName].push(comp);
-      componentMap[key] = comp;
+      const comp = { ...component, key, moduleName }
+      componentModules[moduleName].push(comp)
+      componentMap[key] = comp
     },
-  };
+  }
 }
 
-export type VisualEditorConfig = ReturnType<typeof createVisualEditorConfig>;
+export type VisualEditorConfig = ReturnType<typeof createVisualEditorConfig>

@@ -7,14 +7,15 @@ export default {
   key: 'input',
   moduleName: 'baseWidgets',
   label: '表单项类型 - 输入框',
-  preview: () => <Field name='用户名' label='用户名' labelWidth={50} colon placeholder='请输入用户名' />,
+  preview: () => <Field name="用户名" label="用户名" labelWidth={50} colon placeholder="请输入用户名" />,
   render: ({ styles, block, props }) => {
     const { registerRef } = useGlobalProperties()
 
     let rules = []
     try {
       rules = JSON.parse(props.rules)
-    } catch (e) {}
+    }
+    catch (e) {}
 
     return () => (
       <div style={styles}>
@@ -36,13 +37,13 @@ export default {
     { label: '点击组件时触发', value: 'click' },
     { label: '点击输入区域时触发', value: 'click-input' },
     { label: '点击左侧图标时触发', value: 'click-left-icon' },
-    { label: '点击右侧图标时触发', value: 'click-right-icon' }
+    { label: '点击右侧图标时触发', value: 'click-right-icon' },
   ],
   props: createFieldProps(),
   resize: {
-    width: true
+    width: true,
   },
   model: {
-    default: '绑定字段'
-  }
+    default: '绑定字段',
+  },
 } as VisualEditorComponent

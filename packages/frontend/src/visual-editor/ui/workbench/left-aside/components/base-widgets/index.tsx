@@ -15,11 +15,11 @@ export default defineComponent({
   setup() {
     const baseWidgets = ref(visualConfig.componentModules.baseWidgets)
 
-    const log = evt => {
+    const log = (evt) => {
       window.console.log('onChange:', evt)
     }
     // 克隆组件
-    const cloneDog = comp => {
+    const cloneDog = (comp) => {
       console.log('当前拖拽的组件：', comp)
       const newComp = cloneDeep(comp)
       return createNewBlock(newComp)
@@ -33,17 +33,17 @@ export default defineComponent({
           group={{ name: 'components', pull: 'clone', put: false }}
           clone={cloneDog}
           onChange={log}
-          itemKey='key'
+          itemKey="key"
         >
           {{
             item: ({ element }) => (
               <div class={styles.listGroupItem} data-label={element.label}>
                 {element.preview()}
               </div>
-            )
+            ),
           }}
         </DraggableTransitionGroup>
       </>
     )
-  }
+  },
 })

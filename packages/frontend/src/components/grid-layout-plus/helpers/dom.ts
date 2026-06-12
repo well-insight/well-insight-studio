@@ -8,8 +8,8 @@ export function getDocumentDir() {
   if (!hasDocument()) {
     return currentDir
   }
-  const direction =
-    typeof document.dir !== 'undefined'
+  const direction
+    = typeof document.dir !== 'undefined'
       ? document.dir
       : document.getElementsByTagName('html')[0].getAttribute('dir')
   return direction

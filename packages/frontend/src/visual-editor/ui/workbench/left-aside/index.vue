@@ -6,7 +6,7 @@ import { ref } from 'vue'
 import components from './components'
 
 defineOptions({
-  name: 'LeftAside'
+  name: 'LeftAside',
 })
 
 const tabs = Object.entries(components)

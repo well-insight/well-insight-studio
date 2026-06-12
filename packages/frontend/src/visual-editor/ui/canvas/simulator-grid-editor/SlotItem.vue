@@ -1,18 +1,18 @@
 <script lang="ts" setup>
-import type { PropType } from "vue";
-import type { VisualEditorBlockData } from "@/visual-editor/visual-editor.utils";
-import { useVModel } from "@vueuse/core";
-import CompRender from "./comp-render";
-import DraggableTransitionGroup from "./DraggableTransitionGroup.vue";
+import type { PropType } from 'vue'
+import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
+import { useVModel } from '@vueuse/core'
+import CompRender from './comp-render'
+import DraggableTransitionGroup from './DraggableTransitionGroup.vue'
 
 defineOptions({
-  name: "SlotItem",
-});
+  name: 'SlotItem',
+})
 
 const props = defineProps({
   slotKey: {
     type: String as PropType<string | number>,
-    default: "",
+    default: '',
   },
   drag: {
     type: Boolean as PropType<boolean>,
@@ -32,14 +32,14 @@ const props = defineProps({
     >,
     required: true,
   },
-});
-const emit = defineEmits(["update:children", "on-selected", "update:drag"]);
+})
+const emit = defineEmits(['update:children', 'on-selected', 'update:drag'])
 
-const isDrag = useVModel(props, "drag", emit);
-const slotChildren = useVModel(props, "children", emit);
+const isDrag = useVModel(props, 'drag', emit)
+const slotChildren = useVModel(props, 'children', emit)
 
 // 初始化时设置上次选中的组件
-props.children.some((item) => item.focus && props.selectComp(item));
+props.children.some(item => item.focus && props.selectComp(item))
 </script>
 
 <template>
@@ -84,7 +84,7 @@ props.children.some((item) => item.focus && props.selectComp(item));
 </template>
 
 <style lang="scss" scoped>
-@use "./func.scss" as *;
+@use './func.scss' as *;
 
 .inner-draggable {
   position: relative;

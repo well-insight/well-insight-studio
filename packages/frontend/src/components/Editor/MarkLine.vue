@@ -1,20 +1,18 @@
 <script lang="ts" setup>
-import { computed, onMounted, reactive } from "vue";
-
 interface Line {
-  display?: boolean;
-  position?: string;
-  origin?: string;
-  lineLength?: string;
+  display?: boolean
+  position?: string
+  origin?: string
+  lineLength?: string
 }
 
 const props = withDefaults(
   defineProps<{
-    verticalLine: Line[];
-    horizontalLine: Line[];
+    verticalLine: Line[]
+    horizontalLine: Line[]
   }>(),
   {},
-);
+)
 </script>
 
 <template>

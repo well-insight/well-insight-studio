@@ -2,7 +2,7 @@
 
 <template>
   <div class="h-full w-full">
-    <el-empty size="small" description="开发中，敬请期待"></el-empty>
+    <el-empty size="small" description="开发中，敬请期待" />
   </div>
 </template>
 

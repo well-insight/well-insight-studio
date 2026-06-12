@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { SvgIcon } from "@/components/svg-icon";
-import { PageSetting } from "../../right-attribute-panel/components/page-setting/pageSetting";
+import { SvgIcon } from '@/components/svg-icon'
+import { PageSetting } from '../../right-attribute-panel/components/page-setting/pageSetting'
 </script>
 
 <template>

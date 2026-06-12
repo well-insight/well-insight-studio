@@ -1,46 +1,45 @@
 <script lang="tsx" setup>
-import { useControlStore } from "@/stores/controlStore";
-import { useWorkspaceStore } from "@/stores/workspaceStore";
-import { EditTools } from "@/visual-editor/ui/workbench/edit-tools";
-import RightAttributePanel from "@/visual-editor/ui/workbench/right-attribute-panel/RightAttributePanel.vue";
-import { CloseBold, Plus } from "@element-plus/icons-vue";
-import { onClickOutside } from "@vueuse/core";
-import { storeToRefs } from "pinia";
-import { onUnmounted, ref, useTemplateRef } from "vue";
-import MobileWrapper from "./MobileWrapper.vue";
-import BlockSettingsBar from "./BlockSettingsBar.vue";
-import PcWrapper from "./PcWrapper.vue";
-import { ComponentList } from "../../workbench/component-list-new";
+import { CloseBold } from '@element-plus/icons-vue'
+import { onClickOutside } from '@vueuse/core'
+import { storeToRefs } from 'pinia'
+import { onUnmounted, ref, useTemplateRef } from 'vue'
+import { useControlStore } from '@/stores/controlStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { EditTools } from '@/visual-editor/ui/workbench/edit-tools'
+import RightAttributePanel from '@/visual-editor/ui/workbench/right-attribute-panel/RightAttributePanel.vue'
+import { ComponentList } from '../../workbench/component-list-new'
+import BlockSettingsBar from './BlockSettingsBar.vue'
+import PcWrapper from './PcWrapper.vue'
 
 defineOptions({
-  name: "SimulatorGridEditor",
-});
+  name: 'SimulatorGridEditor',
+})
 
-const workspaceStore = useWorkspaceStore();
+const workspaceStore = useWorkspaceStore()
 
-const { currentApp } = storeToRefs(workspaceStore);
+const { currentApp } = storeToRefs(workspaceStore)
 
-const controlStore = useControlStore();
-const { floatingSettingVisible } = storeToRefs(controlStore);
+const controlStore = useControlStore()
+const { floatingSettingVisible } = storeToRefs(controlStore)
 
-const floatingPanelRef = ref<HTMLElement | null>(null);
+const floatingPanelRef = ref<HTMLElement | null>(null)
 
-const wrapperRef = useTemplateRef("wrapperRef");
+const wrapperRef = useTemplateRef('wrapperRef')
 
 onClickOutside(floatingPanelRef, () => {
   if (controlStore.floatingSettingVisible) {
-    controlStore.floatingSettingVisible = false;
+    controlStore.floatingSettingVisible = false
   }
-});
+})
 
 function triggerShowComponents() {
-  controlStore.customComponentsVisible = !controlStore.customComponentsVisible;
+  controlStore.customComponentsVisible = !controlStore.customComponentsVisible
 }
 
 onUnmounted(() => {
-  workspaceStore.setCurrentApp(null);
-  controlStore.floatingSettingVisible = false;
-});
+  workspaceStore.setCurrentApp(null)
+  controlStore.floatingSettingVisible = false
+})
 </script>
 
 <template>
@@ -64,19 +63,19 @@ onUnmounted(() => {
       <div class="simulator-canvas-area">
         <PcWrapper ref="wrapperRef" />
 
-      <transition name="floating-setting-panel">
-        <div v-if="floatingSettingVisible" ref="floatingPanelRef" class="floating-setting-panel">
-          <div class="floating-setting-panel__header">
-            <span>详细配置</span>
-            <el-button text circle @click="controlStore.floatingSettingVisible = false">
-              <el-icon><CloseBold /></el-icon>
-            </el-button>
+        <transition name="floating-setting-panel">
+          <div v-if="floatingSettingVisible" ref="floatingPanelRef" class="floating-setting-panel">
+            <div class="floating-setting-panel__header">
+              <span>详细配置</span>
+              <el-button text circle @click="controlStore.floatingSettingVisible = false">
+                <el-icon><CloseBold /></el-icon>
+              </el-button>
+            </div>
+            <div class="floating-setting-panel__body">
+              <RightAttributePanel />
+            </div>
           </div>
-          <div class="floating-setting-panel__body">
-            <RightAttributePanel />
-          </div>
-        </div>
-      </transition>
+        </transition>
       </div>
     </div>
 
@@ -112,7 +111,7 @@ onUnmounted(() => {
 </style>
 
 <style lang="scss" scoped>
-@use "./func.scss" as *;
+@use './func.scss' as *;
 
 .simulator-container {
   display: flex;
@@ -135,9 +134,7 @@ onUnmounted(() => {
 .simulator-editor {
   width: 100%;
   overflow: hidden auto;
-  background-image:
-    linear-gradient(#fafafc 14px, transparent 0),
-    linear-gradient(90deg, transparent 14px, #373739 0);
+  background-image: linear-gradient(#fafafc 14px, transparent 0), linear-gradient(90deg, transparent 14px, #373739 0);
   background-color: #fff;
   background-size:
     15px 15px,
@@ -196,7 +193,7 @@ onUnmounted(() => {
   }
 
   &:not(.has-slot) {
-    content: "";
+    content: '';
   }
 
   &.focusWithChild {

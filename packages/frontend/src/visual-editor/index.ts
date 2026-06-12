@@ -1,3 +1,4 @@
+export * from './visual-editor.props'
 /**
  * 可视化编辑器子模块入口（目录约定）
  *
@@ -12,5 +13,4 @@
  *
  * 对外稳定 import 仍可使用 `@/visual-editor/visual-editor.utils` 等根路径文件（薄重导出）。
  */
-export * from "./visual-editor.utils";
-export * from "./visual-editor.props";
+export * from './visual-editor.utils'

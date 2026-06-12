@@ -1,72 +1,74 @@
 <script setup lang="ts">
-import type { ConnectorFieldConfig, ConnectorFieldType } from "@/api/connector";
-import { importDataset as apiImportDataset, parseFile as apiParseFile } from "@/api/connector";
-import type { ApiFolderTreeNode } from "@/api/dataset";
-import { fetchDatasetFolderTree } from "@/api/dataset";
-import { UploadFilled } from "@element-plus/icons-vue";
-import type { UploadFile } from "element-plus";
-import { ElMessage, ElNotification } from "element-plus";
-import { computed, ref, watch } from "vue";
-import TableDemo from "../components/TableDemo.vue";
+import type { UploadFile } from 'element-plus'
+import type { ConnectorFieldConfig, ConnectorFieldType } from '@/api/connector'
+import type { ApiFolderTreeNode } from '@/api/dataset'
+import { UploadFilled } from '@element-plus/icons-vue'
+import { ElMessage, ElNotification } from 'element-plus'
+import { computed, ref, watch } from 'vue'
+import { importDataset as apiImportDataset, parseFile as apiParseFile } from '@/api/connector'
+import { fetchDatasetFolderTree } from '@/api/dataset'
+import TableDemo from '../components/TableDemo.vue'
 
 // ─── Emits ───────────────────────────────────────────────────────────
 const emit = defineEmits<{
-  success: [datasetId: string, datasetName: string];
-  close: [];
-}>();
+  success: [datasetId: string, datasetName: string]
+  close: []
+}>()
 
 // ─── 步骤控制 ─────────────────────────────────────────────────────────
-const step = ref(0); // 0=上传  1=配置字段  2=数据预览  3=创建
+const step = ref(0) // 0=上传  1=配置字段  2=数据预览  3=创建
 
 // ─── Step 1：上传结果 ─────────────────────────────────────────────────
-const uploading = ref(false);
-const uploadProgress = ref(0);
-const sessionId = ref("");
-const totalRows = ref(0);
+const uploading = ref(false)
+const uploadProgress = ref(0)
+const sessionId = ref('')
+const totalRows = ref(0)
 
 /** 原始行矩阵（前 10 行），每行是 unknown[] */
-const previewMatrix = ref<unknown[][]>([]);
-const colCount = ref(0);
+const previewMatrix = ref<unknown[][]>([])
+const colCount = ref(0)
 
 // ─── Step 2：表头选择 & 字段配置 ──────────────────────────────────────
 /** 哪一行作为表头（0-based） */
-const headerRowIndex = ref(0);
+const headerRowIndex = ref(0)
 
 /** 字段配置列表 */
-const fieldConfigs = ref<ConnectorFieldConfig[]>([]);
+const fieldConfigs = ref<ConnectorFieldConfig[]>([])
 
-const typeOptions: { label: string; value: ConnectorFieldType }[] = [
-  { label: "文本", value: "text" },
-  { label: "数字", value: "number" },
-  { label: "日期时间", value: "datetime" },
-];
+const typeOptions: { label: string, value: ConnectorFieldType }[] = [
+  { label: '文本', value: 'text' },
+  { label: '数字', value: 'number' },
+  { label: '日期时间', value: 'datetime' },
+]
 
 /** 全选状态 */
 const allIncluded = computed(
-  () => fieldConfigs.value.length > 0 && fieldConfigs.value.every((f) => f.include),
-);
+  () => fieldConfigs.value.length > 0 && fieldConfigs.value.every(f => f.include),
+)
 const someIncluded = computed(
-  () => fieldConfigs.value.some((f) => f.include) && !allIncluded.value,
-);
+  () => fieldConfigs.value.some(f => f.include) && !allIncluded.value,
+)
 function toggleAllInclude(val: boolean) {
-  fieldConfigs.value.forEach((f) => (f.include = val));
+  fieldConfigs.value.forEach(f => (f.include = val))
 }
 
 // ─── 前端自动推断列类型 ────────────────────────────────────────────────
 function detectColumnType(values: unknown[]): ConnectorFieldType {
-  const nonEmpty = values.filter((v) => v !== null && v !== undefined && String(v).trim() !== "");
-  if (nonEmpty.length === 0) return "text";
-  if (nonEmpty.every((v) => !isNaN(Number(String(v).trim())) && String(v).trim() !== ""))
-    return "number";
-  const dateRe = /^\d{4}[-/]\d{1,2}[-/]\d{1,2}/;
+  const nonEmpty = values.filter(v => v !== null && v !== undefined && String(v).trim() !== '')
+  if (nonEmpty.length === 0)
+    return 'text'
+  if (nonEmpty.every(v => !isNaN(Number(String(v).trim())) && String(v).trim() !== ''))
+    return 'number'
+  const dateRe = /^\d{4}[-/]\d{1,2}[-/]\d{1,2}/
   if (
     nonEmpty.every((v) => {
-      const s = String(v).trim();
-      return dateRe.test(s) && !isNaN(Date.parse(s));
+      const s = String(v).trim()
+      return dateRe.test(s) && !isNaN(Date.parse(s))
     })
-  )
-    return "datetime";
-  return "text";
+  ) {
+    return 'datetime'
+  }
+  return 'text'
 }
 
 /**
@@ -74,178 +76,185 @@ function detectColumnType(values: unknown[]): ConnectorFieldType {
  * 尽量保留用户已改过的 name / type / include
  */
 function rebuildFieldConfigs() {
-  const matrix = previewMatrix.value;
-  if (matrix.length === 0) return;
-  const headerRow = (matrix[headerRowIndex.value] ?? []) as ConnectorFieldConfig[];
-  const dataRows = matrix.filter((_, i) => i > headerRowIndex.value);
+  const matrix = previewMatrix.value
+  if (matrix.length === 0)
+    return
+  const headerRow = (matrix[headerRowIndex.value] ?? []) as ConnectorFieldConfig[]
+  const dataRows = matrix.filter((_, i) => i > headerRowIndex.value)
 
   fieldConfigs.value = Array.from({ length: colCount.value }, (_, ci) => {
-    const headerVal = String(headerRow[ci] ?? "");
-    const colValues = dataRows.map((r) => (r as unknown[])[ci]);
+    const headerVal = String(headerRow[ci] ?? '')
+    const colValues = dataRows.map(r => (r as unknown[])[ci])
     return {
       colIndex: ci,
       header: headerVal || `列${ci + 1}`,
       name: headerVal || `列${ci + 1}`,
       type: detectColumnType(colValues),
       include: true,
-    };
-  });
+    }
+  })
 }
 
 // 表头行变化时重建字段配置
-watch(headerRowIndex, rebuildFieldConfigs);
+watch(headerRowIndex, rebuildFieldConfigs)
 
 // ─── 原始矩阵转 el-table 可用格式（用于表头选择表格）─────────────────
 const rawTableData = computed(() =>
   previewMatrix.value.map((row, rowIdx) => {
     const obj: Record<string, unknown> = { _rowIndex: rowIdx };
     (row as unknown[]).forEach((v, ci) => {
-      obj[`c${ci}`] = v ?? "";
-    });
-    return obj;
+      obj[`c${ci}`] = v ?? ''
+    })
+    return obj
   }),
-);
+)
 
 /** 动态生成的列（最多展示前 8 列，避免过宽） */
 const rawTableColumns = computed(() => {
-  const count = Math.min(colCount.value, 8);
+  const count = Math.min(colCount.value, 8)
   return Array.from({ length: count }, (_, ci) => ({
     prop: `c${ci}`,
     label: `列 ${ci + 1}`,
-  }));
-});
+  }))
+})
 
 // ─── 数据预览表格数据（el-table） ────────────────────────────────────
 /** 预览表格的数据行 */
 const previewTableData = computed(() => {
-  const included = fieldConfigs.value.filter((f) => f.include);
-  const dataRows = previewMatrix.value.filter((_, i) => i !== headerRowIndex.value);
+  const included = fieldConfigs.value.filter(f => f.include)
+  const dataRows = previewMatrix.value.filter((_, i) => i !== headerRowIndex.value)
 
-  if (included.length === 0 || dataRows.length === 0) return [];
+  if (included.length === 0 || dataRows.length === 0)
+    return []
 
   return dataRows.map((row) => {
-    const rec: Record<string, unknown> = {};
+    const rec: Record<string, unknown> = {}
     included.forEach((f) => {
-      rec[`c${f.colIndex}`] = (row as unknown[])[f.colIndex] ?? "";
-    });
-    return rec;
-  });
-});
+      rec[`c${f.colIndex}`] = (row as unknown[])[f.colIndex] ?? ''
+    })
+    return rec
+  })
+})
 
 /** 预览表格的列定义 */
 const previewTableColumns = computed(() => {
-  const included = fieldConfigs.value.filter((f) => f.include);
+  const included = fieldConfigs.value.filter(f => f.include)
 
-  return included.map((f) => ({
+  return included.map(f => ({
     prop: `c${f.colIndex}`,
     label: f.name,
     minWidth: 120,
-    align: f.type === "number" ? "right" : "left",
-    headerAlign: "center",
-  }));
-});
+    align: f.type === 'number' ? 'right' : 'left',
+    headerAlign: 'center',
+  }))
+})
 
 // ─── Step 4：数据集信息 ───────────────────────────────────────────────
-const datasetName = ref("");
-const datasetDesc = ref("");
-const datasetFolderId = ref<string | null>(null);
-const folderTree = ref<ApiFolderTreeNode[]>([]);
-const folderLoading = ref(false);
-const submitting = ref(false);
+const datasetName = ref('')
+const datasetDesc = ref('')
+const datasetFolderId = ref<string | null>(null)
+const folderTree = ref<ApiFolderTreeNode[]>([])
+const folderLoading = ref(false)
+const submitting = ref(false)
 
-const includedCount = computed(() => fieldConfigs.value.filter((f) => f.include).length);
+const includedCount = computed(() => fieldConfigs.value.filter(f => f.include).length)
 
 // ─── 进入 Step 4 时加载文件夹树 ──────────────────────────────────────
 watch(
   () => step.value,
   async (s) => {
     if (s === 3 && folderTree.value.length === 0) {
-      folderLoading.value = true;
+      folderLoading.value = true
       try {
-        folderTree.value = (await fetchDatasetFolderTree(null)) ?? [];
-      } catch {
-        folderTree.value = [];
-      } finally {
-        folderLoading.value = false;
+        folderTree.value = (await fetchDatasetFolderTree(null)) ?? []
+      }
+      catch {
+        folderTree.value = []
+      }
+      finally {
+        folderLoading.value = false
       }
     }
   },
-);
+)
 
 // ─── 文件上传处理 ─────────────────────────────────────────────────────
 function beforeUpload(file: File): boolean {
-  const ext = file.name.split(".").pop()?.toLowerCase();
-  if (!["xlsx", "xls", "csv"].includes(ext ?? "")) {
-    ElMessage.error("仅支持 .xlsx / .xls / .csv 格式");
-    return false;
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  if (!['xlsx', 'xls', 'csv'].includes(ext ?? '')) {
+    ElMessage.error('仅支持 .xlsx / .xls / .csv 格式')
+    return false
   }
   if (file.size > 20 * 1024 * 1024) {
-    ElMessage.error("文件大小不能超过 20MB");
-    return false;
+    ElMessage.error('文件大小不能超过 20MB')
+    return false
   }
-  return true;
+  return true
 }
 
 async function handleFileChange(uploadFile: UploadFile) {
-  const file = uploadFile.raw;
-  if (!file || !beforeUpload(file)) return;
+  const file = uploadFile.raw
+  if (!file || !beforeUpload(file))
+    return
 
-  uploading.value = true;
-  uploadProgress.value = 0;
+  uploading.value = true
+  uploadProgress.value = 0
   try {
-    const data = await apiParseFile(file, (pct) => (uploadProgress.value = pct));
-    sessionId.value = data.sessionId;
-    totalRows.value = data.totalRows;
-    previewMatrix.value = data.previewMatrix ?? [];
-    colCount.value = data.colCount ?? 0;
-    headerRowIndex.value = 0;
-    fieldConfigs.value = [];
-    rebuildFieldConfigs();
-    step.value = 1;
-  } catch (e: any) {
-    ElMessage.error(e?.message ?? "文件解析失败");
-  } finally {
-    uploading.value = false;
+    const data = await apiParseFile(file, pct => (uploadProgress.value = pct))
+    sessionId.value = data.sessionId
+    totalRows.value = data.totalRows
+    previewMatrix.value = data.previewMatrix ?? []
+    colCount.value = data.colCount ?? 0
+    headerRowIndex.value = 0
+    fieldConfigs.value = []
+    rebuildFieldConfigs()
+    step.value = 1
+  }
+  catch (e: any) {
+    ElMessage.error(e?.message ?? '文件解析失败')
+  }
+  finally {
+    uploading.value = false
   }
 }
 
 // ─── Step 1 → Step 2 校验 ─────────────────────────────────────────────
 function goToPreviewStep() {
   if (includedCount.value === 0) {
-    ElMessage.warning("请至少选择一个字段");
-    return;
+    ElMessage.warning('请至少选择一个字段')
+    return
   }
-  const names = fieldConfigs.value.filter((f) => f.include).map((f) => f.name.trim());
-  if (names.some((n) => !n)) {
-    ElMessage.warning("字段名称不能为空");
-    return;
+  const names = fieldConfigs.value.filter(f => f.include).map(f => f.name.trim())
+  if (names.some(n => !n)) {
+    ElMessage.warning('字段名称不能为空')
+    return
   }
   if (new Set(names).size !== names.length) {
-    ElMessage.warning("字段名称不能重复");
-    return;
+    ElMessage.warning('字段名称不能重复')
+    return
   }
-  step.value = 2;
+  step.value = 2
 }
 
 function goToCreateStep() {
-  datasetName.value = "";
-  datasetDesc.value = "";
-  datasetFolderId.value = null;
-  step.value = 3;
+  datasetName.value = ''
+  datasetDesc.value = ''
+  datasetFolderId.value = null
+  step.value = 3
 }
 
 function selectHeaderRow(rowIndex: number) {
-  headerRowIndex.value = rowIndex;
+  headerRowIndex.value = rowIndex
 }
 
 // ─── 确认导入 ─────────────────────────────────────────────────────────
 async function handleSubmit() {
-  const name = datasetName.value.trim();
+  const name = datasetName.value.trim()
   if (!name) {
-    ElMessage.warning("请输入数据集名称");
-    return;
+    ElMessage.warning('请输入数据集名称')
+    return
   }
-  submitting.value = true;
+  submitting.value = true
   try {
     const method = apiImportDataset({
       sessionId: sessionId.value,
@@ -257,19 +266,21 @@ async function handleSubmit() {
         folder_id: datasetFolderId.value || null,
         project_id: null,
       },
-    });
-    const result = await (method as any).send();
+    })
+    const result = await (method as any).send()
     ElNotification({
-      title: "导入成功",
+      title: '导入成功',
       message: `「${result.name}」已创建，共 ${result.row_count} 行，${result.field_count} 个字段`,
-      type: "success",
+      type: 'success',
       duration: 4000,
-    });
-    emit("success", result.id, result.name);
-  } catch (e: any) {
-    ElMessage.error(e?.message ?? "导入失败，请重试");
-  } finally {
-    submitting.value = false;
+    })
+    emit('success', result.id, result.name)
+  }
+  catch (e: any) {
+    ElMessage.error(e?.message ?? '导入失败，请重试')
+  }
+  finally {
+    submitting.value = false
   }
 }
 </script>
@@ -298,10 +309,16 @@ async function handleSubmit() {
           :disabled="uploading"
           :class="$style.uploader"
         >
-          <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
-          <div class="el-upload__text">拖拽文件到此处或<em>点击上传</em></div>
+          <el-icon class="el-icon--upload">
+            <UploadFilled />
+          </el-icon>
+          <div class="el-upload__text">
+            拖拽文件到此处或<em>点击上传</em>
+          </div>
           <template #tip>
-            <div class="el-upload__tip">支持 .xlsx / .xls / .csv 格式，文件大小不超过 20 MB</div>
+            <div class="el-upload__tip">
+              支持 .xlsx / .xls / .csv 格式，文件大小不超过 20 MB
+            </div>
           </template>
         </el-upload>
 
@@ -316,7 +333,9 @@ async function handleSubmit() {
       </div>
 
       <div :class="$style.footer">
-        <el-button @click="emit('close')">取消</el-button>
+        <el-button @click="emit('close')">
+          取消
+        </el-button>
       </div>
     </div>
 
@@ -326,7 +345,9 @@ async function handleSubmit() {
         <!-- ① 表头行选择 -->
         <div :class="$style.section">
           <div :class="$style.sectionTitle">
-            <el-text type="primary" size="small" tag="b">① 选择表头行</el-text>
+            <el-text type="primary" size="small" tag="b">
+              ① 选择表头行
+            </el-text>
             <el-text type="info" size="small">
               点击左侧按钮指定哪一行作为字段名（当前选第
               <b>{{ headerRowIndex + 1 }}</b> 行）
@@ -367,7 +388,9 @@ async function handleSubmit() {
         <!-- ② 字段配置 -->
         <div :class="$style.section">
           <div :class="$style.sectionTitle">
-            <el-text type="primary" size="small" tag="b">② 配置字段</el-text>
+            <el-text type="primary" size="small" tag="b">
+              ② 配置字段
+            </el-text>
             <el-text type="info" size="small">
               共 <b>{{ fieldConfigs.length }}</b> 列，已选 <b>{{ includedCount }}</b> 个
             </el-text>
@@ -426,8 +449,12 @@ async function handleSubmit() {
       <!-- end stepBodyScroll -->
 
       <div :class="$style.footer">
-        <el-button @click="step = 0">上一步</el-button>
-        <el-button type="primary" @click="goToPreviewStep">下一步</el-button>
+        <el-button @click="step = 0">
+          上一步
+        </el-button>
+        <el-button type="primary" @click="goToPreviewStep">
+          下一步
+        </el-button>
       </div>
     </div>
 
@@ -436,7 +463,9 @@ async function handleSubmit() {
       <div :class="$style.stepBodyScroll">
         <div :class="$style.section">
           <div :class="$style.sectionTitle">
-            <el-text type="primary" size="small" tag="b">③ 数据预览</el-text>
+            <el-text type="primary" size="small" tag="b">
+              ③ 数据预览
+            </el-text>
             <el-text type="info" size="small">
               表头以下的数据行（最多展示 {{ previewMatrix.length - 1 }} 行）
             </el-text>
@@ -465,8 +494,12 @@ async function handleSubmit() {
       </div>
 
       <div :class="$style.footer">
-        <el-button @click="step = 1">上一步</el-button>
-        <el-button type="primary" @click="goToCreateStep">下一步</el-button>
+        <el-button @click="step = 1">
+          上一步
+        </el-button>
+        <el-button type="primary" @click="goToCreateStep">
+          下一步
+        </el-button>
       </div>
     </div>
 
@@ -516,8 +549,12 @@ async function handleSubmit() {
         </el-form>
       </div>
       <div :class="$style.footer">
-        <el-button @click="step = 2">上一步</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit"> 确认创建 </el-button>
+        <el-button @click="step = 2">
+          上一步
+        </el-button>
+        <el-button type="primary" :loading="submitting" @click="handleSubmit">
+          确认创建
+        </el-button>
       </div>
     </div>
   </div>

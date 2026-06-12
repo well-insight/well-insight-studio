@@ -1,5 +1,5 @@
-import type { InjectionKey } from 'vue'
 import type { EventEmitter } from '@vexip-ui/utils'
+import type { InjectionKey } from 'vue'
 import type { Layout, LayoutInstance, LayoutItem } from './types'
 
 export const LAYOUT_KEY = Symbol('LAYOUT_KEY') as InjectionKey<LayoutInstance>
@@ -16,13 +16,14 @@ export function bottom(layout: Layout): number {
   let bottomY
   for (let i = 0, len = layout.length; i < len; i++) {
     bottomY = layout[i].y + layout[i].h
-    if (bottomY > max) max = bottomY
+    if (bottomY > max)
+      max = bottomY
   }
   return max
 }
 
 export function cloneLayout(layout: Layout): Layout {
-  const newLayout = Array(layout.length)
+  const newLayout = Array.from({ length: layout.length })
   for (let i = 0, len = layout.length; i < len; i++) {
     newLayout[i] = cloneLayoutItem(layout[i])
   }
@@ -41,11 +42,16 @@ export function cloneLayoutItem(layoutItem: LayoutItem): LayoutItem {
  * @return True if colliding.
  */
 export function collides(l1: LayoutItem, l2: LayoutItem): boolean {
-  if (l1 === l2) return false // same element
-  if (l1.x + l1.w <= l2.x) return false // l1 is left of l2
-  if (l1.x >= l2.x + l2.w) return false // l1 is right of l2
-  if (l1.y + l1.h <= l2.y) return false // l1 is above l2
-  if (l1.y >= l2.y + l2.h) return false // l1 is below l2
+  if (l1 === l2)
+    return false // same element
+  if (l1.x + l1.w <= l2.x)
+    return false // l1 is left of l2
+  if (l1.x >= l2.x + l2.w)
+    return false // l1 is right of l2
+  if (l1.y + l1.h <= l2.y)
+    return false // l1 is above l2
+  if (l1.y >= l2.y + l2.h)
+    return false // l1 is below l2
   return true // boxes overlap
 }
 
@@ -64,7 +70,7 @@ export function compact(layout: Layout, verticalCompact?: boolean, minPositions?
   // We go through the items by row and column.
   const sorted = sortLayoutItemsByRowCol(layout)
   // Holding for new items.
-  const out: Layout = Array(layout.length)
+  const out: Layout = Array.from({ length: layout.length })
 
   for (let i = 0, len = sorted.length; i < len; i++) {
     let l = sorted[i]
@@ -102,7 +108,8 @@ export function compactItem(
     while (l.y > 0 && !getFirstCollision(compareWith, l)) {
       l.y--
     }
-  } else if (minPositions) {
+  }
+  else if (minPositions) {
     const minY = minPositions[l.i].y
     while (l.y > minY && !getFirstCollision(compareWith, l)) {
       l.y--
@@ -128,13 +135,16 @@ export function correctBounds(layout: Layout, bounds: { cols: number }): Layout 
   for (let i = 0, len = layout.length; i < len; i++) {
     const l = layout[i]
     // Overflows right
-    if (l.x + l.w > bounds.cols) l.x = bounds.cols - l.w
+    if (l.x + l.w > bounds.cols)
+      l.x = bounds.cols - l.w
     // Overflows left
     if (l.x < 0) {
       l.x = 0
       l.w = bounds.cols
     }
-    if (!l.static) collidesWith.push(l)
+    if (!l.static) {
+      collidesWith.push(l)
+    }
     else {
       // If this is static and collides with other statics, we must move it down.
       // We have to do something nicer than just letting them overlap.
@@ -155,7 +165,8 @@ export function correctBounds(layout: Layout, bounds: { cols: number }): Layout 
  */
 export function getLayoutItem(layout: Layout, id: number | string): LayoutItem | undefined {
   for (let i = 0, len = layout.length; i < len; i++) {
-    if (layout[i].i === id) return layout[i]
+    if (layout[i].i === id)
+      return layout[i]
   }
 }
 
@@ -164,12 +175,13 @@ export function getLayoutItem(layout: Layout, id: number | string): LayoutItem |
  * It doesn't appear to matter which order we approach this from, although
  * perhaps that is the wrong thing to do.
  *
- * @param  {Object} layoutItem Layout item.
- * @return {Object|undefined}  A colliding layout item, or undefined.
+ * @param  {object} layoutItem Layout item.
+ * @return {object | undefined}  A colliding layout item, or undefined.
  */
 export function getFirstCollision(layout: Layout, layoutItem: LayoutItem): LayoutItem | undefined {
   for (let i = 0, len = layout.length; i < len; i++) {
-    if (collides(layout[i], layoutItem)) return layout[i]
+    if (collides(layout[i], layoutItem))
+      return layout[i]
   }
 }
 
@@ -204,15 +216,18 @@ export function moveElement(
   isUserAction = false,
   preventCollision = false,
 ): Layout {
-  if (layoutItem.static) return layout
+  if (layoutItem.static)
+    return layout
 
   const oldX = layoutItem.x
   const oldY = layoutItem.y
 
   const movingUp = y && layoutItem.y > y
   // This is quite a bit faster than extending the object
-  if (typeof x === 'number') layoutItem.x = x
-  if (typeof y === 'number') layoutItem.y = y
+  if (typeof x === 'number')
+    layoutItem.x = x
+  if (typeof y === 'number')
+    layoutItem.y = y
   layoutItem.moved = true
 
   // If this collides with anything, move it.
@@ -220,7 +235,8 @@ export function moveElement(
   // to ensure, in the case of multiple collisions, that we're getting the
   // nearest collision.
   let sorted = sortLayoutItemsByRowCol(layout)
-  if (movingUp) sorted = sorted.reverse()
+  if (movingUp)
+    sorted = sorted.reverse()
   const collisions = getAllCollisions(sorted, layoutItem)
 
   if (preventCollision && collisions.length) {
@@ -235,15 +251,18 @@ export function moveElement(
     const collision = collisions[i]
 
     // Short circuit so we can't infinite loop
-    if (collision.moved) continue
+    if (collision.moved)
+      continue
 
     // This makes it feel a bit more precise by waiting to swap for just a bit when moving up.
-    if (layoutItem.y > collision.y && layoutItem.y - collision.y > collision.h / 4) continue
+    if (layoutItem.y > collision.y && layoutItem.y - collision.y > collision.h / 4)
+      continue
 
     // Don't move static items - we have to move *this* element away
     if (collision.static) {
       layout = moveElementAwayFromCollision(layout, collision, layoutItem, isUserAction)
-    } else {
+    }
+    else {
       layout = moveElementAwayFromCollision(layout, layoutItem, collision, isUserAction)
     }
   }
@@ -298,20 +317,20 @@ export function moveElementAwayFromCollision(
  * @return      That number as a percentage.
  */
 export function perc(num: number): string {
-  return num * 100 + '%'
+  return `${num * 100}%`
 }
 
 export function setTransform(top: number, left: number, width: number, height: number) {
   // Replace unitless items with px
-  const translate = 'translate3d(' + left + 'px,' + top + 'px, 0)'
+  const translate = `translate3d(${left}px,${top}px, 0)`
   return {
     transform: translate,
     WebkitTransform: translate,
     MozTransform: translate,
     msTransform: translate,
     OTransform: translate,
-    width: width + 'px',
-    height: height + 'px',
+    width: `${width}px`,
+    height: `${height}px`,
     position: 'absolute',
   }
 }
@@ -326,25 +345,25 @@ export function setTransform(top: number, left: number, width: number, height: n
  */
 export function setTransformRtl(top: number, right: number, width: number, height: number) {
   // Replace unitless items with px
-  const translate = 'translate3d(' + right * -1 + 'px,' + top + 'px, 0)'
+  const translate = `translate3d(${right * -1}px,${top}px, 0)`
   return {
     transform: translate,
     WebkitTransform: translate,
     MozTransform: translate,
     msTransform: translate,
     OTransform: translate,
-    width: width + 'px',
-    height: height + 'px',
+    width: `${width}px`,
+    height: `${height}px`,
     position: 'absolute',
   }
 }
 
 export function setTopLeft(top: number, left: number, width: number, height: number) {
   return {
-    top: top + 'px',
-    left: left + 'px',
-    width: width + 'px',
-    height: height + 'px',
+    top: `${top}px`,
+    left: `${left}px`,
+    width: `${width}px`,
+    height: `${height}px`,
     position: 'absolute',
   }
 }
@@ -359,10 +378,10 @@ export function setTopLeft(top: number, left: number, width: number, height: num
  */
 export function setTopRight(top: number, right: number, width: number, height: number) {
   return {
-    top: top + 'px',
-    right: right + 'px',
-    width: width + 'px',
-    height: height + 'px',
+    top: `${top}px`,
+    right: `${right}px`,
+    width: `${width}px`,
+    height: `${height}px`,
     position: 'absolute',
   }
 }
@@ -373,7 +392,7 @@ export function setTopRight(top: number, right: number, width: number, height: n
  * @return Layout, sorted static items first.
  */
 export function sortLayoutItemsByRowCol(layout: Layout): Layout {
-  return Array.from(layout).sort(function (a, b) {
+  return Array.from(layout).sort((a, b) => {
     if (a.y === b.y && a.x === b.x) {
       return 0
     }
@@ -397,32 +416,33 @@ export function validateLayout(layout: Layout, contextName?: string): void {
   contextName = contextName || 'Layout'
   const subProps = ['x', 'y', 'w', 'h']
   const keyArr = []
-  if (!Array.isArray(layout)) throw new Error(contextName + ' must be an array!')
+  if (!Array.isArray(layout))
+    throw new Error(`${contextName} must be an array!`)
   for (let i = 0, len = layout.length; i < len; i++) {
     const item = layout[i]
     for (let j = 0; j < subProps.length; j++) {
       if (typeof (item as any)[subProps[j]] !== 'number') {
-        throw new Error(
-          'VueGridLayout: ' + contextName + '[' + i + '].' + subProps[j] + ' must be a number!',
+        throw new TypeError(
+          `VueGridLayout: ${contextName}[${i}].${subProps[j]} must be a number!`,
         )
       }
     }
 
     if (item.i === undefined || item.i === null) {
-      throw new Error('VueGridLayout: ' + contextName + '[' + i + '].i cannot be null!')
+      throw new Error(`VueGridLayout: ${contextName}[${i}].i cannot be null!`)
     }
 
     if (typeof item.i !== 'number' && typeof item.i !== 'string') {
-      throw new Error('VueGridLayout: ' + contextName + '[' + i + '].i must be a string or number!')
+      throw new TypeError(`VueGridLayout: ${contextName}[${i}].i must be a string or number!`)
     }
 
-    if (keyArr.indexOf(item.i) >= 0) {
-      throw new Error('VueGridLayout: ' + contextName + '[' + i + '].i must be unique!')
+    if (keyArr.includes(item.i)) {
+      throw new Error(`VueGridLayout: ${contextName}[${i}].i must be unique!`)
     }
     keyArr.push(item.i)
 
     if (item.static !== undefined && typeof item.static !== 'boolean') {
-      throw new Error('VueGridLayout: ' + contextName + '[' + i + '].static must be a boolean!')
+      throw new Error(`VueGridLayout: ${contextName}[${i}].static must be a boolean!`)
     }
   }
 }
@@ -442,7 +462,8 @@ export function autoBindHandlers(
  */
 export function createMarkup(obj: Record<string, any>) {
   const keys = Object.keys(obj)
-  if (!keys.length) return ''
+  if (!keys.length)
+    return ''
   let i
   const len = keys.length
   let result = ''
@@ -450,7 +471,7 @@ export function createMarkup(obj: Record<string, any>) {
   for (i = 0; i < len; i++) {
     const key = keys[i]
     const val = obj[key]
-    result += hyphenate(key) + ':' + addPx(key, val) + ';'
+    result += `${hyphenate(key)}:${addPx(key, val)};`
   }
 
   return result
@@ -498,8 +519,9 @@ export const IS_UNITLESS: Record<string, boolean> = {
  */
 export function addPx(name: string, value: number | string) {
   if (typeof value === 'number' && !IS_UNITLESS[name]) {
-    return value + 'px'
-  } else {
+    return `${value}px`
+  }
+  else {
     return value
   }
 }
@@ -527,7 +549,7 @@ export function findItemInArray(array: any[], property: string, value: any) {
 }
 
 export function findAndRemove(array: any[], property: string, value: any) {
-  array.forEach(function (result, index) {
+  array.forEach((result, index) => {
     if (result[property] === value) {
       // Remove from array
       array.splice(index, 1)

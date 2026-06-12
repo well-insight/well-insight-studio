@@ -1,106 +1,105 @@
 <script setup lang="ts">
-import type { AdaptiveDialogMode } from "./types";
-import { Close, CopyDocument, FullScreen, Menu } from "@element-plus/icons-vue";
-import { computed, nextTick, watch } from "vue";
-
-const visible = defineModel<boolean>({ required: true });
-const mode = defineModel<AdaptiveDialogMode>("mode", { default: "dialog" });
+import type { AdaptiveDialogMode } from './types'
+import { Close, CopyDocument, FullScreen, Menu } from '@element-plus/icons-vue'
+import { computed, nextTick, watch } from 'vue'
 
 const props = withDefaults(
   defineProps<{
-    title?: string;
-    width?: string | number;
-    top?: string;
-    drawerSize?: string | number;
-    drawerDirection?: "rtl" | "ltr" | "ttb" | "btt";
-    defaultMode?: AdaptiveDialogMode;
-    appendToBody?: boolean;
-    destroyOnClose?: boolean;
-    closeOnClickModal?: boolean;
-    showModeSwitch?: boolean;
+    title?: string
+    width?: string | number
+    top?: string
+    drawerSize?: string | number
+    drawerDirection?: 'rtl' | 'ltr' | 'ttb' | 'btt'
+    defaultMode?: AdaptiveDialogMode
+    appendToBody?: boolean
+    destroyOnClose?: boolean
+    closeOnClickModal?: boolean
+    showModeSwitch?: boolean
     /** 附加到 dialog / drawer 根节点的 class */
-    shellClass?: string;
+    shellClass?: string
     /** 窗口模式下 dialog body 固定高度，如 66vh */
-    dialogBodyHeight?: string;
+    dialogBodyHeight?: string
   }>(),
   {
-    title: "",
-    width: "50%",
-    top: "4vh",
-    drawerSize: "min(720px, 92vw)",
-    drawerDirection: "rtl",
-    defaultMode: "dialog",
+    title: '',
+    width: '50%',
+    top: '4vh',
+    drawerSize: 'min(720px, 92vw)',
+    drawerDirection: 'rtl',
+    defaultMode: 'dialog',
     appendToBody: true,
     destroyOnClose: true,
     closeOnClickModal: false,
     showModeSwitch: true,
-    shellClass: "",
-    dialogBodyHeight: "",
+    shellClass: '',
+    dialogBodyHeight: '',
   },
-);
+)
+const visible = defineModel<boolean>({ required: true })
+const mode = defineModel<AdaptiveDialogMode>('mode', { default: 'dialog' })
 
 const shellClassList = computed(() => {
   const list = [
-    "adaptive-dialog",
+    'adaptive-dialog',
     `adaptive-dialog--${mode.value}`,
     props.shellClass,
-  ];
-  if (props.dialogBodyHeight && mode.value === "dialog") {
-    list.push("adaptive-dialog--fixed-body");
+  ]
+  if (props.dialogBodyHeight && mode.value === 'dialog') {
+    list.push('adaptive-dialog--fixed-body')
   }
-  return list;
-});
+  return list
+})
 
 const dialogShellStyle = computed(() => {
-  if (mode.value !== "dialog" || !props.dialogBodyHeight) {
-    return undefined;
+  if (mode.value !== 'dialog' || !props.dialogBodyHeight) {
+    return undefined
   }
   return {
-    "--adaptive-dialog-shell-body-height": props.dialogBodyHeight,
-  };
-});
+    '--adaptive-dialog-shell-body-height': props.dialogBodyHeight,
+  }
+})
 
-const dialogFullscreen = computed(() => mode.value === "fullscreen");
+const dialogFullscreen = computed(() => mode.value === 'fullscreen')
 
 const bodyStyle = computed(() => {
-  if (mode.value === "fullscreen" || mode.value === "drawer") {
+  if (mode.value === 'fullscreen' || mode.value === 'drawer') {
     return {
-      "--adaptive-body-height": "100%",
-      "--adaptive-body-min-height": "0",
-      "--adaptive-layout-overflow": "hidden",
-      "--chart-config-max-height": "none",
-    } as Record<string, string>;
+      '--adaptive-body-height': '100%',
+      '--adaptive-body-min-height': '0',
+      '--adaptive-layout-overflow': 'hidden',
+      '--chart-config-max-height': 'none',
+    } as Record<string, string>
   }
   return {
-    "--adaptive-body-height": "100%",
-    "--adaptive-body-min-height": "0",
-    "--adaptive-layout-overflow": "hidden",
-    "--chart-config-max-height": "none",
-  } as Record<string, string>;
-});
+    '--adaptive-body-height': '100%',
+    '--adaptive-body-min-height': '0',
+    '--adaptive-layout-overflow': 'hidden',
+    '--chart-config-max-height': 'none',
+  } as Record<string, string>
+})
 
 function setMode(next: AdaptiveDialogMode) {
   if (mode.value === next) {
-    return;
+    return
   }
-  const wasOpen = visible.value;
-  mode.value = next;
+  const wasOpen = visible.value
+  mode.value = next
   if (wasOpen) {
     void nextTick(() => {
-      visible.value = true;
-    });
+      visible.value = true
+    })
   }
 }
 
 function close() {
-  visible.value = false;
+  visible.value = false
 }
 
 watch(visible, (open) => {
   if (!open) {
-    mode.value = props.defaultMode;
+    mode.value = props.defaultMode
   }
-});
+})
 </script>
 
 <template>
@@ -134,7 +133,9 @@ watch(visible, (open) => {
                 :class="{ 'is-active': mode === 'dialog' }"
                 @click="setMode('dialog')"
               >
-                <el-icon :size="16"><CopyDocument /></el-icon>
+                <el-icon :size="16">
+                  <CopyDocument />
+                </el-icon>
               </el-button>
             </el-tooltip>
             <el-tooltip content="全屏" placement="bottom">
@@ -144,7 +145,9 @@ watch(visible, (open) => {
                 :class="{ 'is-active': mode === 'fullscreen' }"
                 @click="setMode('fullscreen')"
               >
-                <el-icon :size="16"><FullScreen /></el-icon>
+                <el-icon :size="16">
+                  <FullScreen />
+                </el-icon>
               </el-button>
             </el-tooltip>
             <el-tooltip content="侧边栏" placement="bottom">
@@ -154,12 +157,16 @@ watch(visible, (open) => {
                 :class="{ 'is-active': mode === 'drawer' }"
                 @click="setMode('drawer')"
               >
-                <el-icon :size="16"><Menu /></el-icon>
+                <el-icon :size="16">
+                  <Menu />
+                </el-icon>
               </el-button>
             </el-tooltip>
           </template>
           <el-button text class="adaptive-dialog__action adaptive-dialog__close" @click="close">
-            <el-icon :size="16"><Close /></el-icon>
+            <el-icon :size="16">
+              <Close />
+            </el-icon>
           </el-button>
         </div>
       </div>
@@ -203,7 +210,9 @@ watch(visible, (open) => {
                 class="adaptive-dialog__action"
                 @click="setMode('dialog')"
               >
-                <el-icon :size="16"><CopyDocument /></el-icon>
+                <el-icon :size="16">
+                  <CopyDocument />
+                </el-icon>
               </el-button>
             </el-tooltip>
             <el-tooltip content="全屏" placement="bottom">
@@ -212,7 +221,9 @@ watch(visible, (open) => {
                 class="adaptive-dialog__action"
                 @click="setMode('fullscreen')"
               >
-                <el-icon :size="16"><FullScreen /></el-icon>
+                <el-icon :size="16">
+                  <FullScreen />
+                </el-icon>
               </el-button>
             </el-tooltip>
             <el-tooltip content="侧边栏" placement="bottom">
@@ -221,12 +232,16 @@ watch(visible, (open) => {
                 class="adaptive-dialog__action is-active"
                 @click="setMode('drawer')"
               >
-                <el-icon :size="16"><Menu /></el-icon>
+                <el-icon :size="16">
+                  <Menu />
+                </el-icon>
               </el-button>
             </el-tooltip>
           </template>
           <el-button text class="adaptive-dialog__action adaptive-dialog__close" @click="close">
-            <el-icon :size="16"><Close /></el-icon>
+            <el-icon :size="16">
+              <Close />
+            </el-icon>
           </el-button>
         </div>
       </div>

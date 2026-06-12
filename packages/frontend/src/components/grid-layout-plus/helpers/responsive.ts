@@ -1,6 +1,6 @@
-import { cloneLayout, compact, correctBounds } from './common'
-
 import type { Breakpoint, Breakpoints, Layout, ResponsiveLayout } from './types'
+
+import { cloneLayout, compact, correctBounds } from './common'
 
 /**
  * Given a width, find the highest breakpoint that matches is valid for it (width > breakpoint).
@@ -14,7 +14,8 @@ export function getBreakpointFromWidth(breakpoints: Breakpoints, width: number):
   let matching = sorted[0]
   for (let i = 1, len = sorted.length; i < len; i++) {
     const breakpointName = sorted[i]
-    if (width > breakpoints[breakpointName]) matching = breakpointName
+    if (width > breakpoints[breakpointName])
+      matching = breakpointName
   }
   return matching
 }
@@ -28,7 +29,7 @@ export function getBreakpointFromWidth(breakpoints: Breakpoints, width: number):
 export function getColsFromBreakpoint(breakpoint: Breakpoint, cols: Breakpoints): number {
   if (!cols[breakpoint]) {
     throw new Error(
-      'ResponsiveGridLayout: `cols` entry for breakpoint ' + breakpoint + ' is missing!',
+      `ResponsiveGridLayout: \`cols\` entry for breakpoint ${breakpoint} is missing!`,
     )
   }
   return cols[breakpoint]
@@ -60,7 +61,8 @@ export function findOrGenerateResponsiveLayout(
 ): Layout {
   debugger
   // If it already exists, just return it.
-  if (layouts[breakpoint]) return cloneLayout(layouts[breakpoint])
+  if (layouts[breakpoint])
+    return cloneLayout(layouts[breakpoint])
   // Find or generate the next layout
   let layout = orgLayout
 

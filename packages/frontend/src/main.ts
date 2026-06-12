@@ -1,36 +1,36 @@
-import { createApp } from "vue";
+import { createApp } from 'vue'
 
-import App from "./App.vue";
-import { setupElementPlus } from "./plugins/element-plus";
+import { setupStore } from '@/stores/pinia'
+import App from './App.vue'
 
-import { setupVant } from "./plugins/vant";
+import { setupElementPlus } from './plugins/element-plus'
 
-import router from "./router";
-import { setupStore } from "@/stores/pinia";
-import "virtual:uno.css";
-import "normalize.css";
-import "animate.css";
-import "@/styles/animate-force.css";
+import { setupVant } from './plugins/vant'
+import router from './router'
+import 'virtual:uno.css'
+import 'normalize.css'
+import 'animate.css'
+import '@/styles/animate-force.css'
 
-import "virtual:svg-icons/register";
+import 'virtual:svg-icons/register'
 
-import "@/styles/index.scss";
-import "@gausszhou/vue3-drag-resize-rotate/lib/bundle.esm.css";
+import '@/styles/index.scss'
+import '@gausszhou/vue3-drag-resize-rotate/lib/bundle.esm.css'
 
-const app = createApp(App);
+const app = createApp(App)
 
 // 配置store
-setupStore(app);
+setupStore(app)
 // 使用element-plus插件
-setupElementPlus(app);
+setupElementPlus(app)
 // 使用vant插件
-setupVant(app);
+setupVant(app)
 
-app.config.globalProperties.$$refs = {};
+app.config.globalProperties.$$refs = {}
 
 // if (import.meta.env.DEV) {
-window.$$refs = app.config.globalProperties.$$refs;
+window.$$refs = app.config.globalProperties.$$refs
 // }
-app.use(router);
+app.use(router)
 // 路由准备完毕再挂载
-app.mount("#app");
+app.mount('#app')

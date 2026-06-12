@@ -11,8 +11,8 @@ const props = withDefaults(
   }>(),
   {
     direction: 'row',
-    style: () => ({})
-  }
+    style: () => ({}),
+  },
 )
 
 const layoutStyle = computed<CSSProperties>(() => ({
@@ -21,7 +21,7 @@ const layoutStyle = computed<CSSProperties>(() => ({
   width: '100%',
   height: '100%',
   boxSizing: 'border-box',
-  ...props.style
+  ...props.style,
 }))
 </script>
 

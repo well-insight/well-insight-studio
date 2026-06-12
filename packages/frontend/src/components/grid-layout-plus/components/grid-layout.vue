@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import type { Breakpoint, Layout, LayoutInstance } from '../helpers/types'
+
+import type { GridLayoutProps } from './types'
+import { useResize } from '@vexip-ui/hooks'
+import { createEventEmitter, debounce, isNull } from '@vexip-ui/utils'
 import {
   nextTick,
   onBeforeMount,
@@ -10,29 +15,24 @@ import {
   toRefs,
   watch,
 } from 'vue'
-
-import GridItem from './grid-item.vue'
-import { useResize } from '@vexip-ui/hooks'
-import { createEventEmitter, debounce, isNull } from '@vexip-ui/utils'
 import {
-  EMITTER_KEY,
-  LAYOUT_KEY,
   bottom,
   cloneLayout,
   compact,
+  EMITTER_KEY,
   getAllCollisions,
   getLayoutItem,
+  LAYOUT_KEY,
   moveElement,
   validateLayout,
 } from '../helpers/common'
+
 import {
   findOrGenerateResponsiveLayout,
   getBreakpointFromWidth,
   getColsFromBreakpoint,
 } from '../helpers/responsive'
-
-import type { Breakpoint, Layout, LayoutInstance } from '../helpers/types'
-import type { GridLayoutProps } from './types'
+import GridItem from './grid-item.vue'
 
 const props = withDefaults(defineProps<GridLayoutProps>(), {
   autoSize: true,
@@ -186,43 +186,43 @@ watch(
 )
 watch(
   () => props.colNum,
-  val => {
+  (val) => {
     emitter.emit('setColNum', val)
   },
 )
 watch(
   () => props.rowHeight,
-  value => {
+  (value) => {
     emitter.emit('setRowHeight', value)
   },
 )
 watch(
   () => props.isDraggable,
-  value => {
+  (value) => {
     emitter.emit('setDraggable', value)
   },
 )
 watch(
   () => props.isResizable,
-  value => {
+  (value) => {
     emitter.emit('setResizable', value)
   },
 )
 watch(
   () => props.isBounded,
-  value => {
+  (value) => {
     emitter.emit('setBounded', value)
   },
 )
 watch(
   () => props.transformScale,
-  value => {
+  (value) => {
     emitter.emit('setTransformScale', value)
   },
 )
 watch(
   () => props.responsive,
-  value => {
+  (value) => {
     if (!value) {
       emit('update:layout', state.originalLayout)
       emitter.emit('setColNum', props.colNum)
@@ -232,7 +232,7 @@ watch(
 )
 watch(
   () => props.maxRows,
-  value => {
+  (value) => {
     emitter.emit('setMaxRows', value)
   },
 )
@@ -271,7 +271,8 @@ function layoutUpdate() {
       if (diff.length > 0) {
         if (currentLayout.value.length > state.originalLayout.length) {
           state.originalLayout = state.originalLayout.concat(diff)
-        } else {
+        }
+        else {
           const ids = new Set(diff.map(item => item.i))
           state.originalLayout = state.originalLayout.filter(item => !ids.has(item.i))
         }
@@ -304,10 +305,11 @@ function onWindowResize() {
 }
 
 function containerHeight() {
-  if (!props.autoSize) return
+  if (!props.autoSize)
+    return
 
-  const marginY = parseFloat(props.margin[1] as any)
-  const containerHeight = bottom(currentLayout.value) * (props.rowHeight + marginY) + marginY + 'px'
+  const marginY = Number.parseFloat(props.margin[1] as any)
+  const containerHeight = `${bottom(currentLayout.value) * (props.rowHeight + marginY) + marginY}px`
   return containerHeight
 }
 
@@ -350,7 +352,8 @@ function dragEvent(
     })
 
     emitter.emit('updateWidth', state.width)
-  } else {
+  }
+  else {
     nextTick(() => {
       state.isDragging = false
     })
@@ -365,7 +368,8 @@ function dragEvent(
     l.static = true
     compact(currentLayout.value, props.verticalCompact, positionsBeforeDrag)
     l.static = false
-  } else {
+  }
+  else {
     compact(currentLayout.value, props.verticalCompact)
   }
 
@@ -404,13 +408,17 @@ function resizeEvent(
       // adjust w && h to maximum allowed space
       let leastX = Infinity
       let leastY = Infinity
-      collisions.forEach(layoutItem => {
-        if (layoutItem.x > l.x) leastX = Math.min(leastX, layoutItem.x)
-        if (layoutItem.y > l.y) leastY = Math.min(leastY, layoutItem.y)
+      collisions.forEach((layoutItem) => {
+        if (layoutItem.x > l.x)
+          leastX = Math.min(leastX, layoutItem.x)
+        if (layoutItem.y > l.y)
+          leastY = Math.min(leastY, layoutItem.y)
       })
 
-      if (Number.isFinite(leastX)) l.w = leastX - l.x
-      if (Number.isFinite(leastY)) l.h = leastY - l.y
+      if (Number.isFinite(leastX))
+        l.w = leastX - l.x
+      if (Number.isFinite(leastY))
+        l.h = leastY - l.y
     }
   }
 
@@ -431,19 +439,22 @@ function resizeEvent(
     })
     // this.$broadcast("updateWidth", this.width);
     emitter.emit('updateWidth', state.width)
-  } else if (eventName) {
+  }
+  else if (eventName) {
     nextTick(() => {
       state.isDragging = false
     })
   }
 
-  if (props.responsive) responsiveGridLayout()
+  if (props.responsive)
+    responsiveGridLayout()
 
   compact(currentLayout.value, props.verticalCompact)
   emitter.emit('compact')
   updateHeight()
 
-  if (eventName === 'resizeend') emit('layout-updated', currentLayout.value)
+  if (eventName === 'resizeend')
+    emit('layout-updated', currentLayout.value)
 }
 
 function responsiveGridLayout() {
@@ -509,10 +520,10 @@ function findDifference(layout: Layout, originalLayout: Layout) {
 
 <template>
   <div ref="wrapper" class="vgl-layout" :style="state.mergedStyle">
-    <slot v-if="$slots.default"></slot>
+    <slot v-if="$slots.default" />
     <template v-else>
       <GridItem v-for="item in currentLayout" :key="item.i" v-bind="item">
-        <slot name="item" :item="item"></slot>
+        <slot name="item" :item="item" />
       </GridItem>
     </template>
     <GridItem
@@ -523,6 +534,6 @@ function findDifference(layout: Layout, originalLayout: Layout) {
       :w="state.placeholder.w"
       :h="state.placeholder.h"
       :i="state.placeholder.i"
-    ></GridItem>
+    />
   </div>
 </template>

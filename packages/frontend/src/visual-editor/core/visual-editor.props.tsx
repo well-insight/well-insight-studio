@@ -55,13 +55,13 @@ interface EditorModelBindProp {
 export function createEditorModelBindProp({
   label = '字段绑定',
   defaultValue,
-  tips
+  tips,
 }: EditorModelBindProp): VisualEditorProps {
   return {
     type: VisualEditorPropsType.modelBind,
     label,
     tips,
-    defaultValue
+    defaultValue,
   }
 }
 
@@ -77,7 +77,7 @@ export function createEditorSwitchProp({ label, defaultValue, tips }: EditorSwit
     type: VisualEditorPropsType.switch,
     label,
     tips,
-    defaultValue
+    defaultValue,
   }
 }
 
@@ -94,7 +94,7 @@ export function createEditorInputProp({ label, defaultValue, tips }: EditorInput
     type: VisualEditorPropsType.input,
     label,
     tips,
-    defaultValue
+    defaultValue,
   }
 }
 /* ---------------------------------------InputNumber ------------------------------------------- */
@@ -112,7 +112,7 @@ export function createEditorInputNumberProp({
   defaultValue,
   max,
   min,
-  tips
+  tips,
 }: EditorInputNumberProp): VisualEditorProps {
   return {
     type: VisualEditorPropsType.inputNumber,
@@ -120,7 +120,7 @@ export function createEditorInputNumberProp({
     tips,
     max,
     min,
-    defaultValue
+    defaultValue,
   }
 }
 
@@ -135,7 +135,7 @@ export function createEditorColorProp({ label, defaultValue }: EditorColorProp):
   return {
     type: VisualEditorPropsType.color,
     label,
-    defaultValue
+    defaultValue,
   }
 }
 
@@ -160,7 +160,7 @@ export function createEditorSelectProp({
   options,
   defaultValue,
   tips,
-  multiple
+  multiple,
 }: EditorSelectProp): VisualEditorProps {
   return {
     type: VisualEditorPropsType.select,
@@ -168,7 +168,7 @@ export function createEditorSelectProp({
     defaultValue,
     tips,
     options,
-    multiple
+    multiple,
   }
 }
 
@@ -185,7 +185,7 @@ export interface VisualEditorTableOption {
 interface EditorTableProp {
   label: string
   option: VisualEditorTableOption
-  defaultValue?: { label: string; value: string }[]
+  defaultValue?: { label: string, value: string }[]
 }
 
 export function createEditorTableProp({ label, option, defaultValue }: EditorTableProp): VisualEditorProps {
@@ -193,7 +193,7 @@ export function createEditorTableProp({ label, option, defaultValue }: EditorTab
     type: VisualEditorPropsType.table,
     label,
     table: option,
-    defaultValue
+    defaultValue,
   }
 }
 
@@ -212,7 +212,7 @@ export function createEditorCrossSortableProp({
   labelPosition,
   multiple,
   showItemPropsConfig,
-  defaultValue
+  defaultValue,
 }: EditorCrossSortableProp): VisualEditorProps {
   return {
     type: VisualEditorPropsType.crossSortable,
@@ -220,7 +220,7 @@ export function createEditorCrossSortableProp({
     multiple,
     showItemPropsConfig,
     labelPosition,
-    defaultValue
+    defaultValue,
   }
 }
 
@@ -237,6 +237,6 @@ export function createEditorImageUploadProp({ label, defaultValue, tips }: Edito
     type: VisualEditorPropsType.imageUpload,
     label,
     tips,
-    defaultValue
+    defaultValue,
   }
 }

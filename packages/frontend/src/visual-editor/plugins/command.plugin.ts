@@ -21,7 +21,7 @@ export function useCommander() {
     queue: [] as CommandExecute[], // 命令队列
     commandArray: [] as Command[], // 命令对象数组
     commands: {} as Record<string, (...args: any[]) => void>, // 命令对象，方便通过命令的名称调用命令的execute函数，并且执行额外的命令队列的逻辑
-    destroyList: [] as ((() => void) | undefined)[] // 组件销毁的时候，需要调用的销毁逻辑数组
+    destroyList: [] as ((() => void) | undefined)[], // 组件销毁的时候，需要调用的销毁逻辑数组
   })
 
   /**
@@ -55,9 +55,12 @@ export function useCommander() {
       }
       const { keyCode, shiftKey, altKey, ctrlKey, metaKey } = e
       const keyString: string[] = []
-      if (ctrlKey || metaKey) keyString.push('ctrl')
-      if (shiftKey) keyString.push('shift')
-      if (altKey) keyString.push('alt')
+      if (ctrlKey || metaKey)
+        keyString.push('ctrl')
+      if (shiftKey)
+        keyString.push('shift')
+      if (altKey)
+        keyString.push('alt')
       keyString.push(KeyboardCode[keyCode])
       const keyNames = keyString.join('+')
       state.commandArray.forEach(({ keyboard, name }) => {
@@ -111,9 +114,9 @@ export function useCommander() {
             !!queueItem.undo && queueItem.undo()
             state.current--
           }
-        }
+        },
       }
-    }
+    },
   })
 
   /**
@@ -131,9 +134,9 @@ export function useCommander() {
             queueItem.redo()
             state.current++
           }
-        }
+        },
       }
-    }
+    },
   })
 
   onUnmounted(() => state.destroyList.forEach(fn => !!fn && fn()))
@@ -141,6 +144,6 @@ export function useCommander() {
   return {
     state,
     registry,
-    init
+    init,
   }
 }

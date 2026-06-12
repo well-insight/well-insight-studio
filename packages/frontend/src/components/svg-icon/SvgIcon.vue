@@ -4,7 +4,7 @@ import { computed } from 'vue'
 
 defineOptions({
   name: 'SvgIcon',
-  inheritAttrs: false
+  inheritAttrs: false,
 })
 
 const props = withDefaults(defineProps<SvgIconProps>(), {
@@ -12,7 +12,7 @@ const props = withDefaults(defineProps<SvgIconProps>(), {
   color: '',
   rotate: 0,
   title: '',
-  disabled: false
+  disabled: false,
 })
 
 // 定义 Emits 类型
@@ -58,15 +58,18 @@ const computedSize = computed<string>(() => {
 const svgStyle = computed<CSSProperties>(() => {
   const style: CSSProperties = {}
   // 自定义颜色
-  if (props.color) style.color = props.color
+  if (props.color)
+    style.color = props.color
   // 旋转角度
-  if (props.rotate) style.transform = `rotate(${props.rotate}deg)`
+  if (props.rotate)
+    style.transform = `rotate(${props.rotate}deg)`
   return style
 })
 
 // 处理点击事件
 function handleClick(e: MouseEvent) {
-  if (props.disabled) return
+  if (props.disabled)
+    return
   emit('click', e)
 }
 </script>

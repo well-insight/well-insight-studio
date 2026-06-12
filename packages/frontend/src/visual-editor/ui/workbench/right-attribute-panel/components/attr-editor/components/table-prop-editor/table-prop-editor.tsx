@@ -8,7 +8,7 @@ import { $$tablePropEditor } from './table-prop-edit.service'
 export const TablePropEditor = defineComponent({
   props: {
     modelValue: { type: Array as PropType<any[]> },
-    propConfig: { type: Object as PropType<VisualEditorProps>, required: true }
+    propConfig: { type: Object as PropType<VisualEditorProps>, required: true },
   },
   emits: ['update:modelValue'],
   setup(props, { emit }: SetupContext) {
@@ -17,7 +17,7 @@ export const TablePropEditor = defineComponent({
     const onClick = async () => {
       const data = await $$tablePropEditor({
         config: props.propConfig,
-        data: props.modelValue || []
+        data: props.modelValue || [],
       })
       model.value = data
     }
@@ -30,5 +30,5 @@ export const TablePropEditor = defineComponent({
         ))}
       </div>
     )
-  }
+  },
 })

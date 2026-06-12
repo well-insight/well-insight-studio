@@ -1,5 +1,6 @@
-import { alovaInstance, type ApiResponse } from "./alovaConfig";
-import { MethodType, RequestBody } from "alova";
+import type { RequestBody } from 'alova'
+import type { ApiResponse } from './alovaConfig'
+import { alovaInstance } from './alovaConfig'
 
 const request = {
   /**
@@ -12,11 +13,11 @@ const request = {
       ...config,
       transform: (response: ApiResponse<T>) => {
         if (!response.success) {
-          throw new Error(response.error || response.message || "请求失败");
+          throw new Error(response.error || response.message || '请求失败')
         }
-        return response.data as T;
+        return response.data as T
       },
-    });
+    })
   },
 
   /**
@@ -27,11 +28,11 @@ const request = {
       ...config,
       transform: (response: ApiResponse<T>) => {
         if (!response.success) {
-          throw new Error(response.error || response.message || "请求失败");
+          throw new Error(response.error || response.message || '请求失败')
         }
-        return response.data as T;
+        return response.data as T
       },
-    });
+    })
   },
 
   /**
@@ -42,11 +43,11 @@ const request = {
       ...config,
       transform: (response: ApiResponse<T>) => {
         if (!response.success) {
-          throw new Error(response.error || response.message || "请求失败");
+          throw new Error(response.error || response.message || '请求失败')
         }
-        return response.data as T;
+        return response.data as T
       },
-    });
+    })
   },
 
   /**
@@ -57,11 +58,11 @@ const request = {
       ...config,
       transform: (response: ApiResponse<T>) => {
         if (!response.success) {
-          throw new Error(response.error || response.message || "请求失败");
+          throw new Error(response.error || response.message || '请求失败')
         }
-        return response.data as T;
+        return response.data as T
       },
-    });
+    })
   },
 
   /**
@@ -72,11 +73,11 @@ const request = {
       ...config,
       transform: (response: ApiResponse<T>) => {
         if (!response.success) {
-          throw new Error(response.error || response.message || "请求失败");
+          throw new Error(response.error || response.message || '请求失败')
         }
-        return response.data as T;
+        return response.data as T
       },
-    });
+    })
   },
 
   /**
@@ -85,21 +86,21 @@ const request = {
   uploadFile<T = unknown>(url: string, formData: FormData, onProgress?: (progress: number) => void) {
     return alovaInstance.Post<T, ApiResponse<T>>(url, formData, {
       headers: {
-        "Content-Type": "multipart/form-data",
+        'Content-Type': 'multipart/form-data',
       },
       onUploadProgress: (event: ProgressEvent) => {
         if (onProgress && event.total > 0) {
-          const progress = Math.round((event.loaded / event.total) * 100);
-          onProgress(progress);
+          const progress = Math.round((event.loaded / event.total) * 100)
+          onProgress(progress)
         }
       },
       transform: (response: ApiResponse<T>) => {
         if (!response.success) {
-          throw new Error(response.error || response.message || "请求失败");
+          throw new Error(response.error || response.message || '请求失败')
         }
-        return response.data as T;
+        return response.data as T
       },
-    });
+    })
   },
 
   /**
@@ -109,20 +110,20 @@ const request = {
   downloadFile(url: string, filename: string) {
     return alovaInstance.Get<Blob>(url, {
       headers: {
-        Accept: "application/octet-stream",
+        Accept: 'application/octet-stream',
       },
       transform: (data: Blob) => {
         // 创建下载链接
-        const blobUrl = URL.createObjectURL(data);
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = filename;
-        link.click();
-        URL.revokeObjectURL(blobUrl);
-        return data;
+        const blobUrl = URL.createObjectURL(data)
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = filename
+        link.click()
+        URL.revokeObjectURL(blobUrl)
+        return data
       },
-    });
+    })
   },
-};
+}
 
-export default request;
+export default request

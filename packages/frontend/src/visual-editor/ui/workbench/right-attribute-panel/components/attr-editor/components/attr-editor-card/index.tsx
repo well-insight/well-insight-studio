@@ -14,13 +14,13 @@ export const AttrEditorCard = defineComponent({
   props: {
     header: {
       type: String,
-      default: '标题'
-    }
+      default: '标题',
+    },
   },
   slots: Object as SlotsType<Slots>,
   setup(props, { slots }) {
     return () => (
-      <ElCard class={styles.card} shadow='never'>
+      <ElCard class={styles.card} shadow="never">
         {{
           header: () => (
             <>
@@ -34,9 +34,9 @@ export const AttrEditorCard = defineComponent({
               )}
             </>
           ),
-          default: () => <>{slots.default?.()}</>
+          default: () => <>{slots.default?.()}</>,
         }}
       </ElCard>
     )
-  }
+  },
 })

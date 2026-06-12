@@ -1,40 +1,43 @@
 <script setup lang="ts">
-import type { ApiDatasetField } from "@/api/dataset";
-import { Calendar, Document, Histogram, Search } from "@element-plus/icons-vue";
-import { computed, ref } from "vue";
+import type { ApiDatasetField } from '@/api/dataset'
+import { Calendar, Document, Histogram, Search } from '@element-plus/icons-vue'
+import { computed, ref } from 'vue'
 
 const props = defineProps<{
-  fields: ApiDatasetField[];
-  loading?: boolean;
-}>();
+  fields: ApiDatasetField[]
+  loading?: boolean
+}>()
 
 const emit = defineEmits<{
-  fieldDragStart: [field: ApiDatasetField];
-}>();
+  fieldDragStart: [field: ApiDatasetField]
+}>()
 
-const keyword = ref("");
+const keyword = ref('')
 
 const filteredFields = computed(() => {
-  const q = keyword.value.trim().toLowerCase();
-  const list = [...props.fields].sort((a, b) => a.sort_order - b.sort_order);
-  if (!q) return list;
-  return list.filter((f) => f.name.toLowerCase().includes(q));
-});
+  const q = keyword.value.trim().toLowerCase()
+  const list = [...props.fields].sort((a, b) => a.sort_order - b.sort_order)
+  if (!q)
+    return list
+  return list.filter(f => f.name.toLowerCase().includes(q))
+})
 
-function fieldIcon(type: ApiDatasetField["field_type"]) {
-  if (type === "number") return Histogram;
-  if (type === "datetime") return Calendar;
-  return Document;
+function fieldIcon(type: ApiDatasetField['field_type']) {
+  if (type === 'number')
+    return Histogram
+  if (type === 'datetime')
+    return Calendar
+  return Document
 }
 
-function iconClass(type: ApiDatasetField["field_type"]) {
-  return `field-item__icon--${type}`;
+function iconClass(type: ApiDatasetField['field_type']) {
+  return `field-item__icon--${type}`
 }
 
 function onDragStart(e: DragEvent, field: ApiDatasetField) {
-  e.dataTransfer?.setData("application/x-dataset-field", JSON.stringify(field));
-  e.dataTransfer!.effectAllowed = "copy";
-  emit("fieldDragStart", field);
+  e.dataTransfer?.setData('application/x-dataset-field', JSON.stringify(field))
+  e.dataTransfer!.effectAllowed = 'copy'
+  emit('fieldDragStart', field)
 }
 </script>
 

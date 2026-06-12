@@ -1,54 +1,54 @@
 <script lang="ts" setup>
-import type { ApiApplicationListItem } from "@/api/application";
-import { fetchApplication } from "@/api/application";
-import { ELayout, ELayoutContent, ELayoutSider } from "@/components/e-layout";
-import { useControlStore } from "@/stores/controlStore";
-import { useWorkspaceStore } from "@/stores/workspaceStore";
-import { useVisualData } from "@/visual-editor/hooks/useVisualData";
+import type { ApiApplicationListItem } from '@/api/application'
+import { onClickOutside } from '@vueuse/core'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { storeToRefs } from 'pinia'
+import { onActivated, onBeforeUnmount, onMounted, onUnmounted, ref, watch } from 'vue'
+import { onBeforeRouteLeave, useRoute } from 'vue-router'
+import { fetchApplication } from '@/api/application'
+import { ELayout, ELayoutContent, ELayoutSider } from '@/components/e-layout'
+import { useControlStore } from '@/stores/controlStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 // import SimulatorEditor from "@/visual-editor/ui/canvas/simulator-editor/SimulatorEditor.vue";
-import SimulatorEditor from "@/visual-editor/ui/canvas/simulator-grid-editor/SimulatorEditor.vue";
-import { CustomComponents } from "@/visual-editor/ui/workbench/component-list";
-import LeftAside from "@/visual-editor/ui/workbench/left-aside/LeftAside.vue";
-import RightAttributePanel from "@/visual-editor/ui/workbench/right-attribute-panel/RightAttributePanel.vue";
-import { onClickOutside } from "@vueuse/core";
-import { ElMessage, ElMessageBox } from "element-plus";
-import { storeToRefs } from "pinia";
-import { onActivated, onBeforeUnmount, onMounted, onUnmounted, ref, watch } from "vue";
-import { onBeforeRouteLeave, useRoute } from "vue-router";
+import SimulatorEditor from '@/visual-editor/ui/canvas/simulator-grid-editor/SimulatorEditor.vue'
+import { CustomComponents } from '@/visual-editor/ui/workbench/component-list'
+import LeftAside from '@/visual-editor/ui/workbench/left-aside/LeftAside.vue'
 
-const route = useRoute();
-const workspaceStore = useWorkspaceStore();
-const { appList } = storeToRefs(workspaceStore);
+const route = useRoute()
+const workspaceStore = useWorkspaceStore()
+const { appList } = storeToRefs(workspaceStore)
 
-const controlStore = useControlStore();
-const { layoutCollapse, settingCollapse, floatingSettingVisible } = storeToRefs(controlStore);
+const controlStore = useControlStore()
+const { layoutCollapse, settingCollapse, floatingSettingVisible } = storeToRefs(controlStore)
 
-const { overrideProject, updateVisualLoading, isDirty } = useVisualData();
+const { overrideProject, updateVisualLoading, isDirty } = useVisualData()
 
 /** 并发/重复进入时只应用最后一次请求结果 */
-let loadSeq = 0;
+let loadSeq = 0
 
-const loading = ref(false);
-const floatingPanelRef = ref<HTMLElement | null>(null);
+const loading = ref(false)
+const floatingPanelRef = ref<HTMLElement | null>(null)
 
 onClickOutside(floatingPanelRef, () => {
   if (controlStore.floatingSettingVisible) {
-    controlStore.floatingSettingVisible = false;
+    controlStore.floatingSettingVisible = false
   }
-});
+})
 
 function normalizeAppId(): string | null {
-  const raw = route.params.id;
-  if (raw == null) return null;
+  const raw = route.params.id
+  if (raw == null)
+    return null
   if (Array.isArray(raw)) {
-    return raw.filter(Boolean).join("/") || null;
+    return raw.filter(Boolean).join('/') || null
   }
-  const s = String(raw).trim();
-  return s || null;
+  const s = String(raw).trim()
+  return s || null
 }
 
 function toWorkspaceApp(row: ApiApplicationListItem) {
-  const iso = row.lastUpdated || row.updated_at;
+  const iso = row.lastUpdated || row.updated_at
   return {
     id: row.id,
     title: row.title,
@@ -56,33 +56,35 @@ function toWorkspaceApp(row: ApiApplicationListItem) {
     clientType: row.client_type,
     starred: row.starred,
     lastUpdated: iso ? iso.slice(0, 10) : undefined,
-  };
+  }
 }
 
 async function loadApplicationById(id: string) {
-  updateVisualLoading(true);
-  const seq = ++loadSeq;
-  loading.value = true;
+  updateVisualLoading(true)
+  const seq = ++loadSeq
+  loading.value = true
   try {
-    const detail = await fetchApplication(id);
+    const detail = await fetchApplication(id)
     if (seq !== loadSeq) {
-      return;
+      return
     }
-    workspaceStore.setCurrentApp(toWorkspaceApp(detail));
-    overrideProject(detail.schema);
-  } catch (e) {
+    workspaceStore.setCurrentApp(toWorkspaceApp(detail))
+    overrideProject(detail.schema)
+  }
+  catch (e) {
     if (seq !== loadSeq) {
-      return;
+      return
     }
-    ElMessage.error((e as Error).message || "加载应用失败");
-    const fallback = appList.value?.find((e) => String(e?.id) === id);
+    ElMessage.error((e as Error).message || '加载应用失败')
+    const fallback = appList.value?.find(e => String(e?.id) === id)
     if (fallback) {
-      workspaceStore.setCurrentApp(fallback);
+      workspaceStore.setCurrentApp(fallback)
     }
-  } finally {
+  }
+  finally {
     if (seq === loadSeq) {
-      loading.value = false;
-      updateVisualLoading(false);
+      loading.value = false
+      updateVisualLoading(false)
     }
   }
 }
@@ -91,69 +93,70 @@ watch(
   () => normalizeAppId(),
   (id) => {
     if (id) {
-      loadApplicationById(id);
+      loadApplicationById(id)
     }
   },
   { immediate: true },
-);
+)
 
 /**
  * keep-alive 下再次进入同一应用时路由 id 不变，watch 不会触发，需在激活时重新请求。
  * 首次激活与 immediate watch 重合，跳过一次以免重复请求。
  */
-let skipNextActivateLoad = true;
+let skipNextActivateLoad = true
 onActivated(() => {
-  const id = normalizeAppId();
+  const id = normalizeAppId()
   if (!id) {
-    return;
+    return
   }
   if (skipNextActivateLoad) {
-    skipNextActivateLoad = false;
-    return;
+    skipNextActivateLoad = false
+    return
   }
-  loadApplicationById(id);
-});
+  loadApplicationById(id)
+})
 
 async function confirmLeaveIfDirty(): Promise<boolean> {
   if (!isDirty.value) {
-    return true;
+    return true
   }
   try {
-    await ElMessageBox.confirm("当前有未保存的更改，确定要离开吗？", "提示", {
-      confirmButtonText: "离开",
-      cancelButtonText: "取消",
-      type: "warning",
-    });
-    return true;
-  } catch {
-    return false;
+    await ElMessageBox.confirm('当前有未保存的更改，确定要离开吗？', '提示', {
+      confirmButtonText: '离开',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    return true
+  }
+  catch {
+    return false
   }
 }
 
 onBeforeRouteLeave(async (_to, _from, next) => {
-  const ok = await confirmLeaveIfDirty();
-  next(ok);
-});
+  const ok = await confirmLeaveIfDirty()
+  next(ok)
+})
 
 function onBeforeUnload(e: BeforeUnloadEvent) {
   if (isDirty.value) {
-    e.preventDefault();
-    e.returnValue = "";
+    e.preventDefault()
+    e.returnValue = ''
   }
 }
 
 onMounted(() => {
-  window.addEventListener("beforeunload", onBeforeUnload);
-});
+  window.addEventListener('beforeunload', onBeforeUnload)
+})
 
 onBeforeUnmount(() => {
-  window.removeEventListener("beforeunload", onBeforeUnload);
-});
+  window.removeEventListener('beforeunload', onBeforeUnload)
+})
 
 onUnmounted(() => {
-  workspaceStore.setCurrentApp(null);
-  controlStore.floatingSettingVisible = false;
-});
+  workspaceStore.setCurrentApp(null)
+  controlStore.floatingSettingVisible = false
+})
 </script>
 
 <template>

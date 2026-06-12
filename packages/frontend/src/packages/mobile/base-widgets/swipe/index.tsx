@@ -14,7 +14,7 @@ export default {
   moduleName: 'baseWidgets',
   label: '轮播图',
   preview: () => (
-    <Swipe style={{ width: '180px', height: '80%' }} indicatorColor='white'>
+    <Swipe style={{ width: '180px', height: '80%' }} indicatorColor="white">
       <SwipeItem style={swipeItemStyle}>1</SwipeItem>
       <SwipeItem style={swipeItemStyle}>2</SwipeItem>
       <SwipeItem style={swipeItemStyle}>3</SwipeItem>
@@ -42,9 +42,9 @@ export default {
   events: [{ label: '每一页轮播结束后触发', value: 'change' }],
   showStyleConfig: false,
   resize: {
-    width: true
+    width: true,
   },
   model: {
-    default: '绑定字段'
-  }
+    default: '绑定字段',
+  },
 } as VisualEditorComponent

@@ -1,53 +1,54 @@
 <script setup lang="ts">
-import type { DrawerProps } from "element-plus";
-import type { CSSProperties } from "vue";
-import { computed, toRaw, toValue, watch } from "vue";
-import { useWorkspaceStore } from "@/stores/workspaceStore";
-import { localKey, useVisualData } from "@/visual-editor/hooks/useVisualData";
-import SimulatorEditorPreview from "@/visual-editor/ui/canvas/simulator-editor-preview/SimulatorEditorPreview.vue";
+import type { DrawerProps } from 'element-plus'
+import type { CSSProperties } from 'vue'
+import { computed, toRaw, toValue, watch } from 'vue'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { localKey, useVisualData } from '@/visual-editor/hooks/useVisualData'
+import SimulatorEditorPreview from '@/visual-editor/ui/canvas/simulator-editor-preview/SimulatorEditorPreview.vue'
 
 interface Props {
-  device?: "pc" | "mobile";
+  device?: 'pc' | 'mobile'
 }
 
 const props = withDefaults(defineProps<Props & Partial<DrawerProps>>(), {
-  device: "pc",
-  direction: "btt",
-});
+  device: 'pc',
+  direction: 'btt',
+})
 
-const modelValue = defineModel<boolean>({ required: true });
+const modelValue = defineModel<boolean>({ required: true })
 
-const { overrideProject, jsonData } = useVisualData();
-const workspaceStore = useWorkspaceStore();
+const { overrideProject, jsonData } = useVisualData()
+const workspaceStore = useWorkspaceStore()
 
-const drawerDirection = "btt" as DrawerProps["direction"];
-const drawerSize = "95%";
+const drawerDirection = 'btt' as DrawerProps['direction']
+const drawerSize = '95%'
 
 const deviceStyle = computed<CSSProperties>(() => ({
-  width: props.device === "pc" ? "100%" : "374px",
-  height: "100%",
-}));
+  width: props.device === 'pc' ? '100%' : '374px',
+  height: '100%',
+}))
 
 /** 打开预览前写入最新 schema，并同步到编辑器内存 */
 function syncPreviewData() {
-  const snapshot = JSON.stringify(toRaw(toValue(jsonData)));
+  const snapshot = JSON.stringify(toRaw(toValue(jsonData)))
   try {
-    sessionStorage.setItem(localKey, snapshot);
-    const appId = workspaceStore.currentApp?.id;
-    if (appId != null && String(appId) !== "") {
-      sessionStorage.setItem(`${localKey}_${appId}`, snapshot);
+    sessionStorage.setItem(localKey, snapshot)
+    const appId = workspaceStore.currentApp?.id
+    if (appId != null && String(appId) !== '') {
+      sessionStorage.setItem(`${localKey}_${appId}`, snapshot)
     }
-  } catch {
+  }
+  catch {
     /* ignore quota */
   }
-  overrideProject(snapshot);
+  overrideProject(snapshot)
 }
 
 watch(modelValue, (open) => {
   if (open) {
-    syncPreviewData();
+    syncPreviewData()
   }
-});
+})
 </script>
 
 <template>

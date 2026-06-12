@@ -17,7 +17,8 @@ window.addEventListener('beforeunload', () => {
     const snapshot = JSON.stringify(toValue(jsonData))
     sessionStorage.setItem(key, snapshot)
     sessionStorage.setItem(localKey, snapshot)
-  } catch {
+  }
+  catch {
     /* ignore quota */
   }
 })

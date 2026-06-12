@@ -9,7 +9,7 @@ const props = defineProps<{
 const contentStyle = computed<CSSProperties>(() => ({
   flex: 1,
   boxSizing: 'border-box',
-  ...props.style
+  ...props.style,
 }))
 </script>
 

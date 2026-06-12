@@ -6,7 +6,7 @@ import DataModel from './data-model.vue'
 defineOptions({
   label: '数据源',
   order: 2,
-  icon: DataBoard
+  icon: DataBoard,
 })
 </script>
 

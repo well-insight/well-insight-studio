@@ -5,7 +5,7 @@ import {
   createEditorColorProp,
   createEditorInputProp,
   createEditorModelBindProp,
-  createEditorSwitchProp
+  createEditorSwitchProp,
 } from '@/visual-editor/visual-editor.props'
 import { createFieldProps } from './createFieldProps'
 
@@ -13,7 +13,7 @@ export default {
   key: 'switch',
   moduleName: 'baseWidgets',
   label: '表单项类型 - 开关',
-  preview: () => <Field name='switch' label='开关' v-slots={{ input: () => <Switch size={20} /> }} />,
+  preview: () => <Field name="switch" label="开关" v-slots={{ input: () => <Switch size={20} /> }} />,
   render: ({ styles, block, props }) => {
     const { registerRef } = useGlobalProperties()
 
@@ -21,10 +21,10 @@ export default {
       <div style={styles}>
         <Field
           {...props}
-          modelValue=''
+          modelValue=""
           name={Array.isArray(props.name) ? [...props.name].pop() : props.name}
           v-slots={{
-            input: () => <Switch ref={el => registerRef(el, block._vid)} {...props} v-model={props.modelValue} />
+            input: () => <Switch ref={el => registerRef(el, block._vid)} {...props} v-model={props.modelValue} />,
           }}
         />
       </div>
@@ -41,16 +41,16 @@ export default {
     disabled: createEditorSwitchProp({ label: '是否为禁用状态' }),
     loading: createEditorSwitchProp({ label: '是否为加载状态' }),
     size: createEditorInputProp({ label: '开关尺寸', defaultValue: '20px' }),
-    ...createFieldProps()
+    ...createFieldProps(),
   },
   events: [
     { label: '开关状态切换时触发', value: 'change' },
-    { label: '点击时触发', value: 'click' }
+    { label: '点击时触发', value: 'click' },
   ],
   resize: {
-    width: true
+    width: true,
   },
   model: {
-    default: '绑定字段'
-  }
+    default: '绑定字段',
+  },
 } as VisualEditorComponent

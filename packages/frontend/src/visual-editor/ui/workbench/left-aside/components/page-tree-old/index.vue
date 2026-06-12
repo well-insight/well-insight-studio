@@ -157,8 +157,7 @@ function setDefaultPage(data) {
   >
     <template #default="{ node, data }">
       <span class="custom-tree-node">
-        <span
-          >{{ node.label }}（{{ data.path }}）
+        <span>{{ node.label }}（{{ data.path }}）
           <template v-if="data.isDefault">
             <el-tag size="default">默认</el-tag>
           </template>

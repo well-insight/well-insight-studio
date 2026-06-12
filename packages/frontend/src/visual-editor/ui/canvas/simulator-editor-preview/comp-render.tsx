@@ -1,3 +1,3 @@
-import { createCompRender } from "@/visual-editor/ui/canvas/shared/create-comp-render";
+import { createCompRender } from '@/visual-editor/ui/canvas/shared/create-comp-render'
 
-export default createCompRender("PreviewCompRender");
+export default createCompRender('PreviewCompRender')

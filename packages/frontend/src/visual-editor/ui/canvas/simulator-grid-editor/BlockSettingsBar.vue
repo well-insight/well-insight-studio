@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import { AttrSettingsToolbar } from '@/visual-editor/ui/workbench/attr-settings-toolbar'
-import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { computed } from 'vue'
+import { useVisualData } from '@/visual-editor/hooks/useVisualData'
+import { AttrSettingsToolbar } from '@/visual-editor/ui/workbench/attr-settings-toolbar'
 
 const { currentBlock } = useVisualData()
 

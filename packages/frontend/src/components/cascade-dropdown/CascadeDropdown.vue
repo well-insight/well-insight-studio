@@ -1,50 +1,30 @@
-<template>
-  <el-dropdown
-    ref="dropdownRef"
-    :trigger="trigger"
-    :placement="placement"
-    :popper-class="['cascade-dropdown-popper', popperClass]"
-    :hide-on-click="false"
-    @visible-change="handleVisibleChange"
-  >
-    <slot name="reference">
-      <el-button>级联菜单</el-button>
-    </slot>
-
-    <template #dropdown>
-      <el-dropdown-menu>
-        <MenuItem
-          v-for="(item, index) in options"
-          :key="getNodeKey(item)"
-          :node="item"
-          :level="0"
-          :index="index"
-          :node-render="nodeRender"
-          :close-on-click-leaf="closeOnClickLeaf"
-          :parent-path="[]"
-          @item-click="handleItemClick"
-        >
-          <template v-if="$slots.item" #item="{ node, level, index }">
-            <slot name="item" :node="node" :level="level" :index="index" />
-          </template>
-        </MenuItem>
-      </el-dropdown-menu>
-    </template>
-  </el-dropdown>
-</template>
-
 <script lang="ts">
 // 为递归组件提供 name 选项
-export default {
-  name: 'CascadeDropdown'
-}
 </script>
 
 <script setup lang="ts" generic="T extends Record<string, any>">
-import { ref, computed, h, type VNode, type PropType, defineComponent, Teleport } from 'vue'
-import { ElDropdown, ElDropdownMenu, ElDropdownItem, ElButton, ElIcon } from 'element-plus'
-import { ArrowRight } from '@element-plus/icons-vue'
 import type { DropdownInstance } from 'element-plus'
+import type { PropType, VNode } from 'vue'
+import { ArrowRight } from '@element-plus/icons-vue'
+import { ElButton, ElDropdown, ElDropdownItem, ElDropdownMenu, ElIcon } from 'element-plus'
+import { computed, defineComponent, h, ref, Teleport } from 'vue'
+
+const props = withDefaults(defineProps<Props>(), {
+  trigger: 'hover',
+  placement: 'bottom-start',
+  popperClass: '',
+  closeOnClickLeaf: true,
+  nodeKey: 'value',
+})
+
+const emit = defineEmits<{
+  (e: 'item-click', node: TreeNode, path: TreeNode[]): void
+  (e: 'visible-change', visible: boolean): void
+}>()
+
+export default {
+  name: 'CascadeDropdown',
+}
 
 export interface TreeNode {
   label: string
@@ -63,7 +43,7 @@ const MenuItem = defineComponent({
     index: { type: Number, required: true },
     nodeRender: { type: Function as PropType<(node: TreeNode, level: number, index: number) => VNode | string>, default: undefined },
     closeOnClickLeaf: { type: Boolean, default: true },
-    parentPath: { type: Array as PropType<TreeNode[]>, default: () => [] }
+    parentPath: { type: Array as PropType<TreeNode[]>, default: () => [] },
   },
   emits: ['item-click'],
   setup(props, { emit, slots }) {
@@ -81,18 +61,20 @@ const MenuItem = defineComponent({
 
     const submenuStyle = computed(() => {
       const el = itemRef.value?.$el as HTMLElement
-      if (!el) return {}
+      if (!el)
+        return {}
       const rect = el.getBoundingClientRect()
       return {
         position: 'fixed' as const,
         left: `${rect.right + 4}px`,
         top: `${rect.top}px`,
-        zIndex: 3000
+        zIndex: 3000,
       }
     })
 
     const handleMouseEnter = () => {
-      if (props.node.disabled) return
+      if (props.node.disabled)
+        return
       if (hideTimer) {
         clearTimeout(hideTimer)
         hideTimer = null
@@ -103,7 +85,8 @@ const MenuItem = defineComponent({
     }
 
     const handleMouseLeave = () => {
-      if (props.node.disabled) return
+      if (props.node.disabled)
+        return
       hideTimer = window.setTimeout(() => {
         showChildren.value = false
         hideTimer = null
@@ -125,7 +108,8 @@ const MenuItem = defineComponent({
     }
 
     const handleClick = () => {
-      if (props.node.disabled) return
+      if (props.node.disabled)
+        return
       emit('item-click', props.node, currentPath.value)
     }
 
@@ -153,8 +137,8 @@ const MenuItem = defineComponent({
         { class: 'cascade-menu-item-content-wrapper' },
         [
           h('div', { class: 'cascade-menu-item-content' }, renderContent()),
-          hasChildren.value && h(ElIcon, { class: 'cascade-menu-item-arrow' }, () => h(ArrowRight))
-        ]
+          hasChildren.value && h(ElIcon, { class: 'cascade-menu-item-arrow' }, () => h(ArrowRight)),
+        ],
       )
 
       const menuItem = h(
@@ -165,9 +149,9 @@ const MenuItem = defineComponent({
           class: 'cascade-menu-item',
           onMouseenter: handleMouseEnter,
           onMouseleave: handleMouseLeave,
-          onClick: handleClick
+          onClick: handleClick,
         },
-        { default: () => itemContent }
+        { default: () => itemContent },
       )
 
       const submenu = hasChildren.value && showChildren.value
@@ -181,7 +165,7 @@ const MenuItem = defineComponent({
                 class: 'cascade-submenu',
                 style: submenuStyle.value,
                 onMouseenter: handleSubmenuEnter,
-                onMouseleave: handleSubmenuLeave
+                onMouseleave: handleSubmenuLeave,
               },
               h(
                 ElDropdownMenu,
@@ -195,17 +179,17 @@ const MenuItem = defineComponent({
                     nodeRender: props.nodeRender,
                     closeOnClickLeaf: props.closeOnClickLeaf,
                     parentPath: currentPath.value,
-                    onItemClick: handleChildClick
-                  })
-                )
-              )
-            )
+                    onItemClick: handleChildClick,
+                  }),
+                ),
+              ),
+            ),
           )
         : null
 
       return [menuItem, submenu]
     }
-  }
+  },
 })
 
 // ========== 主组件 Props 与逻辑 ==========
@@ -219,43 +203,65 @@ interface Props {
   nodeRender?: (node: TreeNode, level: number, index: number) => VNode | string
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  trigger: 'hover',
-  placement: 'bottom-start',
-  popperClass: '',
-  closeOnClickLeaf: true,
-  nodeKey: 'value'
-})
-
-const emit = defineEmits<{
-  (e: 'item-click', node: TreeNode, path: TreeNode[]): void
-  (e: 'visible-change', visible: boolean): void
-}>()
-
 const dropdownRef = ref<DropdownInstance>()
 
-const getNodeKey = (node: TreeNode): string => {
+function getNodeKey(node: TreeNode): string {
   if (props.nodeKey && node[props.nodeKey] !== undefined) {
     return String(node[props.nodeKey])
   }
   return `${node.label}_${Math.random().toString(36).slice(2, 8)}`
 }
 
-const handleItemClick = (node: TreeNode, path: TreeNode[]) => {
+function handleItemClick(node: TreeNode, path: TreeNode[]) {
   emit('item-click', node, path)
   if (props.closeOnClickLeaf && (!node.children || node.children.length === 0)) {
     dropdownRef.value?.handleClose()
   }
 }
 
-const handleVisibleChange = (visible: boolean) => {
+function handleVisibleChange(visible: boolean) {
   emit('visible-change', visible)
 }
 
 defineExpose({
-  close: () => dropdownRef.value?.handleClose()
+  close: () => dropdownRef.value?.handleClose(),
 })
 </script>
+
+<template>
+  <ElDropdown
+    ref="dropdownRef"
+    :trigger="trigger"
+    :placement="placement"
+    :popper-class="['cascade-dropdown-popper', popperClass]"
+    :hide-on-click="false"
+    @visible-change="handleVisibleChange"
+  >
+    <slot name="reference">
+      <ElButton>级联菜单</ElButton>
+    </slot>
+
+    <template #dropdown>
+      <ElDropdownMenu>
+        <MenuItem
+          v-for="(item, index) in options"
+          :key="getNodeKey(item)"
+          :node="item"
+          :level="0"
+          :index="index"
+          :node-render="nodeRender"
+          :close-on-click-leaf="closeOnClickLeaf"
+          :parent-path="[]"
+          @item-click="handleItemClick"
+        >
+          <template v-if="$slots.item" #item="{ node, level, index }">
+            <slot name="item" :node="node" :level="level" :index="index" />
+          </template>
+        </MenuItem>
+      </ElDropdownMenu>
+    </template>
+  </ElDropdown>
+</template>
 
 <style scoped>
 .cascade-dropdown-popper {

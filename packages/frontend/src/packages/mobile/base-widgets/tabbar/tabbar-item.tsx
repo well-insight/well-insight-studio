@@ -17,7 +17,7 @@ export function getTabbarItem(): VisualEditorComponent {
       iconPrefix: createEditorInputProp({
         label: '图标类名前缀',
         tips: '图标类名前缀，同 Icon 组件的 class-prefix 属性',
-        defaultValue: 'van-icon'
+        defaultValue: 'van-icon',
       }),
       dot: createEditorSwitchProp({ label: '是否显示图标右上角小红点', defaultValue: false }),
       badge: createEditorInputProp({ label: '图标右上角徽标的内容', defaultValue: '' }),
@@ -27,12 +27,12 @@ export function getTabbarItem(): VisualEditorComponent {
       //   tips: '点击后跳转的目标路由对象，同 vue-router 的 to 属性',
       //   defaultValue: ''
       // }),
-      replace: createEditorSwitchProp({ label: '是否在跳转时替换当前页面历史', defaultValue: false })
+      replace: createEditorSwitchProp({ label: '是否在跳转时替换当前页面历史', defaultValue: false }),
     },
     events: [
       { label: '点击左侧按钮时触发', value: 'click-left' },
-      { label: '点击右侧按钮时触发', value: 'click-right' }
+      { label: '点击右侧按钮时触发', value: 'click-right' },
     ],
-    draggable: false
+    draggable: false,
   }
 }

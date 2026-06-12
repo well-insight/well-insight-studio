@@ -18,15 +18,15 @@ const Modal = defineComponent({
   props: {
     options: {
       type: Object as PropType<ModalOptions>,
-      default: () => ({})
-    }
+      default: () => ({}),
+    },
   },
   setup(props) {
     const instance = getCurrentInstance()!
 
     const state = reactive({
       options: props.options,
-      visible: true
+      visible: true,
     })
 
     const methods = {
@@ -35,7 +35,7 @@ const Modal = defineComponent({
         methods.show()
       },
       show: () => (state.visible = true),
-      hide: () => (state.visible = false)
+      hide: () => (state.visible = false),
     }
 
     const handler = {
@@ -46,7 +46,7 @@ const Modal = defineComponent({
       onCancel: () => {
         state.options.onCancel?.()
         methods.hide()
-      }
+      },
     }
 
     Object.assign(instance.proxy!, methods)
@@ -61,24 +61,30 @@ const Modal = defineComponent({
       >
         {{
           default: () =>
-            isVNode(state.options.content) ? (
-              <content />
-            ) : isFunction(state.options.content) ? (
-              state.options.content()
-            ) : null,
+            isVNode(state.options.content)
+              ? (
+                  <content />
+                )
+              : isFunction(state.options.content)
+                ? (
+                    state.options.content()
+                  )
+                : null,
           footer: () =>
-            state.options.footer === null ? null : (
-              <div>
-                <ElButton {...({ onClick: handler.onCancel } as any)}>取消</ElButton>
-                <ElButton type='primary' {...({ onClick: handler.onConfirm } as any)}>
-                  确定
-                </ElButton>
-              </div>
-            )
+            state.options.footer === null
+              ? null
+              : (
+                  <div>
+                    <ElButton {...({ onClick: handler.onCancel } as any)}>取消</ElButton>
+                    <ElButton type="primary" {...({ onClick: handler.onConfirm } as any)}>
+                      确定
+                    </ElButton>
+                  </div>
+                ),
         }}
       </ElDialog>
     )
-  }
+  },
 })
 
 export const useModal = (() => {

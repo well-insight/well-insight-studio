@@ -1,64 +1,65 @@
 <script setup lang="ts">
-import type { VisualEditorBlockData } from "@/visual-editor/visual-editor.utils";
-import type { PropDatasetBinding } from "@/utils/datasetBinding";
-import { useDatasetResolvedProps } from "@/hooks/useDatasetResolvedProps";
-import { visualConfig } from "@/visual.config";
-import { cloneDeep } from "lodash-es";
-import { computed, defineComponent, h } from "vue";
+import type { PropDatasetBinding } from '@/utils/datasetBinding'
+import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
+import { cloneDeep } from 'lodash-es'
+import { computed, defineComponent, h } from 'vue'
+import { useDatasetResolvedProps } from '@/hooks/useDatasetResolvedProps'
+import { visualConfig } from '@/visual.config'
 
 const props = defineProps<{
-  block: VisualEditorBlockData;
-  propName: string;
-  draft: PropDatasetBinding | null;
+  block: VisualEditorBlockData
+  propName: string
+  draft: PropDatasetBinding | null
   /** 三栏布局时预览在右侧独立栏 */
-  column?: boolean;
-}>();
+  column?: boolean
+}>()
 
 const previewBlock = computed(() => {
-  const b = cloneDeep(props.block) as VisualEditorBlockData;
+  const b = cloneDeep(props.block) as VisualEditorBlockData
   if (!b.datasetBindings) {
-    b.datasetBindings = {};
+    b.datasetBindings = {}
   }
   if (props.draft?.datasetId && props.draft?.field) {
-    b.datasetBindings[props.propName] = { ...props.draft };
-  } else {
-    delete b.datasetBindings[props.propName];
+    b.datasetBindings[props.propName] = { ...props.draft }
   }
-  b.focus = false;
-  b.focusWithChild = false;
-  return b;
-});
+  else {
+    delete b.datasetBindings[props.propName]
+  }
+  b.focus = false
+  b.focusWithChild = false
+  return b
+})
 
 const { resolvedProps, datasetLoading } = useDatasetResolvedProps(
   () => previewBlock.value.componentKey,
   previewBlock,
-);
+)
 
 const PreviewInner = defineComponent({
-  name: "DatasetBindPreviewInner",
+  name: 'DatasetBindPreviewInner',
   setup() {
     return () => {
-      const block = previewBlock.value;
-      const props = resolvedProps.value;
-      void datasetLoading.value;
-      const comp = visualConfig.componentMap[block.componentKey];
+      const block = previewBlock.value
+      const props = resolvedProps.value
+      void datasetLoading.value
+      const comp = visualConfig.componentMap[block.componentKey]
       if (!comp) {
-        return h("div", { class: "preview-fallback" }, "无法预览该组件");
+        return h('div', { class: 'preview-fallback' }, '无法预览该组件')
       }
       const renderFn = comp.render({
         styles: {
           ...block.styles,
-          padding: "12px",
+          padding: '12px',
         },
         props,
         model: block.model || {},
         block,
         custom: {},
-      });
-      return h("div", { class: "preview-stage" }, [h("div", { class: "preview-stage__frame" }, [renderFn()])]);
-    };
+      })
+      return h('div', { class: 'preview-stage' }, [h('div', { class: 'preview-stage__frame' }, [renderFn()])])
+    }
   },
-});
+})
 </script>
 
 <template>

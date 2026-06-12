@@ -14,13 +14,16 @@ export function matchesSelectorToParentElements(el, selector, baseNode) {
     'webkitMatchesSelector',
     'mozMatchesSelector',
     'msMatchesSelector',
-    'oMatchesSelector'
+    'oMatchesSelector',
   ].find(func => isFunction(node[func]))
 
-  if (!isFunction(node[matchesSelectorFunc])) return false
+  if (!isFunction(node[matchesSelectorFunc]))
+    return false
   do {
-    if (node[matchesSelectorFunc](selector)) return true
-    if (node === baseNode) return false
+    if (node[matchesSelectorFunc](selector))
+      return true
+    if (node === baseNode)
+      return false
     node = node.parentNode
   } while (node)
 
@@ -31,7 +34,7 @@ export function getComputedSize($el) {
   const style = window.getComputedStyle($el)
   return [
     Number.parseFloat(style.getPropertyValue('width'), 10),
-    Number.parseFloat(style.getPropertyValue('height'), 10)
+    Number.parseFloat(style.getPropertyValue('height'), 10),
   ]
 }
 // 添加事件
@@ -41,9 +44,11 @@ export function addEvent(el, event, handler) {
   }
   if (el.attachEvent) {
     el.attachEvent(`on${event}`, handler)
-  } else if (el.addEventListener) {
+  }
+  else if (el.addEventListener) {
     el.addEventListener(event, handler, true)
-  } else {
+  }
+  else {
     el[`on${event}`] = handler
   }
 }
@@ -55,9 +60,11 @@ export function removeEvent(el, event, handler) {
   }
   if (el.detachEvent) {
     el.detachEvent(`on${event}`, handler)
-  } else if (el.removeEventListener) {
+  }
+  else if (el.removeEventListener) {
     el.removeEventListener(event, handler, true)
-  } else {
+  }
+  else {
     el[`on${event}`] = null
   }
 }

@@ -5,7 +5,7 @@ import { useGlobalProperties } from '@/hooks/useGlobalProperties'
 import {
   createEditorCrossSortableProp,
   createEditorInputProp,
-  createEditorModelBindProp
+  createEditorModelBindProp,
 } from '@/visual-editor/visual-editor.props'
 import { createFieldProps } from './createFieldProps'
 
@@ -13,7 +13,7 @@ export default {
   key: 'picker',
   moduleName: 'baseWidgets',
   label: '表单项类型 - 选择器',
-  preview: () => <Field name='picker' label='选择器' placeholder='点击选择'></Field>,
+  preview: () => <Field name="picker" label="选择器" placeholder="点击选择"></Field>,
   render: ({ styles, block, props }) => {
     const { registerRef } = useGlobalProperties()
 
@@ -22,14 +22,14 @@ export default {
     const state = reactive({
       showPicker: false,
       text: '',
-      defaultIndex: 0
+      defaultIndex: 0,
     })
     const customFieldName = {
       text: 'label',
-      value: 'value'
+      value: 'value',
     }
 
-    const onConfirm = value => {
+    const onConfirm = (value) => {
       props.modelValue = value.value
       state.text = value[props.valueKey || 'text']
       state.showPicker = false
@@ -54,10 +54,10 @@ export default {
           >
             {{
               input: () =>
-                state.text?.trim() == '' ? <span class='placeholder'>{props.placeholder}</span> : state.text
+                state.text?.trim() == '' ? <span class="placeholder">{props.placeholder}</span> : state.text,
             }}
           </Field>
-          <Popup v-model={[state.showPicker, 'show']} position='bottom'>
+          <Popup v-model={[state.showPicker, 'show']} position="bottom">
             <Picker
               ref={el => registerRef(el, block._vid)}
               {...props}
@@ -82,21 +82,21 @@ export default {
       multiple: false,
       defaultValue: [
         { label: '杭州', value: 'hangzhou' },
-        { label: '上海', value: 'shanghai' }
-      ]
+        { label: '上海', value: 'shanghai' },
+      ],
     }),
     placeholder: createEditorInputProp({ label: '占位符', defaultValue: '请选择' }),
-    ...createFieldProps()
+    ...createFieldProps(),
   },
   events: [
     { label: '点击完成按钮时触发', value: 'confirm' },
     { label: '点击取消按钮时触发', value: 'cancel' },
-    { label: '选项改变时触发', value: 'change' }
+    { label: '选项改变时触发', value: 'change' },
   ],
   resize: {
-    width: true
+    width: true,
   },
   model: {
-    default: '绑定字段'
-  }
+    default: '绑定字段',
+  },
 } as VisualEditorComponent

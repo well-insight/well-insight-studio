@@ -1,16 +1,16 @@
-import type { ChartDatum } from "@/utils/datasetChart";
-import type { EChartsOption } from "echarts";
-import { getEChartsThemeColors } from "../theme";
+import type { EChartsOption } from 'echarts'
+import type { ChartDatum } from '@/utils/datasetChart'
+import { getEChartsThemeColors } from '../theme'
 
 export interface BarChartOptionParams {
-  data: ChartDatum[];
-  barColor?: string;
-  compact?: boolean;
+  data: ChartDatum[]
+  barColor?: string
+  compact?: boolean
 }
 
 export function buildBarChartOption(params: BarChartOptionParams): EChartsOption {
-  const { data, barColor = "#409EFF", compact = false } = params;
-  const theme = getEChartsThemeColors();
+  const { data, barColor = '#409EFF', compact = false } = params
+  const theme = getEChartsThemeColors()
 
   return {
     animation: !compact,
@@ -22,13 +22,13 @@ export function buildBarChartOption(params: BarChartOptionParams): EChartsOption
       containLabel: false,
     },
     tooltip: {
-      trigger: "axis",
-      axisPointer: { type: "shadow" },
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
       confine: true,
     },
     xAxis: {
-      type: "category",
-      data: data.map((d) => d.category),
+      type: 'category',
+      data: data.map(d => d.category),
       axisLine: { lineStyle: { color: theme.border } },
       axisTick: { show: false },
       axisLabel: {
@@ -39,9 +39,9 @@ export function buildBarChartOption(params: BarChartOptionParams): EChartsOption
       },
     },
     yAxis: {
-      type: "value",
+      type: 'value',
       splitLine: {
-        lineStyle: { color: theme.border, type: "dashed" },
+        lineStyle: { color: theme.border, type: 'dashed' },
       },
       axisLabel: {
         color: theme.textSecondary,
@@ -50,8 +50,8 @@ export function buildBarChartOption(params: BarChartOptionParams): EChartsOption
     },
     series: [
       {
-        type: "bar",
-        data: data.map((d) => d.value),
+        type: 'bar',
+        data: data.map(d => d.value),
         barMaxWidth: compact ? 28 : 48,
         itemStyle: {
           color: barColor,
@@ -61,11 +61,11 @@ export function buildBarChartOption(params: BarChartOptionParams): EChartsOption
           ? { show: false }
           : {
               show: true,
-              position: "top",
+              position: 'top',
               color: theme.text,
               fontSize: 10,
             },
       },
     ],
-  };
+  }
 }

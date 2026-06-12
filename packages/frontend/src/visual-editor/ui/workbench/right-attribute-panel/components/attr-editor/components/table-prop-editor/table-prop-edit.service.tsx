@@ -13,7 +13,7 @@ export interface TablePropEditorServiceOption {
 
 const ServiceComponent = defineComponent({
   props: {
-    option: { type: Object as PropType<TablePropEditorServiceOption>, required: true }
+    option: { type: Object as PropType<TablePropEditorServiceOption>, required: true },
   },
   setup(props) {
     const ctx = getCurrentInstance()!
@@ -26,7 +26,7 @@ const ServiceComponent = defineComponent({
         onMounted(() => setTimeout(() => dfd.resolve(), 0))
         return dfd.promise
       })(),
-      editData: [] as any[]
+      editData: [] as any[],
     })
 
     const methods = {
@@ -47,7 +47,7 @@ const ServiceComponent = defineComponent({
       },
       reset: () => {
         state.editData = cloneDeep(state.option.data)
-      }
+      },
     }
 
     const handler = {
@@ -60,7 +60,7 @@ const ServiceComponent = defineComponent({
       },
       onDelete: (index: number) => {
         state.editData.splice(index, 1)
-      }
+      },
     }
 
     Object.assign(ctx.proxy!, methods)
@@ -80,17 +80,17 @@ const ServiceComponent = defineComponent({
                   {state.option.config.table!.options.map(item => (
                     <ElTableColumn {...({ label: item.label } as any)}>
                       {{
-                        default: ({ row }: { row: any }) => <ElInput v-model={row[item.field]} />
+                        default: ({ row }: { row: any }) => <ElInput v-model={row[item.field]} />,
                       }}
                     </ElTableColumn>
                   ))}
                   <ElTableColumn {...({ label: '操作栏' } as any)}>
                     {{
                       default: ({ $index }: { $index: number }) => (
-                        <ElButton type='danger' {...({ onClick: () => handler.onDelete($index) } as any)}>
+                        <ElButton type="danger" {...({ onClick: () => handler.onDelete($index) } as any)}>
                           删除
                         </ElButton>
-                      )
+                      ),
                     }}
                   </ElTableColumn>
                 </ElTable>
@@ -99,16 +99,16 @@ const ServiceComponent = defineComponent({
             footer: () => (
               <>
                 <ElButton {...({ onClick: handler.onCancel } as any)}>取消</ElButton>
-                <ElButton type='primary' {...({ onClick: handler.onConfirm } as any)}>
+                <ElButton type="primary" {...({ onClick: handler.onConfirm } as any)}>
                   确定
                 </ElButton>
               </>
-            )
+            ),
           }}
         </ElDialog>
       </>
     )
-  }
+  },
 })
 
 export const $$tablePropEditor = (() => {
@@ -123,7 +123,7 @@ export const $$tablePropEditor = (() => {
     const dfd = defer<any[]>()
     ins.service({
       ...option,
-      onConfirm: dfd.resolve
+      onConfirm: dfd.resolve,
     })
     return dfd.promise
   }

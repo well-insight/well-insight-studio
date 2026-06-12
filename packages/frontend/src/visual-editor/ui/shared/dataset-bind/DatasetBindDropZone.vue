@@ -1,35 +1,37 @@
 <script setup lang="ts">
-import type { ApiDatasetField } from "@/api/dataset";
-import { Close } from "@element-plus/icons-vue";
+import type { ApiDatasetField } from '@/api/dataset'
+import { Close } from '@element-plus/icons-vue'
 
 defineProps<{
-  label: string;
-  hint?: string;
-  field: ApiDatasetField | null;
-  active?: boolean;
-  emptyText?: string;
+  label: string
+  hint?: string
+  field: ApiDatasetField | null
+  active?: boolean
+  emptyText?: string
   /** dimension | metric | filter | bind */
-  variant?: "dimension" | "metric" | "filter" | "bind";
-}>();
+  variant?: 'dimension' | 'metric' | 'filter' | 'bind'
+}>()
 
 const emit = defineEmits<{
-  dropField: [field: ApiDatasetField];
-  clear: [];
-}>();
+  dropField: [field: ApiDatasetField]
+  clear: []
+}>()
 
 function onDragOver(e: DragEvent) {
-  e.preventDefault();
-  e.dataTransfer!.dropEffect = "copy";
+  e.preventDefault()
+  e.dataTransfer!.dropEffect = 'copy'
 }
 
 function onDrop(e: DragEvent) {
-  e.preventDefault();
-  const raw = e.dataTransfer?.getData("application/x-dataset-field");
-  if (!raw) return;
+  e.preventDefault()
+  const raw = e.dataTransfer?.getData('application/x-dataset-field')
+  if (!raw)
+    return
   try {
-    const field = JSON.parse(raw) as ApiDatasetField;
-    emit("dropField", field);
-  } catch {
+    const field = JSON.parse(raw) as ApiDatasetField
+    emit('dropField', field)
+  }
+  catch {
     /* ignore */
   }
 }

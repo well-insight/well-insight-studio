@@ -5,7 +5,7 @@ export async function useAnimate(animateEl: HTMLElement | string, animations: An
 
   animateEl = typeof animateEl === 'string' ? document.querySelector(animateEl) as HTMLElement : animateEl
   const play = (animate: Animation) =>
-    new Promise(resolve => {
+    new Promise((resolve) => {
       if (animateEl) {
         const animationName = `${prefixCls}${animate.value}`
 
@@ -35,7 +35,8 @@ export async function useAnimate(animateEl: HTMLElement | string, animations: An
 
         animateEl?.addEventListener('animationend', handleAnimationEnd, { once: true })
         // animateEl?.addEventListener('animationcancel', handleAnimationEnd, { once: true })
-      } else {
+      }
+      else {
         resolve('动画执行失败！执行动画元素不存在！')
       }
     })

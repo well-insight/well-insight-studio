@@ -251,7 +251,9 @@ function showOperateModal() {
 
 <template>
   <div class="w-full h-full p-3">
-    <ElButton :disabled="!currentBlock?.actions" type="primary" @click="addActionItem"> 添加事件 </ElButton>
+    <ElButton :disabled="!currentBlock?.actions" type="primary" @click="addActionItem">
+      添加事件
+    </ElButton>
 
     <ElCard v-for="actionItem in currentBlock?.actions || []" :key="actionItem.key" class="mt-10px">
       <template #header>
@@ -260,10 +262,14 @@ function showOperateModal() {
           <div>
             <ElPopconfirm title="确定要删除该事件吗？" @confirm="() => deleteActionItem(actionItem.key)">
               <template #reference>
-                <ElButton type="danger"> 删除 </ElButton>
+                <ElButton type="danger">
+                  删除
+                </ElButton>
               </template>
             </ElPopconfirm>
-            <ElButton type="primary" @click="() => showEditActionModal(actionItem)"> 编辑 </ElButton>
+            <ElButton type="primary" @click="() => showEditActionModal(actionItem)">
+              编辑
+            </ElButton>
           </div>
         </div>
       </template>

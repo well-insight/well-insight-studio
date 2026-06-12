@@ -1,7 +1,7 @@
 import {
   createEditorCrossSortableProp,
   createEditorInputProp,
-  createEditorSwitchProp
+  createEditorSwitchProp,
 } from '@/visual-editor/visual-editor.props'
 
 export function createFieldProps() {
@@ -9,7 +9,7 @@ export function createFieldProps() {
     images: createEditorCrossSortableProp({
       label: '图片列表',
       labelPosition: 'top',
-      defaultValue: ['https://img.yzcdn.cn/vant/apple-1.jpg', 'https://img.yzcdn.cn/vant/apple-2.jpg']
+      defaultValue: ['https://img.yzcdn.cn/vant/apple-1.jpg', 'https://img.yzcdn.cn/vant/apple-2.jpg'],
     }),
     // width: createEditorInputProp({ label: '滑块宽度，单位为 px', defaultValue: 'auto' }),
     height: createEditorInputProp({ label: '滑块高度，单位为 px', defaultValue: '200' }),
@@ -22,6 +22,6 @@ export function createFieldProps() {
     showIndicators: createEditorSwitchProp({ label: '是否显示指示器', defaultValue: true }),
     stopPropagation: createEditorSwitchProp({ label: '是否阻止滑动事件冒泡', defaultValue: true }),
     touchable: createEditorSwitchProp({ label: '是否可以通过手势滑动', defaultValue: true }),
-    vertical: createEditorSwitchProp({ label: '是否为纵向滚动', defaultValue: false })
+    vertical: createEditorSwitchProp({ label: '是否为纵向滚动', defaultValue: false }),
   }
 }

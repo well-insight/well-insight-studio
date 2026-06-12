@@ -10,27 +10,27 @@ export const FormatInputNumber = defineComponent({
   props: {
     modelValue: {
       type: [String] as PropType<string>,
-      default: ''
+      default: '',
     },
     symbol: {
       // 符号
       type: String as PropType<string>,
-      default: 'px'
+      default: 'px',
     },
     max: {
       type: [Number],
-      default: 100
+      default: 100,
     },
     min: {
       type: [Number],
-      default: 0
-    }
+      default: 0,
+    },
   },
   emits: ['update:modelValue'],
   setup(props, { attrs }) {
     const modelValue = useVModel(props, 'modelValue')
 
-    const onInput = val => {
+    const onInput = (val) => {
       let num = Number.parseFloat(`${val}`.replace(/\D/g, ''))
       num = Number.isNaN(num) ? 0 : num
       num = Math.max(props.min, num)
@@ -48,25 +48,25 @@ export const FormatInputNumber = defineComponent({
 
     return () => (
       <div class={styles.formatInputNumber}>
-        <ElInput model-value={modelValue.value} placeholder='请输入内容' {...attrs} onInput={onInput}>
+        <ElInput model-value={modelValue.value} placeholder="请输入内容" {...attrs} onInput={onInput}>
           {{
             append: () => (
-              <div class='flex flex-col'>
-                <div onClick={increment} class='cursor-pointer leading-0'>
+              <div class="flex flex-col">
+                <div onClick={increment} class="cursor-pointer leading-0">
                   <ElIcon size={14}>
                     <ArrowUp />
                   </ElIcon>
                 </div>
-                <div onClick={cutdown} class='cursor-pointer leading-0'>
+                <div onClick={cutdown} class="cursor-pointer leading-0">
                   <ElIcon size={14}>
                     <ArrowDown />
                   </ElIcon>
                 </div>
               </div>
-            )
+            ),
           }}
         </ElInput>
       </div>
     )
-  }
+  },
 })

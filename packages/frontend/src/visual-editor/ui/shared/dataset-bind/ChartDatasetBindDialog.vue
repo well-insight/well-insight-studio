@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import type { ApiDatasetField, ApiDatasetListItem } from "@/api/dataset";
-import { fetchAllDatasets, fetchDatasetDetail } from "@/api/dataset";
-import BarChartView from "@/packages/pc/chart-widgets/bar-chart/BarChartView";
-import type { VisualEditorBlockData } from "@/visual-editor/visual-editor.utils";
+import type { ApiDatasetField, ApiDatasetListItem } from '@/api/dataset'
 import type {
   BlockDatasetBindings,
   DatasetBindingFilter,
   DatasetPostCalcOp,
   DatasetValueOperation,
   PropDatasetBinding,
-} from "@/utils/datasetBinding";
+} from '@/utils/datasetBinding'
+import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
+import { ElAutoResizer, ElMessage } from 'element-plus'
+import { computed, ref, watch } from 'vue'
+import { fetchAllDatasets, fetchDatasetDetail } from '@/api/dataset'
+import { AdaptiveDialog } from '@/components/adaptive-dialog'
+import BarChartView from '@/packages/pc/chart-widgets/bar-chart/BarChartView'
 import {
   CHART_DIMENSION_PROP,
   CHART_METRIC_PROP,
@@ -17,224 +20,227 @@ import {
   DATASET_POST_CALC_OPTIONS,
   getChartBindings,
   syncChartPropsFromBindings,
-} from "@/utils/datasetBinding";
-import DatasetBindDropZone from "./DatasetBindDropZone.vue";
-import DatasetBindFilters from "./DatasetBindFilters.vue";
-import DatasetBindSplitterLayout from "./DatasetBindSplitterLayout.vue";
-import DatasetFieldList from "./DatasetFieldList.vue";
-import { AdaptiveDialog } from "@/components/adaptive-dialog";
-import { ElAutoResizer, ElMessage } from "element-plus";
-import { computed, ref, watch } from "vue";
+} from '@/utils/datasetBinding'
+import DatasetBindDropZone from './DatasetBindDropZone.vue'
+import DatasetBindFilters from './DatasetBindFilters.vue'
+import DatasetBindSplitterLayout from './DatasetBindSplitterLayout.vue'
+import DatasetFieldList from './DatasetFieldList.vue'
 
 const props = defineProps<{
-  block: VisualEditorBlockData;
-}>();
+  block: VisualEditorBlockData
+}>()
 
-const visible = defineModel<boolean>({ required: true });
+const visible = defineModel<boolean>({ required: true })
 
-const datasetId = ref("");
-const datasets = ref<ApiDatasetListItem[]>([]);
-const fields = ref<ApiDatasetField[]>([]);
-const fieldsLoading = ref(false);
-const pickerVisible = ref(false);
+const datasetId = ref('')
+const datasets = ref<ApiDatasetListItem[]>([])
+const fields = ref<ApiDatasetField[]>([])
+const fieldsLoading = ref(false)
+const pickerVisible = ref(false)
 
-const dimensionField = ref<ApiDatasetField | null>(null);
-const metricField = ref<ApiDatasetField | null>(null);
-const filters = ref<DatasetBindingFilter[]>([]);
-const valueOp = ref<DatasetValueOperation>("sum");
-const postCalcEnabled = ref(false);
-const postCalcOp = ref<DatasetPostCalcOp>("add");
-const postCalcOperand = ref(0);
+const dimensionField = ref<ApiDatasetField | null>(null)
+const metricField = ref<ApiDatasetField | null>(null)
+const filters = ref<DatasetBindingFilter[]>([])
+const valueOp = ref<DatasetValueOperation>('sum')
+const postCalcEnabled = ref(false)
+const postCalcOp = ref<DatasetPostCalcOp>('add')
+const postCalcOperand = ref(0)
 
-const datasetName = computed(() => datasets.value.find((d) => d.id === datasetId.value)?.name ?? "");
+const datasetName = computed(() => datasets.value.find(d => d.id === datasetId.value)?.name ?? '')
 
 const datasourceActionLabel = computed(() =>
-  datasetId.value ? "更改数据源" : "选择数据源",
-);
+  datasetId.value ? '更改数据源' : '选择数据源',
+)
 
 const draftBindings = computed((): BlockDatasetBindings => {
-  const base = { ...(props.block.datasetBindings ?? {}) };
+  const base = { ...(props.block.datasetBindings ?? {}) }
   if (!datasetId.value.trim()) {
-    return base;
+    return base
   }
-  const sharedFilters = filters.value.length > 0 ? [...filters.value] : undefined;
+  const sharedFilters = filters.value.length > 0 ? [...filters.value] : undefined
   if (dimensionField.value) {
     base[CHART_DIMENSION_PROP] = {
       datasetId: datasetId.value,
-      dataType: "scalar",
+      dataType: 'scalar',
       field: dimensionField.value.name,
       filters: sharedFilters,
-    };
+    }
   }
   if (metricField.value) {
     const metric: PropDatasetBinding = {
       datasetId: datasetId.value,
-      dataType: "scalar",
+      dataType: 'scalar',
       field: metricField.value.name,
       filters: sharedFilters,
       valueOp: valueOp.value,
-    };
-    if (postCalcEnabled.value) {
-      metric.postCalc = { op: postCalcOp.value, operand: postCalcOperand.value };
     }
-    base[CHART_METRIC_PROP] = metric;
+    if (postCalcEnabled.value) {
+      metric.postCalc = { op: postCalcOp.value, operand: postCalcOperand.value }
+    }
+    base[CHART_METRIC_PROP] = metric
   }
-  return base;
-});
+  return base
+})
 
 const canConfirm = computed(
   () =>
     Boolean(datasetId.value.trim() && dimensionField.value && metricField.value),
-);
+)
 
 function findFieldByName(name: string): ApiDatasetField | null {
-  return fields.value.find((f) => f.name === name) ?? null;
+  return fields.value.find(f => f.name === name) ?? null
 }
 
 function syncFieldRefsFromBindings() {
-  const { dimension, metric } = getChartBindings(props.block.datasetBindings);
-  dimensionField.value = dimension?.field ? findFieldByName(dimension.field) : null;
-  metricField.value = metric?.field ? findFieldByName(metric.field) : null;
+  const { dimension, metric } = getChartBindings(props.block.datasetBindings)
+  dimensionField.value = dimension?.field ? findFieldByName(dimension.field) : null
+  metricField.value = metric?.field ? findFieldByName(metric.field) : null
 }
 
 async function loadDatasets() {
   try {
-    const list = await fetchAllDatasets();
-    datasets.value = Array.isArray(list) ? list : [];
-  } catch (e) {
-    datasets.value = [];
-    ElMessage.error(e instanceof Error ? e.message : "加载数据集失败");
+    const list = await fetchAllDatasets()
+    datasets.value = Array.isArray(list) ? list : []
+  }
+  catch (e) {
+    datasets.value = []
+    ElMessage.error(e instanceof Error ? e.message : '加载数据集失败')
   }
 }
 
 async function loadFields(id: string) {
   if (!id) {
-    fields.value = [];
-    return;
+    fields.value = []
+    return
   }
-  fieldsLoading.value = true;
+  fieldsLoading.value = true
   try {
-    const detail = await fetchDatasetDetail(id);
-    fields.value = detail.fields ?? [];
-    syncFieldRefsFromBindings();
-  } catch {
-    fields.value = [];
-  } finally {
-    fieldsLoading.value = false;
+    const detail = await fetchDatasetDetail(id)
+    fields.value = detail.fields ?? []
+    syncFieldRefsFromBindings()
+  }
+  catch {
+    fields.value = []
+  }
+  finally {
+    fieldsLoading.value = false
   }
 }
 
 function resetFromBlock() {
-  const { dimension, metric } = getChartBindings(props.block.datasetBindings);
-  datasetId.value = dimension?.datasetId?.trim() || metric?.datasetId?.trim() || "";
-  filters.value = [...(dimension?.filters ?? metric?.filters ?? [])];
-  valueOp.value = metric?.valueOp ?? "sum";
-  postCalcEnabled.value = Boolean(metric?.postCalc);
-  postCalcOp.value = metric?.postCalc?.op ?? "add";
-  postCalcOperand.value = metric?.postCalc?.operand ?? 0;
-  dimensionField.value = null;
-  metricField.value = null;
+  const { dimension, metric } = getChartBindings(props.block.datasetBindings)
+  datasetId.value = dimension?.datasetId?.trim() || metric?.datasetId?.trim() || ''
+  filters.value = [...(dimension?.filters ?? metric?.filters ?? [])]
+  valueOp.value = metric?.valueOp ?? 'sum'
+  postCalcEnabled.value = Boolean(metric?.postCalc)
+  postCalcOp.value = metric?.postCalc?.op ?? 'add'
+  postCalcOperand.value = metric?.postCalc?.operand ?? 0
+  dimensionField.value = null
+  metricField.value = null
 
   if (datasetId.value) {
-    void loadFields(datasetId.value);
+    void loadFields(datasetId.value)
   }
 }
 
 function ensureBindings() {
   if (!props.block.datasetBindings) {
-    props.block.datasetBindings = {};
+    props.block.datasetBindings = {}
   }
-  return props.block.datasetBindings;
+  return props.block.datasetBindings
 }
 
 function applyToBlock() {
-  const map = ensureBindings();
-  const sharedFilters = filters.value.length > 0 ? [...filters.value] : undefined;
+  const map = ensureBindings()
+  const sharedFilters = filters.value.length > 0 ? [...filters.value] : undefined
 
   if (datasetId.value.trim() && dimensionField.value) {
     map[CHART_DIMENSION_PROP] = {
       datasetId: datasetId.value,
-      dataType: "scalar",
+      dataType: 'scalar',
       field: dimensionField.value.name,
       filters: sharedFilters,
-    };
-  } else {
-    delete map[CHART_DIMENSION_PROP];
+    }
+  }
+  else {
+    delete map[CHART_DIMENSION_PROP]
   }
 
   if (datasetId.value.trim() && metricField.value) {
     const metric: PropDatasetBinding = {
       datasetId: datasetId.value,
-      dataType: "scalar",
+      dataType: 'scalar',
       field: metricField.value.name,
       filters: sharedFilters,
       valueOp: valueOp.value,
-    };
-    if (postCalcEnabled.value) {
-      metric.postCalc = { op: postCalcOp.value, operand: postCalcOperand.value };
     }
-    map[CHART_METRIC_PROP] = metric;
-  } else {
-    delete map[CHART_METRIC_PROP];
+    if (postCalcEnabled.value) {
+      metric.postCalc = { op: postCalcOp.value, operand: postCalcOperand.value }
+    }
+    map[CHART_METRIC_PROP] = metric
+  }
+  else {
+    delete map[CHART_METRIC_PROP]
   }
 
-  syncChartPropsFromBindings(props.block.props, map);
+  syncChartPropsFromBindings(props.block.props, map)
 }
 
 function onPickDataset(id: string) {
-  datasetId.value = id;
-  pickerVisible.value = false;
-  dimensionField.value = null;
-  metricField.value = null;
-  filters.value = [];
+  datasetId.value = id
+  pickerVisible.value = false
+  dimensionField.value = null
+  metricField.value = null
+  filters.value = []
 }
 
 function onDimensionDrop(field: ApiDatasetField) {
-  dimensionField.value = field;
+  dimensionField.value = field
 }
 
 function onMetricDrop(field: ApiDatasetField) {
-  metricField.value = field;
+  metricField.value = field
 }
 
 function onConfirm() {
   if (!canConfirm.value) {
-    return;
+    return
   }
-  applyToBlock();
-  visible.value = false;
+  applyToBlock()
+  visible.value = false
 }
 
 function onClear() {
-  const map = props.block.datasetBindings;
+  const map = props.block.datasetBindings
   if (map) {
-    delete map[CHART_DIMENSION_PROP];
-    delete map[CHART_METRIC_PROP];
+    delete map[CHART_DIMENSION_PROP]
+    delete map[CHART_METRIC_PROP]
   }
-  syncChartPropsFromBindings(props.block.props, map ?? {});
-  visible.value = false;
+  syncChartPropsFromBindings(props.block.props, map ?? {})
+  visible.value = false
 }
 
 watch(visible, async (open) => {
   if (!open) {
-    return;
+    return
   }
-  await loadDatasets();
-  resetFromBlock();
-});
+  await loadDatasets()
+  resetFromBlock()
+})
 
 watch(datasetId, (id) => {
   if (id) {
-    void loadFields(id);
-  } else {
-    fields.value = [];
-    dimensionField.value = null;
-    metricField.value = null;
+    void loadFields(id)
   }
-});
+  else {
+    fields.value = []
+    dimensionField.value = null
+    metricField.value = null
+  }
+})
 
 function chartSize(value: number, min: number) {
-  return Math.max(value, min);
+  return Math.max(value, min)
 }
 </script>
 
@@ -298,7 +304,9 @@ function chartSize(value: number, min: number) {
           <header class="bind-config__head">
             <div class="section-head">
               <span class="section-head__title">字段映射</span>
-              <el-tag size="small" type="info" effect="plain">维度 + 指标</el-tag>
+              <el-tag size="small" type="info" effect="plain">
+                维度 + 指标
+              </el-tag>
             </div>
             <p class="bind-config__desc">
               从左侧拖动字段到维度或指标区域，分别对应图表 X 轴分类与 Y 轴数值。
@@ -350,7 +358,9 @@ function chartSize(value: number, min: number) {
 
             <span class="bind-config__label">数值运算</span>
             <div class="bind-config__control bind-config__control--inline">
-              <el-checkbox v-model="postCalcEnabled" :disabled="!metricField">启用</el-checkbox>
+              <el-checkbox v-model="postCalcEnabled" :disabled="!metricField">
+                启用
+              </el-checkbox>
               <template v-if="postCalcEnabled">
                 <el-select v-model="postCalcOp" size="default" style="width: 88px">
                   <el-option
@@ -370,7 +380,9 @@ function chartSize(value: number, min: number) {
             </div>
 
             <div class="bind-config__section chart-bind-filters">
-              <div class="bind-config__section-title">筛选条件</div>
+              <div class="bind-config__section-title">
+                筛选条件
+              </div>
               <DatasetBindFilters v-model="filters" :fields="fields" :disabled="!datasetId" />
             </div>
           </div>
@@ -404,9 +416,15 @@ function chartSize(value: number, min: number) {
     </DatasetBindSplitterLayout>
 
     <template #footer>
-      <el-button @click="visible = false">取消</el-button>
-      <el-button type="danger" plain @click="onClear">清除绑定</el-button>
-      <el-button type="primary" :disabled="!canConfirm" @click="onConfirm">确定</el-button>
+      <el-button @click="visible = false">
+        取消
+      </el-button>
+      <el-button type="danger" plain @click="onClear">
+        清除绑定
+      </el-button>
+      <el-button type="primary" :disabled="!canConfirm" @click="onConfirm">
+        确定
+      </el-button>
     </template>
   </AdaptiveDialog>
 </template>

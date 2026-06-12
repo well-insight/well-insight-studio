@@ -10,15 +10,15 @@ export default defineComponent({
     scale: Number,
     width: {
       type: Number,
-      default: 1
+      default: 1,
     },
     height: {
       type: Number,
-      default: 1
+      default: 1,
     },
     canvasConfigs: Object,
     selectStart: Number,
-    selectLength: Number
+    selectLength: Number,
   },
   setup(props, { emit }) {
     const canvasRef = ref<any>()
@@ -45,7 +45,7 @@ export default defineComponent({
         scale: props.scale,
         width: props.width,
         height: props.height,
-        canvasConfigs: props.canvasConfigs
+        canvasConfigs: props.canvasConfigs,
       }
 
       if (props.vertical) {
@@ -53,14 +53,15 @@ export default defineComponent({
           canvasContext.value,
           props.start,
           { y: props.selectStart, height: props.selectLength },
-          options
+          options,
         )
-      } else {
+      }
+      else {
         drawHorizontalRuler(
           canvasContext.value,
           props.start,
           { x: props.selectStart, width: props.selectLength },
-          options
+          options,
         )
       }
     }
@@ -99,9 +100,9 @@ export default defineComponent({
       handleClick,
       handleEnter,
       handleMove,
-      handleLeave
+      handleLeave,
     }
-  }
+  },
 })
 </script>
 

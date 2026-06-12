@@ -2,9 +2,13 @@
   "tab_size": 2,
   "lsp": {
     "oxlint": {
+      "binary": {
+        "path": "./node_modules/.bin/oxlint",
+        "args": ["--lsp"]
+      },
       "initialization_options": {
         "settings": {
-          "configPath": null,
+          "configPath": ".oxlintrc.json",
           "run": "onType",
           "disableNestedConfig": false,
           "fixKind": "safe_fix",
@@ -13,6 +17,10 @@
       }
     },
     "oxfmt": {
+      "binary": {
+        "path": "./node_modules/.bin/oxfmt",
+        "args": ["--lsp"]
+      },
       "initialization_options": {
         "settings": {
           "fmt.configPath": null,

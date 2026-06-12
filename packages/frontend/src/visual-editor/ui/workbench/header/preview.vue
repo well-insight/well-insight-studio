@@ -3,14 +3,14 @@ import { useVModel } from '@vueuse/core'
 import { BASE_URL } from '@/visual-editor/lib'
 
 defineOptions({
-  name: 'Preview'
+  name: 'Preview',
 })
 
 const props = defineProps({
   visible: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 })
 const emits = defineEmits(['update:visible'])
 

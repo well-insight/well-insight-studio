@@ -8,7 +8,7 @@ interface Options {
 }
 
 const props = withDefaults(defineProps<{ options?: Options[] }>(), {
-  options: () => []
+  options: () => [],
 })
 
 const modelValue = defineModel<string>({ required: true, default: '' })

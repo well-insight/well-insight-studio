@@ -1,46 +1,3 @@
-<template>
-  <div ref="containerRef" class="animated-characters" :style="containerStyle">
-    <div class="animated-scene" :style="sceneStyle">
-      <div ref="purpleRef" class="character" :style="characterStyle('purple')">
-        <div ref="purpleFaceRef" class="face-row" :style="faceStyle('purple')">
-        <div class="eyeball eyeball-sm" data-max-distance="5">
-          <div class="eyeball-pupil pupil-sm"></div>
-        </div>
-        <div class="eyeball eyeball-sm" data-max-distance="5">
-          <div class="eyeball-pupil pupil-sm"></div>
-        </div>
-      </div>
-    </div>
-
-      <div ref="blackRef" class="character" :style="characterStyle('black')">
-        <div ref="blackFaceRef" class="face-row" :style="faceStyle('black')">
-          <div class="eyeball eyeball-xs" data-max-distance="4">
-            <div class="eyeball-pupil pupil-xs"></div>
-          </div>
-          <div class="eyeball eyeball-xs" data-max-distance="4">
-            <div class="eyeball-pupil pupil-xs"></div>
-          </div>
-        </div>
-      </div>
-
-      <div ref="orangeRef" class="character" :style="characterStyle('orange')">
-        <div ref="orangeFaceRef" class="face-row" :style="faceStyle('orange')">
-          <div class="pupil" data-max-distance="5"></div>
-          <div class="pupil" data-max-distance="5"></div>
-        </div>
-      </div>
-
-      <div ref="yellowRef" class="character" :style="characterStyle('yellow')">
-        <div ref="yellowFaceRef" class="face-row" :style="faceStyle('yellow')">
-          <div class="pupil" data-max-distance="5"></div>
-          <div class="pupil" data-max-distance="5"></div>
-        </div>
-        <div ref="yellowMouthRef" class="yellow-mouth" :style="mouthStyle"></div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import gsap from 'gsap'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
@@ -81,18 +38,28 @@ interface MouthLayout {
   background: string
 }
 
+const props = withDefaults(defineProps<Props>(), {
+  isTyping: false,
+  showPassword: false,
+  passwordLength: 0,
+  width: '100%',
+  height: '100%',
+  sceneWidth: 550,
+  sceneHeight: 400,
+})
+
 const DEFAULT_CHARACTERS: Record<CharacterKey, CharacterLayout> = {
   purple: { left: 70, width: 180, height: 400, background: '#6c3ff5', borderRadius: '10px 10px 0 0', zIndex: 1 },
   black: { left: 240, width: 120, height: 310, background: '#2d2d2d', borderRadius: '8px 8px 0 0', zIndex: 2 },
   orange: { left: 0, width: 240, height: 200, background: '#ff9b6b', borderRadius: '120px 120px 0 0', zIndex: 3 },
-  yellow: { left: 310, width: 140, height: 230, background: '#e8d754', borderRadius: '70px 70px 0 0', zIndex: 4 }
+  yellow: { left: 310, width: 140, height: 230, background: '#e8d754', borderRadius: '70px 70px 0 0', zIndex: 4 },
 }
 
 const DEFAULT_FACES: Record<CharacterKey, FaceLayout> = {
   purple: { left: 45, top: 40, gap: 32 },
   black: { left: 26, top: 32, gap: 24 },
   orange: { left: 82, top: 90, gap: 32 },
-  yellow: { left: 52, top: 40, gap: 24 }
+  yellow: { left: 52, top: 40, gap: 24 },
 }
 
 const DEFAULT_MOUTH: MouthLayout = {
@@ -101,18 +68,8 @@ const DEFAULT_MOUTH: MouthLayout = {
   width: 80,
   height: 4,
   borderRadius: '9999px',
-  background: '#2d2d2d'
+  background: '#2d2d2d',
 }
-
-const props = withDefaults(defineProps<Props>(), {
-  isTyping: false,
-  showPassword: false,
-  passwordLength: 0,
-  width: '100%',
-  height: '100%',
-  sceneWidth: 550,
-  sceneHeight: 400
-})
 
 const containerRef = ref<HTMLDivElement>()
 const purpleRef = ref<HTMLDivElement>()
@@ -142,7 +99,7 @@ const mergedCharacters = computed(() => {
     purple: { ...DEFAULT_CHARACTERS.purple, ...(props.characters?.purple || {}) },
     black: { ...DEFAULT_CHARACTERS.black, ...(props.characters?.black || {}) },
     orange: { ...DEFAULT_CHARACTERS.orange, ...(props.characters?.orange || {}) },
-    yellow: { ...DEFAULT_CHARACTERS.yellow, ...(props.characters?.yellow || {}) }
+    yellow: { ...DEFAULT_CHARACTERS.yellow, ...(props.characters?.yellow || {}) },
   }
 })
 const mergedFaces = computed(() => {
@@ -150,18 +107,18 @@ const mergedFaces = computed(() => {
     purple: { ...DEFAULT_FACES.purple, ...(props.faces?.purple || {}) },
     black: { ...DEFAULT_FACES.black, ...(props.faces?.black || {}) },
     orange: { ...DEFAULT_FACES.orange, ...(props.faces?.orange || {}) },
-    yellow: { ...DEFAULT_FACES.yellow, ...(props.faces?.yellow || {}) }
+    yellow: { ...DEFAULT_FACES.yellow, ...(props.faces?.yellow || {}) },
   }
 })
 const mergedMouth = computed(() => ({ ...DEFAULT_MOUTH, ...(props.mouth || {}) }))
 const containerStyle = computed(() => ({
   width: typeof props.width === 'number' ? `${props.width}px` : props.width,
-  height: typeof props.height === 'number' ? `${props.height}px` : props.height
+  height: typeof props.height === 'number' ? `${props.height}px` : props.height,
 }))
 const sceneStyle = computed(() => ({
   width: `${props.sceneWidth}px`,
   height: `${props.sceneHeight}px`,
-  transform: `translate(-50%, -50%) scale(${sceneScale.value})`
+  transform: `translate(-50%, -50%) scale(${sceneScale.value})`,
 }))
 const mouthStyle = computed(() => ({
   left: `${mergedMouth.value.left}px`,
@@ -169,9 +126,9 @@ const mouthStyle = computed(() => ({
   width: `${mergedMouth.value.width}px`,
   height: `${mergedMouth.value.height}px`,
   borderRadius: mergedMouth.value.borderRadius,
-  background: mergedMouth.value.background
+  background: mergedMouth.value.background,
 }))
-const characterStyle = (key: CharacterKey) => {
+function characterStyle(key: CharacterKey) {
   const style = mergedCharacters.value[key]
   return {
     left: `${style.left}px`,
@@ -179,10 +136,10 @@ const characterStyle = (key: CharacterKey) => {
     height: `${style.height}px`,
     background: style.background,
     borderRadius: style.borderRadius,
-    zIndex: style.zIndex
+    zIndex: style.zIndex,
   }
 }
-const faceStyle = (key: CharacterKey) => {
+function faceStyle(key: CharacterKey) {
   const style = mergedFaces.value[key]
   return { left: `${style.left}px`, top: `${style.top}px`, gap: `${style.gap}px` }
 }
@@ -205,7 +162,7 @@ let yellowFaceY: gsap.QuickToFunc
 let mouthX: gsap.QuickToFunc
 let mouthY: gsap.QuickToFunc
 
-const calcPos = (el: HTMLElement, mouseX: number, mouseY: number) => {
+function calcPos(el: HTMLElement, mouseX: number, mouseY: number) {
   const rect = el.getBoundingClientRect()
   const cx = rect.left + rect.width / 2
   const cy = rect.top + rect.height / 3
@@ -219,7 +176,7 @@ const calcPos = (el: HTMLElement, mouseX: number, mouseY: number) => {
   return { faceX, faceY, bodySkew }
 }
 
-const calcEyePos = (el: HTMLElement, mouseX: number, mouseY: number, maxDist = 5) => {
+function calcEyePos(el: HTMLElement, mouseX: number, mouseY: number, maxDist = 5) {
   const r = el.getBoundingClientRect()
   const cx = r.left + r.width / 2
   const cy = r.top + r.height / 2
@@ -229,13 +186,14 @@ const calcEyePos = (el: HTMLElement, mouseX: number, mouseY: number, maxDist = 5
   const angle = Math.atan2(dy, dx)
   return {
     x: Math.cos(angle) * dist,
-    y: Math.sin(angle) * dist
+    y: Math.sin(angle) * dist,
   }
 }
 
-const tick = () => {
+function tick() {
   const container = containerRef.value
-  if (!container) return
+  if (!container)
+    return
 
   const typing = props.isTyping
   const hiding = isHidingPassword.value
@@ -248,7 +206,8 @@ const tick = () => {
       purpleSkew?.(pp.bodySkew - 12)
       purpleX?.(40)
       purpleHeight?.(440)
-    } else {
+    }
+    else {
       purpleSkew?.(pp.bodySkew)
       purpleX?.(0)
       purpleHeight?.(400)
@@ -260,10 +219,12 @@ const tick = () => {
     if (looking) {
       blackSkew?.(bp.bodySkew * 1.5 + 10)
       blackX?.(20)
-    } else if (typing || hiding) {
+    }
+    else if (typing || hiding) {
       blackSkew?.(bp.bodySkew * 1.5)
       blackX?.(0)
-    } else {
+    }
+    else {
       blackSkew?.(bp.bodySkew)
       blackX?.(0)
     }
@@ -319,7 +280,8 @@ const tick = () => {
       eyeballs.forEach((el) => {
         const maxDist = Number(el.dataset.maxDistance) || 10
         const pupil = el.querySelector<HTMLElement>('.eyeball-pupil')
-        if (!pupil) return
+        if (!pupil)
+          return
         const ePos = calcEyePos(el, mousePosition.value.x, mousePosition.value.y, maxDist)
         gsap.set(pupil, { x: ePos.x, y: ePos.y })
       })
@@ -329,104 +291,107 @@ const tick = () => {
   rafId.value = requestAnimationFrame(tick)
 }
 
-const onMove = (e: MouseEvent) => {
+function onMove(e: MouseEvent) {
   mousePosition.value = { x: e.clientX, y: e.clientY }
 }
 
-const initAnimations = () => {
+function initAnimations() {
   if (
-    !purpleRef.value ||
-    !blackRef.value ||
-    !orangeRef.value ||
-    !yellowRef.value ||
-    !purpleFaceRef.value ||
-    !blackFaceRef.value ||
-    !orangeFaceRef.value ||
-    !yellowFaceRef.value ||
-    !yellowMouthRef.value
-  ) return
+    !purpleRef.value
+    || !blackRef.value
+    || !orangeRef.value
+    || !yellowRef.value
+    || !purpleFaceRef.value
+    || !blackFaceRef.value
+    || !orangeFaceRef.value
+    || !yellowFaceRef.value
+    || !yellowMouthRef.value
+  ) {
+    return
+  }
 
   purpleSkew = gsap.quickTo(purpleRef.value, 'skewX', {
     duration: 0.3,
-    ease: 'power2.out'
+    ease: 'power2.out',
   })
   blackSkew = gsap.quickTo(blackRef.value, 'skewX', {
     duration: 0.3,
-    ease: 'power2.out'
+    ease: 'power2.out',
   })
   orangeSkew = gsap.quickTo(orangeRef.value, 'skewX', {
     duration: 0.3,
-    ease: 'power2.out'
+    ease: 'power2.out',
   })
   yellowSkew = gsap.quickTo(yellowRef.value, 'skewX', {
     duration: 0.3,
-    ease: 'power2.out'
+    ease: 'power2.out',
   })
   purpleX = gsap.quickTo(purpleRef.value, 'x', {
     duration: 0.3,
-    ease: 'power2.out'
+    ease: 'power2.out',
   })
   blackX = gsap.quickTo(blackRef.value, 'x', {
     duration: 0.3,
-    ease: 'power2.out'
+    ease: 'power2.out',
   })
   purpleHeight = gsap.quickTo(purpleRef.value, 'height', {
     duration: 0.3,
-    ease: 'power2.out'
+    ease: 'power2.out',
   })
   purpleFaceLeft = gsap.quickTo(purpleFaceRef.value, 'left', {
     duration: 0.3,
-    ease: 'power2.out'
+    ease: 'power2.out',
   })
   purpleFaceTop = gsap.quickTo(purpleFaceRef.value, 'top', {
     duration: 0.3,
-    ease: 'power2.out'
+    ease: 'power2.out',
   })
   blackFaceLeft = gsap.quickTo(blackFaceRef.value, 'left', {
     duration: 0.3,
-    ease: 'power2.out'
+    ease: 'power2.out',
   })
   blackFaceTop = gsap.quickTo(blackFaceRef.value, 'top', {
     duration: 0.3,
-    ease: 'power2.out'
+    ease: 'power2.out',
   })
   orangeFaceX = gsap.quickTo(orangeFaceRef.value, 'x', {
     duration: 0.2,
-    ease: 'power2.out'
+    ease: 'power2.out',
   })
   orangeFaceY = gsap.quickTo(orangeFaceRef.value, 'y', {
     duration: 0.2,
-    ease: 'power2.out'
+    ease: 'power2.out',
   })
   yellowFaceX = gsap.quickTo(yellowFaceRef.value, 'x', {
     duration: 0.2,
-    ease: 'power2.out'
+    ease: 'power2.out',
   })
   yellowFaceY = gsap.quickTo(yellowFaceRef.value, 'y', {
     duration: 0.2,
-    ease: 'power2.out'
+    ease: 'power2.out',
   })
   mouthX = gsap.quickTo(yellowMouthRef.value, 'x', {
     duration: 0.2,
-    ease: 'power2.out'
+    ease: 'power2.out',
   })
   mouthY = gsap.quickTo(yellowMouthRef.value, 'y', {
     duration: 0.2,
-    ease: 'power2.out'
+    ease: 'power2.out',
   })
 
   gsap.set(containerRef.value.querySelectorAll('.pupil, .eyeball-pupil'), { x: 0, y: 0 })
   tick()
 }
 
-const tweenPupils = (root: HTMLElement | undefined, selector: string, x: number, y: number) => {
-  if (!root) return
+function tweenPupils(root: HTMLElement | undefined, selector: string, x: number, y: number) {
+  if (!root)
+    return
   root.querySelectorAll<HTMLElement>(selector).forEach((pupil) => {
     gsap.to(pupil, { x, y, duration: 0.3, ease: 'power2.out', overwrite: 'auto' })
   })
 }
 
-const applyLookAtEachOther = () => {
+function applyLookAtEachOther() {
   purpleFaceLeft?.(55)
   purpleFaceTop?.(65)
   blackFaceLeft?.(32)
@@ -435,12 +400,12 @@ const applyLookAtEachOther = () => {
   tweenPupils(blackRef.value, '.eyeball-pupil', 0, -4)
 }
 
-const applyHidingPassword = () => {
+function applyHidingPassword() {
   purpleFaceLeft?.(55)
   purpleFaceTop?.(65)
 }
 
-const applyShowPassword = () => {
+function applyShowPassword() {
   purpleSkew?.(0)
   blackSkew?.(0)
   orangeSkew?.(0)
@@ -466,14 +431,15 @@ const applyShowPassword = () => {
   tweenPupils(yellowRef.value, '.pupil', -5, -4)
 }
 
-const scheduleBlink = (host: HTMLElement, timer: typeof purpleBlinkTimer, fallbackSize: number) => {
+function scheduleBlink(host: HTMLElement, timer: typeof purpleBlinkTimer, fallbackSize: number) {
   const eyeballs = host.querySelectorAll<HTMLElement>('.eyeball')
-  if (!eyeballs.length) return
+  if (!eyeballs.length)
+    return
 
   const loop = () => {
     timer.value = setTimeout(
       () => {
-        eyeballs.forEach((el) => gsap.to(el, { height: 2, duration: 0.08, ease: 'power2.in' }))
+        eyeballs.forEach(el => gsap.to(el, { height: 2, duration: 0.08, ease: 'power2.in' }))
         setTimeout(() => {
           eyeballs.forEach((el) => {
             const size = Number(el.style.width.replace('px', '')) || fallbackSize
@@ -482,15 +448,16 @@ const scheduleBlink = (host: HTMLElement, timer: typeof purpleBlinkTimer, fallba
           loop()
         }, 150)
       },
-      Math.random() * 4000 + 3000
+      Math.random() * 4000 + 3000,
     )
   }
   loop()
 }
 
-const schedulePurplePeek = () => {
+function schedulePurplePeek() {
   const purpleEyePupils = purpleRef.value?.querySelectorAll<HTMLElement>('.eyeball-pupil')
-  if (!purpleEyePupils?.length) return
+  if (!purpleEyePupils?.length)
+    return
 
   const loop = () => {
     purplePeekTimer.value = setTimeout(
@@ -508,7 +475,7 @@ const schedulePurplePeek = () => {
           loop()
         }, 800)
       },
-      Math.random() * 3000 + 2000
+      Math.random() * 3000 + 2000,
     )
   }
   loop()
@@ -519,7 +486,7 @@ watch(
   ([typing, showing]) => {
     if (typing && !showing) {
       clearTimeout(lookingTimer.value)
-    isLooking.value = true
+      isLooking.value = true
       applyLookAtEachOther()
       lookingTimer.value = setTimeout(() => {
         isLooking.value = false
@@ -532,18 +499,19 @@ watch(
 
     clearTimeout(lookingTimer.value)
     isLooking.value = false
-  }
+  },
 )
 
 watch(
   () => [isHidingPassword.value, isShowingPassword.value] as const,
   ([hiding, showing]) => {
     if (showing) {
-    applyShowPassword()
-    } else if (hiding) {
+      applyShowPassword()
+    }
+    else if (hiding) {
       applyHidingPassword()
     }
-  }
+  },
 )
 
 watch(
@@ -553,7 +521,7 @@ watch(
     if (showing && len > 0) {
       schedulePurplePeek()
     }
-  }
+  },
 )
 
 onMounted(() => {
@@ -568,8 +536,10 @@ onMounted(() => {
   }
   setTimeout(() => {
     initAnimations()
-    if (purpleRef.value) scheduleBlink(purpleRef.value, purpleBlinkTimer, 18)
-    if (blackRef.value) scheduleBlink(blackRef.value, blackBlinkTimer, 16)
+    if (purpleRef.value)
+      scheduleBlink(purpleRef.value, purpleBlinkTimer, 18)
+    if (blackRef.value)
+      scheduleBlink(blackRef.value, blackBlinkTimer, 16)
   }, 100)
 })
 
@@ -584,6 +554,49 @@ onUnmounted(() => {
   resizeObserver = null
 })
 </script>
+
+<template>
+  <div ref="containerRef" class="animated-characters" :style="containerStyle">
+    <div class="animated-scene" :style="sceneStyle">
+      <div ref="purpleRef" class="character" :style="characterStyle('purple')">
+        <div ref="purpleFaceRef" class="face-row" :style="faceStyle('purple')">
+          <div class="eyeball eyeball-sm" data-max-distance="5">
+            <div class="eyeball-pupil pupil-sm" />
+          </div>
+          <div class="eyeball eyeball-sm" data-max-distance="5">
+            <div class="eyeball-pupil pupil-sm" />
+          </div>
+        </div>
+      </div>
+
+      <div ref="blackRef" class="character" :style="characterStyle('black')">
+        <div ref="blackFaceRef" class="face-row" :style="faceStyle('black')">
+          <div class="eyeball eyeball-xs" data-max-distance="4">
+            <div class="eyeball-pupil pupil-xs" />
+          </div>
+          <div class="eyeball eyeball-xs" data-max-distance="4">
+            <div class="eyeball-pupil pupil-xs" />
+          </div>
+        </div>
+      </div>
+
+      <div ref="orangeRef" class="character" :style="characterStyle('orange')">
+        <div ref="orangeFaceRef" class="face-row" :style="faceStyle('orange')">
+          <div class="pupil" data-max-distance="5" />
+          <div class="pupil" data-max-distance="5" />
+        </div>
+      </div>
+
+      <div ref="yellowRef" class="character" :style="characterStyle('yellow')">
+        <div ref="yellowFaceRef" class="face-row" :style="faceStyle('yellow')">
+          <div class="pupil" data-max-distance="5" />
+          <div class="pupil" data-max-distance="5" />
+        </div>
+        <div ref="yellowMouthRef" class="yellow-mouth" :style="mouthStyle" />
+      </div>
+    </div>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 .animated-characters {

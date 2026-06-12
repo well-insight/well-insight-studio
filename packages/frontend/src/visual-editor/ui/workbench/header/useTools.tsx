@@ -7,24 +7,24 @@ import {
   Position,
   RefreshLeft,
   RefreshRight,
-  Upload
+  Upload,
 } from '@element-plus/icons-vue'
 import { useClipboard } from '@vueuse/core'
 import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { ElMessage, ElRadio, ElRadioGroup } from 'element-plus'
 
 import { reactive, unref } from 'vue'
-import MonacoEditor from '@/visual-editor/ui/shared/monaco-editor/MonacoEditor'
 import { useModal } from '@/visual-editor/hooks/useModal'
 import { localKey, useVisualData } from '@/visual-editor/hooks/useVisualData'
+import MonacoEditor from '@/visual-editor/ui/shared/monaco-editor/MonacoEditor'
 
 export function useTools() {
   const { jsonData, updatePage, currentPage, overrideProject } = useVisualData()
   const state = reactive({
     coverRadio: 'current',
-    importJsonValue: ''
+    importJsonValue: '',
   })
-  const importJsonChange = value => {
+  const importJsonChange = (value) => {
     state.importJsonValue = value
   }
 
@@ -36,13 +36,13 @@ export function useTools() {
         useModal({
           title: '导入JSON',
           props: {
-            width: 642
+            width: 642,
           },
           content: () => (
             <>
               <ElRadioGroup v-model={state.coverRadio}>
-                <ElRadio value='current'>覆盖当前页面</ElRadio>
-                <ElRadio value='all'>覆盖整个项目</ElRadio>
+                <ElRadio value="current">覆盖当前页面</ElRadio>
+                <ElRadio value="all">覆盖整个项目</ElRadio>
               </ElRadioGroup>
               <MonacoEditor
                 onChange={importJsonChange}
@@ -57,9 +57,10 @@ export function useTools() {
             if (isCoverCurrent) {
               updatePage({
                 oldPath: currentPage.value.path,
-                page: JSON.parse(state.importJsonValue)
+                page: JSON.parse(state.importJsonValue),
               })
-            } else {
+            }
+            else {
               // 覆盖整个项目
               overrideProject(JSON.parse(state.importJsonValue))
             }
@@ -67,11 +68,11 @@ export function useTools() {
               showClose: true,
               type: 'success',
               duration: 2000,
-              message: isCoverCurrent ? '成功覆盖当前页面' : '成功覆盖整个项目'
+              message: isCoverCurrent ? '成功覆盖当前页面' : '成功覆盖整个项目',
             })
-          }
+          },
         })
-      }
+      },
     },
     {
       title: '导出JSON',
@@ -82,7 +83,7 @@ export function useTools() {
         copy()
           .then(() => ElMessage.success('复制成功'))
           .catch(err => ElMessage.error(`复制失败：${err}`))
-      }
+      },
     },
     {
       title: '真机预览',
@@ -92,16 +93,16 @@ export function useTools() {
         useModal({
           title: '预览二维码（暂不可用）',
           props: {
-            width: 300
+            width: 300,
           },
           footer: null,
           content: () => (
-            <div class='flex justify-center'>
+            <div class="flex justify-center">
               <img width={220} height={220} src={qrcode.value} />
             </div>
-          )
+          ),
         })
-      }
+      },
     },
     {
       title: '复制页面',
@@ -111,9 +112,9 @@ export function useTools() {
           showClose: true,
           type: 'info',
           duration: 2000,
-          message: '敬请期待！'
+          message: '敬请期待！',
         })
-      }
+      },
     },
     {
       title: '撤销',
@@ -123,9 +124,9 @@ export function useTools() {
           showClose: true,
           type: 'info',
           duration: 2000,
-          message: '敬请期待！'
+          message: '敬请期待！',
         })
-      }
+      },
     },
     {
       title: '重做',
@@ -135,9 +136,9 @@ export function useTools() {
           showClose: true,
           type: 'info',
           duration: 2000,
-          message: '敬请期待！'
+          message: '敬请期待！',
         })
-      }
+      },
     },
     {
       title: '清空页面',
@@ -147,9 +148,9 @@ export function useTools() {
           showClose: true,
           type: 'info',
           duration: 2000,
-          message: '敬请期待！'
+          message: '敬请期待！',
         })
-      }
+      },
     },
     {
       title: '预览',
@@ -157,14 +158,14 @@ export function useTools() {
       onClick: () => {
         localStorage.setItem(localKey, JSON.stringify(unref(jsonData)))
         window.open(location.href.replace('/#/', '/preview/#/'))
-      }
+      },
     },
     {
       title: '反馈',
       icon: ChatLineSquare,
       onClick: () => {
         window.open('https://github.com/buqiyuan/vite-vue3-lowcode/issues/new')
-      }
-    }
+      },
+    },
   ]
 }

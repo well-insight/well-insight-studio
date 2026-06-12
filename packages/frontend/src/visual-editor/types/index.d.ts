@@ -21,7 +21,7 @@ declare global {
     $$refs: any
     requestIdleCallback: (
       callback: (deadline: RequestIdleCallbackDeadline) => void,
-      opts?: RequestIdleCallbackOptions
+      opts?: RequestIdleCallbackOptions,
     ) => RequestIdleCallbackHandle
     cancelIdleCallback: (handle: RequestIdleCallbackHandle) => void
   }

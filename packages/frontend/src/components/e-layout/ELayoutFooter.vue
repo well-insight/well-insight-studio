@@ -10,7 +10,7 @@ const footerStyle = computed<CSSProperties>(() => ({
   flexShrink: 0,
   boxSizing: 'border-box',
   width: '100%',
-  ...props.style
+  ...props.style,
 }))
 </script>
 

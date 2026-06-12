@@ -7,11 +7,11 @@ import { useDesignStore } from '@/stores/design'
 import { getComponent } from '../control-components'
 
 defineOptions({
-  name: 'AttrListRender'
+  name: 'AttrListRender',
 })
 
-const props = withDefaults(defineProps<{ configs?: ComponentConfig[]; collapseAll?: boolean }>(), {
-  collapseAll: false
+const props = withDefaults(defineProps<{ configs?: ComponentConfig[], collapseAll?: boolean }>(), {
+  collapseAll: false,
 })
 
 const designStore = useDesignStore()
@@ -25,7 +25,7 @@ watch(
   () => {
     activeNames.value = props?.collapseAll === true ? props?.configs?.map(e => e?.value) || [] : []
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 )
 
 watchEffect(() => {

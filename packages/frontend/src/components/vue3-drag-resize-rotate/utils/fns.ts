@@ -34,11 +34,11 @@ export function rotatedPoint(originX, originY, offsetX, offsetY, rotate) {
   const rad = (Math.PI / 180) * rotate
   const cos = Math.cos(rad)
   const sin = Math.sin(rad)
-  let x = offsetX - originX
-  let y = offsetY - originY
+  const x = offsetX - originX
+  const y = offsetY - originY
   return {
     x: x * cos - y * sin + originX,
-    y: x * sin + y * cos + originY
+    y: x * sin + y * cos + originY,
   }
 }
 
@@ -46,6 +46,7 @@ export function rotatedPoint(originX, originY, offsetX, offsetY, rotate) {
 export function getAngle(x, y) {
   let theta = Math.atan2(y, x) // 正切转弧度
   theta = Math.round((180 / Math.PI) * theta) // 弧度转角度
-  if (theta < 0) theta = 360 + theta // 控制角度在0~360度
+  if (theta < 0)
+    theta = 360 + theta // 控制角度在0~360度
   return theta // 返回角度
 }

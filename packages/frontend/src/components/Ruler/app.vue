@@ -6,7 +6,7 @@ const rectWidth = 160
 const rectHeight = 200
 export default Vue.extend({
   components: {
-    SketchRule
+    SketchRule,
   },
   data() {
     return {
@@ -15,12 +15,12 @@ export default Vue.extend({
       startY: 0,
       lines: {
         h: [100, 200],
-        v: [100, 200]
+        v: [100, 200],
       },
       thick: 20,
       lang: 'zh-CN', // 中英文
       isShowRuler: true, // 显示标尺
-      isShowReferLine: true // 显示参考线
+      isShowReferLine: true, // 显示参考线
     }
   },
   computed: {
@@ -29,16 +29,16 @@ export default Vue.extend({
         x: 0,
         y: 0,
         width: rectWidth,
-        height: rectHeight
+        height: rectHeight,
       }
     },
     canvasStyle() {
       return {
         width: rectWidth,
         height: rectHeight,
-        transform: `scale(${this.scale})`
+        transform: `scale(${this.scale})`,
       }
-    }
+    },
   },
   mounted() {
     // 滚动居中
@@ -70,8 +70,8 @@ export default Vue.extend({
       this.$nextTick(() => {
         this.handleScroll()
       })
-    }
-  }
+    },
+  },
 })
 </script>
 

@@ -5,7 +5,7 @@ import {
   createEditorCrossSortableProp,
   createEditorInputProp,
   createEditorModelBindProp,
-  createEditorSelectProp
+  createEditorSelectProp,
 } from '@/visual-editor/visual-editor.props'
 import { createFieldProps } from './createFieldProps'
 
@@ -14,9 +14,9 @@ export default {
   moduleName: 'baseWidgets',
   label: '表单项类型 - 单选框',
   preview: () => (
-    <RadioGroup modelValue='1' direction='horizontal'>
-      <Radio name='1'>one</Radio>
-      <Radio name='2'>two</Radio>
+    <RadioGroup modelValue="1" direction="horizontal">
+      <Radio name="1">one</Radio>
+      <Radio name="2">two</Radio>
     </RadioGroup>
   ),
   render: ({ styles, block, props }) => {
@@ -26,7 +26,7 @@ export default {
       <div style={styles}>
         <Field
           {...props}
-          modelValue=''
+          modelValue=""
           name={Array.isArray(props.name) ? [...props.name].pop() : props.name}
           v-slots={{
             input: () => (
@@ -37,7 +37,7 @@ export default {
                   </Radio>
                 ))}
               </RadioGroup>
-            )
+            ),
           }}
         />
       </div>
@@ -54,30 +54,30 @@ export default {
       defaultValue: [
         { label: '胡萝卜', value: 'carrot' },
         { label: '白菜', value: 'cabbage' },
-        { label: '猪', value: 'pig' }
-      ]
+        { label: '猪', value: 'pig' },
+      ],
     }),
     direction: createEditorSelectProp({
       label: '排列方向',
       options: [
         {
           label: '水平',
-          value: 'horizontal'
+          value: 'horizontal',
         },
         {
           label: '垂直',
-          value: 'vertical'
-        }
+          value: 'vertical',
+        },
       ],
-      defaultValue: 'horizontal'
+      defaultValue: 'horizontal',
     }),
-    ...createFieldProps()
+    ...createFieldProps(),
   },
   events: [{ label: '点击单选框时触发', value: 'click' }],
   resize: {
-    width: true
+    width: true,
   },
   model: {
-    default: '绑定字段'
-  }
+    default: '绑定字段',
+  },
 } as VisualEditorComponent

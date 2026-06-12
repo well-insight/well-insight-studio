@@ -14,8 +14,8 @@ const markLineData = reactive<any>({
     xb: { show: false, style: {} },
     yl: { show: false, style: {} },
     yc: { show: false, style: {} },
-    yr: { show: false, style: {} }
-  }
+    yr: { show: false, style: {} },
+  },
 })
 
 const curComponentIndex = computed(() => store.$state.curComponentIndex)
@@ -37,15 +37,15 @@ function checkLine() {
       xb: `${Number.parseInt(style.top) + Number.parseInt(style.height)}px`,
       yl: `${Number.parseInt(style.left)}px`,
       yc: `${Number.parseInt(style.left) + Number.parseInt(style.width) / 2}px`,
-      yr: `${Number.parseInt(style.left) + Number.parseInt(style.width)}px`
+      yr: `${Number.parseInt(style.left) + Number.parseInt(style.width)}px`,
     }
     Object.entries(markLineData.lineConfig).forEach(([key, value]: any) => {
       const position = key.includes('x') ? 'top' : 'left'
       if (curComponent.id === com.id) {
         return
       }
-      markLineData.lineConfig[key].show =
-        Math.abs(Number.parseInt(value.style[position]) - Number.parseInt(componentStyle[key])) <= markLineData.diff
+      markLineData.lineConfig[key].show
+        = Math.abs(Number.parseInt(value.style[position]) - Number.parseInt(componentStyle[key])) <= markLineData.diff
     })
   })
 }
@@ -56,7 +56,7 @@ onMounted(() => {
     // Object.entries(markLineData.lineConfig).forEach(([key, value]: any) => {
     //     markLineData.lineConfig[key].show =true;
     // });
-    Object.keys(markLineData.lineConfig).forEach(key => {
+    Object.keys(markLineData.lineConfig).forEach((key) => {
       const lineStyle = markLineData.lineConfig[key].style
       if (key === 'xt') {
         lineStyle.top = `${Number.parseInt(component.style.top)}px`

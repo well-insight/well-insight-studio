@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { UploadFile } from 'element-plus'
 import { storeToRefs } from 'pinia'
-import { computed, reactive, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { themeColor } from '@/hooks/useEchartTheme'
 import { useDesignStore } from '@/stores/design'
 import { BackgroundRepeat } from '../control-components/background'
@@ -30,11 +30,12 @@ function changePageBgColor(e: string | null) {
 }
 
 function uploadSuccess(file: UploadFile) {
-  if (file.status !== 'ready') return
+  if (file.status !== 'ready')
+    return
   if (file) {
     const reader = new FileReader()
     reader.readAsDataURL(file.raw!)
-    reader.onload = e => {
+    reader.onload = (e) => {
       fileUrl.value = (e.target?.result || '') as string
       designStore.setPageConfigByKey('backgroundImage', fileUrl.value)
     }
@@ -49,10 +50,10 @@ function deleteBg() {
 
 watch(
   () => pageConfig.value.backgroundImage,
-  n => {
+  (n) => {
     fileUrl.value = n || ''
   },
-  { immediate: true }
+  { immediate: true },
 )
 </script>
 
@@ -69,25 +70,35 @@ watch(
           <el-scrollbar view-style="padding: 12px">
             <div class="attrs-setting-content">
               <div class="attrs-setting-item">
-                <el-text class="attrs-setting-item-title"> 宽度 </el-text>
+                <el-text class="attrs-setting-item-title">
+                  宽度
+                </el-text>
                 <div class="attrs-setting-item-content">
                   <el-input v-model="pageConfig.width" type="number" :min="1">
-                    <template #append> px </template>
+                    <template #append>
+                      px
+                    </template>
                   </el-input>
                 </div>
               </div>
 
               <div class="attrs-setting-item">
-                <el-text class="attrs-setting-item-title"> 长度 </el-text>
+                <el-text class="attrs-setting-item-title">
+                  长度
+                </el-text>
                 <div class="attrs-setting-item-content">
                   <el-input v-model="pageConfig.height" type="number" :min="1">
-                    <template #append> px </template>
+                    <template #append>
+                      px
+                    </template>
                   </el-input>
                 </div>
               </div>
 
               <div class="attrs-setting-item">
-                <el-text class="attrs-setting-item-title"> 背景颜色 </el-text>
+                <el-text class="attrs-setting-item-title">
+                  背景颜色
+                </el-text>
                 <div class="attrs-setting-item-content">
                   <el-color-picker
                     v-model="pageConfig.backgroundColor"
@@ -101,7 +112,9 @@ watch(
               </div>
 
               <div class="attrs-setting-item">
-                <el-text class="attrs-setting-item-title"> 背景图片 </el-text>
+                <el-text class="attrs-setting-item-title">
+                  背景图片
+                </el-text>
                 <div class="attrs-setting-item-content">
                   <el-upload
                     v-model:file-list="uploadImage"
@@ -117,10 +130,12 @@ watch(
                         <el-icon class="el-icon--upload" size="60px">
                           <PictureFilled />
                         </el-icon>
-                        <div class="el-upload__text">背景图需小于 5M ，格式为 png/jpg/gif 的文件</div>
+                        <div class="el-upload__text">
+                          背景图需小于 5M ，格式为 png/jpg/gif 的文件
+                        </div>
                       </template>
                       <template v-else>
-                        <img class="w-full" :src="fileUrl" alt="" fit="contain" />
+                        <img class="w-full" :src="fileUrl" alt="" fit="contain">
                         <div class="flex absolute top-2 right-2 z-99">
                           <el-icon :size="20" @click.stop="deleteBg">
                             <Delete />
@@ -135,21 +150,27 @@ watch(
               <el-collapse v-model="backgroundCoolapse" class="custom-collapse">
                 <el-collapse-item title="背景属性设置" name="backgroundControl">
                   <div class="attrs-setting-item">
-                    <el-text class="attrs-setting-item-title"> 背景位置 </el-text>
+                    <el-text class="attrs-setting-item-title">
+                      背景位置
+                    </el-text>
                     <div class="attrs-setting-item-content">
                       <el-input v-model="pageConfig.backgroundPosition" placeholder="请输入" />
                     </div>
                   </div>
 
                   <div class="attrs-setting-item">
-                    <el-text class="attrs-setting-item-title"> 背景大小 </el-text>
+                    <el-text class="attrs-setting-item-title">
+                      背景大小
+                    </el-text>
                     <div class="attrs-setting-item-content">
                       <el-input v-model="pageConfig.backgroundSize" placeholder="请输入" />
                     </div>
                   </div>
 
                   <div class="attrs-setting-item">
-                    <el-text class="attrs-setting-item-title"> 背景重复 </el-text>
+                    <el-text class="attrs-setting-item-title">
+                      背景重复
+                    </el-text>
                     <div class="attrs-setting-item-content">
                       <BackgroundRepeat v-model="pageConfig.backgroundRepeat" />
                     </div>
@@ -158,7 +179,9 @@ watch(
               </el-collapse>
 
               <div class="attrs-setting-item" style="border-bottom: none">
-                <el-text class="attrs-setting-item-title"> 主题颜色 </el-text>
+                <el-text class="attrs-setting-item-title">
+                  主题颜色
+                </el-text>
                 <div class="attrs-setting-item-content" />
               </div>
 

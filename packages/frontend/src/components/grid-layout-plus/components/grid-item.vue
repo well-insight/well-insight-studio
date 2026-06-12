@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import type { GridItemProps } from './types'
+
+import { isNull, nextTickOnce, throttle } from '@vexip-ui/utils'
+import interact from 'interactjs'
 import {
   computed,
   inject,
@@ -12,8 +16,6 @@ import {
   watch,
   watchEffect,
 } from 'vue'
-
-import { isNull, nextTickOnce, throttle } from '@vexip-ui/utils'
 import {
   EMITTER_KEY,
   LAYOUT_KEY,
@@ -23,13 +25,11 @@ import {
   setTransformRtl,
   useNameHelper,
 } from '../helpers/common'
-import { createCoreData, getControlPosition } from '../helpers/draggable'
-import { getColsFromBreakpoint } from '../helpers/responsive'
 import { getDocumentDir } from '../helpers/dom'
 
-import interact from 'interactjs'
+import { createCoreData, getControlPosition } from '../helpers/draggable'
 
-import type { GridItemProps } from './types'
+import { getColsFromBreakpoint } from '../helpers/responsive'
 
 const props = withDefaults(defineProps<GridItemProps>(), {
   isDraggable: undefined,
@@ -91,10 +91,10 @@ const state = reactive({
 let dragEventSet = false
 let resizeEventSet = false
 
-let lastX = NaN
-let lastY = NaN
-let lastW = NaN
-let lastH = NaN
+let lastX = Number.NaN
+let lastY = Number.NaN
+let lastW = Number.NaN
+let lastH = Number.NaN
 
 let previousW = -1
 let previousH = -1
@@ -171,7 +171,8 @@ onBeforeMount(() => {
 onMounted(() => {
   if (layout.responsive && layout.lastBreakpoint) {
     state.cols = getColsFromBreakpoint(layout.lastBreakpoint, layout.cols)
-  } else {
+  }
+  else {
     state.cols = layout.colNum
   }
   state.rowHeight = layout.rowHeight
@@ -181,17 +182,20 @@ onMounted(() => {
 
   if (isNull(props.isDraggable)) {
     state.draggable = layout.isDraggable
-  } else {
+  }
+  else {
     state.draggable = props.isDraggable
   }
   if (isNull(props.isResizable)) {
     state.resizable = layout.isResizable
-  } else {
+  }
+  else {
     state.resizable = props.isResizable
   }
   if (isNull(props.isBounded)) {
     state.bounded = layout.isBounded
-  } else {
+  }
+  else {
     state.bounded = props.isBounded
   }
   state.transformScale = layout.transformScale
@@ -240,8 +244,8 @@ onBeforeUnmount(() => {
 
 defineExpose({ state, wrapper })
 
-const isAndroid =
-  typeof navigator !== 'undefined' ? navigator.userAgent.toLowerCase().includes('android') : false
+const isAndroid
+  = typeof navigator !== 'undefined' ? navigator.userAgent.toLowerCase().includes('android') : false
 
 const resizableAndNotStatic = computed(() => state.resizable && !props.static)
 const renderRtl = computed(() => (layout.isMirrored ? !state.rtl : state.rtl))
@@ -270,7 +274,7 @@ const resizerClass = computed(() => {
 
 watch(
   () => props.isDraggable,
-  value => {
+  (value) => {
     state.draggable = value
   },
 )
@@ -289,13 +293,13 @@ watch(
 )
 watch(
   () => props.isResizable,
-  value => {
+  (value) => {
     state.resizable = value
   },
 )
 watch(
   () => props.isBounded,
-  value => {
+  (value) => {
     state.bounded = value
   },
 )
@@ -340,7 +344,8 @@ function createStyle() {
   if (props.x + props.w > state.cols) {
     innerX = 0
     innerW = props.w > state.cols ? state.cols : props.w
-  } else {
+  }
+  else {
     innerX = props.x
     innerW = props.w
   }
@@ -352,7 +357,8 @@ function createStyle() {
     // Add rtl support
     if (renderRtl.value) {
       pos.right = state.dragging.left
-    } else {
+    }
+    else {
       pos.left = state.dragging.left
     }
   }
@@ -367,15 +373,18 @@ function createStyle() {
     // Add rtl support
     if (renderRtl.value) {
       style = setTransformRtl(pos.top, pos.right!, pos.width, pos.height)
-    } else {
+    }
+    else {
       style = setTransform(pos.top, pos.left!, pos.width, pos.height)
     }
-  } else {
+  }
+  else {
     // top,left (slow)
     // Add rtl support
     if (renderRtl.value) {
       style = setTopRight(pos.top, pos.right!, pos.width, pos.height)
-    } else {
+    }
+    else {
       style = setTopLeft(pos.top, pos.left!, pos.width, pos.height)
     }
   }
@@ -399,19 +408,21 @@ function emitContainerResized() {
 }
 
 function handleResize(event: MouseEvent & { edges: any }) {
-  if (props.static) return
+  if (props.static)
+    return
 
   const type = event.type
   if (
-    (type === 'resizestart' && state.isResizing) ||
-    (type !== 'resizestart' && !state.isResizing)
+    (type === 'resizestart' && state.isResizing)
+    || (type !== 'resizestart' && !state.isResizing)
   ) {
     return
   }
 
   const position = getControlPosition(event)
   // Get the current drag point from the event. This is used as the offset.
-  if (isNull(position)) return // not possible but satisfies flow
+  if (isNull(position))
+    return // not possible but satisfies flow
 
   const { x, y } = position
   const newSize = { width: 0, height: 0 }
@@ -442,7 +453,8 @@ function handleResize(event: MouseEvent & { edges: any }) {
       const coreEvent = createCoreData(lastW, lastH, x, y)
       if (renderRtl.value) {
         newSize.width = state.resizing.width - coreEvent.deltaX / state.transformScale
-      } else {
+      }
+      else {
         newSize.width = state.resizing.width + coreEvent.deltaX / state.transformScale
       }
       newSize.height = state.resizing.height + coreEvent.deltaY / state.transformScale
@@ -495,7 +507,8 @@ function handleResize(event: MouseEvent & { edges: any }) {
 }
 
 function handleDrag(event: MouseEvent) {
-  if (props.static || state.isResizing) return
+  if (props.static || state.isResizing)
+    return
 
   const type = event.type
   if ((type === 'dragstart' && state.isDragging) || (type !== 'dragstart' && !state.isDragging)) {
@@ -505,11 +518,13 @@ function handleDrag(event: MouseEvent) {
   const position = getControlPosition(event)
 
   // Get the current drag point from the event. This is used as the offset.
-  if (isNull(position)) return // not possible but satisfies flow
+  if (isNull(position))
+    return // not possible but satisfies flow
   const { x, y } = position
   const target = event.target as HTMLElement
 
-  if (!target.offsetParent) return
+  if (!target.offsetParent)
+    return
 
   // let shouldUpdate = false;
   const newPosition = { top: 0, left: 0 }
@@ -530,7 +545,8 @@ function handleDrag(event: MouseEvent) {
 
       if (renderRtl.value) {
         newPosition.left = (cRight - pRight) * -1
-      } else {
+      }
+      else {
         newPosition.left = cLeft - pLeft
       }
       newPosition.top = cTop - pTop
@@ -543,18 +559,19 @@ function handleDrag(event: MouseEvent) {
       // Add rtl support
       if (renderRtl.value) {
         newPosition.left = state.dragging.left - coreEvent.deltaX / state.transformScale
-      } else {
+      }
+      else {
         newPosition.left = state.dragging.left + coreEvent.deltaX / state.transformScale
       }
       newPosition.top = state.dragging.top + coreEvent.deltaY / state.transformScale
       if (state.bounded) {
-        const bottomBoundary =
-          target.offsetParent.clientHeight -
-          calcGridItemWHPx(props.h, state.rowHeight, state.margin[1])
+        const bottomBoundary
+          = target.offsetParent.clientHeight
+            - calcGridItemWHPx(props.h, state.rowHeight, state.margin[1])
         newPosition.top = clamp(newPosition.top, 0, bottomBoundary)
         const colWidth = calcColWidth()
-        const rightBoundary =
-          state.containerWidth - calcGridItemWHPx(props.w, colWidth, state.margin[0])
+        const rightBoundary
+          = state.containerWidth - calcGridItemWHPx(props.w, colWidth, state.margin[0])
         newPosition.left = clamp(newPosition.left, 0, rightBoundary)
       }
 
@@ -575,7 +592,8 @@ function handleDrag(event: MouseEvent) {
       // Add rtl support
       if (renderRtl.value) {
         newPosition.left = (cRight - pRight) * -1
-      } else {
+      }
+      else {
         newPosition.left = cLeft - pLeft
       }
       newPosition.top = cTop - pTop
@@ -589,7 +607,8 @@ function handleDrag(event: MouseEvent) {
   let pos
   if (renderRtl.value) {
     pos = calcXY(newPosition.top, newPosition.left)
-  } else {
+  }
+  else {
     pos = calcXY(newPosition.top, newPosition.left)
   }
 
@@ -640,7 +659,8 @@ function calcPosition(x: number, y: number, w: number, h: number) {
       width: posWidth,
       height: posHeight,
     }
-  } else {
+  }
+  else {
     out = {
       left: posLeft,
       top: posTop,
@@ -682,7 +702,8 @@ function calcColWidth() {
 
 function calcGridItemWHPx(gridUnits: number, colOrRowSize: number, marginPx: number) {
   // 0 * Infinity === NaN, which causes problems with resize constraints
-  if (!Number.isFinite(gridUnits)) return gridUnits
+  if (!Number.isFinite(gridUnits))
+    return gridUnits
   return Math.round(colOrRowSize * gridUnits + Math.max(0, gridUnits - 1) * marginPx)
 }
 
@@ -707,7 +728,8 @@ function calcWH(height: number, width: number, autoSizeFlag = false) {
   let h = 0
   if (!autoSizeFlag) {
     h = Math.round((height + state.margin[1]) / (state.rowHeight + state.margin[1]))
-  } else {
+  }
+  else {
     h = Math.ceil((height + state.margin[1]) / (state.rowHeight + state.margin[1]))
   }
 
@@ -742,7 +764,8 @@ const throttleDrag = throttle(handleDrag)
 function tryMakeDraggable() {
   tryInteract()
 
-  if (!interactObj.value) return
+  if (!interactObj.value)
+    return
 
   if (state.draggable && !props.static) {
     const opts = {
@@ -754,11 +777,12 @@ function tryMakeDraggable() {
 
     if (!dragEventSet) {
       dragEventSet = true
-      interactObj.value.on('dragstart dragmove dragend', event => {
+      interactObj.value.on('dragstart dragmove dragend', (event) => {
         event.type === 'dragmove' ? throttleDrag(event) : handleDrag(event)
       })
     }
-  } else {
+  }
+  else {
     interactObj.value.draggable({ enabled: false })
   }
 }
@@ -768,7 +792,8 @@ const throttleResize = throttle(handleResize)
 function tryMakeResizable() {
   tryInteract()
 
-  if (!interactObj.value) return
+  if (!interactObj.value)
+    return
 
   if (state.resizable && !props.static) {
     const maximum = calcPosition(0, 0, props.maxW, props.maxH)
@@ -802,11 +827,12 @@ function tryMakeResizable() {
     interactObj.value.resizable(opts)
     if (!resizeEventSet) {
       resizeEventSet = true
-      interactObj.value.on('resizestart resizemove resizeend', event => {
+      interactObj.value.on('resizestart resizemove resizeend', (event) => {
         event.type === 'resizemove' ? throttleResize(event) : handleResize(event)
       })
     }
-  } else {
+  }
+  else {
     interactObj.value.resizable({ enabled: false })
   }
 }
@@ -814,7 +840,7 @@ function tryMakeResizable() {
 
 <template>
   <section ref="wrapper" :class="className" :style="state.style">
-    <slot></slot>
-    <span v-if="resizableAndNotStatic" :class="resizerClass"></span>
+    <slot />
+    <span v-if="resizableAndNotStatic" :class="resizerClass" />
   </section>
 </template>

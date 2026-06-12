@@ -1,62 +1,64 @@
-import { useAnimate } from "@/hooks/useAnimate";
-import { useVisualData } from "@/visual-editor/hooks/useVisualData";
-import { getBlockAnimationElement, type Animation } from "@/visual-editor/visual-editor.utils";
-import { CaretRight, Delete, Plus, VideoPlay } from "@element-plus/icons-vue";
-import { onClickOutside } from "@vueuse/core";
-import { ElButton, ElIcon, ElSwitch, ElTabPane, ElTabs, ElTooltip } from "element-plus";
-import { defineComponent, reactive, ref, watchEffect } from "vue";
-import styles from "./animate.module.scss";
-import { animationTabs } from "./animateConfig";
+import type { Animation } from '@/visual-editor/visual-editor.utils'
+import { CaretRight, Delete, Plus, VideoPlay } from '@element-plus/icons-vue'
+import { onClickOutside } from '@vueuse/core'
+import { ElButton, ElIcon, ElSwitch, ElTabPane, ElTabs, ElTooltip } from 'element-plus'
+import { defineComponent, reactive, ref, watchEffect } from 'vue'
+import { useAnimate } from '@/hooks/useAnimate'
+import { useVisualData } from '@/visual-editor/hooks/useVisualData'
+import { getBlockAnimationElement } from '@/visual-editor/visual-editor.utils'
+import styles from './animate.module.scss'
+import { animationTabs } from './animateConfig'
 
 export const Animate = defineComponent({
   setup() {
-    const { currentBlock } = useVisualData();
-    const target = ref<InstanceType<typeof HTMLDivElement>>();
+    const { currentBlock } = useVisualData()
+    const target = ref<InstanceType<typeof HTMLDivElement>>()
 
     const state = reactive({
-      activeName: "",
+      activeName: '',
       isAddAnimates: false, // 是否显示添加动画集
       changeTargetIndex: -1, // 要修改的动画的索引
-    });
+    })
 
     onClickOutside(target, () => {
       if (state.isAddAnimates) {
-        state.isAddAnimates = false;
+        state.isAddAnimates = false
       }
-    });
+    })
 
     watchEffect(() => {
       if (state.isAddAnimates) {
-        state.activeName = "in";
-      } else {
-        state.changeTargetIndex = -1;
+        state.activeName = 'in'
       }
-    });
+      else {
+        state.changeTargetIndex = -1
+      }
+    })
 
     /**
      * @description 运行动画
      */
     const runAnimation = (animation: Animation | Animation[] = []) => {
-      const animateEl = getBlockAnimationElement(currentBlock.value?._vid);
+      const animateEl = getBlockAnimationElement(currentBlock.value?._vid)
       if (animateEl) {
-        useAnimate(animateEl, animation);
+        useAnimate(animateEl, animation)
       }
-    };
+    }
 
     /**
      * @description 点击要修改的动画名称
      */
     const clickAnimateName = (index: number) => {
-      state.changeTargetIndex = index;
-      state.isAddAnimates = true;
-    };
+      state.changeTargetIndex = index
+      state.isAddAnimates = true
+    }
 
     /**
      * @description 删除动画
      */
     const delAnimate = (index: number) => {
-      currentBlock.value.animations?.splice(index, 1);
-    };
+      currentBlock.value.animations?.splice(index, 1)
+    }
 
     /**
      * @description 添加/修改动画
@@ -64,26 +66,27 @@ export const Animate = defineComponent({
     const addOrChangeAnimate = (animateItem: Animation) => {
       const animation: Animation = {
         ...animateItem,
-      };
-      if (state.changeTargetIndex === -1) {
-        currentBlock.value.animations?.push(animation);
-      } else {
-        currentBlock.value.animations![state.changeTargetIndex] = animation;
-        state.changeTargetIndex = -1;
       }
-      state.isAddAnimates = false;
-    };
+      if (state.changeTargetIndex === -1) {
+        currentBlock.value.animations?.push(animation)
+      }
+      else {
+        currentBlock.value.animations![state.changeTargetIndex] = animation
+        state.changeTargetIndex = -1
+      }
+      state.isAddAnimates = false
+    }
 
     // 已添加的动画列表面板
     const AddedAnimateList = () => {
-      const animations = currentBlock.value.animations;
+      const animations = currentBlock.value.animations
       if (!animations || animations.length === 0) {
         return (
           <div class="animate-empty">
             <span class="animate-empty__icon">🎬</span>
             <span>暂无动画，点击上方按钮添加</span>
           </div>
-        );
+        )
       }
 
       return (
@@ -131,8 +134,8 @@ export const Animate = defineComponent({
             </div>
           ))}
         </div>
-      );
-    };
+      )
+    }
 
     // 可选动画列表（选择/添加动画模式）
     const AnimatePicker = () => (
@@ -142,8 +145,8 @@ export const Animate = defineComponent({
           size="small"
           text
           onClick={() => {
-            state.isAddAnimates = false;
-            state.changeTargetIndex = -1;
+            state.isAddAnimates = false
+            state.changeTargetIndex = -1
           }}
         >
           ← 返回列表
@@ -167,38 +170,40 @@ export const Animate = defineComponent({
           ))}
         </ElTabs>
       </div>
-    );
+    )
 
     return () => (
       <div ref={target} class={styles.animate}>
-        {!state.isAddAnimates ? (
-          <>
-            <div class="animate-actions">
-              <ElButton
-                type="primary"
-                disabled={!currentBlock.value.animations}
-                plain
-                icon={Plus}
-                onClick={() => (state.isAddAnimates = true)}
-              >
-                添加动画
-              </ElButton>
-              <ElButton
-                type="primary"
-                disabled={!currentBlock.value.animations?.length}
-                plain
-                icon={CaretRight}
-                onClick={() => runAnimation(currentBlock.value.animations)}
-              >
-                播放全部
-              </ElButton>
-            </div>
-            <AddedAnimateList />
-          </>
-        ) : (
-          <AnimatePicker />
-        )}
+        {!state.isAddAnimates
+          ? (
+              <>
+                <div class="animate-actions">
+                  <ElButton
+                    type="primary"
+                    disabled={!currentBlock.value.animations}
+                    plain
+                    icon={Plus}
+                    onClick={() => (state.isAddAnimates = true)}
+                  >
+                    添加动画
+                  </ElButton>
+                  <ElButton
+                    type="primary"
+                    disabled={!currentBlock.value.animations?.length}
+                    plain
+                    icon={CaretRight}
+                    onClick={() => runAnimation(currentBlock.value.animations)}
+                  >
+                    播放全部
+                  </ElButton>
+                </div>
+                <AddedAnimateList />
+              </>
+            )
+          : (
+              <AnimatePicker />
+            )}
       </div>
-    );
+    )
   },
-});
+})

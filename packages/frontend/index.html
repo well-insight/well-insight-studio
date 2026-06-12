@@ -8,11 +8,7 @@
       name="viewport"
       content="width=device-width,initial-scale=1.0,minimum-scale=1,maximum-scale=1,user-scalable=0"
     />
-    <meta
-      name="viewport"
-      content="width=device-width,initial-scale=1.0,user-scalable=yes"
-      media="(min-width: 769px)"
-    />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=yes" media="(min-width: 769px)" />
     <link rel="icon" href="./logo.svg" />
     <title>WellCube</title>
     <link rel="stylesheet" href="./index.css" />
@@ -58,15 +54,15 @@
 
     <!-- 隐藏加载动画逻辑 -->
     <script>
-      window.addEventListener("load", () => {
+      window.addEventListener('load', () => {
         setTimeout(() => {
-          const loadingEl = document.getElementById("app-loading");
+          const loadingEl = document.getElementById('app-loading')
           if (loadingEl) {
-            loadingEl.classList.add("loading-hidden");
-            setTimeout(() => loadingEl.remove(), 600);
+            loadingEl.classList.add('loading-hidden')
+            setTimeout(() => loadingEl.remove(), 600)
           }
-        }, 400);
-      });
+        }, 400)
+      })
     </script>
   </body>
 </html>

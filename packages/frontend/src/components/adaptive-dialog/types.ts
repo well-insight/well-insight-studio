@@ -1,1 +1,1 @@
-export type AdaptiveDialogMode = "dialog" | "fullscreen" | "drawer";
+export type AdaptiveDialogMode = 'dialog' | 'fullscreen' | 'drawer'

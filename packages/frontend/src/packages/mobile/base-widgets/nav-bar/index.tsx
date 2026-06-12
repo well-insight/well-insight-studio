@@ -9,7 +9,7 @@ export default {
   key: 'nav-bar',
   moduleName: 'baseWidgets',
   label: '导航栏',
-  preview: () => <NavBar title='标题' left-text='返回' right-text='按钮' left-arrow style={{ width: '100%' }} />,
+  preview: () => <NavBar title="标题" left-text="返回" right-text="按钮" left-arrow style={{ width: '100%' }} />,
   render: ({ props, block }) => {
     const { registerRef } = useGlobalProperties()
 
@@ -26,7 +26,8 @@ export default {
         draggableEl.style.width = '100%'
         draggableEl.style.zIndex = '1000'
         dragArea.style.paddingTop = '50px'
-      } else {
+      }
+      else {
         document.body.style.paddingTop = '46px'
         const slotEl = compEl?.closest('__slot-item')
         if (slotEl) {
@@ -57,15 +58,15 @@ export default {
     border: createEditorSwitchProp({ label: '是否显示下边框', defaultValue: true }),
     leftText: createEditorInputProp({ label: '左侧文案', defaultValue: '返回' }),
     rightText: createEditorInputProp({ label: '右侧文案', defaultValue: '按钮' }),
-    leftArrow: createEditorSwitchProp({ label: '是否显示左侧箭头', defaultValue: true })
+    leftArrow: createEditorSwitchProp({ label: '是否显示左侧箭头', defaultValue: true }),
   },
   events: [
     { label: '点击左侧按钮时触发', value: 'click-left' },
-    { label: '点击右侧按钮时触发', value: 'click-right' }
+    { label: '点击右侧按钮时触发', value: 'click-right' },
   ],
   showStyleConfig: false,
   draggable: false,
   resize: {
-    width: true
-  }
+    width: true,
+  },
 } as VisualEditorComponent

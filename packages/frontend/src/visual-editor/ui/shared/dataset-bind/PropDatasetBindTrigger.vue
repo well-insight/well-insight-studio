@@ -1,53 +1,53 @@
 <script setup lang="ts">
-import type { VisualEditorBlockData } from "@/visual-editor/visual-editor.utils";
-import type { PropDatasetBinding } from "@/utils/datasetBinding";
+import type { PropDatasetBinding } from '@/utils/datasetBinding'
+import type { VisualEditorProps } from '@/visual-editor/visual-editor.props'
+import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
+import { Connection } from '@element-plus/icons-vue'
+import { computed, ref } from 'vue'
 import {
   getPropDatasetBinding,
   isListProp,
   isPropDatasetBound,
   shouldShowPropDatasetBind,
-} from "@/utils/datasetBinding";
-import type { VisualEditorProps } from "@/visual-editor/visual-editor.props";
-import { Connection } from "@element-plus/icons-vue";
-import { computed, ref } from "vue";
-import DatasetBindDialog from "./DatasetBindDialog.vue";
+} from '@/utils/datasetBinding'
+import DatasetBindDialog from './DatasetBindDialog.vue'
 
 const props = defineProps<{
-  block: VisualEditorBlockData;
-  propName: string;
-  propLabel?: string;
-  propConfig?: VisualEditorProps;
-}>();
+  block: VisualEditorBlockData
+  propName: string
+  propLabel?: string
+  propConfig?: VisualEditorProps
+}>()
 
-const dialogVisible = ref(false);
+const dialogVisible = ref(false)
 
 const showBind = computed(() =>
   props.propConfig
     ? shouldShowPropDatasetBind(props.propName, props.propConfig, props.block.componentKey)
     : false,
-);
+)
 
-const binding = computed(() => getPropDatasetBinding(props.block, props.propName));
+const binding = computed(() => getPropDatasetBinding(props.block, props.propName))
 
-const isBound = computed(() => isPropDatasetBound(props.block, props.propName));
+const isBound = computed(() => isPropDatasetBound(props.block, props.propName))
 
-const allowListMode = computed(() => isListProp(props.propName, props.propConfig));
+const allowListMode = computed(() => isListProp(props.propName, props.propConfig))
 
 function ensureBindings(): Record<string, PropDatasetBinding> {
   if (!props.block.datasetBindings) {
-    props.block.datasetBindings = {};
+    props.block.datasetBindings = {}
   }
-  return props.block.datasetBindings;
+  return props.block.datasetBindings
 }
 
 function onConfirm(b: PropDatasetBinding) {
-  ensureBindings()[props.propName] = b;
+  ensureBindings()[props.propName] = b
 }
 
 function onClear() {
-  const map = props.block.datasetBindings;
+  const map = props.block.datasetBindings
   if (map) {
-    delete map[props.propName];
+    delete map[props.propName]
   }
 }
 </script>

@@ -19,9 +19,9 @@ export function userDisplayLabel(user: Pick<AuthUser, 'display_name' | 'username
 
 function apiBase(): string {
   return (
-    (import.meta.env.VITE_APP_API_URL as string | undefined) ||
-    (import.meta.env.VITE_API_BASE_URL as string | undefined) ||
-    'http://localhost:3001/api/v1'
+    (import.meta.env.VITE_APP_API_URL as string | undefined)
+    || (import.meta.env.VITE_API_BASE_URL as string | undefined)
+    || 'http://localhost:3001/api/v1'
   )
 }
 
@@ -33,7 +33,7 @@ export interface LoginPayload {
 
 export async function loginRequest(
   payload: LoginPayload,
-): Promise<{ ok: true; token: string; user: AuthUser; message: string } | { ok: false; message: string }> {
+): Promise<{ ok: true, token: string, user: AuthUser, message: string } | { ok: false, message: string }> {
   const res = await fetch(`${apiBase()}/auth/login`, {
     method: 'POST',
     headers: {
@@ -45,7 +45,8 @@ export async function loginRequest(
   let data: Record<string, unknown> = {}
   try {
     data = (await res.json()) as Record<string, unknown>
-  } catch {
+  }
+  catch {
     /* ignore */
   }
 
@@ -58,10 +59,10 @@ export async function loginRequest(
     }
   }
 
-  const message =
-    (typeof data.message === 'string' && data.message) ||
-    (typeof data.error === 'string' && data.error) ||
-    '登录失败'
+  const message
+    = (typeof data.message === 'string' && data.message)
+      || (typeof data.error === 'string' && data.error)
+      || '登录失败'
 
   return { ok: false, message }
 }
@@ -77,14 +78,15 @@ export interface RegisterPayload {
 /** 注册成功后后端会直接返回与登录相同的 token/user（HTTP 201） */
 export async function registerRequest(
   payload: RegisterPayload,
-): Promise<{ ok: true; token: string; user: AuthUser; message: string } | { ok: false; message: string }> {
+): Promise<{ ok: true, token: string, user: AuthUser, message: string } | { ok: false, message: string }> {
   const body: Record<string, string> = {
     email: payload.email,
     username: payload.username,
     password: payload.password,
   }
   const nick = payload.display_name?.trim()
-  if (nick) body.display_name = nick
+  if (nick)
+    body.display_name = nick
 
   const res = await fetch(`${apiBase()}/auth/register`, {
     method: 'POST',
@@ -97,7 +99,8 @@ export async function registerRequest(
   let data: Record<string, unknown> = {}
   try {
     data = (await res.json()) as Record<string, unknown>
-  } catch {
+  }
+  catch {
     /* ignore */
   }
 
@@ -110,10 +113,10 @@ export async function registerRequest(
     }
   }
 
-  const message =
-    (typeof data.message === 'string' && data.message) ||
-    (typeof data.error === 'string' && data.error) ||
-    '注册失败'
+  const message
+    = (typeof data.message === 'string' && data.message)
+      || (typeof data.error === 'string' && data.error)
+      || '注册失败'
 
   return { ok: false, message }
 }

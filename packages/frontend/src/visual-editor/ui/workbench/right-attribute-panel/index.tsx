@@ -12,16 +12,16 @@ export default defineComponent({
 
     const state = reactive({
       activeName: 'attr',
-      isOpen: true
+      isOpen: true,
     })
 
     watch(
       () => currentBlock.value.label,
-      newLabel => {
+      (newLabel) => {
         if (!newLabel?.startsWith('表单') && state.activeName === 'form-rule') {
           state.activeName = 'attr'
         }
-      }
+      },
     )
 
     return () => (
@@ -31,22 +31,24 @@ export default defineComponent({
             {state.isOpen ? <DArrowRight /> : <DArrowLeft />}
           </div>
           <div class={styles.attrs}>
-            <ElTabs v-model={state.activeName} type='border-card' stretch={true} class={styles.tabs}>
-              <ElTabPane label='属性' name='attr'>
+            <ElTabs v-model={state.activeName} type="border-card" stretch={true} class={styles.tabs}>
+              <ElTabPane label="属性" name="attr">
                 <AttrEditor />
               </ElTabPane>
-              <ElTabPane label='动画' name='animate' lazy>
+              <ElTabPane label="动画" name="animate" lazy>
                 <Animate />
               </ElTabPane>
-              <ElTabPane label='事件' name='events'>
+              <ElTabPane label="事件" name="events">
                 <EventAction />
               </ElTabPane>
-              {currentBlock.value.label?.startsWith('表单') ? (
-                <ElTabPane label='规则' name='form-rule' lazy>
-                  <FormRule />
-                </ElTabPane>
-              ) : null}
-              <ElTabPane label='页面设置' name='page-setting'>
+              {currentBlock.value.label?.startsWith('表单')
+                ? (
+                    <ElTabPane label="规则" name="form-rule" lazy>
+                      <FormRule />
+                    </ElTabPane>
+                  )
+                : null}
+              <ElTabPane label="页面设置" name="page-setting">
                 <PageSetting />
               </ElTabPane>
             </ElTabs>
@@ -54,5 +56,5 @@ export default defineComponent({
         </div>
       </>
     )
-  }
+  },
 })

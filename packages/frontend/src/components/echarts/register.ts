@@ -1,4 +1,4 @@
-import { BarChart, LineChart, PieChart } from "echarts/charts";
+import { BarChart, LineChart, PieChart } from 'echarts/charts'
 import {
   DatasetComponent,
   GridComponent,
@@ -6,17 +6,17 @@ import {
   TitleComponent,
   TooltipComponent,
   TransformComponent,
-} from "echarts/components";
-import * as echarts from "echarts/core";
-import { LabelLayout, UniversalTransition } from "echarts/features";
-import { CanvasRenderer } from "echarts/renderers";
+} from 'echarts/components'
+import * as echarts from 'echarts/core'
+import { LabelLayout, UniversalTransition } from 'echarts/features'
+import { CanvasRenderer } from 'echarts/renderers'
 
-let registered = false;
+let registered = false
 
 /** 按需注册 ECharts 组件，后续新增图表类型在此扩展 */
 export function ensureEChartsRegistered() {
   if (registered) {
-    return;
+    return
   }
   echarts.use([
     BarChart,
@@ -31,8 +31,8 @@ export function ensureEChartsRegistered() {
     LabelLayout,
     UniversalTransition,
     CanvasRenderer,
-  ]);
-  registered = true;
+  ])
+  registered = true
 }
 
-export { echarts };
+export { echarts }

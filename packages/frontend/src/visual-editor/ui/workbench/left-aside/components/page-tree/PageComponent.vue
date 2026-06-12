@@ -13,13 +13,13 @@ const triggerWithMine = ref(false)
 
 const treeProps = {
   label: 'label', // 节点显示的文本字段
-  children: 'children' // 子节点的字段名
+  children: 'children', // 子节点的字段名
 }
 
 function selectBlock(element: VisualEditorBlockData) {
   triggerWithMine.value = true
   setCurrentBlock(element)
-  currentPage.value.blocks.forEach(block => {
+  currentPage.value.blocks.forEach((block) => {
     block.focus = element._vid === block._vid
     block.focusWithChild = false
     handleSlotsFocus(block, element._vid)
@@ -31,7 +31,7 @@ function selectBlock(element: VisualEditorBlockData) {
 function handleSlotsFocus(block: VisualEditorBlockData, _vid: string) {
   const slots = block.props?.slots || {}
   if (Object.keys(slots).length > 0) {
-    Object.keys(slots).forEach(key => {
+    Object.keys(slots).forEach((key) => {
       slots[key]?.children?.forEach((item: VisualEditorBlockData) => {
         item.focusWithChild = false
         item.focus = item._vid === _vid
@@ -50,7 +50,7 @@ function handleSlotsFocus(block: VisualEditorBlockData, _vid: string) {
 function findPathByLeafId(
   leafId: string,
   nodes: VisualEditorBlockData[] = [],
-  path: VisualEditorBlockData[] = []
+  path: VisualEditorBlockData[] = [],
 ): VisualEditorBlockData[] {
   for (let i = 0; i < nodes.length; i++) {
     const tmpPath = path.concat()
@@ -78,11 +78,11 @@ function findPathByLeafId(
  * @returns {Array} 转换后的树形数据
  */
 function transformToTreeData(data: VisualEditorBlockData[]) {
-  return data.map(item => {
+  return data.map((item) => {
     // 基础节点结构
     const treeNode: VisualEditorBlockData = {
       ...item, // 保留原始所有属性
-      children: [] // 初始化子节点
+      children: [], // 初始化子节点
     }
 
     // 1. 处理表单容器（form）的子节点：props.slots.default.children
@@ -94,7 +94,7 @@ function transformToTreeData(data: VisualEditorBlockData[]) {
     if (item.componentKey === 'layout' && item.props?.slots) {
       const slots = item.props.slots
       // 遍历所有slot（slot0、slot1...）
-      Object.keys(slots).forEach(slotKey => {
+      Object.keys(slots).forEach((slotKey) => {
         if (slotKey.startsWith('slot') && slots[slotKey]?.children) {
           treeNode.children = [...treeNode.children, ...transformToTreeData(slots[slotKey].children)]
         }
@@ -109,19 +109,21 @@ function transformToTreeData(data: VisualEditorBlockData[]) {
  * 让选中的节点滚动到可视区域
  */
 async function scrollToCurrentNode() {
-  if (!currentBlock.value?._vid || !treeRef.value) return
+  if (!currentBlock.value?._vid || !treeRef.value)
+    return
 
   // 等待DOM渲染完成（必须，否则获取不到节点DOM）
   await nextTick()
 
   // 1. 通过el-tree的getNode方法获取选中的节点对象
   const targetNode = document.querySelector(`[data-key="${currentBlock.value._vid}"]`)
-  if (!targetNode) return
+  if (!targetNode)
+    return
 
   targetNode.scrollIntoView({
     block: 'center',
     behavior: 'smooth',
-    inline: 'nearest'
+    inline: 'nearest',
   })
 }
 
@@ -134,7 +136,7 @@ watch(
     }
     triggerWithMine.value = false
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 console.log('currentPage.value', currentPage.value)

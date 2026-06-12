@@ -1,57 +1,57 @@
 <script lang="tsx" setup>
-import { useControlStore } from "@/stores/controlStore";
-import { useWorkspaceStore } from "@/stores/workspaceStore";
-import { EditTools } from "@/visual-editor/ui/workbench/edit-tools";
-import RightAttributePanel from "@/visual-editor/ui/workbench/right-attribute-panel/RightAttributePanel.vue";
-import { CloseBold, Plus } from "@element-plus/icons-vue";
-import { onClickOutside } from "@vueuse/core";
-import { storeToRefs } from "pinia";
-import { computed, onUnmounted, ref } from "vue";
-import MobileWrapper from "./MobileWrapper.vue";
-import PcWrapper from "./PcWrapper.vue";
+import { CloseBold, Plus } from '@element-plus/icons-vue'
+import { onClickOutside } from '@vueuse/core'
+import { storeToRefs } from 'pinia'
+import { computed, onUnmounted, ref } from 'vue'
+import { useControlStore } from '@/stores/controlStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { EditTools } from '@/visual-editor/ui/workbench/edit-tools'
+import RightAttributePanel from '@/visual-editor/ui/workbench/right-attribute-panel/RightAttributePanel.vue'
+import MobileWrapper from './MobileWrapper.vue'
+import PcWrapper from './PcWrapper.vue'
 
 defineOptions({
-  name: "SimulatorEditor",
-});
+  name: 'SimulatorEditor',
+})
 
-const workspaceStore = useWorkspaceStore();
+const workspaceStore = useWorkspaceStore()
 
-const { currentApp } = storeToRefs(workspaceStore);
+const { currentApp } = storeToRefs(workspaceStore)
 
-const controlStore = useControlStore();
-const { floatingSettingVisible } = storeToRefs(controlStore);
+const controlStore = useControlStore()
+const { floatingSettingVisible } = storeToRefs(controlStore)
 
-const { editScale } = storeToRefs(controlStore);
+const { editScale } = storeToRefs(controlStore)
 
 const scaleValue = computed({
   get() {
-    return editScale.value * 100;
+    return editScale.value * 100
   },
   set(v: number) {
-    editScale.value = v / 100;
+    editScale.value = v / 100
   },
-});
+})
 
-const floatingPanelRef = ref<HTMLElement | null>(null);
+const floatingPanelRef = ref<HTMLElement | null>(null)
 
 onClickOutside(floatingPanelRef, () => {
   if (controlStore.floatingSettingVisible) {
-    controlStore.floatingSettingVisible = false;
+    controlStore.floatingSettingVisible = false
   }
-});
+})
 
 function changeScale(s: number) {
-  editScale.value = s;
+  editScale.value = s
 }
 
 function triggerShowComponents() {
-  controlStore.customComponentsVisible = !controlStore.customComponentsVisible;
+  controlStore.customComponentsVisible = !controlStore.customComponentsVisible
 }
 
 onUnmounted(() => {
-  workspaceStore.setCurrentApp(null);
-  controlStore.floatingSettingVisible = false;
-});
+  workspaceStore.setCurrentApp(null)
+  controlStore.floatingSettingVisible = false
+})
 </script>
 
 <template>
@@ -118,7 +118,7 @@ onUnmounted(() => {
 </style>
 
 <style lang="scss" scoped>
-@use "./func.scss" as *;
+@use './func.scss' as *;
 
 .simulator-container {
   display: flex;
@@ -187,7 +187,7 @@ onUnmounted(() => {
   }
 
   &:not(.has-slot) {
-    content: "";
+    content: '';
   }
 
   &.focusWithChild {

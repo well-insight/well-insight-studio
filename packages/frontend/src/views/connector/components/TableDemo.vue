@@ -39,7 +39,7 @@ const props = withDefaults(defineProps<Props>(), {
     { prop: 'phone', label: '手机号 *' },
     { prop: 'email', label: '邮箱' },
     { prop: 'department', label: '部门' },
-    { prop: 'status', label: '状态', align: 'center' }
+    { prop: 'status', label: '状态', align: 'center' },
   ],
   tableData: () => [
     {
@@ -47,46 +47,46 @@ const props = withDefaults(defineProps<Props>(), {
       phone: '13812345678',
       email: 'zhangsan@example.com',
       department: '技术部',
-      status: '启用'
+      status: '启用',
     },
     {
       name: '李四',
       phone: '13987654321',
       email: 'lisi@example.com',
       department: '市场部',
-      status: '禁用'
+      status: '禁用',
     },
     {
       name: '王芳',
       phone: '15233445566',
       email: 'wangfang@example.com',
       department: '人力资源部',
-      status: '启用'
+      status: '启用',
     },
     {
       name: '赵磊',
       phone: '18799887766',
       email: 'zhaolei@example.com',
       department: '财务部',
-      status: '启用'
+      status: '启用',
     },
     {
       name: '陈敏',
       phone: '13611223344',
       email: 'chenmin@example.com',
       department: '运营部',
-      status: '禁用'
+      status: '禁用',
     },
     {
       name: '周涛',
       phone: '15966778899',
       email: 'zhoutao@example.com',
       department: '产品部',
-      status: '启用'
-    }
+      status: '启用',
+    },
   ],
   emptyText: '暂无模板数据',
-  showFooterNote: true
+  showFooterNote: true,
 })
 </script>
 
@@ -94,9 +94,11 @@ const props = withDefaults(defineProps<Props>(), {
   <div class="import-template-table">
     <!-- 表格说明区域 -->
     <div class="table-info">
-      <h4 class="title">📋 导入模板示例</h4>
+      <h4 class="title">
+        📋 导入模板示例
+      </h4>
       <p class="description">
-        请按照下表格式准备导入数据，第一行为字段名称，第二行起为数据示例。<br />
+        请按照下表格式准备导入数据，第一行为字段名称，第二行起为数据示例。<br>
         请确保数据类型与示例一致，避免导入失败。
       </p>
     </div>

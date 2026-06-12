@@ -5,7 +5,7 @@ import { defer } from './defer'
 
 enum DialogServiceEditType {
   textarea = 'textarea',
-  input = 'input'
+  input = 'input',
 }
 
 interface DialogServiceOption {
@@ -24,7 +24,7 @@ const keyGenerator = (() => {
 const ServiceComponent = defineComponent({
   name: 'DialogService',
   props: {
-    option: { type: Object as PropType<DialogServiceOption>, required: true }
+    option: { type: Object as PropType<DialogServiceOption>, required: true },
   },
   setup(props) {
     const ctx = getCurrentInstance()!
@@ -33,7 +33,7 @@ const ServiceComponent = defineComponent({
       option: props.option,
       editValue: null as undefined | null | string,
       showFlag: false,
-      key: keyGenerator()
+      key: keyGenerator(),
     })
 
     const methods = {
@@ -48,7 +48,7 @@ const ServiceComponent = defineComponent({
       },
       hide: () => {
         state.showFlag = false
-      }
+      },
     }
 
     const handler = {
@@ -58,7 +58,7 @@ const ServiceComponent = defineComponent({
       },
       onCancel: () => {
         methods.hide()
-      }
+      },
     }
 
     Object.assign(ctx.proxy!, methods)
@@ -69,11 +69,13 @@ const ServiceComponent = defineComponent({
           {{
             default: () => (
               <div>
-                {state.option.editType === DialogServiceEditType.textarea ? (
-                  <ElInput type='textarea' {...{ rows: 10 }} v-model={state.editValue} />
-                ) : (
-                  <ElInput v-model={state.editValue} />
-                )}
+                {state.option.editType === DialogServiceEditType.textarea
+                  ? (
+                      <ElInput type="textarea" {...{ rows: 10 }} v-model={state.editValue} />
+                    )
+                  : (
+                      <ElInput v-model={state.editValue} />
+                    )}
               </div>
             ),
             footer: () => (
@@ -81,12 +83,12 @@ const ServiceComponent = defineComponent({
                 <ElButton {...({ onClick: handler.onCancel } as any)}>取消</ElButton>
                 <ElButton {...({ onClick: handler.onConfirm } as any)}>确定</ElButton>
               </div>
-            )
+            ),
           }}
         </ElDialog>
       </>
     )
-  }
+  },
 })
 
 const DialogService = (() => {
@@ -110,7 +112,7 @@ export const $$dialog = Object.assign(DialogService, {
       editType: DialogServiceEditType.input,
       onConfirm: dfd.resolve,
       editValue: initValue,
-      title
+      title,
     }
     DialogService(opt)
     return dfd.promise
@@ -122,9 +124,9 @@ export const $$dialog = Object.assign(DialogService, {
       editType: DialogServiceEditType.textarea,
       onConfirm: dfd.resolve,
       editValue: initValue,
-      title
+      title,
     }
     DialogService(opt)
     return dfd.promise
-  }
+  },
 })

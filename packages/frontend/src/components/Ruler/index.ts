@@ -3,14 +3,15 @@ import SketchRuler from './sketchRuler.vue'
 
 // Declare install function executed by Vue.use()
 export function install(Vue: any) {
-  if (install.installed) return
+  if (install.installed)
+    return
   install.installed = true
   Vue.component(SketchRuler.name, SketchRuler)
 }
 
 // Create module definition for Vue.use()
 const plugin = {
-  install
+  install,
 }
 
 // Auto-install when vue is found (eg. in browser via <script> tag)

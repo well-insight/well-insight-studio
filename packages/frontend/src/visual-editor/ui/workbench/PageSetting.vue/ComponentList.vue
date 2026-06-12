@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import type { ScrollbarDirection } from 'element-plus'
-
 import type { VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
 import { cloneDeep } from 'lodash-es'
 import { computed, ref } from 'vue'
@@ -15,20 +13,20 @@ const widgets = computed(() => {
   return [
     {
       title: '基础组件',
-      widgets: baseWidgets
+      widgets: baseWidgets,
     },
     {
       title: '表单组件',
-      widgets: formWidgets
+      widgets: formWidgets,
     },
     {
       title: '图表组件',
-      widgets: chartWidgets
+      widgets: chartWidgets,
     },
     {
       title: '容器组件',
-      widgets: containerComponents
-    }
+      widgets: containerComponents,
+    },
   ]
 })
 

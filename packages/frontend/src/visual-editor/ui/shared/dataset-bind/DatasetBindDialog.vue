@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import type { ApiDatasetField, ApiDatasetListItem } from "@/api/dataset";
-import { fetchAllDatasets, fetchDatasetDetail } from "@/api/dataset";
-import type { VisualEditorBlockData } from "@/visual-editor/visual-editor.utils";
+import type { ApiDatasetField, ApiDatasetListItem } from '@/api/dataset'
 import type {
   DatasetBindingDataType,
   DatasetBindingFilter,
   DatasetPostCalcOp,
   DatasetValueOperation,
   PropDatasetBinding,
-} from "@/utils/datasetBinding";
+} from '@/utils/datasetBinding'
+import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
+import { ElMessage } from 'element-plus'
+import { computed, ref, watch } from 'vue'
+import { fetchAllDatasets, fetchDatasetDetail } from '@/api/dataset'
+import { AdaptiveDialog } from '@/components/adaptive-dialog'
 import {
   CHART_VALUE_AGG_OPTIONS,
   DATASET_POST_CALC_OPTIONS,
@@ -16,243 +19,246 @@ import {
   getBindingTypeLabel,
   getPropValueType,
   inferBindingDataType,
-} from "@/utils/datasetBinding";
-import DatasetBindBlockPreview from "./DatasetBindBlockPreview.vue";
-import DatasetBindDropZone from "./DatasetBindDropZone.vue";
-import DatasetBindFilters from "./DatasetBindFilters.vue";
-import DatasetBindSplitterLayout from "./DatasetBindSplitterLayout.vue";
-import DatasetFieldList from "./DatasetFieldList.vue";
-import { AdaptiveDialog } from "@/components/adaptive-dialog";
-import { ElMessage } from "element-plus";
-import { computed, ref, watch } from "vue";
+} from '@/utils/datasetBinding'
+import DatasetBindBlockPreview from './DatasetBindBlockPreview.vue'
+import DatasetBindDropZone from './DatasetBindDropZone.vue'
+import DatasetBindFilters from './DatasetBindFilters.vue'
+import DatasetBindSplitterLayout from './DatasetBindSplitterLayout.vue'
+import DatasetFieldList from './DatasetFieldList.vue'
 
 const props = defineProps<{
-  block: VisualEditorBlockData;
-  propName: string;
-  propLabel?: string;
-  allowListMode?: boolean;
-  initialBinding?: PropDatasetBinding | null;
-}>();
-
-const visible = defineModel<boolean>({ required: true });
+  block: VisualEditorBlockData
+  propName: string
+  propLabel?: string
+  allowListMode?: boolean
+  initialBinding?: PropDatasetBinding | null
+}>()
 
 const emit = defineEmits<{
-  confirm: [binding: PropDatasetBinding];
-  clear: [];
-}>();
+  confirm: [binding: PropDatasetBinding]
+  clear: []
+}>()
 
-const datasetId = ref("");
-const datasets = ref<ApiDatasetListItem[]>([]);
-const fields = ref<ApiDatasetField[]>([]);
-const fieldsLoading = ref(false);
-const pickerVisible = ref(false);
+const visible = defineModel<boolean>({ required: true })
 
-const boundField = ref<ApiDatasetField | null>(null);
-const labelField = ref<ApiDatasetField | null>(null);
-const rowIndex = ref(0);
-const valueOp = ref<DatasetValueOperation>("cell");
-const filters = ref<DatasetBindingFilter[]>([]);
-const listDistinct = ref(false);
-const postCalcEnabled = ref(false);
-const postCalcOp = ref<DatasetPostCalcOp>("add");
-const postCalcOperand = ref(0);
+const datasetId = ref('')
+const datasets = ref<ApiDatasetListItem[]>([])
+const fields = ref<ApiDatasetField[]>([])
+const fieldsLoading = ref(false)
+const pickerVisible = ref(false)
 
-const isChartCategory = computed(() => props.propName === "categoryField");
-const isChartValue = computed(() => props.propName === "valueField");
-const isChartField = computed(() => isChartCategory.value || isChartValue.value);
+const boundField = ref<ApiDatasetField | null>(null)
+const labelField = ref<ApiDatasetField | null>(null)
+const rowIndex = ref(0)
+const valueOp = ref<DatasetValueOperation>('cell')
+const filters = ref<DatasetBindingFilter[]>([])
+const listDistinct = ref(false)
+const postCalcEnabled = ref(false)
+const postCalcOp = ref<DatasetPostCalcOp>('add')
+const postCalcOperand = ref(0)
+
+const isChartCategory = computed(() => props.propName === 'categoryField')
+const isChartValue = computed(() => props.propName === 'valueField')
+const isChartField = computed(() => isChartCategory.value || isChartValue.value)
 
 const bindingDataType = computed((): DatasetBindingDataType =>
   inferBindingDataType(props.propName, Boolean(props.allowListMode), isChartField.value),
-);
+)
 
 const bindingTypeLabel = computed(() =>
   getBindingTypeLabel(bindingDataType.value, isChartField.value),
-);
+)
 
-const isListMode = computed(() => bindingDataType.value === "list");
-const isScalarMode = computed(() => bindingDataType.value === "scalar");
+const isListMode = computed(() => bindingDataType.value === 'list')
+const isScalarMode = computed(() => bindingDataType.value === 'scalar')
 
 const isNumericTarget = computed(
-  () => getPropValueType(props.block.componentKey, props.propName) === "number",
-);
+  () => getPropValueType(props.block.componentKey, props.propName) === 'number',
+)
 
 const valueOpOptions = computed(() =>
-  DATASET_VALUE_OP_OPTIONS.filter((o) => !o.numeric || isNumericTarget.value),
-);
+  DATASET_VALUE_OP_OPTIONS.filter(o => !o.numeric || isNumericTarget.value),
+)
 
 const showRowIndex = computed(
-  () => isScalarMode.value && !isChartField.value && valueOp.value === "cell",
-);
+  () => isScalarMode.value && !isChartField.value && valueOp.value === 'cell',
+)
 
 const showPostCalc = computed(
   () =>
     (isScalarMode.value && !isChartField.value && isNumericTarget.value) || isChartValue.value,
-);
+)
 
-const showNumericAgg = computed(() => isScalarMode.value && isNumericTarget.value);
+const showNumericAgg = computed(() => isScalarMode.value && isNumericTarget.value)
 
 const datasetName = computed(() => {
-  const id = datasetId.value;
-  return datasets.value.find((d) => d.id === id)?.name ?? "";
-});
+  const id = datasetId.value
+  return datasets.value.find(d => d.id === id)?.name ?? ''
+})
 
 const datasourceActionLabel = computed(() =>
-  datasetId.value ? "更改数据源" : "选择数据源",
-);
+  datasetId.value ? '更改数据源' : '选择数据源',
+)
 
 const draftBinding = computed((): PropDatasetBinding | null => {
   if (!datasetId.value.trim() || !boundField.value) {
-    return null;
+    return null
   }
   const b: PropDatasetBinding = {
     datasetId: datasetId.value,
     dataType: bindingDataType.value,
     field: boundField.value.name,
     filters: filters.value.length > 0 ? [...filters.value] : undefined,
-  };
+  }
 
   if (isListMode.value) {
-    b.labelField = (labelField.value ?? boundField.value)!.name;
+    b.labelField = (labelField.value ?? boundField.value)!.name
     if (listDistinct.value) {
-      b.listDistinct = true;
+      b.listDistinct = true
     }
-  } else if (isChartValue.value) {
-    b.valueOp = valueOp.value;
+  }
+  else if (isChartValue.value) {
+    b.valueOp = valueOp.value
     if (postCalcEnabled.value) {
-      b.postCalc = { op: postCalcOp.value, operand: postCalcOperand.value };
+      b.postCalc = { op: postCalcOp.value, operand: postCalcOperand.value }
     }
-  } else if (!isChartCategory.value) {
-    b.valueOp = valueOp.value;
-    if (valueOp.value === "cell") {
-      b.rowIndex = rowIndex.value;
+  }
+  else if (!isChartCategory.value) {
+    b.valueOp = valueOp.value
+    if (valueOp.value === 'cell') {
+      b.rowIndex = rowIndex.value
     }
     if (showPostCalc.value && postCalcEnabled.value) {
-      b.postCalc = { op: postCalcOp.value, operand: postCalcOperand.value };
+      b.postCalc = { op: postCalcOp.value, operand: postCalcOperand.value }
     }
   }
 
-  return b;
-});
+  return b
+})
 
-const canConfirm = computed(() => Boolean(draftBinding.value));
+const canConfirm = computed(() => Boolean(draftBinding.value))
 
 const scalarFieldLabel = computed(() => {
   if (isChartCategory.value) {
-    return "维度字段";
+    return '维度字段'
   }
   if (isChartValue.value) {
-    return "指标字段";
+    return '指标字段'
   }
-  return `绑定到「${props.propLabel || props.propName}」`;
-});
+  return `绑定到「${props.propLabel || props.propName}」`
+})
 
 async function loadDatasets() {
   try {
-    const list = await fetchAllDatasets();
-    datasets.value = Array.isArray(list) ? list : [];
-  } catch (e) {
-    datasets.value = [];
-    ElMessage.error(e instanceof Error ? e.message : "加载数据集失败");
+    const list = await fetchAllDatasets()
+    datasets.value = Array.isArray(list) ? list : []
+  }
+  catch (e) {
+    datasets.value = []
+    ElMessage.error(e instanceof Error ? e.message : '加载数据集失败')
   }
 }
 
 async function loadFields(id: string) {
   if (!id) {
-    fields.value = [];
-    return;
+    fields.value = []
+    return
   }
-  fieldsLoading.value = true;
+  fieldsLoading.value = true
   try {
-    const detail = await fetchDatasetDetail(id);
-    fields.value = detail.fields ?? [];
-    syncFieldRefsFromNames();
-  } catch {
-    fields.value = [];
-  } finally {
-    fieldsLoading.value = false;
+    const detail = await fetchDatasetDetail(id)
+    fields.value = detail.fields ?? []
+    syncFieldRefsFromNames()
+  }
+  catch {
+    fields.value = []
+  }
+  finally {
+    fieldsLoading.value = false
   }
 }
 
 function findFieldByName(name: string): ApiDatasetField | null {
-  return fields.value.find((f) => f.name === name) ?? null;
+  return fields.value.find(f => f.name === name) ?? null
 }
 
 function syncFieldRefsFromNames() {
-  const b = props.initialBinding;
+  const b = props.initialBinding
   if (!b) {
-    return;
+    return
   }
-  boundField.value = findFieldByName(b.field);
-  labelField.value = b.labelField ? findFieldByName(b.labelField) : null;
+  boundField.value = findFieldByName(b.field)
+  labelField.value = b.labelField ? findFieldByName(b.labelField) : null
 }
 
 function resetFromBinding(b: PropDatasetBinding | null | undefined) {
-  datasetId.value = b?.datasetId ?? "";
-  rowIndex.value = b?.rowIndex ?? 0;
-  valueOp.value = b?.valueOp ?? (props.propName === "valueField" ? "sum" : "cell");
-  filters.value = b?.filters ? [...b.filters] : [];
-  listDistinct.value = Boolean(b?.listDistinct);
-  postCalcEnabled.value = Boolean(b?.postCalc);
-  postCalcOp.value = b?.postCalc?.op ?? "add";
-  postCalcOperand.value = b?.postCalc?.operand ?? 0;
-  boundField.value = null;
-  labelField.value = null;
+  datasetId.value = b?.datasetId ?? ''
+  rowIndex.value = b?.rowIndex ?? 0
+  valueOp.value = b?.valueOp ?? (props.propName === 'valueField' ? 'sum' : 'cell')
+  filters.value = b?.filters ? [...b.filters] : []
+  listDistinct.value = Boolean(b?.listDistinct)
+  postCalcEnabled.value = Boolean(b?.postCalc)
+  postCalcOp.value = b?.postCalc?.op ?? 'add'
+  postCalcOperand.value = b?.postCalc?.operand ?? 0
+  boundField.value = null
+  labelField.value = null
 
   if (datasetId.value) {
     void loadFields(datasetId.value).then(() => {
       if (b?.field) {
-        boundField.value = findFieldByName(b.field);
+        boundField.value = findFieldByName(b.field)
       }
       if (b?.labelField) {
-        labelField.value = findFieldByName(b.labelField);
+        labelField.value = findFieldByName(b.labelField)
       }
-    });
+    })
   }
 }
 
 watch(visible, async (open) => {
   if (!open) {
-    return;
+    return
   }
-  await loadDatasets();
-  resetFromBinding(props.initialBinding);
-});
+  await loadDatasets()
+  resetFromBinding(props.initialBinding)
+})
 
 watch(datasetId, (id) => {
   if (id) {
-    void loadFields(id);
-  } else {
-    fields.value = [];
-    boundField.value = null;
-    labelField.value = null;
+    void loadFields(id)
   }
-});
+  else {
+    fields.value = []
+    boundField.value = null
+    labelField.value = null
+  }
+})
 
 function onPickDataset(id: string) {
-  datasetId.value = id;
-  pickerVisible.value = false;
+  datasetId.value = id
+  pickerVisible.value = false
 }
 
 function onLabelDrop(field: ApiDatasetField) {
-  labelField.value = field;
+  labelField.value = field
 }
 
 function onValueDrop(field: ApiDatasetField) {
-  boundField.value = field;
+  boundField.value = field
 }
 
 function onConfirm() {
-  const d = draftBinding.value;
+  const d = draftBinding.value
   if (!d) {
-    return;
+    return
   }
-  emit("confirm", d);
-  visible.value = false;
+  emit('confirm', d)
+  visible.value = false
 }
 
 function onClear() {
-  emit("clear");
-  visible.value = false;
+  emit('clear')
+  visible.value = false
 }
 </script>
 
@@ -316,7 +322,9 @@ function onClear() {
           <header class="bind-config__head">
             <div class="section-head">
               <span class="section-head__title">数据绑定</span>
-              <el-tag size="small" type="info" effect="plain">{{ bindingTypeLabel }}</el-tag>
+              <el-tag size="small" type="info" effect="plain">
+                {{ bindingTypeLabel }}
+              </el-tag>
             </div>
             <p class="bind-config__desc">
               <template v-if="isListMode">
@@ -354,7 +362,9 @@ function onClear() {
               />
               <span class="bind-config__label">列表处理</span>
               <div class="bind-config__control">
-                <el-checkbox v-model="listDistinct">按绑定值去重</el-checkbox>
+                <el-checkbox v-model="listDistinct">
+                  按绑定值去重
+                </el-checkbox>
               </div>
             </template>
 
@@ -391,7 +401,9 @@ function onClear() {
 
                 <span class="bind-config__label">数值运算</span>
                 <div class="bind-config__control bind-config__control--inline">
-                  <el-checkbox v-model="postCalcEnabled">启用</el-checkbox>
+                  <el-checkbox v-model="postCalcEnabled">
+                    启用
+                  </el-checkbox>
                   <template v-if="postCalcEnabled">
                     <el-select v-model="postCalcOp" size="default" style="width: 88px">
                       <el-option
@@ -441,7 +453,9 @@ function onClear() {
                 <template v-if="showPostCalc">
                   <span class="bind-config__label">数值运算</span>
                   <div class="bind-config__control bind-config__control--inline">
-                    <el-checkbox v-model="postCalcEnabled">启用</el-checkbox>
+                    <el-checkbox v-model="postCalcEnabled">
+                      启用
+                    </el-checkbox>
                     <template v-if="postCalcEnabled">
                       <el-select v-model="postCalcOp" size="default" style="width: 88px">
                         <el-option
@@ -473,7 +487,9 @@ function onClear() {
             </template>
 
             <div class="bind-config__section">
-              <div class="bind-config__section-title">筛选条件</div>
+              <div class="bind-config__section-title">
+                筛选条件
+              </div>
               <DatasetBindFilters v-model="filters" :fields="fields" :disabled="!datasetId" />
             </div>
           </div>
@@ -491,9 +507,15 @@ function onClear() {
     </DatasetBindSplitterLayout>
 
     <template #footer>
-      <el-button @click="visible = false">取消</el-button>
-      <el-button type="danger" plain @click="onClear">解除绑定</el-button>
-      <el-button type="primary" :disabled="!canConfirm" @click="onConfirm">确定</el-button>
+      <el-button @click="visible = false">
+        取消
+      </el-button>
+      <el-button type="danger" plain @click="onClear">
+        解除绑定
+      </el-button>
+      <el-button type="primary" :disabled="!canConfirm" @click="onConfirm">
+        确定
+      </el-button>
     </template>
   </AdaptiveDialog>
 </template>

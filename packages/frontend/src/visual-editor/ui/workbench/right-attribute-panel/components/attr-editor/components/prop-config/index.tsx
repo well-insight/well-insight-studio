@@ -13,27 +13,27 @@ import {
   ElSelect,
   ElSpace,
   ElSwitch,
-  ElTooltip
+  ElTooltip,
 } from 'element-plus'
 import { cloneDeep } from 'lodash-es'
 import { computed, defineComponent } from 'vue'
+import { isChartBindProp } from '@/utils/datasetBinding'
 import { useDotProp } from '@/visual-editor/hooks/useDotProp'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
-import { VisualEditorPropsType } from '@/visual-editor/visual-editor.props'
-import { isChartBindProp } from '@/utils/datasetBinding'
 import PropDatasetBindTrigger from '@/visual-editor/ui/shared/dataset-bind/PropDatasetBindTrigger.vue'
+import { VisualEditorPropsType } from '@/visual-editor/visual-editor.props'
 import { ImageUploadEditor, OptionsEditorDialog, TablePropEditor } from '..'
 
 export const PropConfig = defineComponent({
   props: {
     component: {
       type: Object as PropType<VisualEditorComponent>,
-      default: () => ({})
+      default: () => ({}),
     },
     block: {
       type: Object as PropType<VisualEditorBlockData>,
-      default: () => ({})
-    }
+      default: () => ({}),
+    },
   },
   setup(props) {
     const { jsonData } = useVisualData()
@@ -70,7 +70,7 @@ export const PropConfig = defineComponent({
           />
         ),
         [VisualEditorPropsType.select]: () => (
-          <ElSelect v-model={propObj[prop]} valueKey='value' multiple={propConfig.multiple}>
+          <ElSelect v-model={propObj[prop]} valueKey="value" multiple={propConfig.multiple}>
             {propConfig.options?.map(opt => (
               <ElOption label={opt.label} style={{ fontFamily: opt.value }} value={opt.value} />
             ))}
@@ -80,18 +80,19 @@ export const PropConfig = defineComponent({
         [VisualEditorPropsType.modelBind]: () => (
           <ElCascader
             clearable={true}
-            class='w-full'
+            class="w-full"
             props={{
               checkStrictly: true,
               children: 'entitys',
               label: 'name',
               value: 'key',
-              expandTrigger: 'hover'
+              expandTrigger: 'hover',
             }}
-            placeholder='请选择绑定的请求数据'
+            placeholder="请选择绑定的请求数据"
             v-model={propObj[prop]}
             options={[...models.value]}
-          ></ElCascader>
+          >
+          </ElCascader>
         ),
         [VisualEditorPropsType.imageUpload]: () => {
           return (
@@ -106,45 +107,59 @@ export const PropConfig = defineComponent({
     }
 
     return () => {
-      const componentKey = props.block.componentKey;
+      const componentKey = props.block.componentKey
       const propEntries = Object.entries(props.component.props ?? {}).filter(
         ([propName]) => !isChartBindProp(propName, componentKey),
-      );
+      )
 
       return propEntries.map(([propName, propConfig]) => {
         const isOptions = propConfig.type === VisualEditorPropsType.crossSortable
 
         return (
-        <>
-          <ElFormItem
-            key={props.block._vid + propName}
-            style={
-              propConfig.labelPosition === 'top'
-                ? {
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start'
-                  }
-                : {}
-            }
-          >
-            {{
-              label: () => (
-                <>
-                  <div class='flex w-full items-center justify-between gap-8px'>
-                    <ElSpace>
-                      {propConfig.label}
-                      {propConfig.tips && (
-                        <ElTooltip placement='left-start' popper-class='max-w-200px' content={propConfig.tips}>
-                          <div>
-                            <ElIcon>
-                              <Warning />
-                            </ElIcon>
-                          </div>
-                        </ElTooltip>
+          <>
+            <ElFormItem
+              key={props.block._vid + propName}
+              style={
+                propConfig.labelPosition === 'top'
+                  ? {
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                    }
+                  : {}
+              }
+            >
+              {{
+                label: () => (
+                  <>
+                    <div class="flex w-full items-center justify-between gap-8px">
+                      <ElSpace>
+                        {propConfig.label}
+                        {propConfig.tips && (
+                          <ElTooltip placement="left-start" popper-class="max-w-200px" content={propConfig.tips}>
+                            <div>
+                              <ElIcon>
+                                <Warning />
+                              </ElIcon>
+                            </div>
+                          </ElTooltip>
+                        )}
+                      </ElSpace>
+                      {isOptions && (
+                        <PropDatasetBindTrigger
+                          block={props.block}
+                          propName={propName}
+                          propLabel={propConfig.label}
+                          propConfig={propConfig}
+                        />
                       )}
-                    </ElSpace>
-                    {isOptions && (
+                    </div>
+                  </>
+                ),
+                default: () => (
+                  <div class="flex w-full items-start gap-8px">
+                    <div class="min-w-0 flex-1">{renderPropItem(propName, propConfig)}</div>
+                    {!isOptions && (
                       <PropDatasetBindTrigger
                         block={props.block}
                         propName={propName}
@@ -153,25 +168,12 @@ export const PropConfig = defineComponent({
                       />
                     )}
                   </div>
-                </>
-              ),
-              default: () => (
-                <div class='flex w-full items-start gap-8px'>
-                  <div class='min-w-0 flex-1'>{renderPropItem(propName, propConfig)}</div>
-                  {!isOptions && (
-                    <PropDatasetBindTrigger
-                      block={props.block}
-                      propName={propName}
-                      propLabel={propConfig.label}
-                      propConfig={propConfig}
-                    />
-                  )}
-                </div>
-              )
-            }}
-          </ElFormItem>
-        </>
-      )})
+                ),
+              }}
+            </ElFormItem>
+          </>
+        )
+      })
     }
-  }
+  },
 })

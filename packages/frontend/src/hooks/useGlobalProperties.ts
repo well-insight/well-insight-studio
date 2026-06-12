@@ -14,6 +14,6 @@ export function useGlobalProperties() {
 
   return {
     globalProperties,
-    registerRef
+    registerRef,
   }
 }

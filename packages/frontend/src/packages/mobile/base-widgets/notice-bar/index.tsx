@@ -10,8 +10,8 @@ export default {
   preview: () => (
     <NoticeBar
       style={{ width: '180px' }}
-      leftIcon='volume-o'
-      text='在代码阅读过程中人们说脏话的频率是衡量代码质量的唯一标准。'
+      leftIcon="volume-o"
+      text="在代码阅读过程中人们说脏话的频率是衡量代码质量的唯一标准。"
     />
   ),
   render: ({ block, props, styles }) => {
@@ -26,13 +26,13 @@ export default {
   events: [
     { label: '点击通知栏时触发', value: 'click' },
     { label: '关闭通知栏时触发', value: 'close' },
-    { label: '每当滚动栏重新开始滚动时触发', value: 'replay' }
+    { label: '每当滚动栏重新开始滚动时触发', value: 'replay' },
   ],
   props: createFieldProps(),
   resize: {
-    width: true
+    width: true,
   },
   model: {
-    default: '绑定字段'
-  }
+    default: '绑定字段',
+  },
 } as VisualEditorComponent

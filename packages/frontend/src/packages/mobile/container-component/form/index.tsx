@@ -11,10 +11,10 @@ export default {
   label: '表单容器',
   preview: () => (
     <Form>
-      <Field name='用户名' label='用户名' placeholder='用户名' />
-      <Field type='password' name='密码' label='密码' placeholder='密码' />
-      <div style='margin: 16px;'>
-        <Button round size='small' block type='primary'>
+      <Field name="用户名" label="用户名" placeholder="用户名" />
+      <Field type="password" name="密码" label="密码" placeholder="密码" />
+      <div style="margin: 16px;">
+        <Button round size="small" block type="primary">
           提交
         </Button>
       </div>
@@ -24,7 +24,7 @@ export default {
     const slots = useSlots()
     const { registerRef } = useGlobalProperties()
 
-    const onSubmit = values => {
+    const onSubmit = (values) => {
       console.log('onSubmit:', values)
     }
 
@@ -38,11 +38,11 @@ export default {
   },
   resize: {
     height: true,
-    width: true
+    width: true,
   },
   events: [
     { label: '提交表单且验证通过后触发', value: 'submit' },
-    { label: '提交表单且验证不通过后触发', value: 'failed' }
+    { label: '提交表单且验证不通过后触发', value: 'failed' },
   ],
-  props: compProps
+  props: compProps,
 } as VisualEditorComponent

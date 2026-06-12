@@ -7,23 +7,23 @@ import bus from '@/utils/eventBus'
 const props = defineProps({
   active: {
     type: Boolean,
-    default: false
+    default: false,
   },
   element: {
     required: true,
     type: Object,
-    default: () => {}
+    default: () => {},
   },
   defaultStyle: {
     required: true,
     type: Object,
-    default: () => {}
+    default: () => {},
   },
   index: {
     required: true,
     type: [Number, String],
-    default: 0
-  }
+    default: 0,
+  },
 })
 
 const store = useDesignStore()
@@ -40,20 +40,20 @@ const shapeData = reactive<any>({
     rb: 'se-resize',
     b: 'n-resize',
     lb: 'sw-resize',
-    l: 'e-resize'
-  }
+    l: 'e-resize',
+  },
 })
 
 const curComponentIndex = computed(() => store.$state.curComponentIndex)
 
 function delComponentIndex(e: any) {
   store.$patch({
-    curComponentIndex: -1
+    curComponentIndex: -1,
   })
 }
 function selectCurComponent(e: any) {
   store.$patch({
-    curComponentIndex: Number(props.index)
+    curComponentIndex: Number(props.index),
   })
 
   const $container = document.getElementsByClassName('edit-control-container')?.[0]
@@ -71,7 +71,7 @@ watch(curComponentIndex, (n, o) => {
 
 const shapeXY = reactive({
   x: 0,
-  y: 0
+  y: 0,
 })
 const component = store.$state.componentsInCanvas[Number(props.index)]
 
@@ -84,7 +84,7 @@ const vDrag = {
 
     el.onmousedown = function (e: any) {
       store.$patch({
-        curComponentIndex: Number(props.index ? props.index : 0)
+        curComponentIndex: Number(props.index ? props.index : 0),
       })
 
       if (e.target && e.target.dataset.name) {
@@ -120,7 +120,7 @@ const vDrag = {
         bus.emit('unMoveComponent')
       }
     }
-  }
+  },
 }
 
 function handleMouseDownOnPoint(item: any, e: any) {
@@ -141,37 +141,44 @@ function handleMouseDownOnPoint(item: any, e: any) {
         $shape.value.style.top = 'auto'
         $shape.value.style.width = `${$shape.value.offsetWidth + (x - oldX) / scale.value}px`
         $shape.value.style.height = `${$shape.value.offsetHeight - (y - oldY) / scale.value}px`
-      } else if (item === 'rb') {
+      }
+      else if (item === 'rb') {
         $shape.value.style.right = 'auto'
         $shape.value.style.bottom = 'auto'
         $shape.value.style.width = `${$shape.value.offsetWidth + (x - oldX) / scale.value}px`
         $shape.value.style.height = `${$shape.value.offsetHeight + (y - oldY) / scale.value}px`
-      } else if (item === 'lt') {
+      }
+      else if (item === 'lt') {
         $shape.value.style.left = 'auto'
         $shape.value.style.top = 'auto'
         $shape.value.style.width = `${$shape.value.offsetWidth - (x - oldX) / scale.value}px`
         $shape.value.style.height = `${$shape.value.offsetHeight - (y - oldY) / scale.value}px`
-      } else {
+      }
+      else {
         $shape.value.style.left = 'auto'
         $shape.value.style.bottom = 'auto'
         $shape.value.style.width = `${$shape.value.offsetWidth - (x - oldX) / scale.value}px`
         $shape.value.style.height = `${$shape.value.offsetHeight + (y - oldY) / scale.value}px`
       }
-    } else if (item === 'r' || item === 'l') {
+    }
+    else if (item === 'r' || item === 'l') {
       // 横向
       if (item === 'r') {
         $shape.value.style.right = 'auto'
         $shape.value.style.width = `${$shape.value.offsetWidth + (x - oldX) / scale.value}px`
-      } else {
+      }
+      else {
         $shape.value.style.left = 'auto'
         $shape.value.style.width = `${$shape.value.offsetWidth - (x - oldX) / scale.value}px`
       }
-    } else {
+    }
+    else {
       // 竖向
       if (item === 't') {
         $shape.value.style.top = 'auto'
         $shape.value.style.height = `${$shape.value.offsetHeight - (y - oldY) / scale.value}px`
-      } else {
+      }
+      else {
         $shape.value.style.bottom = 'auto'
         $shape.value.style.height = `${$shape.value.offsetHeight + (y - oldY) / scale.value}px`
       }
@@ -248,14 +255,14 @@ function getPointStyle(point: any) {
   }
 
   return {
-    left: `${left}px`,
-    top: `${top}px`,
-    right: `${right}px`,
-    bottom: `${bottom}px`,
-    cursor: shapeData.cursors[point],
-    width: `${width}px`,
-    height: `${height}px`,
-    'border-radius': `${width / 2}px`
+    'left': `${left}px`,
+    'top': `${top}px`,
+    'right': `${right}px`,
+    'bottom': `${bottom}px`,
+    'cursor': shapeData.cursors[point],
+    'width': `${width}px`,
+    'height': `${height}px`,
+    'border-radius': `${width / 2}px`,
   }
 }
 

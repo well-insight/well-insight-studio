@@ -12,7 +12,7 @@ const dbForm = ref({
   port: '',
   database: '',
   username: '',
-  password: ''
+  password: '',
 })
 
 async function submitExcelData(data: any[]) {
@@ -23,7 +23,8 @@ async function submitExcelData(data: any[]) {
 function handleCardClick(type: string) {
   if (type === 'excel') {
     excelDialogVisible.value = true
-  } else {
+  }
+  else {
     currentDbType.value = type
     switch (type) {
       case 'mysql':

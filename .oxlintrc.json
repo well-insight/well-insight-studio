@@ -1,12 +1,14 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": [
-    "unicorn",
-    "typescript",
-    "oxc"
-  ],
-  "options": {
-    "typeAware": true,
-    "typeCheck": true
+  "plugins": ["unicorn", "typescript", "oxc"],
+  "rules": {
+    "typescript/explicit-function-return-type": "off",
+    "unicorn/filename-case": "off",
+    "unicorn/catch-error-name": "error",
+    "no-var": "error",
+    "no-debugger": "error",
+    "no-duplicate-imports": "error",
+    "no-unused-vars": "warn",
+    "eqeqeq": "warn"
   }
 }

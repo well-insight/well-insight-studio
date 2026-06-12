@@ -11,14 +11,14 @@ type StringToUnion<S extends string> = S extends `${infer S1}${infer S2}` ? S1 |
 type Replace<
   Str extends string,
   From extends string,
-  To extends string
+  To extends string,
 > = Str extends `${infer Left}${From}${infer Right}` ? `${Left}${To}${Right}` : Str
 
 /** 字符串替换，类似js的字符串replaceAll方法 */
 type ReplaceAll<
   Str extends string,
   From extends string,
-  To extends string
+  To extends string,
 > = Str extends `${infer Left}${From}${infer Right}`
   ? Replace<Replace<`${Left}${To}${Right}`, From, To>, From, To>
   : Str

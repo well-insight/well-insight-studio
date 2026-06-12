@@ -1,12 +1,10 @@
-import { useDotProp } from "@/visual-editor/hooks/useDotProp";
-import { useVisualData } from "@/visual-editor/hooks/useVisualData";
-import type { VisualEditorProps } from "@/visual-editor/visual-editor.props";
-import { VisualEditorPropsType } from "@/visual-editor/visual-editor.props";
+import type { Component, PropType } from 'vue'
+import type { VisualEditorProps } from '@/visual-editor/visual-editor.props'
 import type {
   VisualEditorBlockData,
   VisualEditorComponent,
-} from "@/visual-editor/visual-editor.utils";
-import { Warning } from "@element-plus/icons-vue";
+} from '@/visual-editor/visual-editor.utils'
+import { Warning } from '@element-plus/icons-vue'
 import {
   ElCascader,
   ElColorPicker,
@@ -18,13 +16,15 @@ import {
   ElSelect,
   ElSwitch,
   ElTooltip,
-} from "element-plus";
-import { cloneDeep } from "lodash-es";
-import type { Component, PropType } from "vue";
-import { computed, defineComponent } from "vue";
-import PropDatasetBindTrigger from "@/visual-editor/ui/shared/dataset-bind/PropDatasetBindTrigger.vue";
-import { isChartBindProp } from "@/utils/datasetBinding";
-import { ImageUploadEditor, OptionsEditorDialog, TablePropEditor } from "..";
+} from 'element-plus'
+import { cloneDeep } from 'lodash-es'
+import { computed, defineComponent } from 'vue'
+import { isChartBindProp } from '@/utils/datasetBinding'
+import { useDotProp } from '@/visual-editor/hooks/useDotProp'
+import { useVisualData } from '@/visual-editor/hooks/useVisualData'
+import PropDatasetBindTrigger from '@/visual-editor/ui/shared/dataset-bind/PropDatasetBindTrigger.vue'
+import { VisualEditorPropsType } from '@/visual-editor/visual-editor.props'
+import { ImageUploadEditor, OptionsEditorDialog, TablePropEditor } from '..'
 
 export const PropConfig = defineComponent({
   props: {
@@ -43,22 +43,22 @@ export const PropConfig = defineComponent({
     },
   },
   setup(props) {
-    const { jsonData } = useVisualData();
-    const uiSize = "default";
+    const { jsonData } = useVisualData()
+    const uiSize = 'default'
     /**
      * @description 模型集合
      */
-    const models = computed(() => cloneDeep(jsonData.value.models));
+    const models = computed(() => cloneDeep(jsonData.value.models))
 
     const renderPropItem = (propName: string, propConfig: VisualEditorProps) => {
-      const { propObj, prop } = useDotProp(props.block.props, propName);
+      const { propObj, prop } = useDotProp(props.block.props, propName)
 
-      propObj[prop] ??= propConfig.defaultValue;
+      propObj[prop] ??= propConfig.defaultValue
 
       const renderFunc: Record<VisualEditorPropsType, () => JSX.Element | Component> = {
         [VisualEditorPropsType.input]: () => {
           if (!Object.is(propObj[prop], undefined) && !Object.is(propObj[prop], null)) {
-            propObj[prop] = `${propObj[prop]}`;
+            propObj[prop] = `${propObj[prop]}`
           }
           return (
             <ElInput
@@ -66,12 +66,12 @@ export const PropConfig = defineComponent({
               v-model={propObj[prop]}
               placeholder={propConfig.tips || propConfig.label}
             />
-          );
+          )
         },
         [VisualEditorPropsType.inputNumber]: () => {
-          const parseRes = Number.parseFloat(propObj[prop]);
-          propObj[prop] = Number.isNaN(parseRes) ? 0 : parseRes;
-          return <ElInputNumber size={uiSize} v-model={propObj[prop]} />;
+          const parseRes = Number.parseFloat(propObj[prop])
+          propObj[prop] = Number.isNaN(parseRes) ? 0 : parseRes
+          return <ElInputNumber size={uiSize} v-model={propObj[prop]} />
         },
         [VisualEditorPropsType.switch]: () => <ElSwitch size={uiSize} v-model={propObj[prop]} />,
         [VisualEditorPropsType.color]: () => (
@@ -93,7 +93,7 @@ export const PropConfig = defineComponent({
             multiple={propConfig.multiple}
             teleported={false}
           >
-            {propConfig.options?.map((opt) => (
+            {propConfig.options?.map(opt => (
               <ElOption label={opt.label} style={{ fontFamily: opt.value }} value={opt.value} />
             ))}
           </ElSelect>
@@ -109,15 +109,16 @@ export const PropConfig = defineComponent({
             teleported={false}
             props={{
               checkStrictly: true,
-              children: "entitys",
-              label: "name",
-              value: "key",
-              expandTrigger: "hover",
+              children: 'entitys',
+              label: 'name',
+              value: 'key',
+              expandTrigger: 'hover',
             }}
             placeholder="请选择绑定的请求数据"
             v-model={propObj[prop]}
             options={[...models.value]}
-          ></ElCascader>
+          >
+          </ElCascader>
         ),
         [VisualEditorPropsType.imageUpload]: () => {
           return (
@@ -125,14 +126,15 @@ export const PropConfig = defineComponent({
               <ImageUploadEditor
                 v-model={propObj[prop]}
                 propConfig={propConfig}
-              ></ImageUploadEditor>
+              >
+              </ImageUploadEditor>
             </>
-          );
+          )
         },
-      };
+      }
 
-      return renderFunc[propConfig.type]?.();
-    };
+      return renderFunc[propConfig.type]?.()
+    }
 
     const commonTypes = new Set<VisualEditorPropsType>([
       VisualEditorPropsType.input,
@@ -142,25 +144,25 @@ export const PropConfig = defineComponent({
       VisualEditorPropsType.color,
       VisualEditorPropsType.imageUpload,
       VisualEditorPropsType.crossSortable,
-    ]);
+    ])
 
     const isOptionsProp = (propConfig: VisualEditorProps) =>
-      propConfig.type === VisualEditorPropsType.crossSortable;
+      propConfig.type === VisualEditorPropsType.crossSortable
 
     return () => {
-      const componentKey = props.block.componentKey;
+      const componentKey = props.block.componentKey
       const propEntries = Object.entries(props.component.props ?? {}).filter(([propName, propConfig]) => {
         if (isChartBindProp(propName, componentKey)) {
-          return false;
+          return false
         }
         if (!props.commonOnly) {
-          return true;
+          return true
         }
-        return commonTypes.has(propConfig.type);
-      });
+        return commonTypes.has(propConfig.type)
+      })
 
       return propEntries.map(([propName, propConfig]) => {
-        const optionsProp = isOptionsProp(propConfig);
+        const optionsProp = isOptionsProp(propConfig)
 
         if (optionsProp) {
           return (
@@ -198,7 +200,7 @@ export const PropConfig = defineComponent({
                 </div>
               </div>
             </ElDropdownItem>
-          );
+          )
         }
 
         return (
@@ -234,8 +236,8 @@ export const PropConfig = defineComponent({
               </div>
             </div>
           </ElDropdownItem>
-        );
-      });
-    };
+        )
+      })
+    }
   },
-});
+})
