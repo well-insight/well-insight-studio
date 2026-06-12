@@ -6,7 +6,7 @@ import { useMouseInElement, useResizeObserver } from '@vueuse/core'
 import { vLoading } from 'element-plus'
 import { cloneDeep, debounce, throttle } from 'lodash-es'
 import { storeToRefs } from 'pinia'
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, useTemplateRef } from 'vue'
 import { useRoute } from 'vue-router'
 import { GridLayout } from '@/components/grid-layout-plus'
 import { useAnimate } from '@/hooks/useAnimate'
@@ -190,11 +190,12 @@ function keyEvent() {
 }
 
 onMounted(() => {
-  currentPage.value.blocks.forEach((block) => {
+  currentPage.value?.blocks?.forEach((block) => {
     if (!block.i) {
       block.i = block._vid
     }
   })
+
   setWrapPositionSize()
   keyEvent()
 
@@ -232,6 +233,12 @@ const editCanvasStyle = computed(() => {
 const wrapper = ref<HTMLElement>()
 const gridLayout = ref<InstanceType<typeof GridLayout>>()
 
+/** 基于页面设计宽度计算固定列数，使每列步长接近15px（不随窗口大小变化） */
+const gridColNum = computed(() => {
+  const designWidth = currentPage.value?.config?.pageSize?.width || 1920
+  return Math.max(1, Math.floor(designWidth / 15))
+})
+
 onMounted(() => {
   document.addEventListener('dragover', syncMousePosition)
 })
@@ -248,7 +255,7 @@ function syncMousePosition(event: MouseEvent) {
 }
 
 const dropId = 'drop'
-const dragItem = { x: -1, y: -1, w: 2, h: 4, i: '' }
+const dragItem = { x: -1, y: -1, w: 10, h: 10, i: '' }
 
 const dragging = throttle(() => {
   const parentRect = wrapper.value?.getBoundingClientRect()
@@ -263,7 +270,8 @@ const dragging = throttle(() => {
       && mouseAt.y < parentRect.bottom
 
   if (mouseInGrid && !currentPage.value.blocks.some(item => item.i === dropId)) {
-    const moveData = { ...controlStore.moveVisualData, x: (currentPage.value.blocks.length * 2) % 12, y: currentPage.value.blocks.length + 12, w: 2, h: 2, i: dropId }
+    const colNum = gridColNum.value
+    const moveData = { ...controlStore.moveVisualData, x: (currentPage.value.blocks.length * 10) % colNum, y: currentPage.value.blocks.length + 5, w: 10, h: 10, i: dropId }
 
     currentPage.value.blocks.push(moveData)
   }
@@ -628,8 +636,9 @@ defineExpose({
             ref="gridLayout"
             v-model:layout="currentPage.blocks"
             class="grid-layout-canvas"
-            :row-height="30"
-            :margin="[8, 8]"
+            :col-num="gridColNum"
+            :row-height="15"
+            :margin="[0, 0]"
             :allow-overlap="true"
             @layout-updated="onLayoutUpdated"
           >
@@ -751,7 +760,7 @@ defineExpose({
   align-items: stretch;
   box-sizing: border-box;
   cursor: pointer;
-  background-color: #fff;
+  // background-color: #fff;
   overflow: hidden;
   outline: none;
 
