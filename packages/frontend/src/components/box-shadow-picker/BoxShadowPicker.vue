@@ -10,7 +10,6 @@ import {
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { computed, onMounted, ref, watch } from 'vue'
-
 // ==================== 类型定义 ====================
 export interface ShadowLayer {
   id: string
@@ -922,6 +921,7 @@ $bsp-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     transform: scale(1);
     opacity: 1;
   }
+}
 
 // 预览块
 .#{$bsp-prefix}-preview-block {
@@ -1012,6 +1012,7 @@ $bsp-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   .el-icon {
     font-size: 11px;
   }
+}
 
 .#{$bsp-prefix}-add-layer-btn {
   flex-shrink: 0;

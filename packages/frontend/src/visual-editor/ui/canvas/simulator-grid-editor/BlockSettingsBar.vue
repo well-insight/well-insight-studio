@@ -9,31 +9,35 @@ const hasSelection = computed(() => !!currentBlock.value?._vid)
 </script>
 
 <template>
-  <Transition name="block-settings-inline">
-    <div v-show="hasSelection" class="block-settings-inline">
-      <el-divider direction="vertical" class="block-settings-inline__divider" />
-      <div class="block-settings-inline__meta">
-        <span class="block-settings-inline__tag">当前组件</span>
-        <span class="block-settings-inline__name" :title="currentBlock.label">
-          {{ currentBlock.label }}
-        </span>
-      </div>
-      <el-divider direction="vertical" class="block-settings-inline__divider" />
-      <div class="block-settings-inline__actions">
-        <AttrSettingsToolbar variant="dock" />
-      </div>
-    </div>
-  </Transition>
+  <div class="h-full">
+    <el-scrollbar class="h-full w-auto">
+      <Transition name="block-settings-inline">
+        <div v-show="hasSelection" class="block-settings-inline">
+          <el-divider direction="vertical" class="block-settings-inline__divider" />
+          <div class="block-settings-inline__meta">
+            <span class="block-settings-inline__tag">当前组件</span>
+            <span class="block-settings-inline__name" :title="currentBlock.label">
+              {{ currentBlock.label }}
+            </span>
+          </div>
+          <el-divider direction="vertical" class="block-settings-inline__divider" />
+          <div class="block-settings-inline__actions">
+            <AttrSettingsToolbar variant="dock" />
+          </div>
+        </div>
+      </Transition>
+    </el-scrollbar>
+  </div>
 </template>
 
 <style lang="scss" scoped>
 .block-settings-inline {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
   height: 100%;
-  overflow: hidden;
+  // overflow: hidden;
 }
 
 .block-settings-inline__divider {
@@ -70,8 +74,8 @@ const hasSelection = computed(() => !!currentBlock.value?._vid)
   display: flex;
   align-items: center;
   min-width: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
+  // overflow-x: auto;
+  // overflow-y: hidden;
 
   &::-webkit-scrollbar {
     height: 0;

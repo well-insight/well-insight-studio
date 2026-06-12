@@ -226,7 +226,7 @@ export const PropConfig = defineComponent({
                 key={props.block._vid + propName}
                 class="toolbar-item-content flex items-center gap-4px"
               >
-                <div class="min-w-0 flex-1">{renderPropItem(propName, propConfig)}</div>
+                <div class="min-w-0 flex-1 flex items-center justify-end">{renderPropItem(propName, propConfig)}</div>
                 <PropDatasetBindTrigger
                   block={props.block}
                   propName={propName}
