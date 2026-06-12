@@ -54,6 +54,7 @@ const props = withDefaults(defineProps<GridLayoutProps>(), {
   cols: () => ({ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }),
   preventCollision: false,
   useStyleCursor: true,
+  allowOverlap: false,
 })
 
 const emit = defineEmits([
@@ -108,7 +109,9 @@ onMounted(() => {
     nextTick(() => {
       initResponsiveFeatures()
       wrapper.value && observeResize(wrapper.value, debounce(onWindowResize, 16))
-      compact(currentLayout.value, props.verticalCompact)
+      if (!props.allowOverlap) {
+        compact(currentLayout.value, props.verticalCompact)
+      }
       emit('layout-updated', currentLayout.value)
       updateHeight()
       onWindowResize()
@@ -282,7 +285,9 @@ function layoutUpdate() {
       initResponsiveFeatures()
     }
 
-    compact(currentLayout.value, props.verticalCompact)
+    if (!props.allowOverlap) {
+      compact(currentLayout.value, props.verticalCompact)
+    }
     emitter.emit('updateWidth', state.width)
     updateHeight()
 
@@ -366,11 +371,15 @@ function dragEvent(
     // Do not compact items more than in layout before drag
     // Set moved item as static to avoid to compact it
     l.static = true
-    compact(currentLayout.value, props.verticalCompact, positionsBeforeDrag)
+    if (!props.allowOverlap) {
+      compact(currentLayout.value, props.verticalCompact, positionsBeforeDrag)
+    }
     l.static = false
   }
   else {
-    compact(currentLayout.value, props.verticalCompact)
+    if (!props.allowOverlap) {
+      compact(currentLayout.value, props.verticalCompact)
+    }
   }
 
   // needed because vue can't detect changes on array element properties
@@ -449,7 +458,9 @@ function resizeEvent(
   if (props.responsive)
     responsiveGridLayout()
 
-  compact(currentLayout.value, props.verticalCompact)
+  if (!props.allowOverlap) {
+    compact(currentLayout.value, props.verticalCompact)
+  }
   emitter.emit('compact')
   updateHeight()
 
@@ -522,7 +533,12 @@ function findDifference(layout: Layout, originalLayout: Layout) {
   <div ref="wrapper" class="vgl-layout" :style="state.mergedStyle">
     <slot v-if="$slots.default" />
     <template v-else>
-      <GridItem v-for="item in currentLayout" :key="item.i" v-bind="item">
+      <GridItem
+        v-for="(item, index) in currentLayout"
+        :key="item.i"
+        v-bind="item"
+        :z-index="allowOverlap ? index + 1 : undefined"
+      >
         <slot name="item" :item="item" />
       </GridItem>
     </template>

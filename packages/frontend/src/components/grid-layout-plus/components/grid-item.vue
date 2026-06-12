@@ -46,6 +46,7 @@ const props = withDefaults(defineProps<GridItemProps>(), {
   preserveAspectRatio: false,
   dragOption: () => ({}),
   resizeOption: () => ({}),
+  zIndex: undefined,
 })
 
 const emit = defineEmits(['container-resized', 'resize', 'resized', 'move', 'moved'])
@@ -390,6 +391,10 @@ function createStyle() {
   }
 
   state.style = style
+
+  if (props.zIndex !== undefined) {
+    state.style.zIndex = String(props.zIndex)
+  }
 }
 
 function emitContainerResized() {

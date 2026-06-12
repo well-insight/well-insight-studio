@@ -40,6 +40,7 @@ export interface LayoutInstance {
   useStyleCursor: boolean
   maxRows: number
   isMirrored: boolean
+  allowOverlap: boolean
   increaseItem: (item: any) => void
   decreaseItem: (item: any) => void
 }

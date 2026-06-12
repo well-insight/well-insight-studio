@@ -123,6 +123,7 @@ onMounted(() => {
             :is-draggable="false"
             :is-resizable="false"
             :vertical-compact="true"
+            :allow-overlap="true"
             :use-style-cursor="false"
           >
             <template #item="{ item }: { item: VisualEditorBlockData }">

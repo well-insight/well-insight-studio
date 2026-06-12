@@ -630,6 +630,7 @@ defineExpose({
             class="grid-layout-canvas"
             :row-height="30"
             :margin="[8, 8]"
+            :allow-overlap="true"
             @layout-updated="onLayoutUpdated"
           >
             <template #item="{ item }: { item: VisualEditorBlockData }">
