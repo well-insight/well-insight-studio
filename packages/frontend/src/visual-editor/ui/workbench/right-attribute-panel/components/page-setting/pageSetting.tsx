@@ -5,8 +5,8 @@ import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { defaultComponentBorder } from '@/utils/blockBorder'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { BorderStyleConfig } from '@/visual-editor/ui/shared/border-style-config'
+import ImageUpload from '@/visual-editor/ui/shared/image-upload/ImageUpload.vue'
 import DeviceSelect from './DeviceSelect.vue'
-import ImageUpload from './ImageUpload.vue'
 
 export const PageSetting = defineComponent({
   setup() {

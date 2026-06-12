@@ -1,6 +1,14 @@
 <script lang="ts" setup>
+import type { VisualEditorProps } from '@/visual-editor/visual-editor.props'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+
+withDefaults(
+  defineProps<{
+    propConfig?: VisualEditorProps
+  }>(),
+  {},
+)
 
 const currentImage = defineModel<string>({ required: false, default: '' })
 
@@ -23,7 +31,7 @@ function beforeUpload(file: File) {
 <template>
   <div class="w-full flex flex-col" :class="$style['image-upload']">
     <ElUpload drag action="#" accept="image/*" :show-file-list="false" :before-upload="beforeUpload" :class="$style.upload">
-      <div class="w-full h-[54px] flex flex-col items-center justify-center">
+      <div class="w-full h-[auto] min-h-[80px] flex flex-col items-center justify-center">
         <el-image v-if="currentImage" style="width: 100%" fit="fill" :src="currentImage" />
         <template v-else>
           <el-icon class="el-icon--upload !text-[20px]">
@@ -40,13 +48,11 @@ function beforeUpload(file: File) {
 </template>
 
 <style lang="scss" module>
-.image-upload {
-  // display: block;
-}
 .upload {
   margin-bottom: 6px;
   :global {
     .el-upload {
+      --el-upload-dragger-padding-vertical: 10px;
       position: relative;
       overflow: hidden;
       cursor: pointer;
@@ -65,6 +71,10 @@ function beforeUpload(file: File) {
     //   color: #8c939d;
     //   text-align: center;
     // }
+  }
+
+  :global(.el-upload-dragger) {
+    padding: 12px;
   }
 }
 </style>

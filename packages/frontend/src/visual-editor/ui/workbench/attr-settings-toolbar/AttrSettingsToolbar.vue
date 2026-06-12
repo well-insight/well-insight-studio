@@ -18,10 +18,9 @@ import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { BorderStyleConfig } from '@/visual-editor/ui/shared/border-style-config'
 import ChartDatasetBindDialog from '@/visual-editor/ui/shared/dataset-bind/ChartDatasetBindDialog.vue'
 import { FormatInputNumber } from '@/visual-editor/ui/shared/format-input-number'
+import ImageUpload from '@/visual-editor/ui/shared/image-upload/ImageUpload.vue'
 import { TextStyleConfig } from '@/visual-editor/ui/shared/text-style-config'
-import { EventAction } from '@/visual-editor/ui/workbench/right-attribute-panel/components'
 import { PropConfig } from '@/visual-editor/ui/workbench/right-attribute-panel/components/attr-editor/components/prop-config/prop-config-dropdown'
-import ImageUpload from '@/visual-editor/ui/workbench/right-attribute-panel/components/page-setting/ImageUpload.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -163,6 +162,11 @@ function openMorePanel() {
 
 function openAnimatePanel() {
   controlStore.floatingSettingActiveTab = 'animate'
+  controlStore.floatingSettingVisible = true
+}
+
+function openEventPanel() {
+  controlStore.floatingSettingActiveTab = 'event'
   controlStore.floatingSettingVisible = true
 }
 </script>
@@ -395,26 +399,10 @@ function openAnimatePanel() {
     </el-button>
 
     <el-divider direction="vertical" />
-    <el-dropdown
-      trigger="click"
-      placement="bottom"
-      :show-arrow="false"
-      transition="el-zoom-in-top"
-      :hide-on-click="false"
-      popper-class="toolbar-dropdown toolbar-dropdown-panel"
-    >
-      <el-button text :icon="DataLine">
-        <span>事件 </span>
-        <el-icon><CaretBottom /></el-icon>
-      </el-button>
-      <template #dropdown>
-        <el-scrollbar class="toolbar-panel-scroll" max-height="500px">
-          <div class="toolbar-panel">
-            <EventAction />
-          </div>
-        </el-scrollbar>
-      </template>
-    </el-dropdown>
+
+    <el-button text :icon="DataLine" @click="openEventPanel">
+      <span>事件</span>
+    </el-button>
 
     <el-divider direction="vertical" />
     <el-tooltip content="更多选项" placement="bottom">

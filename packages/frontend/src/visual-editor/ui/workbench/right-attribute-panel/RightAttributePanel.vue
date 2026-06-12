@@ -5,7 +5,7 @@ import { ref, watch } from 'vue'
 import { ButtonTabs } from '@/components/button-tabs'
 import { useControlStore } from '@/stores/controlStore'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
-import { Animate, AttrEditor, FormRule } from './components'
+import { Animate, AttrEditor, EventAction, FormRule } from './components'
 
 defineOptions({
   name: 'RightAttributePanel',
@@ -37,6 +37,11 @@ function initPageOptions() {
       value: 'form-rule',
     })
   }
+
+  options.push({
+    label: '事件',
+    value: 'event',
+  })
 
   if (floatingSettingActiveTab.value) {
     currentActive.value = floatingSettingActiveTab.value
@@ -72,6 +77,7 @@ watch(
             <AttrEditor v-if="currentActive === 'attr'" />
             <Animate v-else-if="currentActive === 'animate'" />
             <FormRule v-else-if="currentActive === 'form-rule'" />
+            <EventAction v-else-if="currentActive === 'event'" />
           </el-scrollbar>
         </div>
       </div>
