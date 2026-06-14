@@ -32,6 +32,11 @@ const props = withDefaults(
 
 const { currentPage } = useVisualData()
 
+const gridColNum = computed(() => {
+  const designWidth = currentPage.value?.config?.pageSize?.width || 1920
+  return Math.max(1, Math.floor(designWidth / 15))
+})
+
 function getBlockBorderStyle(item: VisualEditorBlockData): CSSProperties {
   return resolveBlockBorderCss(item, currentPage.value?.config)
 }
@@ -117,7 +122,7 @@ onMounted(() => {
             v-if="previewLayout.length > 0"
             v-model:layout="previewLayout"
             class="grid-layout-preview"
-            :col-num="12"
+            :col-num="gridColNum"
             :row-height="30"
             :margin="[8, 8]"
             :is-draggable="false"

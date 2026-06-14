@@ -25,29 +25,41 @@ export function resolveComponentBorder(
   override?: ComponentBorderOverride,
 ): ComponentBorderStyle {
   const base = { ...defaultComponentBorder(), ...global }
+
   if (!override) {
     return base
   }
+
+  const resolvedShow = override.show ?? base.show ?? false
+  const resolvedWidth = override.width?.trim() ? override.width : base.width
+  const resolvedStyle = override.style?.trim() ? override.style : base.style
+  const resolvedColor = override.color?.trim() ? override.color : base.color
+  const resolvedRadius = override.radius?.trim() ? override.radius : base.radius
+  const resolvedShadow = override.shadow?.trim() ? override.shadow : base.shadow
+
   return {
-    show: override.show ?? base.show,
-    width: override.width?.trim() ? override.width : base.width,
-    style: override.style?.trim() ? override.style : base.style,
-    color: override.color?.trim() ? override.color : base.color,
-    radius: override.radius?.trim() ? override.radius : base.radius,
-    shadow: override.shadow?.trim() ? override.shadow : base.shadow,
+    show: resolvedShow,
+    width: resolvedWidth,
+    style: resolvedStyle,
+    color: resolvedColor,
+    radius: resolvedRadius,
+    shadow: resolvedShadow,
   }
 }
 
 export function componentBorderToCss(border: ComponentBorderStyle): CSSProperties {
   const radius = border.radius || defaultComponentBorder().radius
-  const shadow = border.shadow?.trim() || DEFAULT_CARD_SHADOW
-  if (!border.show) {
+  const shouldShow = border.show === true
+  const shadow = shouldShow ? (border.shadow?.trim() || DEFAULT_CARD_SHADOW) : 'none'
+
+  if (!shouldShow) {
     return {
       border: 'none',
       borderRadius: radius,
       boxShadow: shadow,
     }
   }
+
   return {
     borderWidth: border.width || '1px',
     borderStyle: border.style || 'solid',
