@@ -35,6 +35,14 @@ const props = defineProps({
     >,
     required: true,
   },
+  parentVid: {
+    type: String as PropType<string>,
+    default: '',
+  },
+  selectedBlockIds: {
+    type: Array as PropType<string[]>,
+    default: (): string[] => [],
+  },
 })
 const emit = defineEmits(['update:children', 'on-selected', 'update:drag'])
 
@@ -45,6 +53,8 @@ const slotChildren = useVModel(props, 'children', emit)
 
 function onNativeDrop(event: DragEvent) {
   event.preventDefault()
+  event.stopPropagation()
+
   const block = controlStore.moveVisualData
   if (!block) {
     return
@@ -58,6 +68,8 @@ function onNativeDrop(event: DragEvent) {
 
   slotChildren.value = [...slotChildren.value, copiedBlock]
   controlStore.setMoveVisualData(null)
+  // 选中新添加的组件
+  props.selectComp(copiedBlock)
 }
 
 // 初始化时设置上次选中的组件
@@ -80,11 +92,12 @@ props.children.some(item => item.focus && props.selectComp(item))
         class="list-group-item inner"
         :data-label="innerElement.label"
         :class="{
-          focus: innerElement.focus,
-          focusWithChild: innerElement.focusWithChild,
+          'focus': innerElement.focus,
+          'focusWithChild': innerElement.focusWithChild,
+          'multi-focus': selectedBlockIds.includes(innerElement._vid),
         }"
         @contextmenu.stop.prevent="onContextmenuBlock($event, innerElement, slotChildren)"
-        @mousedown.stop="selectComp(innerElement)"
+        @mousedown.stop="selectComp(innerElement, $event)"
       >
         <CompRender
           :element="innerElement"
@@ -97,6 +110,8 @@ props.children.some(item => item.focus && props.selectComp(item))
               v-model:children="value.children"
               v-model:drag="isDrag"
               :slot-key="key"
+              :parent-vid="innerElement._vid"
+              :selected-block-ids="selectedBlockIds"
               :on-contextmenu-block="onContextmenuBlock"
               :select-comp="selectComp"
             />
@@ -156,6 +171,11 @@ props.children.some(item => item.focus && props.selectComp(item))
     &:hover::after {
       opacity: 1;
     }
+  }
+
+  &.multi-focus {
+    outline: 2px solid var(--el-color-warning);
+    outline-offset: -1px;
   }
 
   &.inner:hover {
