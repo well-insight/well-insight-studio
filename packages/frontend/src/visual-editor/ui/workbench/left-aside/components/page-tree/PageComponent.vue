@@ -77,29 +77,28 @@ function findPathByLeafId(
  * @param {Array} data - 原始数据数组
  * @returns {Array} 转换后的树形数据
  */
+function collectSlotChildren(item: VisualEditorBlockData): VisualEditorBlockData[] {
+  const result: VisualEditorBlockData[] = []
+  const slots = item.props?.slots || {}
+
+  Object.keys(slots).forEach((slotKey) => {
+    const slotChildren = slots[slotKey]?.children
+    if (Array.isArray(slotChildren) && slotChildren.length) {
+      result.push(...transformToTreeData(slotChildren))
+    }
+  })
+
+  return result
+}
+
 function transformToTreeData(data: VisualEditorBlockData[]) {
   return data.map((item) => {
-    // 基础节点结构
     const treeNode: VisualEditorBlockData = {
-      ...item, // 保留原始所有属性
-      children: [], // 初始化子节点
+      ...item,
+      children: [],
     }
 
-    // 1. 处理表单容器（form）的子节点：props.slots.default.children
-    if (item.componentKey === 'form' && item.props?.slots?.default?.children) {
-      treeNode.children = transformToTreeData(item.props.slots.default.children)
-    }
-
-    // 2. 处理布局容器（layout）的子节点：props.slots下的所有slot*的children
-    if (item.componentKey === 'layout' && item.props?.slots) {
-      const slots = item.props.slots
-      // 遍历所有slot（slot0、slot1...）
-      Object.keys(slots).forEach((slotKey) => {
-        if (slotKey.startsWith('slot') && slots[slotKey]?.children) {
-          treeNode.children = [...treeNode.children, ...transformToTreeData(slots[slotKey].children)]
-        }
-      })
-    }
+    treeNode.children = collectSlotChildren(item)
 
     return treeNode
   })

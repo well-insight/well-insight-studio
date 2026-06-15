@@ -58,6 +58,7 @@ const controlStore = useControlStore()
 const { floatingSettingVisible } = storeToRefs(controlStore)
 
 const drag = ref(false)
+const selectedBlockIds = ref<string[]>([])
 
 const route = useRoute()
 
@@ -65,11 +66,11 @@ const canvasId = String(route.query?.key) || ''
 
 const componentLoading = ref(false)
 
-const $wrap = useTemplateRef('$wrap')
+const wrapper = ref<HTMLElement>()
 const canvasRef = useTemplateRef('canvasRef')
 const sketchRuleKey = ref<string>('')
 
-const { isOutside } = useMouseInElement($wrap)
+const { isOutside } = useMouseInElement(wrapper)
 
 const lines = reactive({
   h: [],
@@ -86,91 +87,8 @@ const shadow = reactive({
 })
 
 const isEnterSpace = ref(false)
-
-function handleLine(e: any) {
-  console.log(e)
-}
-
-function handleCornerClick(e: any) {
-  console.log(e)
-}
-
-const hRulerX = ref('0')
-const hRulerY = ref('0')
-function scrollEdit(e: any) {
-  hRulerY.value = `-${e.target.scrollTop}px`
-  hRulerX.value = `-${e.target.scrollLeft}px`
-}
-
-const startMoveWrap = reactive({
-  x: 0,
-  y: 0,
-})
-
-function wrapMousedown(e: any) {
-  if ((e.target && e.target.id === 'content') || isEnterSpace.value) {
-    startMoveWrap.x = e.x
-    startMoveWrap.y = e.y
-
-    document.onmousemove = (e: any) => {
-      if ($wrap.value) {
-        $wrap.value.scrollLeft = $wrap.value.scrollLeft - (e.x - startMoveWrap.x)
-        $wrap.value.scrollTop = $wrap.value.scrollTop - (e.y - startMoveWrap.y)
-        hRulerY.value = `-${$wrap.value.scrollTop}px`
-        hRulerX.value = `-${$wrap.value.scrollLeft}px`
-        startMoveWrap.x = e.x
-        startMoveWrap.y = e.y
-      }
-    }
-
-    document.onmouseup = () => {
-      document.onmousemove = null
-      document.onmouseup = null
-    }
-  }
-}
-
-function mouseWheel(e: any) {
-  if (isEnterSpace.value) {
-    const mouseTo = e && (e.deltaY > 0 || e.deltaX > 0) ? 'down' : 'up'
-    if (mouseTo === 'down') {
-      currentScale.value = currentScale.value - 0.05
-    }
-    else {
-      currentScale.value = currentScale.value + 5
-    }
-  }
-}
-
 function getBlockBorderStyle(item: VisualEditorBlockData): CSSProperties {
   return resolveBlockBorderCss(item, currentPage.value?.config)
-}
-
-/**
- * 设置wrap显示的位置和大小
- */
-function setWrapPositionSize() {
-  // 监听wrap的尺寸变化
-  useResizeObserver($wrap, debounce(() => {
-    if ($wrap.value) {
-      const wrapW = $wrap.value?.clientWidth
-      const wrapH = $wrap.value?.clientHeight
-      const canvasW = canvasRef.value.clientWidth
-      const canvasH = canvasRef.value.clientHeight
-      if (canvasW > canvasH) {
-        currentScale.value = Math.round(((wrapW - 100) / canvasW) * 100) / 100 // 数字取整
-      }
-      else {
-        currentScale.value = Math.round((((wrapH) - 100) / canvasH) * 100) / 100 // 数字取整
-      }
-      const x = ($wrap.value?.clientWidth - canvasRef.value.clientWidth * currentScale.value) / 2
-      const y = ($wrap.value?.clientHeight - canvasRef.value.clientHeight * currentScale.value) / 2
-      $wrap.value.scrollTop = 5000 - y
-      $wrap.value.scrollLeft = 5000 - x
-      hRulerY.value = `-${$wrap.value.scrollTop}px`
-      hRulerX.value = `-${$wrap.value.scrollLeft}px`
-    }
-  }, 50))
 }
 
 // 监听键盘按键事件componentData
@@ -196,7 +114,6 @@ onMounted(() => {
     }
   })
 
-  setWrapPositionSize()
   keyEvent()
 
   nextTick(() => {
@@ -205,10 +122,6 @@ onMounted(() => {
     }, 1000)
   })
 })
-
-function canvasMousemove() {
-  // const { x, y } = useMouseXY();
-}
 
 /**
  * @description 操作当前页面样式表
@@ -230,7 +143,6 @@ const editCanvasStyle = computed(() => {
   } as CSSProperties
 })
 
-const wrapper = ref<HTMLElement>()
 const gridLayout = ref<InstanceType<typeof GridLayout>>()
 
 /** 基于页面设计宽度计算固定列数，使每列步长接近15px（不随窗口大小变化） */
@@ -377,23 +289,6 @@ function dragEnd() {
   recordHistory()
 }
 
-function elementDrop(e: DragEvent) {
-  e.preventDefault() // 必须！
-  // 获取拖拽传递的数据
-  const moveData = { ...controlStore.moveVisualData, x: e?.offsetX - Number(controlStore.moveVisualData.width) / 2, y: e?.offsetY - Number(controlStore.moveVisualData.height) / 2 }
-
-  if (moveData) {
-    currentPage.value.blocks.push(moveData)
-
-    controlStore.setMoveVisualData(null)
-  }
-}
-
-function elementDragover(payload: DragEvent) {
-  payload.preventDefault()
-  payload.dataTransfer.dropEffect = 'move' // 配合 effectAllowed
-}
-
 // 递归实现
 // @leafId  为你要查找的id，
 // @nodes   为原始Json数据
@@ -444,6 +339,7 @@ function handleSlotsFocus(block: VisualEditorBlockData, _vid: string) {
  */
 function deSelectComp() {
   floatingSettingVisible.value = false
+  selectedBlockIds.value = []
   currentPage.value.blocks.forEach((block) => {
     block.focus = false
     block.focusWithChild = false
@@ -455,20 +351,33 @@ function deSelectComp() {
  * 选择要操作的组件
  * @param element
  */
-function selectComp(element: VisualEditorBlockData) {
+function selectComp(element: VisualEditorBlockData, event?: MouseEvent) {
   if (!element?._vid) {
     return
   }
-  // 选中组件关闭组件选择抽屉
-  controlStore.customComponentsVisible = false
 
+  const multiSelect = Boolean(event?.metaKey || event?.ctrlKey)
+  if (multiSelect) {
+    selectedBlockIds.value = selectedBlockIds.value.includes(element._vid)
+      ? selectedBlockIds.value.filter(id => id !== element._vid)
+      : [...selectedBlockIds.value, element._vid]
+  }
+  else {
+    selectedBlockIds.value = [element._vid]
+  }
+
+  controlStore.customComponentsVisible = false
   setCurrentBlock(element)
+
   currentPage.value.blocks.forEach((block) => {
-    block.focus = element._vid === block._vid
+    block.focus = selectedBlockIds.value.includes(block._vid)
     block.focusWithChild = false
     handleSlotsFocus(block, element._vid)
-    element.focusWithChild = false
   })
+
+  if (selectedBlockIds.value.length === 1) {
+    element.focusWithChild = false
+  }
 }
 
 function onCanvasMousedown(e: MouseEvent) {
@@ -507,25 +416,6 @@ function deleteComp(block: VisualEditorBlockData, parentBlocks = currentPage.val
     }
     recordHistory()
   }
-}
-
-/**
- * 移动组件
- */
-function onDrag(x: number, y: number) {
-  updateCurrentBlock({ x, y })
-}
-
-function onDragStop(x: number, y: number) {
-  updateCurrentBlock({ x, y })
-}
-
-function onResize(x: number, y: number, width: number, height: number) {
-  updateCurrentBlock({ x, y, width, height })
-//
-}
-function onResizeStop(x: number, y: number, width: number, height: number) {
-  updateCurrentBlock({ x, y, width, height })
 }
 
 function onContextmenuBlock(e: MouseEvent, block: VisualEditorBlockData, parentBlocks = currentPage.value.blocks) {
@@ -599,14 +489,6 @@ function getScale() {
   return currentScale.value
 }
 
-const vLine = ref([])
-const hLine = ref([])
-
-function getRefLineParams(params: { vLine: any[], hLine: any[] }) {
-  vLine.value = params.vLine
-  hLine.value = params.hLine
-}
-
 function initAnimate() {
   const animations = currentPage.value.blocks.filter(block => block?.animations)?.map(block => ({
     _vid: block._vid,
@@ -636,7 +518,6 @@ watch(currentScale, () => {
 defineExpose({
   setScale,
   getScale,
-  setWrapPositionSize,
   drag: dragging,
   dragEnd,
 })
@@ -678,7 +559,7 @@ defineExpose({
                   'has-inner-title': item.showTitle === true && isInnerBlockTitle(item.titleStyle),
                   [`list-group-item-${item._vid}`]: true,
                 }"
-                @mousedown.stop="selectComp(item)"
+                @mousedown.stop="selectComp(item, $event)"
                 @contextmenu.stop.prevent="onContextmenuBlock($event, item)"
               >
                 <div

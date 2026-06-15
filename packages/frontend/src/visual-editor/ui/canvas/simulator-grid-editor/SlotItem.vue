@@ -2,6 +2,9 @@
 import type { PropType } from 'vue'
 import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
 import { useVModel } from '@vueuse/core'
+import { cloneDeep } from 'lodash-es'
+import { useControlStore } from '@/stores/controlStore'
+import { generateNanoid } from '@/visual-editor/lib'
 import CompRender from './comp-render'
 import DraggableTransitionGroup from './DraggableTransitionGroup.vue'
 
@@ -20,7 +23,7 @@ const props = defineProps({
   },
   children: {
     type: Array as PropType<VisualEditorBlockData[]>,
-    default: () => [],
+    default: (): VisualEditorBlockData[] => [],
   },
   selectComp: {
     type: Function as PropType<(comp: VisualEditorBlockData) => void>,
@@ -35,8 +38,27 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:children', 'on-selected', 'update:drag'])
 
+const controlStore = useControlStore()
+
 const isDrag = useVModel(props, 'drag', emit)
 const slotChildren = useVModel(props, 'children', emit)
+
+function onNativeDrop(event: DragEvent) {
+  event.preventDefault()
+  const block = controlStore.moveVisualData
+  if (!block) {
+    return
+  }
+
+  const copiedBlock = cloneDeep(block) as VisualEditorBlockData
+  copiedBlock._vid = `vid_${generateNanoid()}`
+  copiedBlock.i = copiedBlock._vid
+  copiedBlock.focus = false
+  copiedBlock.focusWithChild = false
+
+  slotChildren.value = [...slotChildren.value, copiedBlock]
+  controlStore.setMoveVisualData(null)
+}
 
 // 初始化时设置上次选中的组件
 props.children.some(item => item.focus && props.selectComp(item))
@@ -50,6 +72,8 @@ props.children.some(item => item.focus && props.selectComp(item))
     :class="{ slot: !slotChildren?.length }"
     draggable=".item-drag"
     :data-slot="`插槽（${slotKey}）\n 拖拽组件到此处`"
+    @dragover.prevent
+    @drop="onNativeDrop"
   >
     <template #item="{ element: innerElement }">
       <div

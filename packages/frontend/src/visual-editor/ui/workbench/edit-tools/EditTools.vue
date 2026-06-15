@@ -8,7 +8,7 @@ import {
 import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { computed, ref, toRaw, toValue } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { updateApplication } from '@/api/application'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { localKey, useVisualData } from '@/visual-editor/hooks/useVisualData'
@@ -18,7 +18,6 @@ import Preview from './components/Preview.vue'
 
 const workspaceStore = useWorkspaceStore()
 const { currentApp } = storeToRefs(workspaceStore)
-const router = useRouter()
 const route = useRoute()
 
 const { jsonData, saveStatus, saveError, isDirty, canUndo, canRedo, saveProject, undo, redo }
@@ -58,17 +57,6 @@ const saveStatusTooltip = computed(() => {
   return '已同步至服务器'
 })
 
-const saveStatusButtonType = computed(() => {
-  if (saveStatus.value === 'error' || isDirty.value) {
-    return 'danger'
-  }
-
-  if (saveStatus.value === 'saved') {
-    return 'success'
-  }
-  return 'info'
-})
-
 const saveStatusColor = computed(() => {
   if (saveStatus.value === 'error' || isDirty.value) {
     return `var(--el-color-danger)`
@@ -101,22 +89,6 @@ function handleUndo() {
 function handleRedo() {
   if (!redo()) {
     ElMessage.info('没有可重做的操作')
-  }
-}
-
-async function triggerClient() {
-  const app = currentApp.value
-  if (!app?.id)
-    return
-
-  const next = app.clientType === 1 ? 2 : 1
-  try {
-    await updateApplication(String(app.id), { client_type: next })
-    app.clientType = next
-    ElMessage.success(next === 2 ? '已切换为移动端画布' : '已切换为 PC 画布')
-  }
-  catch (error) {
-    ElMessage.error((error as Error).message || '切换失败')
   }
 }
 

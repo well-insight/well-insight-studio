@@ -50,7 +50,7 @@ import { PageSetting } from '../../right-attribute-panel/components/page-setting
   }
 
   .page-setting-panel {
-    padding: 12px 16px;
+    padding: 12px 16px 0 16px;
     width: 320px;
     height: min(460px, calc(100vh - 220px));
     max-height: min(460px, calc(100vh - 220px));

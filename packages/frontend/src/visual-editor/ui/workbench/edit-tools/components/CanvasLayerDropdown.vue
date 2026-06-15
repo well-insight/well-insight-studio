@@ -55,6 +55,20 @@ function findPathByLeafId(
   return []
 }
 
+function collectSlotChildren(item: VisualEditorBlockData): VisualEditorBlockData[] {
+  const result: VisualEditorBlockData[] = []
+  const slots = item.props?.slots || {}
+
+  Object.keys(slots).forEach((slotKey) => {
+    const slotChildren = slots[slotKey]?.children
+    if (Array.isArray(slotChildren) && slotChildren.length) {
+      result.push(...transformToTreeData(slotChildren))
+    }
+  })
+
+  return result
+}
+
 function transformToTreeData(data: VisualEditorBlockData[]) {
   return data.map((item) => {
     const treeNode: VisualEditorBlockData = {
@@ -63,18 +77,7 @@ function transformToTreeData(data: VisualEditorBlockData[]) {
       label: item.label || item.componentKey || item._vid,
     }
 
-    if (item.componentKey === 'form' && item.props?.slots?.default?.children) {
-      treeNode.children = transformToTreeData(item.props.slots.default.children)
-    }
-
-    if (item.componentKey === 'layout' && item.props?.slots) {
-      const slots = item.props.slots
-      Object.keys(slots).forEach((slotKey) => {
-        if (slotKey.startsWith('slot') && slots[slotKey]?.children) {
-          treeNode.children = [...treeNode.children, ...transformToTreeData(slots[slotKey].children)]
-        }
-      })
-    }
+    treeNode.children = collectSlotChildren(item)
 
     return treeNode
   })
@@ -133,88 +136,94 @@ function removeBlockById(id: string, nodes: VisualEditorBlockData[] = []): boole
 <template>
   <el-popover
     title="画布层级"
-    placement="bottom-start"
+    placement="bottom"
     trigger="click"
     width="320"
-    :popper-class="$style['layer-tree-popover']"
+    transition="el-zoom-in-top"
+    :popper-class="$style['page-setting-popover']"
   >
     <template #reference>
       <el-button text bg type="primary" :icon="List">
-        <span class="ml-2">画布层级</span>
+        <span>画布层级</span>
       </el-button>
     </template>
 
-    <div class="toolbar">
-      <el-button size="small" text :icon="Expand" @click="expandAll">
-        展开全部
-      </el-button>
-      <el-button size="small" text :icon="Fold" @click="collapseAll">
-        收起全部
-      </el-button>
-      <el-button
-        size="small"
-        text
-        type="danger"
-        :icon="Delete"
-        :disabled="!currentBlock?._vid"
-        @click="deleteCurrentBlock"
-      >
-        删除选中
-      </el-button>
+    <div class="w-full h-full flex flex-col">
+      <el-space class="mx-3 my-2">
+        <el-button link :icon="Expand" @click="expandAll">
+          展开全部
+        </el-button>
+        <el-button link :icon="Fold" @click="collapseAll">
+          收起全部
+        </el-button>
+        <el-button
+          link
+          type="danger"
+          :icon="Delete"
+          :disabled="!currentBlock?._vid"
+          @click="deleteCurrentBlock"
+        >
+          删除选中
+        </el-button>
+      </el-space>
+      <el-scrollbar :class="$style['page-setting-panel']">
+        <el-tree
+          ref="treeRef"
+          :data="layerTreeData"
+          :props="treeProps"
+          node-key="_vid"
+          default-expand-all
+          highlight-current
+          :current-node-key="currentBlock?._vid"
+          class="custom-el-tree-wrapper"
+          @current-change="selectBlock"
+        >
+          <template #default="{ node, data }">
+            <el-space>
+              <span>{{ node.label }}</span>
+              <span class="node-meta">{{ data.componentKey }}</span>
+            </el-space>
+          </template>
+        </el-tree>
+      </el-scrollbar>
     </div>
-
-    <el-scrollbar class="tree-wrapper">
-      <el-tree
-        ref="treeRef"
-        :data="layerTreeData"
-        :props="treeProps"
-        node-key="_vid"
-        default-expand-all
-        highlight-current
-        :current-node-key="currentBlock?._vid"
-        class="custom-el-tree-wrapper"
-        @current-change="selectBlock"
-      >
-        <template #default="{ node, data }">
-          <el-space>
-            <span>{{ node.label }}</span>
-            <span class="node-meta">{{ data.componentKey }}</span>
-          </el-space>
-        </template>
-      </el-tree>
-    </el-scrollbar>
   </el-popover>
 </template>
 
 <style lang="scss" module>
-.layer-tree-popover {
+.page-setting-popover {
   --el-popover-bg-color: var(--el-bg-color-overlay);
   --el-popover-font-size: var(--el-font-size-base);
   --el-popover-border-color: var(--el-border-color-lighter);
   --el-popover-padding: 0;
   --el-popover-border-radius: 12px;
+
+  width: 320px !important;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-}
 
-.toolbar {
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  border-bottom: 1px solid var(--el-border-color-lighter);
-}
+  :global(.el-popover__title) {
+    height: 40px;
+    width: 100%;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+    flex-shrink: 0;
+  }
 
-.tree-wrapper {
-  max-height: 320px;
-  min-height: 260px;
-  padding: 12px;
-}
+  .page-setting-panel {
+    padding: 0 8px;
+    width: 320px;
+    height: min(460px, calc(100vh - 220px));
+    max-height: min(460px, calc(100vh - 220px));
+    box-sizing: border-box;
+  }
 
-.node-meta {
-  color: #999;
-  font-size: 12px;
+  :global(.el-scrollbar__wrap) {
+    max-height: min(460px, calc(100vh - 220px));
+  }
 }
 </style>
