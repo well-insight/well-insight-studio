@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { PropType } from 'vue'
+import type { CSSProperties, PropType } from 'vue'
 import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
 import { useVModel } from '@vueuse/core'
 import { cloneDeep } from 'lodash-es'
@@ -43,6 +43,16 @@ const props = defineProps({
     type: Array as PropType<string[]>,
     default: (): string[] => [],
   },
+  /** 每个子块应用于外层 .list-group-item 的样式映射 */
+  blockWrapperStyles: {
+    type: Object as PropType<Record<string, CSSProperties>>,
+    default: (): Record<string, CSSProperties> => ({}),
+  },
+  /** 禁止从外部拖入新组件 */
+  disallowDrop: {
+    type: Boolean as PropType<boolean>,
+    default: false,
+  },
 })
 const emit = defineEmits(['update:children', 'on-selected', 'update:drag'])
 
@@ -54,6 +64,9 @@ const slotChildren = useVModel(props, 'children', emit)
 function onNativeDrop(event: DragEvent) {
   event.preventDefault()
   event.stopPropagation()
+
+  if (props.disallowDrop)
+    return
 
   const block = controlStore.moveVisualData
   if (!block) {
@@ -91,6 +104,7 @@ props.children.some(item => item.focus && props.selectComp(item))
       <div
         class="list-group-item inner"
         :data-label="innerElement.label"
+        :style="(blockWrapperStyles as Record<string, CSSProperties>)[innerElement._vid]"
         :class="{
           'focus': innerElement.focus,
           'focusWithChild': innerElement.focusWithChild,
@@ -112,6 +126,8 @@ props.children.some(item => item.focus && props.selectComp(item))
               :slot-key="key"
               :parent-vid="innerElement._vid"
               :selected-block-ids="selectedBlockIds"
+              :block-wrapper-styles="blockWrapperStyles"
+              :disallow-drop="innerElement.componentKey === 'group' || props.disallowDrop"
               :on-contextmenu-block="onContextmenuBlock"
               :select-comp="selectComp"
             />

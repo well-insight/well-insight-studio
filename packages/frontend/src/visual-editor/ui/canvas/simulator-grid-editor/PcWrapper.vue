@@ -60,6 +60,9 @@ const { floatingSettingVisible } = storeToRefs(controlStore)
 const drag = ref(false)
 const selectedBlockIds = ref<string[]>([])
 
+/** 子块的外层包装样式映射（用于组内绝对定位） */
+const blockWrapperStyles = ref<Record<string, CSSProperties>>({})
+
 // ---- 多选拖动状态 ----
 const multiDragState = reactive({
   active: false,
@@ -361,6 +364,9 @@ function findSlotContextAtPoint(x: number, y: number): { parentBlock: VisualEdit
       continue
     const parentBlock = findBlockByVid(parentVid, currentPage.value.blocks)
     if (!parentBlock)
+      continue
+    // 组容器不允许从外部拖入组件
+    if (parentBlock.componentKey === 'group')
       continue
     const dataSlot = (slotEl as HTMLElement).getAttribute('data-slot') || ''
     const match = dataSlot.match(/插槽（(.+?)）/)
@@ -848,12 +854,36 @@ function mergeToGroup() {
     maxY = Math.max(maxY, b.y + (b.h || 8))
   })
 
-  // 重置子组件的位置相对组内布局
+  // 保留子组件在组内的相对位置
+  const designWidth = currentPage.value?.config?.pageSize?.width || 1920
+  const colNum = Math.max(1, Math.floor(designWidth / 15))
+  const colWidth = designWidth / colNum
+  const rowHeight = 15
+
+  const newWrapperStyles: Record<string, CSSProperties> = {}
   selectedBlocks.forEach((b) => {
+    const relX = b.x - minX
+    const relY = b.y - minY
+    // 将定位样式放在外层包装上（SlotItem 的 .list-group-item）
+    newWrapperStyles[b._vid] = {
+      position: 'absolute',
+      left: `${relX * colWidth}px`,
+      top: `${relY * rowHeight}px`,
+      width: `${(b.w || 24) * colWidth}px`,
+      height: `${(b.h || 8) * rowHeight}px`,
+      margin: '0',
+      flex: 'none',
+    }
+    // block 自身 styles 保持干净
+    b.styles = b.styles || {}
     b.x = 0
     b.y = 0
     b.focus = false
   })
+  blockWrapperStyles.value = {
+    ...blockWrapperStyles.value,
+    ...newWrapperStyles,
+  }
 
   const groupVid = `vid_${generateNanoid()}`
 
@@ -862,7 +892,7 @@ function mergeToGroup() {
     _vid: groupVid,
     i: groupVid,
     moduleName: 'containerComponents',
-    componentKey: 'container',
+    componentKey: 'group',
     label: '组',
     adjustPosition: true,
     focus: false,
@@ -872,15 +902,11 @@ function mergeToGroup() {
     x: minX,
     y: minY,
     styles: {
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
+      position: 'relative',
+      overflow: 'visible',
+      width: '100%',
+      height: '100%',
       backgroundColor: 'transparent',
-      paddingTop: '0px',
-      paddingRight: '0px',
-      paddingLeft: '0px',
-      paddingBottom: '0px',
-      tempPadding: '0px',
     },
     hasResize: false,
     props: {
@@ -888,18 +914,6 @@ function mergeToGroup() {
         default: {
           key: 'default',
           children: selectedBlocks,
-        },
-        header: {
-          key: 'header',
-          children: [],
-        },
-        aside: {
-          key: 'aside',
-          children: [],
-        },
-        footer: {
-          key: 'footer',
-          children: [],
         },
       },
     },
@@ -1115,6 +1129,8 @@ defineExpose({
                         :slot-key="slotKey"
                         :parent-vid="item._vid"
                         :selected-block-ids="selectedBlockIds"
+                        :block-wrapper-styles="blockWrapperStyles"
+                        :disallow-drop="item.componentKey === 'group'"
                         :on-contextmenu-block="onContextmenuBlock"
                         :select-comp="selectComp"
                         :delete-comp="deleteComp"

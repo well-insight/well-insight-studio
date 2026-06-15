@@ -1,98 +1,344 @@
 <script lang="ts" setup>
 import type { VisualEditorBlockData } from '@/visual-editor/core/visual-editor.utils'
-import { Delete, Expand, Fold, List } from '@element-plus/icons-vue'
+import {
+  CopyDocument,
+  Delete,
+  Expand,
+  Fold,
+  List,
+  Rank,
+} from '@element-plus/icons-vue'
+import { isString } from 'lodash-es'
 import { computed, ref } from 'vue'
+import { SvgIcon } from '@/components/svg-icon'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
+import { generateNanoid } from '@/visual-editor/lib'
+import { visualConfig } from '@/visual.config'
 
-const { currentPage, currentBlock, setCurrentBlock } = useVisualData()
+const { currentPage, currentBlock, setCurrentBlock, recordHistory } = useVisualData()
 
 const blocks = computed(() => currentPage.value?.blocks ?? [])
-const layerTreeData = computed(() => transformToTreeData(blocks.value))
-const treeRef = ref<any>(null)
 
-const treeProps = {
-  label: 'label',
-  children: 'children',
+/** 树过滤器关键字 */
+const filterText = ref('')
+const treeRef = ref<any>(null)
+const treeData = computed(() => transformToTreeData(blocks.value))
+
+// ---- 工具函数 ----
+
+function getModuleColor(moduleName?: string): string {
+  const map: Record<string, string> = {
+    baseWidgets: 'var(--el-color-primary)',
+    containerComponents: 'var(--el-color-success)',
+    formWidgets: 'var(--el-color-warning)',
+    chartWidgets: 'var(--el-color-purple)',
+  }
+  return moduleName ? map[moduleName] || 'var(--el-text-color-secondary)' : 'var(--el-text-color-secondary)'
 }
 
-function resetFocus(nodes: VisualEditorBlockData[]) {
-  nodes.forEach((item) => {
-    item.focus = false
-    item.focusWithChild = false
-    const slots = item.props?.slots || {}
-    Object.keys(slots).forEach((key) => {
-      const children = slots[key]?.children
-      if (children) {
-        resetFocus(children)
+function getModuleLabel(moduleName?: string): string {
+  const map: Record<string, string> = {
+    baseWidgets: '基础',
+    containerComponents: '容器',
+    formWidgets: '表单',
+    chartWidgets: '图表',
+  }
+  return moduleName ? map[moduleName] || '' : ''
+}
+
+interface TreeNode extends Omit<VisualEditorBlockData, 'children'> {
+  children: TreeNode[]
+  /** 是否为插槽分组节点 */
+  isSlotGroup?: boolean
+  /** 插槽名称（slotGroup=true 时有效） */
+  slotKey?: string
+  /** 组件图标 class */
+  iconClass?: string
+  /** 所属模块颜色 */
+  moduleColor?: string
+  /** 模块中文简称 */
+  moduleLabel?: string
+}
+
+function transformToTreeData(data: VisualEditorBlockData[]): TreeNode[] {
+  // 数组末尾的元素在画布上层，展示在树顶部
+  return data.slice().reverse().map(item => buildTreeNode(item))
+}
+
+function buildTreeNode(item: VisualEditorBlockData): TreeNode {
+  const comp = visualConfig.componentMap[item.componentKey]
+  const iconClass = comp?.icon && isString(comp.icon) ? comp.icon : ''
+  const moduleColor = getModuleColor(item.moduleName)
+  const moduleLabel = getModuleLabel(item.moduleName)
+
+  const node: TreeNode = {
+    ...item,
+    children: [],
+    label: item.label || item.componentKey || item._vid,
+    iconClass,
+    moduleColor,
+    moduleLabel,
+  }
+
+  // 收集插槽子节点，将插槽名字作为分组标题
+  const slots = item.props?.slots || {}
+  const slotKeys = Object.keys(slots).filter(k => slots[k]?.children?.length)
+
+  if (slotKeys.length > 0) {
+    slotKeys.forEach((key) => {
+      const children = slots[key]?.children || []
+      if (children.length > 0) {
+        // 插槽分组标题节点
+        const slotGroup: TreeNode = {
+          _vid: `__slot_${item._vid}_${key}`,
+          i: '',
+          moduleName: item.moduleName,
+          componentKey: '',
+          label: `插槽：${key}`,
+          adjustPosition: false,
+          focus: false,
+          w: 0,
+          h: 0,
+          x: 0,
+          y: 0,
+          styles: {},
+          hasResize: false,
+          props: {},
+          draggable: false,
+          showStyleConfig: false,
+          actions: [],
+          events: [],
+          children: children.slice().reverse().map(child => buildTreeNode(child)),
+          isSlotGroup: true,
+          slotKey: key,
+        }
+        node.children.push(slotGroup)
       }
     })
-  })
+  }
+
+  return node
 }
 
-function findPathByLeafId(
-  leafId: string,
-  nodes: VisualEditorBlockData[] = [],
-  path: VisualEditorBlockData[] = [],
-): VisualEditorBlockData[] {
-  for (let i = 0; i < nodes.length; i++) {
-    const tmpPath = path.concat()
-    tmpPath.push(nodes[i])
-    if (leafId === nodes[i]._vid) {
-      return tmpPath
-    }
-    const slots = nodes[i].props?.slots || {}
-    const keys = Object.keys(slots)
-    for (let j = 0; j < keys.length; j++) {
-      const children = slots[keys[j]]?.children
-      if (children) {
-        const findResult = findPathByLeafId(leafId, children, tmpPath)
-        if (findResult.length) {
-          return findResult
+/** 递归过滤树节点 */
+function filterNode(value: string, data: TreeNode): boolean {
+  if (!value)
+    return true
+  const keyword = value.toLowerCase()
+  if (data.label?.toLowerCase().includes(keyword))
+    return true
+  if (data.componentKey?.toLowerCase().includes(keyword))
+    return true
+  if (data.children?.length) {
+    return data.children.some(child => filterNode(value, child))
+  }
+  return false
+}
+
+// ---- 树拖拽 ----
+
+/** 从实际数据中移除指定 _vid 的 block，返回被移除的 block */
+function removeBlockByVid(vid: string): VisualEditorBlockData | null {
+  const walk = (nodes: VisualEditorBlockData[]): VisualEditorBlockData | null => {
+    for (let i = 0; i < nodes.length; i++) {
+      if (nodes[i]._vid === vid) {
+        const removed = nodes.splice(i, 1)[0]
+        return removed
+      }
+      const slots = nodes[i].props?.slots || {}
+      for (const key of Object.keys(slots)) {
+        const children = slots[key]?.children
+        if (children) {
+          const found = walk(children)
+          if (found)
+            return found
         }
       }
     }
+    return null
   }
-  return []
+  return walk(blocks.value)
 }
 
-function collectSlotChildren(item: VisualEditorBlockData): VisualEditorBlockData[] {
-  const result: VisualEditorBlockData[] = []
-  const slots = item.props?.slots || {}
-
-  Object.keys(slots).forEach((slotKey) => {
-    const slotChildren = slots[slotKey]?.children
-    if (Array.isArray(slotChildren) && slotChildren.length) {
-      result.push(...transformToTreeData(slotChildren))
+/** 在实际数据中递归查找指定 _vid 的 block */
+function findBlockByVidRaw(vid: string, nodes: VisualEditorBlockData[]): VisualEditorBlockData | null {
+  for (const n of nodes) {
+    if (n._vid === vid)
+      return n
+    const slots = n.props?.slots || {}
+    for (const key of Object.keys(slots)) {
+      const children = slots[key]?.children
+      if (children) {
+        const found = findBlockByVidRaw(vid, children)
+        if (found)
+          return found
+      }
     }
-  })
-
-  return result
+  }
+  return null
 }
 
-function transformToTreeData(data: VisualEditorBlockData[]) {
-  return data.map((item) => {
-    const treeNode: VisualEditorBlockData = {
-      ...item,
-      children: [],
-      label: item.label || item.componentKey || item._vid,
+/** 解析拖拽放置的目标位置 */
+function resolveDropTarget(
+  dropNodeVid: string,
+  dropType: 'before' | 'after' | 'inner',
+): { parent: VisualEditorBlockData[], index: number } | null {
+  // inner → 放入容器的 default 插槽末尾
+  if (dropType === 'inner') {
+    const container = findBlockByVidRaw(dropNodeVid, blocks.value)
+    if (container?.props?.slots?.default?.children) {
+      return { parent: container.props.slots.default.children, index: container.props.slots.default.children.length }
     }
+    return null
+  }
 
-    treeNode.children = collectSlotChildren(item)
+  // 如果是插槽分组标题（__slot_ 前缀），代表拖到插槽分组上
+  if (dropNodeVid.startsWith('__slot_')) {
+    // 格式: __slot_{parentVid}_{slotKey}
+    const underscoreIdx = dropNodeVid.indexOf('__slot_') + 7
+    const afterPrefix = dropNodeVid.slice(underscoreIdx)
+    const firstUnderscore = afterPrefix.indexOf('_')
+    if (firstUnderscore === -1)
+      return null
+    const parentVid = afterPrefix.slice(0, firstUnderscore)
+    const slotKey = afterPrefix.slice(firstUnderscore + 1)
+    const container = findBlockByVidRaw(parentVid, blocks.value)
+    const children = container?.props?.slots?.[slotKey]?.children
+    if (!children)
+      return null
+    const idx = dropType === 'before' ? 0 : children.length
+    return { parent: children, index: idx }
+  }
 
-    return treeNode
-  })
+  // before / after 普通节点
+  const walk = (nodes: VisualEditorBlockData[]): { parent: VisualEditorBlockData[], index: number } | null => {
+    for (let i = 0; i < nodes.length; i++) {
+      if (nodes[i]._vid === dropNodeVid) {
+        return { parent: nodes, index: dropType === 'before' ? i : i + 1 }
+      }
+      const slots = nodes[i].props?.slots || {}
+      for (const key of Object.keys(slots)) {
+        const children = slots[key]?.children
+        if (children) {
+          const found = walk(children)
+          if (found)
+            return found
+        }
+      }
+    }
+    return null
+  }
+  return walk(blocks.value)
 }
 
-function selectBlock(node: VisualEditorBlockData) {
-  if (!node?._vid) {
+/** 检测 draggedVid 是否是 targetVid 的祖先（防止循环拖拽） */
+function isAncestorOf(draggedVid: string, targetVid: string): boolean {
+  if (draggedVid === targetVid)
+    return true
+  const target = findBlockByVidRaw(targetVid, blocks.value)
+  if (!target)
+    return false
+  const walk = (nodes: VisualEditorBlockData[]): boolean => {
+    for (const n of nodes) {
+      if (n._vid === draggedVid)
+        return true
+      const slots = n.props?.slots || {}
+      for (const key of Object.keys(slots)) {
+        const children = slots[key]?.children
+        if (children && walk(children))
+          return true
+      }
+    }
+    return false
+  }
+  return walk([target])
+}
+
+function handleNodeDrop(
+  draggingNode: { data: TreeNode, key: string },
+  dropNode: { data: TreeNode, key: string },
+  dropType: 'before' | 'after' | 'inner',
+) {
+  const draggedVid = draggingNode.data._vid
+  const dropVid = dropNode.data._vid
+
+  // 不允许拖拽插槽分组
+  if (draggingNode.data.isSlotGroup)
+    return
+
+  // 不允许放入自身或后代
+  if (isAncestorOf(draggedVid, dropVid))
+    return
+
+  // 移除被拖拽的 block
+  const movedBlock = removeBlockByVid(draggedVid)
+  if (!movedBlock)
+    return
+
+  // 解析目标位置
+  const target = resolveDropTarget(dropVid, dropType)
+  if (!target) {
+    // 如果目标位置解析失败，尝试放回根节点末尾
+    blocks.value.push(movedBlock)
     return
   }
 
+  // 插入到目标位置
+  target.parent.splice(target.index, 0, movedBlock)
+  selectBlockByVid(draggedVid)
+  recordHistory()
+}
+
+/** 根据 _vid 选中一个 block */
+function selectBlockByVid(vid: string) {
+  const node = findBlockByVidRaw(vid, blocks.value)
+  if (node)
+    selectBlock(node as TreeNode)
+}
+
+// ---- 交互 ----
+
+function selectBlock(node: TreeNode) {
+  if (!node?._vid || node.isSlotGroup)
+    return
+
+  // 清除所有 focus
+  const resetFocus = (nodes: VisualEditorBlockData[]) => {
+    nodes.forEach((item) => {
+      item.focus = false
+      item.focusWithChild = false
+      const slots = item.props?.slots || {}
+      Object.keys(slots).forEach((key) => {
+        const children = slots[key]?.children
+        if (children)
+          resetFocus(children)
+      })
+    })
+  }
+
   resetFocus(blocks.value)
-  const path = findPathByLeafId(node._vid, blocks.value)
-  path.forEach((item) => {
-    item.focusWithChild = true
-  })
+
+  // 高亮路径
+  const findPath = (leafId: string, nodes: VisualEditorBlockData[], path: VisualEditorBlockData[] = []): VisualEditorBlockData[] => {
+    for (const n of nodes) {
+      const p = [...path, n]
+      if (n._vid === leafId)
+        return p
+      const slots = n.props?.slots || {}
+      for (const key of Object.keys(slots)) {
+        const children = slots[key]?.children
+        if (children) {
+          const found = findPath(leafId, children, p)
+          if (found.length)
+            return found
+        }
+      }
+    }
+    return []
+  }
+
+  const path = findPath(node._vid, blocks.value)
+  path.forEach(item => (item.focusWithChild = true))
   node.focus = true
   setCurrentBlock(node)
 }
@@ -106,30 +352,57 @@ function collapseAll() {
 }
 
 function deleteCurrentBlock() {
-  if (!currentBlock.value?._vid) {
+  if (!currentBlock.value?._vid)
     return
-  }
-  if (removeBlockById(currentBlock.value._vid, blocks.value)) {
-    setCurrentBlock({} as VisualEditorBlockData)
-  }
-}
-
-function removeBlockById(id: string, nodes: VisualEditorBlockData[] = []): boolean {
-  for (let i = 0; i < nodes.length; i++) {
-    if (nodes[i]._vid === id) {
-      nodes.splice(i, 1)
-      return true
-    }
-    const slots = nodes[i].props?.slots || {}
-    const keys = Object.keys(slots)
-    for (let j = 0; j < keys.length; j++) {
-      const children = slots[keys[j]]?.children
-      if (children && removeBlockById(id, children)) {
+  const removeById = (id: string, nodes: VisualEditorBlockData[]): boolean => {
+    for (let i = nodes.length - 1; i >= 0; i--) {
+      if (nodes[i]._vid === id) {
+        nodes.splice(i, 1)
         return true
       }
+      const slots = nodes[i].props?.slots || {}
+      for (const key of Object.keys(slots)) {
+        const children = slots[key]?.children
+        if (children && removeById(id, children))
+          return true
+      }
     }
+    return false
   }
-  return false
+  if (removeById(currentBlock.value._vid, blocks.value))
+    setCurrentBlock({} as VisualEditorBlockData)
+}
+
+function duplicateNode(node: TreeNode) {
+  if (node.isSlotGroup)
+    return
+  const setNewVid = (n: VisualEditorBlockData) => {
+    n._vid = `vid_${generateNanoid()}`
+    n.focus = false
+    const slots = n.props?.slots || {}
+    Object.keys(slots).forEach((key) => {
+      slots[key]?.children?.forEach((child: VisualEditorBlockData) => setNewVid(child))
+    })
+  }
+  const cloneNode = (id: string, nodes: VisualEditorBlockData[]): boolean => {
+    for (let i = 0; i < nodes.length; i++) {
+      if (nodes[i]._vid === id) {
+        const copy = JSON.parse(JSON.stringify(nodes[i]))
+        setNewVid(copy)
+        nodes.splice(i + 1, 0, copy)
+        return true
+      }
+      const slots = nodes[i].props?.slots || {}
+      for (const key of Object.keys(slots)) {
+        const children = slots[key]?.children
+        if (children && cloneNode(id, children))
+          return true
+      }
+    }
+    return false
+  }
+  if (node._vid)
+    cloneNode(node._vid, blocks.value)
 }
 </script>
 
@@ -138,7 +411,7 @@ function removeBlockById(id: string, nodes: VisualEditorBlockData[] = []): boole
     title="画布层级"
     placement="bottom"
     trigger="click"
-    width="320"
+    width="340"
     transition="el-zoom-in-top"
     :popper-class="$style['page-setting-popover']"
   >
@@ -149,12 +422,13 @@ function removeBlockById(id: string, nodes: VisualEditorBlockData[] = []): boole
     </template>
 
     <div class="w-full h-full flex flex-col">
-      <el-space class="mx-3 my-2">
+      <!-- 工具栏 -->
+      <el-space class="mx-3 my-2" wrap>
         <el-button link :icon="Expand" @click="expandAll">
-          展开全部
+          展开
         </el-button>
         <el-button link :icon="Fold" @click="collapseAll">
-          收起全部
+          收起
         </el-button>
         <el-button
           link
@@ -163,29 +437,119 @@ function removeBlockById(id: string, nodes: VisualEditorBlockData[] = []): boole
           :disabled="!currentBlock?._vid"
           @click="deleteCurrentBlock"
         >
-          删除选中
+          删除
         </el-button>
       </el-space>
+
+      <!-- 搜索框 -->
+      <div :class="$style['search-box']">
+        <el-input
+          v-model="filterText"
+          placeholder="搜索组件..."
+          clearable
+          :prefix-icon="List"
+        />
+      </div>
+
+      <!-- 树 -->
       <el-scrollbar :class="$style['page-setting-panel']">
         <el-tree
           ref="treeRef"
-          :data="layerTreeData"
-          :props="treeProps"
+          :data="treeData"
+          :props="{ children: 'children', label: 'label' }"
           node-key="_vid"
           default-expand-all
           highlight-current
+          draggable
           :current-node-key="currentBlock?._vid"
-          class="custom-el-tree-wrapper"
+          :filter-node-method="filterNode"
+          :allow-drag="(node: any) => !node.data.isSlotGroup"
+          :allow-drop="(draggingNode: any, dropNode: any, type: string) => {
+            // 不能拖到插槽分组内部或前后
+            if (dropNode.data.isSlotGroup && type !== 'inner') return false
+            return true
+          }"
+          :class="$style['drag-tree']"
           @current-change="selectBlock"
+          @node-drop="handleNodeDrop"
         >
-          <template #default="{ node, data }">
-            <el-space>
-              <span>{{ node.label }}</span>
-              <span class="node-meta">{{ data.componentKey }}</span>
-            </el-space>
+          <template #default="{ data }: { data: TreeNode }">
+            <!-- 插槽分组标题 -->
+            <div
+              v-if="data.isSlotGroup"
+              :class="$style['slot-group-header']"
+            >
+              <span :class="$style['slot-label']">{{ data.slotKey }}</span>
+              <span :class="$style['slot-count']">{{ data.children.length }}</span>
+            </div>
+
+            <!-- 普通节点 -->
+            <div
+              v-else
+              :class="$style['tree-node']"
+              @mouseenter="data.focusWithChild = true"
+              @mouseleave="data.focusWithChild = false"
+            >
+              <!-- 拖拽手柄 -->
+              <el-icon :class="$style['drag-handle-icon']" class="drag-handle-icon">
+                <Rank />
+              </el-icon>
+
+              <!-- 图标 -->
+              <SvgIcon
+                v-if="data.iconClass"
+                :name="data.iconClass"
+                :class="$style['node-icon']"
+                :style="{ color: data.moduleColor }"
+              />
+              <span v-else :class="$style['node-icon-placeholder']" />
+
+              <!-- 名称 -->
+              <span :class="$style['node-label']">{{ data.label }}</span>
+
+              <!-- 类型标签 -->
+              <span
+                v-if="data.moduleLabel"
+                :class="$style['node-type-badge']"
+                :style="{
+                  background: `var(--el-color-primary-light-9)`,
+                  color: data.moduleColor,
+                }"
+              >
+                {{ data.moduleLabel }}
+              </span>
+
+              <!-- 快速操作 -->
+              <span :class="$style['node-actions']" @click.stop>
+                <el-tooltip content="复制" placement="top">
+                  <el-button
+                    link
+                    size="small"
+                    :icon="CopyDocument"
+                    :class="$style['action-btn']"
+                    @click="duplicateNode(data)"
+                  />
+                </el-tooltip>
+                <el-tooltip content="删除" placement="top">
+                  <el-button
+                    link
+                    size="small"
+                    type="danger"
+                    :icon="Delete"
+                    :class="$style['action-btn']"
+                    @click="deleteCurrentBlock"
+                  />
+                </el-tooltip>
+              </span>
+            </div>
           </template>
         </el-tree>
       </el-scrollbar>
+
+      <!-- 底部统计 -->
+      <div :class="$style['footer-bar']">
+        <span>共 {{ treeData.length }} 个根节点</span>
+      </div>
     </div>
   </el-popover>
 </template>
@@ -198,7 +562,7 @@ function removeBlockById(id: string, nodes: VisualEditorBlockData[] = []): boole
   --el-popover-padding: 0;
   --el-popover-border-radius: 12px;
 
-  width: 320px !important;
+  width: 340px !important;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -213,17 +577,210 @@ function removeBlockById(id: string, nodes: VisualEditorBlockData[] = []): boole
     border-bottom: 1px solid var(--el-border-color-lighter);
     flex-shrink: 0;
   }
+}
 
-  .page-setting-panel {
-    padding: 0 8px;
-    width: 320px;
-    height: min(460px, calc(100vh - 220px));
-    max-height: min(460px, calc(100vh - 220px));
-    box-sizing: border-box;
+.search-box {
+  padding: 0 12px 8px;
+
+  :global(.el-input) {
+    --el-input-border-radius: 8px;
   }
+}
+
+.page-setting-panel {
+  padding: 0 4px;
+  width: 340px;
+  height: min(420px, calc(100vh - 280px));
+  max-height: min(420px, calc(100vh - 280px));
+  box-sizing: border-box;
 
   :global(.el-scrollbar__wrap) {
-    max-height: min(460px, calc(100vh - 220px));
+    max-height: min(420px, calc(100vh - 280px));
   }
+
+  // 树节点样式
+  :global(.el-tree-node__content) {
+    height: auto;
+    min-height: 36px;
+    padding: 2px 0;
+    border-radius: 6px;
+    transition: background-color 0.15s;
+
+    &:hover {
+      background-color: var(--el-color-primary-light-9);
+    }
+  }
+
+  :global(.el-tree-node.is-current > .el-tree-node__content) {
+    background-color: var(--el-color-primary-light-8);
+  }
+
+  // 插槽分组缩进
+  :global(.el-tree-node__children) .el-tree-node__children .el-tree-node__content {
+    padding-left: 44px !important;
+  }
+}
+
+/* 拖拽中的样式 */
+:global(.el-tree-dragging) {
+  :global(.el-tree-node__content) {
+    opacity: 0.5;
+  }
+}
+
+.drag-tree {
+  :global(.el-tree-node.is-dragging) {
+    > .el-tree-node__content {
+      background-color: var(--el-color-primary-light-7);
+      opacity: 0.8;
+      box-shadow: 0 0 0 2px var(--el-color-primary);
+      border-radius: 6px;
+    }
+  }
+
+  :global(.el-tree-node.is-drop-inner) {
+    > .el-tree-node__content {
+      background-color: var(--el-color-primary-light-8);
+      outline: 2px dashed var(--el-color-primary);
+      outline-offset: -2px;
+      border-radius: 6px;
+    }
+  }
+
+  :global(.el-tree-node.before-drop),
+  :global(.el-tree-node.after-drop) {
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 24px;
+      right: 8px;
+      height: 2px;
+      background: var(--el-color-primary);
+      z-index: 10;
+      border-radius: 1px;
+    }
+  }
+
+  :global(.el-tree-node.before-drop)::before {
+    top: 0;
+  }
+
+  :global(.el-tree-node.after-drop)::before {
+    bottom: 0;
+  }
+
+  // 拖拽手柄图标提示
+  :global(.el-tree-node__content:hover .drag-handle-icon) {
+    opacity: 1;
+  }
+}
+
+.drag-handle-icon {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--el-text-color-disabled);
+  opacity: 0;
+  transition: opacity 0.15s;
+  cursor: grab;
+  margin-right: 2px;
+}
+
+/* ---- 插槽分组标题 ---- */
+.slot-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 8px;
+  cursor: default;
+  user-select: none;
+
+  .slot-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--el-text-color-placeholder);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .slot-count {
+    font-size: 10px;
+    color: var(--el-text-color-disabled);
+    background: var(--el-fill-color);
+    padding: 0 6px;
+    border-radius: 8px;
+    line-height: 16px;
+  }
+}
+
+/* ---- 树节点 ---- */
+.tree-node {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 4px 6px;
+  min-height: 30px;
+}
+
+.node-icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  font-size: 16px;
+}
+
+.node-icon-placeholder {
+  flex-shrink: 0;
+  width: 18px;
+}
+
+.node-label {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.node-type-badge {
+  flex-shrink: 0;
+  font-size: 10px;
+  padding: 0 6px;
+  line-height: 18px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.node-actions {
+  display: none;
+  flex-shrink: 0;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.tree-node:hover .node-actions {
+  display: flex;
+}
+
+.action-btn {
+  --el-button-size: 22px;
+  font-size: 13px;
+  padding: 0 2px;
+}
+
+/* ---- 底部统计 ---- */
+.footer-bar {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-top: 1px solid var(--el-border-color-lighter);
+  font-size: 11px;
+  color: var(--el-text-color-disabled);
+  flex-shrink: 0;
 }
 </style>

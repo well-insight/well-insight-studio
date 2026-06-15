@@ -12,7 +12,6 @@ import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 // import SimulatorEditor from "@/visual-editor/ui/canvas/simulator-editor/SimulatorEditor.vue";
 import SimulatorEditor from '@/visual-editor/ui/canvas/simulator-grid-editor/SimulatorEditor.vue'
-import { CustomComponents } from '@/visual-editor/ui/workbench/component-list'
 import LeftAside from '@/visual-editor/ui/workbench/left-aside/LeftAside.vue'
 
 const route = useRoute()
@@ -189,8 +188,6 @@ onUnmounted(() => {
       >
         <RightAttributePanel />
       </ELayoutSider> -->
-
-      <CustomComponents />
     </ELayout>
   </div>
 </template>
