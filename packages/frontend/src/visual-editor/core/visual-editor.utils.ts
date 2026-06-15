@@ -450,8 +450,8 @@ export function createNewBlock(
     label: component!.label,
     adjustPosition: true,
     focus: false,
-    w: component.props?.width || (component.moduleName === 'chartWidgets' ? 6 : 2),
-    h: component.props?.height || (component.moduleName === 'chartWidgets' ? 8 : 4),
+    w: component.props?.width || 24,
+    h: component.props?.height || 8,
     styles: {
       display: 'flex',
       justifyContent: 'center',

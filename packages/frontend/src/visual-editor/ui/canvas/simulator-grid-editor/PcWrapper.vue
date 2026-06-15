@@ -6,7 +6,7 @@ import { useMouseInElement, useResizeObserver } from '@vueuse/core'
 import { vLoading } from 'element-plus'
 import { cloneDeep, debounce, throttle } from 'lodash-es'
 import { storeToRefs } from 'pinia'
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, useTemplateRef } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { GridLayout } from '@/components/grid-layout-plus'
 import { useAnimate } from '@/hooks/useAnimate'
@@ -43,10 +43,6 @@ const props = withDefaults(defineProps<{
 const emits = defineEmits<{
   changeScale: [value: number]
 }>()
-
-function getBlockBorderStyle(item: VisualEditorBlockData): CSSProperties {
-  return resolveBlockBorderCss(item, currentPage.value?.config)
-}
 
 const currentScale = ref(props?.scale)
 
@@ -144,6 +140,10 @@ function mouseWheel(e: any) {
       currentScale.value = currentScale.value + 5
     }
   }
+}
+
+function getBlockBorderStyle(item: VisualEditorBlockData): CSSProperties {
+  return resolveBlockBorderCss(item, currentPage.value?.config)
 }
 
 /**
@@ -255,7 +255,17 @@ function syncMousePosition(event: MouseEvent) {
 }
 
 const dropId = 'drop'
-const dragItem = { x: -1, y: -1, w: 10, h: 10, i: '' }
+const dragItem = ref(defaultDragItem())
+
+function defaultDragItem() {
+  return {
+    x: -1,
+    y: -1,
+    i: '',
+    w: 10,
+    h: 10,
+  }
+}
 
 const dragging = throttle(() => {
   const parentRect = wrapper.value?.getBoundingClientRect()
@@ -271,8 +281,10 @@ const dragging = throttle(() => {
 
   if (mouseInGrid && !currentPage.value.blocks.some(item => item.i === dropId)) {
     const colNum = gridColNum.value
-    const moveData = { ...controlStore.moveVisualData, x: (currentPage.value.blocks.length * 10) % colNum, y: currentPage.value.blocks.length + 5, w: 10, h: 10, i: dropId }
-
+    const moveData = { ...controlStore.moveVisualData, x: (currentPage.value.blocks.length * 10) % colNum, y: currentPage.value.blocks.length + 5, i: dropId }
+    dragItem.value.h = moveData?.h
+    dragItem.value.w = moveData?.w
+    dragItem.value.i = dropId
     currentPage.value.blocks.push(moveData)
   }
 
@@ -287,7 +299,9 @@ const dragging = throttle(() => {
     try {
       item.wrapper.style.display = 'none'
     }
-    catch (e) {}
+    catch (error) {
+      console.warn(error)
+    }
 
     Object.assign(item.state, {
       top: mouseAt.y - parentRect.top,
@@ -296,13 +310,13 @@ const dragging = throttle(() => {
     const newPos = item.calcXY(mouseAt.y - parentRect.top, mouseAt.x - parentRect.left)
 
     if (mouseInGrid) {
-      gridLayout.value.dragEvent('dragstart', dropId, newPos.x, newPos.y, dragItem.h, dragItem.w)
-      dragItem.i = String(index)
-      dragItem.x = currentPage.value.blocks[index].x
-      dragItem.y = currentPage.value.blocks[index].y
+      gridLayout.value.dragEvent('dragstart', dropId, newPos.x, newPos.y, dragItem.value.h, dragItem.value.w)
+      dragItem.value.i = String(index)
+      dragItem.value.x = currentPage.value.blocks[index].x
+      dragItem.value.y = currentPage.value.blocks[index].y
     }
     else {
-      gridLayout.value.dragEvent('dragend', dropId, newPos.x, newPos.y, dragItem.h, dragItem.w)
+      gridLayout.value.dragEvent('dragend', dropId, newPos.x, newPos.y, dragItem.value.h, dragItem.value.w)
       currentPage.value.blocks = currentPage.value.blocks.filter(item => item.i !== dropId)
     }
   }
@@ -322,7 +336,7 @@ function dragEnd() {
 
   if (mouseInGrid) {
     // alert(`Dropped element props:\n${JSON.stringify(dragItem, ['x', 'y', 'w', 'h'], 2)}`)
-    gridLayout.value.dragEvent('dragend', dropId, dragItem.x, dragItem.y, dragItem.h, dragItem.w)
+    gridLayout.value.dragEvent('dragend', dropId, dragItem.value.x, dragItem.value.y, dragItem.value.h, dragItem.value.w)
 
     currentPage.value.blocks = currentPage.value.blocks.filter(item => item.i !== dropId)
   }
@@ -333,10 +347,10 @@ function dragEnd() {
   // 获取拖拽传递的数据
   const moveData = {
     ...controlStore.moveVisualData,
-    x: dragItem.x,
-    y: dragItem.y,
-    w: dragItem.w,
-    h: dragItem.h,
+    x: dragItem.value.x,
+    y: dragItem.value.y,
+    w: dragItem.value.w,
+    h: dragItem.value.h,
     i: controlStore.moveVisualData?._vid ?? controlStore.moveVisualData?.i,
   }
 
@@ -344,7 +358,7 @@ function dragEnd() {
   selectComp(moveData)
   controlStore.setMoveVisualData(null)
 
-  gridLayout.value.dragEvent('dragend', dragItem.i, dragItem.x, dragItem.y, dragItem.h, dragItem.w)
+  gridLayout.value.dragEvent('dragend', dragItem.value.i, dragItem.value.x, dragItem.value.y, dragItem.value.h, dragItem.value.w)
 
   const item = gridLayout.value.getItem(dropId)
 
@@ -354,7 +368,11 @@ function dragEnd() {
   try {
     item.wrapper.style.display = ''
   }
-  catch (e) {}
+  catch (error) {
+    console.warn(error)
+  }
+
+  dragItem.value = defaultDragItem()
 
   recordHistory()
 }
@@ -464,6 +482,10 @@ function onCanvasMousedown(e: MouseEvent) {
   }
 }
 
+function onDragover(e: DragEvent) {
+  e.preventDefault()
+}
+
 function onLayoutUpdated() {
   const focused = currentPage.value.blocks.find(item => item._vid === currentBlock.value?._vid)
   if (focused) {
@@ -476,7 +498,6 @@ function onLayoutUpdated() {
  * 删除组件
  */
 function deleteComp(block: VisualEditorBlockData, parentBlocks = currentPage.value.blocks) {
-  console.log(block, 'block')
   const index = parentBlocks.findIndex(item => item._vid === block._vid)
   if (index !== -1) {
     delete globalProperties.$$refs[parentBlocks[index]._vid]
@@ -629,6 +650,7 @@ defineExpose({
         v-loading="visualLoading"
         class="edit-canvas"
         :style="editCanvasStyle"
+        @dragover="onDragover"
         @mousedown="onCanvasMousedown"
       >
         <div class="edit-canvas-inner">

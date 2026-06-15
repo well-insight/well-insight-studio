@@ -8,14 +8,18 @@ import {
 import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { computed, ref, toRaw, toValue } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { updateApplication } from '@/api/application'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { localKey, useVisualData } from '@/visual-editor/hooks/useVisualData'
+import CanvasLayerDropdown from './components/CanvasLayerDropdown.vue'
 import PageSettingButton from './components/PageSetting.vue'
 import Preview from './components/Preview.vue'
 
 const workspaceStore = useWorkspaceStore()
 const { currentApp } = storeToRefs(workspaceStore)
+const router = useRouter()
+const route = useRoute()
 
 const { jsonData, saveStatus, saveError, isDirty, canUndo, canRedo, saveProject, undo, redo }
   = useVisualData()
@@ -118,13 +122,15 @@ async function triggerClient() {
 
 function previewPage() {
   sessionStorage.setItem(localKey, JSON.stringify(toRaw(toValue(jsonData))))
-  previewVisible.value = true
+  // previewVisible.value = true
+  window.open(`${location.origin + location.pathname}#/project/application/view/${route?.params?.id?.[0]}`, '_blank')
 }
 </script>
 
 <template>
   <div class="border-bottom-1 flex h-full w-full items-center gap-2 overflow-hidden px-4">
     <div class="flex h-full min-w-0 flex-1 items-center gap-2 overflow-hidden">
+      <CanvasLayerDropdown />
       <PageSettingButton />
       <div class="w-0 flex-auto">
         <slot name="center" />

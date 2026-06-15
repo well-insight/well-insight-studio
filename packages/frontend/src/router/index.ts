@@ -21,6 +21,14 @@ const routes2: RouteRecordRaw[] = [
     redirect: '/project/application',
     children: [
       {
+        path: '/project/application/view/:id(.*)*',
+        name: 'ApplicationView',
+        component: () => import('@/views/application/AppView.vue'),
+        meta: {
+          title: '应用预览',
+        },
+      },
+      {
         path: 'project',
         name: 'Project',
         redirect: '/project/application',
