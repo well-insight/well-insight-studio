@@ -199,6 +199,7 @@ onMounted(() => {
   keyEvent()
 
   nextTick(() => {
+    syncGroupWrapperStyles()
     setTimeout(() => {
       initAnimate()
     }, 1000)
@@ -232,6 +233,108 @@ const gridColNum = computed(() => {
   const designWidth = currentPage.value?.config?.pageSize?.width || 1920
   return Math.max(1, Math.floor(designWidth / 15))
 })
+
+function getGridMetrics() {
+  const rowHeight = 15
+  const gridEl = document.querySelector('.grid-layout-canvas') as HTMLElement | null
+  const containerWidth = gridEl?.clientWidth || currentPage.value?.config?.pageSize?.width || 1920
+  const colWidth = containerWidth / gridColNum.value
+  return { rowHeight, colWidth }
+}
+
+function buildGroupInnerWrapperStyle(
+  block: VisualEditorBlockData,
+  relX: number,
+  relY: number,
+  colWidth: number,
+  rowHeight: number,
+): CSSProperties {
+  const savedLeft = block.styles?.left
+  const savedTop = block.styles?.top
+  if (savedLeft != null && savedTop != null) {
+    return {
+      position: 'absolute',
+      left: typeof savedLeft === 'number' ? `${savedLeft}px` : String(savedLeft),
+      top: typeof savedTop === 'number' ? `${savedTop}px` : String(savedTop),
+      width: block.styles?.width || `${Math.round((block.w || 24) * colWidth)}px`,
+      height: block.styles?.height || `${Math.round((block.h || 8) * rowHeight)}px`,
+      margin: '0',
+      flex: 'none',
+      overflow: 'visible',
+    }
+  }
+
+  return {
+    position: 'absolute',
+    left: `${Math.round(relX * colWidth)}px`,
+    top: `${Math.round(relY * rowHeight)}px`,
+    width: `${Math.round((block.w || 24) * colWidth)}px`,
+    height: `${Math.round((block.h || 8) * rowHeight)}px`,
+    margin: '0',
+    flex: 'none',
+    overflow: 'visible',
+  }
+}
+
+/** 根据页面中的组块，同步组内组件的绝对定位样式 */
+function syncGroupWrapperStyles() {
+  const { rowHeight, colWidth } = getGridMetrics()
+  const styles: Record<string, CSSProperties> = { ...blockWrapperStyles.value }
+
+  const syncGroupChildren = (blocks: VisualEditorBlockData[]) => {
+    blocks.forEach((block) => {
+      if (block.componentKey === 'group') {
+        const children = block.props?.slots?.default?.children || []
+        children.forEach((child: VisualEditorBlockData) => {
+          const existing = styles[child._vid]
+          styles[child._vid] = existing
+            ? {
+                ...existing,
+                width: `${Math.round((child.w || 24) * colWidth)}px`,
+                height: `${Math.round((child.h || 8) * rowHeight)}px`,
+              }
+            : buildGroupInnerWrapperStyle(child, child.x || 0, child.y || 0, colWidth, rowHeight)
+        })
+      }
+
+      const slots = block.props?.slots || {}
+      Object.keys(slots).forEach((key) => {
+        const children = slots[key]?.children
+        if (children)
+          syncGroupChildren(children)
+      })
+    })
+  }
+
+  syncGroupChildren(currentPage.value.blocks)
+  blockWrapperStyles.value = styles
+}
+
+/** 更新组内组件拖拽后的位置 */
+function updateGroupInnerBlockPosition(vid: string, left: number, top: number) {
+  const prev = blockWrapperStyles.value[vid] || {}
+  blockWrapperStyles.value = {
+    ...blockWrapperStyles.value,
+    [vid]: {
+      ...prev,
+      left: `${Math.round(left)}px`,
+      top: `${Math.round(top)}px`,
+    },
+  }
+
+  const block = findBlockByVid(vid, currentPage.value.blocks)
+  if (block) {
+    block.styles = {
+      ...(block.styles || {}),
+      left: `${Math.round(left)}px`,
+      top: `${Math.round(top)}px`,
+    }
+  }
+}
+
+function onGroupInnerDragEnd() {
+  recordHistory()
+}
 
 onMounted(() => {
   document.addEventListener('dragover', syncMousePosition)
@@ -899,27 +1002,40 @@ function mergeToGroup() {
   })
 
   // 保留子组件在组内的相对位置
-  const designWidth = currentPage.value?.config?.pageSize?.width || 1920
-  const colNum = Math.max(1, Math.floor(designWidth / 15))
-  const colWidth = designWidth / colNum
   const rowHeight = 15
+  // 从实际渲染的网格布局获取列宽
+  const gridEl = document.querySelector('.grid-layout-canvas') as HTMLElement | null
+  const containerWidth = gridEl?.clientWidth || currentPage.value?.config?.pageSize?.width || 1920
+  const colNum = Math.max(1, Math.floor((currentPage.value?.config?.pageSize?.width || 1920) / 15))
+  const colWidth = containerWidth / colNum
 
   const newWrapperStyles: Record<string, CSSProperties> = {}
   selectedBlocks.forEach((b) => {
     const relX = b.x - minX
     const relY = b.y - minY
-    // 将定位样式放在外层包装上（SlotItem 的 .list-group-item）
+    const left = `${Math.round(relX * colWidth)}px`
+    const top = `${Math.round(relY * rowHeight)}px`
+    const width = `${Math.round((b.w || 24) * colWidth)}px`
+    const height = `${Math.round((b.h || 8) * rowHeight)}px`
+    // 用实际网格列宽计算像素位置，保持与合并前一致的视觉位置和大小
     newWrapperStyles[b._vid] = {
       position: 'absolute',
-      left: `${relX * colWidth}px`,
-      top: `${relY * rowHeight}px`,
-      width: `${(b.w || 24) * colWidth}px`,
-      height: `${(b.h || 8) * rowHeight}px`,
+      left,
+      top,
+      width,
+      height,
       margin: '0',
       flex: 'none',
+      overflow: 'visible',
     }
-    // block 自身 styles 保持干净
-    b.styles = b.styles || {}
+    b.styles = {
+      ...(b.styles || {}),
+      position: 'absolute',
+      left,
+      top,
+      width,
+      height,
+    }
     b.x = 0
     b.y = 0
     b.focus = false
@@ -1084,7 +1200,10 @@ function initAnimate() {
 
 watch(visualLoading, (value, oldValue) => {
   if (!value && oldValue) {
-    initAnimate()
+    nextTick(() => {
+      syncGroupWrapperStyles()
+      initAnimate()
+    })
   }
 })
 
@@ -1179,6 +1298,8 @@ defineExpose({
                         :on-contextmenu-block="onContextmenuBlock"
                         :select-comp="selectComp"
                         :delete-comp="deleteComp"
+                        :update-group-inner-block-position="updateGroupInnerBlockPosition"
+                        :on-group-inner-drag-end="onGroupInnerDragEnd"
                       />
                     </template>
                   </CompRender>
@@ -1260,6 +1381,11 @@ defineExpose({
   overflow: hidden;
   outline: none;
 
+  /* 组内的组件不需要滚动条 */
+  &.inner {
+    overflow: visible;
+  }
+
   /* 选中/悬停描边置于最上层，避免被内部内容背景遮盖 */
   &::after {
     content: '';
@@ -1302,6 +1428,11 @@ defineExpose({
   width: 100%;
   display: flex;
   overflow: hidden;
+
+  /* 组内的组件不需要滚动条 */
+  :deep(.list-group-item.inner) & {
+    overflow: visible;
+  }
 }
 
 /* 卡片内顶部标题（参考图：左上、加粗、深色） */
