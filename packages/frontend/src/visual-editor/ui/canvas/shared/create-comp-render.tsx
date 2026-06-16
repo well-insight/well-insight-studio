@@ -19,6 +19,20 @@ export function createCompRender(name = 'CompRender') {
     setup(props) {
       const blockStyles = computed(() => {
         const { tempPadding, ...rest } = props.element.styles || {}
+        // 组内定位由外层 blockWrapperStyles 负责，避免污染 comp-render-root 的 flex 布局
+        if (props.element.groupInnerLayout) {
+          const {
+            position: _p,
+            left: _l,
+            top: _t,
+            right: _r,
+            bottom: _b,
+            width: _w,
+            height: _h,
+            ...clean
+          } = rest
+          return clean
+        }
         return rest
       })
 

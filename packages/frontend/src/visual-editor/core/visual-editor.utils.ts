@@ -55,6 +55,13 @@ export interface VisualEditorBlockData extends GridItemProps {
   actions: Action[]
   /** 组件事件集合 */
   events: { label: string, value: string }[]
+  /** 组内绝对定位（仅作用于外层包装，不参与组件内容渲染） */
+  groupInnerLayout?: {
+    left: string
+    top: string
+    width: string
+    height: string
+  }
   [prop: string]: any
 }
 /**
@@ -403,6 +410,13 @@ export function stripBlockEditorEphemeral(block: VisualEditorBlockData): VisualE
     ...block,
     focus: false,
     focusWithChild: false,
+  }
+  if (next._groupEditLocked || (next.componentKey === 'group' && next.static)) {
+    delete next._groupEditLocked
+    delete next.static
+    delete next.isDraggable
+    delete next.isResizable
+    delete next.dragIgnoreFrom
   }
   const slots = next.props?.slots as Record<string, { children?: VisualEditorBlockData[] }> | undefined
   if (slots) {

@@ -7,7 +7,7 @@ export default {
   key: 'group',
   moduleName: 'containerComponents',
   label: '组',
-  icon: 'comp-icon-container',
+  icon: 'comp-icon-group',
   preview: () => <div style={{ padding: '12px', border: '1px dashed #409eff', borderRadius: '6px', fontSize: '12px', color: '#409eff', textAlign: 'center' }}>组</div>,
   render: ({ props, styles, block }) => {
     const slots = useSlots()

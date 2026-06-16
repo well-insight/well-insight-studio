@@ -60,6 +60,9 @@ const { floatingSettingVisible } = storeToRefs(controlStore)
 const drag = ref(false)
 const selectedBlockIds = ref<string[]>([])
 
+/** 当前处于组内编辑模式的组 _vid（双击组进入，Esc/点击画布退出） */
+const editingGroupId = ref<string | null>(null)
+
 /** 子块的外层包装样式映射（用于组内绝对定位） */
 const blockWrapperStyles = ref<Record<string, CSSProperties>>({})
 
@@ -180,6 +183,14 @@ function keyEvent() {
         deleteComp()
       }
     }
+    // Esc 退出组内编辑模式
+    if (e.code === 'Escape' && editingGroupId.value && !isOutside.value) {
+      const group = findBlockByVid(editingGroupId.value, currentPage.value.blocks)
+      exitGroupEditMode()
+      if (group)
+        selectComp(group)
+      e.preventDefault()
+    }
   })
   document.addEventListener('keyup', (e: any) => {
     if (e && e.code === 'Space') {
@@ -199,6 +210,8 @@ onMounted(() => {
   keyEvent()
 
   nextTick(() => {
+    resetAllGroupGridLocks()
+    syncGroupGridAfterLockChange()
     syncGroupWrapperStyles()
     setTimeout(() => {
       initAnimate()
@@ -234,43 +247,136 @@ const gridColNum = computed(() => {
   return Math.max(1, Math.floor(designWidth / 15))
 })
 
-function getGridMetrics() {
+type GridLayoutMetrics = {
+  containerWidth: number
+  cols: number
+  rowHeight: number
+  margin: [number, number]
+}
+
+function getGridMetrics(): GridLayoutMetrics & { colWidth: number } {
   const rowHeight = 15
+  const margin: [number, number] = [0, 0]
   const gridEl = document.querySelector('.grid-layout-canvas') as HTMLElement | null
   const containerWidth = gridEl?.clientWidth || currentPage.value?.config?.pageSize?.width || 1920
-  const colWidth = containerWidth / gridColNum.value
-  return { rowHeight, colWidth }
+  const cols = gridColNum.value
+  const totalSpace = containerWidth - margin[0] * (cols + 1)
+  const colWidth = totalSpace / cols
+  return { rowHeight, colWidth, containerWidth, cols, margin }
+}
+
+/** 与 grid-layout-plus 中 calcGridColLeft 保持一致 */
+function calcGridColLeft(col: number, metrics: GridLayoutMetrics) {
+  const totalSpace = metrics.containerWidth - metrics.margin[0] * (metrics.cols + 1)
+  return Math.round(totalSpace * col / metrics.cols) + metrics.margin[0] * (col + 1)
+}
+
+/** 与 grid-layout-plus 中 calcGridRowTop 保持一致 */
+function calcGridRowTop(row: number, metrics: GridLayoutMetrics) {
+  return Math.round(metrics.rowHeight * row) + metrics.margin[1] * (row + 1)
+}
+
+/** 计算网格项在画布中的像素矩形（与 GridItem calcPosition 一致） */
+function calcGridItemPixelRect(
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  metrics: GridLayoutMetrics,
+) {
+  const left = calcGridColLeft(x, metrics)
+  const top = calcGridRowTop(y, metrics)
+  const width = calcGridColLeft(x + w, metrics) - left - metrics.margin[0]
+  const height = calcGridRowTop(y + h, metrics) - top - metrics.margin[1]
+  return { left, top, width, height }
+}
+
+function getBlockDomRect(vid: string, originEl: HTMLElement) {
+  const el = document.querySelector(`.list-group-item-${vid}`) as HTMLElement | null
+  if (!el)
+    return null
+  const originRect = originEl.getBoundingClientRect()
+  const elRect = el.getBoundingClientRect()
+  return {
+    left: elRect.left - originRect.left,
+    top: elRect.top - originRect.top,
+    width: elRect.width,
+    height: elRect.height,
+  }
+}
+
+function toPxStyle(value: number) {
+  return `${Math.round(value)}px`
+}
+
+function toPxString(value: string | number | undefined, fallback: string) {
+  if (value == null || value === '')
+    return fallback
+  return typeof value === 'number' ? `${value}px` : String(value)
+}
+
+/** 将旧版写入 block.styles 的组内定位迁移到 groupInnerLayout */
+function migrateGroupInnerStyles(block: VisualEditorBlockData) {
+  if (block.groupInnerLayout)
+    return
+
+  const styles = block.styles || {}
+  if (styles.position !== 'absolute' || styles.left == null || styles.top == null)
+    return
+
+  const childRect = calcGridItemPixelRect(block.x || 0, block.y || 0, block.w || 24, block.h || 8, getGridMetrics())
+  block.groupInnerLayout = {
+    left: toPxString(styles.left, '0px'),
+    top: toPxString(styles.top, '0px'),
+    width: toPxString(styles.width, toPxStyle(childRect.width)),
+    height: toPxString(styles.height, toPxStyle(childRect.height)),
+  }
+
+  const { position, left, top, width, height, right, bottom, ...rest } = styles
+  block.styles = rest
+}
+
+function setGroupInnerLayout(
+  block: VisualEditorBlockData,
+  layout: { left: string, top: string, width: string, height: string },
+) {
+  block.groupInnerLayout = layout
 }
 
 function buildGroupInnerWrapperStyle(
   block: VisualEditorBlockData,
-  relX: number,
-  relY: number,
-  colWidth: number,
-  rowHeight: number,
+  metrics: GridLayoutMetrics,
+  originLeft = 0,
+  originTop = 0,
 ): CSSProperties {
-  const savedLeft = block.styles?.left
-  const savedTop = block.styles?.top
-  if (savedLeft != null && savedTop != null) {
+  migrateGroupInnerStyles(block)
+
+  const saved = block.groupInnerLayout
+  if (saved) {
     return {
       position: 'absolute',
-      left: typeof savedLeft === 'number' ? `${savedLeft}px` : String(savedLeft),
-      top: typeof savedTop === 'number' ? `${savedTop}px` : String(savedTop),
-      width: block.styles?.width || `${Math.round((block.w || 24) * colWidth)}px`,
-      height: block.styles?.height || `${Math.round((block.h || 8) * rowHeight)}px`,
+      left: saved.left,
+      top: saved.top,
+      width: saved.width,
+      height: saved.height,
       margin: '0',
+      padding: '0',
+      boxSizing: 'border-box',
       flex: 'none',
       overflow: 'visible',
     }
   }
 
+  const rect = calcGridItemPixelRect(block.x || 0, block.y || 0, block.w || 24, block.h || 8, metrics)
   return {
     position: 'absolute',
-    left: `${Math.round(relX * colWidth)}px`,
-    top: `${Math.round(relY * rowHeight)}px`,
-    width: `${Math.round((block.w || 24) * colWidth)}px`,
-    height: `${Math.round((block.h || 8) * rowHeight)}px`,
+    left: toPxStyle(rect.left - originLeft),
+    top: toPxStyle(rect.top - originTop),
+    width: toPxStyle(rect.width),
+    height: toPxStyle(rect.height),
     margin: '0',
+    padding: '0',
+    boxSizing: 'border-box',
     flex: 'none',
     overflow: 'visible',
   }
@@ -278,22 +384,32 @@ function buildGroupInnerWrapperStyle(
 
 /** 根据页面中的组块，同步组内组件的绝对定位样式 */
 function syncGroupWrapperStyles() {
-  const { rowHeight, colWidth } = getGridMetrics()
+  const metrics = getGridMetrics()
   const styles: Record<string, CSSProperties> = { ...blockWrapperStyles.value }
 
   const syncGroupChildren = (blocks: VisualEditorBlockData[]) => {
     blocks.forEach((block) => {
       if (block.componentKey === 'group') {
+        const groupOriginLeft = calcGridColLeft(block.x || 0, metrics)
+        const groupOriginTop = calcGridRowTop(block.y || 0, metrics)
         const children = block.props?.slots?.default?.children || []
         children.forEach((child: VisualEditorBlockData) => {
+          migrateGroupInnerStyles(child)
           const existing = styles[child._vid]
+          const childRect = calcGridItemPixelRect(
+            child.x || 0,
+            child.y || 0,
+            child.w || 24,
+            child.h || 8,
+            metrics,
+          )
           styles[child._vid] = existing
             ? {
                 ...existing,
-                width: `${Math.round((child.w || 24) * colWidth)}px`,
-                height: `${Math.round((child.h || 8) * rowHeight)}px`,
+                width: child.groupInnerLayout?.width ?? toPxStyle(childRect.width),
+                height: child.groupInnerLayout?.height ?? toPxStyle(childRect.height),
               }
-            : buildGroupInnerWrapperStyle(child, child.x || 0, child.y || 0, colWidth, rowHeight)
+            : buildGroupInnerWrapperStyle(child, metrics, groupOriginLeft, groupOriginTop)
         })
       }
 
@@ -323,12 +439,37 @@ function updateGroupInnerBlockPosition(vid: string, left: number, top: number) {
   }
 
   const block = findBlockByVid(vid, currentPage.value.blocks)
-  if (block) {
-    block.styles = {
-      ...(block.styles || {}),
+  if (block?.groupInnerLayout) {
+    block.groupInnerLayout = {
+      ...block.groupInnerLayout,
       left: `${Math.round(left)}px`,
       top: `${Math.round(top)}px`,
     }
+  }
+}
+
+/** 更新组内组件拖拽后的尺寸 */
+function updateGroupInnerBlockSize(vid: string, width: number, height: number) {
+  const widthPx = `${Math.max(20, Math.round(width))}px`
+  const heightPx = `${Math.max(20, Math.round(height))}px`
+  const prev = blockWrapperStyles.value[vid] || {}
+  blockWrapperStyles.value = {
+    ...blockWrapperStyles.value,
+    [vid]: {
+      ...prev,
+      width: widthPx,
+      height: heightPx,
+    },
+  }
+
+  const block = findBlockByVid(vid, currentPage.value.blocks)
+  if (block?.groupInnerLayout) {
+    block.groupInnerLayout = {
+      ...block.groupInnerLayout,
+      width: widthPx,
+      height: heightPx,
+    }
+    block.hasResize = true
   }
 }
 
@@ -338,10 +479,12 @@ function onGroupInnerDragEnd() {
 
 onMounted(() => {
   document.addEventListener('dragover', syncMousePosition)
+  controlStore.registerCanvasSelectHandler(selectComp)
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('dragover', syncMousePosition)
+  controlStore.unregisterCanvasSelectHandler()
 })
 
 const mouseAt = { x: -1, y: -1 }
@@ -654,9 +797,135 @@ function setMultiFocus(blocks: VisualEditorBlockData[], ids: string[]) {
 }
 
 /**
+ * 查找组内组件所属的组
+ */
+function findParentGroup(
+  vid: string,
+  blocks: VisualEditorBlockData[] = currentPage.value.blocks,
+): VisualEditorBlockData | null {
+  for (const block of blocks) {
+    if (block.componentKey === 'group') {
+      const children = block.props?.slots?.default?.children || []
+      if (children.some(c => c._vid === vid))
+        return block
+    }
+    const slots = block.props?.slots || {}
+    for (const key of Object.keys(slots)) {
+      const children = slots[key]?.children
+      if (children) {
+        const found = findParentGroup(vid, children)
+        if (found)
+          return found
+      }
+    }
+  }
+  return null
+}
+
+function isGroupInnerBlockData(block: VisualEditorBlockData) {
+  return Boolean(block.groupInnerLayout || blockWrapperStyles.value[block._vid])
+}
+
+function setGroupGridLocked(block: VisualEditorBlockData, locked: boolean) {
+  if (block.componentKey !== 'group')
+    return
+
+  if (locked) {
+    // 仅用 static 锁定，避免 isDraggable=false 导致退出后 grid-item 内部状态无法恢复
+    block.static = true
+    block._groupEditLocked = true
+  }
+  else {
+    delete block.static
+    delete block.isDraggable
+    delete block.isResizable
+    delete block._groupEditLocked
+    delete block.dragIgnoreFrom
+  }
+}
+
+/** 恢复组的 grid-item 拖拽/缩放内部状态（退出编辑模式时调用） */
+function restoreGroupGridInteract(blocks: VisualEditorBlockData[] = currentPage.value.blocks) {
+  blocks.forEach((block) => {
+    const item = gridLayout.value?.getItem(block.i ?? block._vid)
+    if (item?.state) {
+      const locked = Boolean(block.static)
+      item.state.draggable = !locked
+      item.state.resizable = !locked
+    }
+    const slots = block.props?.slots || {}
+    Object.keys(slots).forEach((key) => {
+      const children = slots[key]?.children
+      if (children)
+        restoreGroupGridInteract(children)
+    })
+  })
+}
+
+/** 清除所有组的编辑态网格锁定（含持久化残留） */
+function resetAllGroupGridLocks(blocks: VisualEditorBlockData[] = currentPage.value.blocks) {
+  blocks.forEach((block) => {
+    if (block.componentKey === 'group')
+      setGroupGridLocked(block, false)
+
+    const slots = block.props?.slots || {}
+    Object.keys(slots).forEach((key) => {
+      const children = slots[key]?.children
+      if (children)
+        resetAllGroupGridLocks(children)
+    })
+  })
+}
+
+function syncGroupGridAfterLockChange() {
+  nextTick(() => {
+    restoreGroupGridInteract(currentPage.value.blocks)
+    gridLayout.value?.layoutUpdate?.()
+  })
+}
+
+function unlockAllEditingGroups() {
+  resetAllGroupGridLocks()
+  syncGroupGridAfterLockChange()
+}
+
+function lockGroupAndAncestors(groupVid: string) {
+  resetAllGroupGridLocks()
+  let currentVid: string | null = groupVid
+  while (currentVid) {
+    const block = findBlockByVid(currentVid, currentPage.value.blocks)
+    if (block?.componentKey === 'group')
+      setGroupGridLocked(block, true)
+    const parent = findParentGroup(currentVid)
+    currentVid = parent?._vid ?? null
+  }
+  syncGroupGridAfterLockChange()
+}
+
+function enterGroupEditMode(groupVid: string) {
+  const group = findBlockByVid(groupVid, currentPage.value.blocks)
+  if (!group || group.componentKey !== 'group')
+    return
+  editingGroupId.value = groupVid
+  lockGroupAndAncestors(groupVid)
+}
+
+function exitGroupEditMode() {
+  editingGroupId.value = null
+  unlockAllEditingGroups()
+}
+
+function selectBlockByVid(vid: string, event?: MouseEvent) {
+  const block = findBlockByVid(vid, currentPage.value.blocks)
+  if (block)
+    selectComp(block, event)
+}
+
+/**
  * 取消选择当前组件
  */
 function deSelectComp() {
+  exitGroupEditMode()
   floatingSettingVisible.value = false
   selectedBlockIds.value = []
   clearAllBlockFocus(currentPage.value.blocks)
@@ -670,6 +939,25 @@ function deSelectComp() {
 function selectComp(element: VisualEditorBlockData, event?: MouseEvent) {
   if (!element?._vid) {
     return
+  }
+
+  // 未进入组内编辑模式时，点击组内组件应选中其所属组
+  if (isGroupInnerBlockData(element)) {
+    const parentGroup = findParentGroup(element._vid)
+    if (!parentGroup || editingGroupId.value !== parentGroup._vid) {
+      if (parentGroup)
+        selectComp(parentGroup, event)
+      return
+    }
+  }
+
+  // 选中组外元素时退出组内编辑模式
+  if (editingGroupId.value) {
+    const isEditingGroup = element._vid === editingGroupId.value
+    const isInnerOfEditingGroup = isGroupInnerBlockData(element)
+      && findParentGroup(element._vid)?._vid === editingGroupId.value
+    if (!isEditingGroup && !isInnerOfEditingGroup)
+      exitGroupEditMode()
   }
 
   const multiSelect = Boolean(event?.metaKey || event?.ctrlKey)
@@ -705,6 +993,28 @@ function selectComp(element: VisualEditorBlockData, event?: MouseEvent) {
     const arr = findPathByLeafId(vid, currentPage.value.blocks)
     arr?.forEach(n => (n.focusWithChild = true))
   })
+}
+
+function getCompRenderPointerEvents(item: VisualEditorBlockData) {
+  const hasSlots = !!Object.keys(item.props?.slots || {}).length
+  // 组未进入编辑模式时，内部层不拦截鼠标，以便正常拖拽/操作组本身
+  if (item.componentKey === 'group' && editingGroupId.value !== item._vid)
+    return 'none'
+  return hasSlots ? 'auto' : 'none'
+}
+
+function onBlockDblClick(item: VisualEditorBlockData, e: MouseEvent) {
+  if (item.componentKey !== 'group')
+    return
+  e.stopPropagation()
+  enterGroupEditMode(item._vid)
+  selectComp(item, e)
+}
+
+function onInnerGroupDblClick(groupVid: string, e: MouseEvent) {
+  e.stopPropagation()
+  enterGroupEditMode(groupVid)
+  selectBlockByVid(groupVid, e)
 }
 
 function onCanvasMousedown(e: MouseEvent) {
@@ -832,6 +1142,19 @@ function finishBoxSelection(rect: { left: number, top: number, width: number, he
   // 遍历所有可交互的 block（递归 slots）
   const collectBlocks = (blocks: VisualEditorBlockData[]) => {
     blocks.forEach((block) => {
+      const isInner = isGroupInnerBlockData(block)
+
+      // 普通模式：不参与框选组内组件
+      if (!editingGroupId.value && isInner)
+        return
+
+      // 组内编辑模式：仅框选当前组内的组件
+      if (editingGroupId.value && isInner) {
+        const parentGroup = findParentGroup(block._vid)
+        if (parentGroup?._vid !== editingGroupId.value)
+          return
+      }
+
       const el = document.querySelector(`.list-group-item-${block._vid}`) as HTMLElement | null
       if (el) {
         const elRect = el.getBoundingClientRect()
@@ -1001,23 +1324,23 @@ function mergeToGroup() {
     maxY = Math.max(maxY, b.y + (b.h || 8))
   })
 
-  // 保留子组件在组内的相对位置
-  const rowHeight = 15
-  // 从实际渲染的网格布局获取列宽
+  // 保留子组件在组内的相对位置（与 GridItem calcPosition 算法一致，优先读取 DOM 实测）
+  const metrics = getGridMetrics()
   const gridEl = document.querySelector('.grid-layout-canvas') as HTMLElement | null
-  const containerWidth = gridEl?.clientWidth || currentPage.value?.config?.pageSize?.width || 1920
-  const colNum = Math.max(1, Math.floor((currentPage.value?.config?.pageSize?.width || 1920) / 15))
-  const colWidth = containerWidth / colNum
+  const groupOriginLeft = calcGridColLeft(minX, metrics)
+  const groupOriginTop = calcGridRowTop(minY, metrics)
 
   const newWrapperStyles: Record<string, CSSProperties> = {}
   selectedBlocks.forEach((b) => {
-    const relX = b.x - minX
-    const relY = b.y - minY
-    const left = `${Math.round(relX * colWidth)}px`
-    const top = `${Math.round(relY * rowHeight)}px`
-    const width = `${Math.round((b.w || 24) * colWidth)}px`
-    const height = `${Math.round((b.h || 8) * rowHeight)}px`
-    // 用实际网格列宽计算像素位置，保持与合并前一致的视觉位置和大小
+    const domRect = gridEl ? getBlockDomRect(b._vid, gridEl) : null
+    const gridRect = calcGridItemPixelRect(b.x, b.y, b.w || 24, b.h || 8, metrics)
+    const sourceRect = domRect ?? gridRect
+
+    const left = toPxStyle(sourceRect.left - groupOriginLeft)
+    const top = toPxStyle(sourceRect.top - groupOriginTop)
+    const width = toPxStyle(sourceRect.width)
+    const height = toPxStyle(sourceRect.height)
+
     newWrapperStyles[b._vid] = {
       position: 'absolute',
       left,
@@ -1025,17 +1348,12 @@ function mergeToGroup() {
       width,
       height,
       margin: '0',
+      padding: '0',
+      boxSizing: 'border-box',
       flex: 'none',
       overflow: 'visible',
     }
-    b.styles = {
-      ...(b.styles || {}),
-      position: 'absolute',
-      left,
-      top,
-      width,
-      height,
-    }
+    setGroupInnerLayout(b, { left, top, width, height })
     b.x = 0
     b.y = 0
     b.focus = false
@@ -1057,8 +1375,8 @@ function mergeToGroup() {
     adjustPosition: true,
     focus: false,
     focusWithChild: false,
-    w: Math.max(24, maxX - minX),
-    h: Math.max(8, maxY - minY),
+    w: Math.max(1, maxX - minX),
+    h: Math.max(1, maxY - minY),
     x: minX,
     y: minY,
     styles: {
@@ -1095,6 +1413,7 @@ function mergeToGroup() {
   }
 
   currentPage.value.blocks.push(groupBlock)
+  exitGroupEditMode()
   selectedBlockIds.value = [groupVid]
   clearAllBlockFocus(currentPage.value.blocks)
   setMultiFocus(currentPage.value.blocks, [groupVid])
@@ -1201,6 +1520,8 @@ function initAnimate() {
 watch(visualLoading, (value, oldValue) => {
   if (!value && oldValue) {
     nextTick(() => {
+      resetAllGroupGridLocks()
+      syncGroupGridAfterLockChange()
       syncGroupWrapperStyles()
       initAnimate()
     })
@@ -1256,12 +1577,14 @@ defineExpose({
                   'focus': item.focus,
                   'focusWithChild': item.focusWithChild,
                   'multi-focus': selectedBlockIds.includes(item._vid),
+                  'is-editing-group': item.componentKey === 'group' && editingGroupId === item._vid,
                   drag,
                   'has-slot': !!Object.keys(item.props?.slots || {}).length,
                   'has-inner-title': item.showTitle === true && isInnerBlockTitle(item.titleStyle),
                   [`list-group-item-${item._vid}`]: true,
                 }"
                 @mousedown.stop="selectComp(item, $event)"
+                @dblclick.stop="onBlockDblClick(item, $event)"
                 @contextmenu.stop.prevent="onContextmenuBlock($event, item)"
               >
                 <div
@@ -1283,7 +1606,7 @@ defineExpose({
                   <CompRender
                     :element="item"
                     :style="{
-                      pointerEvents: Object.keys(item.props?.slots || {}).length ? 'auto' : 'none',
+                      pointerEvents: getCompRenderPointerEvents(item),
                     }"
                   >
                     <template v-for="(value, slotKey) in item.props?.slots" :key="slotKey" #[slotKey]>
@@ -1293,12 +1616,16 @@ defineExpose({
                         :slot-key="slotKey"
                         :parent-vid="item._vid"
                         :selected-block-ids="selectedBlockIds"
+                        :editing-group-id="editingGroupId"
                         :block-wrapper-styles="blockWrapperStyles"
                         :disallow-drop="item.componentKey === 'group'"
                         :on-contextmenu-block="onContextmenuBlock"
                         :select-comp="selectComp"
+                        :select-block-by-vid="selectBlockByVid"
+                        :on-inner-group-dbl-click="onInnerGroupDblClick"
                         :delete-comp="deleteComp"
                         :update-group-inner-block-position="updateGroupInnerBlockPosition"
+                        :update-group-inner-block-size="updateGroupInnerBlockSize"
                         :on-group-inner-drag-end="onGroupInnerDragEnd"
                       />
                     </template>
@@ -1380,6 +1707,12 @@ defineExpose({
   // background-color: #fff;
   overflow: hidden;
   outline: none;
+
+  &.is-editing-group {
+    outline: 2px dashed var(--el-color-primary);
+    outline-offset: -1px;
+    z-index: 15;
+  }
 
   /* 组内的组件不需要滚动条 */
   &.inner {
@@ -1486,5 +1819,10 @@ defineExpose({
 :deep(.vgl-item--resizing),
 :deep(.vgl-item--dragging) {
   z-index: 10;
+}
+
+:deep(.vgl-item:has(.list-group-item.focus) .vgl-item__resizer),
+:deep(.vgl-item:has(.list-group-item.multi-focus) .vgl-item__resizer) {
+  z-index: 25;
 }
 </style>

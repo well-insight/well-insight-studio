@@ -3,7 +3,7 @@ import type { CSSProperties, PropType } from 'vue'
 import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
 import { useVModel } from '@vueuse/core'
 import { cloneDeep } from 'lodash-es'
-import { onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import { useControlStore } from '@/stores/controlStore'
 import { generateNanoid } from '@/visual-editor/lib'
 import CompRender from './comp-render'
@@ -44,6 +44,20 @@ const props = defineProps({
     type: Array as PropType<string[]>,
     default: (): string[] => [],
   },
+  /** 当前处于组内编辑模式的组 _vid */
+  editingGroupId: {
+    type: String as PropType<string | null>,
+    default: null,
+  },
+  /** 通过 _vid 选中块（用于点击组内空白区域选中组） */
+  selectBlockByVid: {
+    type: Function as PropType<(vid: string, event?: MouseEvent) => void>,
+    default: undefined,
+  },
+  onInnerGroupDblClick: {
+    type: Function as PropType<(groupVid: string, event: MouseEvent) => void>,
+    default: undefined,
+  },
   /** 每个子块应用于外层 .list-group-item 的样式映射 */
   blockWrapperStyles: {
     type: Object as PropType<Record<string, CSSProperties>>,
@@ -58,6 +72,10 @@ const props = defineProps({
     type: Function as PropType<(vid: string, left: number, top: number) => void>,
     default: undefined,
   },
+  updateGroupInnerBlockSize: {
+    type: Function as PropType<(vid: string, width: number, height: number) => void>,
+    default: undefined,
+  },
   onGroupInnerDragEnd: {
     type: Function as PropType<() => void>,
     default: undefined,
@@ -70,6 +88,11 @@ const controlStore = useControlStore()
 const isDrag = useVModel(props, 'drag', emit)
 const slotChildren = useVModel(props, 'children', emit)
 
+/** 是否为组容器插槽 */
+const isGroupSlot = computed(() => props.disallowDrop)
+/** 当前组是否处于组内编辑模式 */
+const isEditingThisGroup = computed(() => isGroupSlot.value && props.editingGroupId === props.parentVid)
+
 /** 当前正在拖拽的组内组件 */
 const draggingInnerBlock = ref<string | null>(null)
 /** 拖拽开始时的鼠标位置 */
@@ -78,6 +101,11 @@ const dragStartPos = ref({ x: 0, y: 0 })
 const dragStartBlockPos = ref({ left: 0, top: 0 })
 /** 是否发生了实际移动 */
 const hasInnerDragMoved = ref(false)
+/** 当前正在缩放尺寸的组内组件 */
+const resizingInnerBlock = ref<string | null>(null)
+const resizeStartPos = ref({ x: 0, y: 0 })
+const resizeStartSize = ref({ width: 0, height: 0 })
+const hasInnerResizeChanged = ref(false)
 
 function getInnerBlockStyle(block: VisualEditorBlockData): CSSProperties {
   return (props.blockWrapperStyles as Record<string, CSSProperties>)[block._vid] || {}
@@ -85,6 +113,29 @@ function getInnerBlockStyle(block: VisualEditorBlockData): CSSProperties {
 
 function isGroupInnerBlock(block: VisualEditorBlockData) {
   return Boolean((props.blockWrapperStyles as Record<string, CSSProperties>)[block._vid])
+}
+
+function isInnerBlockLocked(block: VisualEditorBlockData) {
+  return isGroupInnerBlock(block) && !isEditingThisGroup.value
+}
+
+function shouldShowInnerResizer(block: VisualEditorBlockData) {
+  return isGroupInnerBlock(block)
+    && isEditingThisGroup.value
+    && (block.focus || props.selectedBlockIds.includes(block._vid))
+}
+
+function parsePx(value: string | number | undefined, fallback = 0) {
+  return Number.parseInt(String(value ?? ''), 10) || fallback
+}
+
+function onGroupSlotMouseDown(e: MouseEvent) {
+  if (!isEditingThisGroup.value)
+    return
+  if ((e.target as HTMLElement).closest('.group-inner-block'))
+    return
+  e.stopPropagation()
+  props.selectBlockByVid?.(props.parentVid, e)
 }
 
 function onNativeDrop(event: DragEvent) {
@@ -113,6 +164,9 @@ function onNativeDrop(event: DragEvent) {
 /** 处理组内组件的鼠标按下事件 - 选中并准备拖拽 */
 function onInnerBlockMouseDown(e: MouseEvent, block: VisualEditorBlockData) {
   if (e.button !== 0)
+    return
+
+  if (isInnerBlockLocked(block))
     return
 
   props.selectComp(block, e)
@@ -166,10 +220,68 @@ function onInnerBlockMouseUp() {
   document.removeEventListener('mouseup', onInnerBlockMouseUp)
 }
 
+function onInnerBlockResizeStart(e: MouseEvent, block: VisualEditorBlockData) {
+  if (e.button !== 0 || isInnerBlockLocked(block))
+    return
+
+  e.preventDefault()
+  e.stopPropagation()
+  props.selectComp(block, e)
+
+  const blockStyle = getInnerBlockStyle(block)
+  resizingInnerBlock.value = block._vid
+  hasInnerResizeChanged.value = false
+  resizeStartPos.value = { x: e.clientX, y: e.clientY }
+  resizeStartSize.value = {
+    width: parsePx(blockStyle.width as string, 100),
+    height: parsePx(blockStyle.height as string, 100),
+  }
+
+  document.addEventListener('mousemove', onInnerBlockResizeMove)
+  document.addEventListener('mouseup', onInnerBlockResizeUp)
+}
+
+function onInnerBlockResizeMove(e: MouseEvent) {
+  if (!resizingInnerBlock.value)
+    return
+
+  const dx = e.clientX - resizeStartPos.value.x
+  const dy = e.clientY - resizeStartPos.value.y
+  if (dx === 0 && dy === 0)
+    return
+
+  hasInnerResizeChanged.value = true
+  props.updateGroupInnerBlockSize?.(
+    resizingInnerBlock.value,
+    resizeStartSize.value.width + dx,
+    resizeStartSize.value.height + dy,
+  )
+}
+
+function onInnerBlockResizeUp() {
+  if (hasInnerResizeChanged.value)
+    props.onGroupInnerDragEnd?.()
+
+  resizingInnerBlock.value = null
+  hasInnerResizeChanged.value = false
+  document.removeEventListener('mousemove', onInnerBlockResizeMove)
+  document.removeEventListener('mouseup', onInnerBlockResizeUp)
+}
+
 onBeforeUnmount(() => {
   document.removeEventListener('mousemove', onInnerBlockMouseMove)
   document.removeEventListener('mouseup', onInnerBlockMouseUp)
+  document.removeEventListener('mousemove', onInnerBlockResizeMove)
+  document.removeEventListener('mouseup', onInnerBlockResizeUp)
 })
+
+function onInnerBlockDblClick(e: MouseEvent, block: VisualEditorBlockData) {
+  if (block.componentKey !== 'group')
+    return
+  if (isInnerBlockLocked(block))
+    return
+  props.onInnerGroupDblClick?.(block._vid, e)
+}
 
 // 初始化时设置上次选中的组件
 props.children.some(item => item.focus && props.selectComp(item))
@@ -183,11 +295,13 @@ props.children.some(item => item.focus && props.selectComp(item))
     :class="{
       'slot': !slotChildren?.length,
       'group-inner-slot': disallowDrop,
+      'group-inner-slot--editing': isEditingThisGroup,
     }"
     draggable=".item-drag"
     :data-slot="`插槽（${slotKey}）\n 拖拽组件到此处`"
     @dragover.prevent
     @drop="onNativeDrop"
+    @mousedown="onGroupSlotMouseDown"
   >
     <template #item="{ element: innerElement }">
       <div
@@ -199,15 +313,21 @@ props.children.some(item => item.focus && props.selectComp(item))
           'focusWithChild': innerElement.focusWithChild,
           'multi-focus': selectedBlockIds.includes(innerElement._vid),
           'is-dragging': draggingInnerBlock === innerElement._vid,
+          'is-resizing': resizingInnerBlock === innerElement._vid,
           'group-inner-block': isGroupInnerBlock(innerElement),
+          'group-inner-block--locked': isInnerBlockLocked(innerElement),
+          [`list-group-item-${innerElement._vid}`]: true,
         }"
         @contextmenu.stop.prevent="onContextmenuBlock($event, innerElement, slotChildren)"
         @mousedown.stop="onInnerBlockMouseDown($event, innerElement)"
+        @dblclick.stop="onInnerBlockDblClick($event, innerElement)"
       >
         <CompRender
           :element="innerElement"
           :style="{
-            pointerEvents: Object.keys(innerElement.props?.slots || {}).length ? 'auto' : 'none',
+            pointerEvents: isInnerBlockLocked(innerElement)
+              ? 'none'
+              : (Object.keys(innerElement.props?.slots || {}).length ? 'auto' : 'none'),
           }"
         >
           <template v-for="(value, key) in innerElement.props?.slots" :key="key" #[key]>
@@ -217,15 +337,24 @@ props.children.some(item => item.focus && props.selectComp(item))
               :slot-key="key"
               :parent-vid="innerElement._vid"
               :selected-block-ids="selectedBlockIds"
+              :editing-group-id="editingGroupId"
               :block-wrapper-styles="blockWrapperStyles"
               :disallow-drop="innerElement.componentKey === 'group' || props.disallowDrop"
               :on-contextmenu-block="onContextmenuBlock"
               :select-comp="selectComp"
+              :select-block-by-vid="selectBlockByVid"
+              :on-inner-group-dbl-click="onInnerGroupDblClick"
               :update-group-inner-block-position="updateGroupInnerBlockPosition"
+              :update-group-inner-block-size="updateGroupInnerBlockSize"
               :on-group-inner-drag-end="onGroupInnerDragEnd"
             />
           </template>
         </CompRender>
+        <span
+          v-if="shouldShowInnerResizer(innerElement)"
+          class="group-inner-resizer"
+          @mousedown.stop="onInnerBlockResizeStart($event, innerElement)"
+        />
       </div>
     </template>
   </DraggableTransitionGroup>
@@ -248,6 +377,10 @@ props.children.some(item => item.focus && props.selectComp(item))
     min-height: 0;
     overflow: visible;
   }
+}
+
+.inner-draggable.group-inner-slot--editing {
+  cursor: default;
 }
 
 .inner-draggable.slot::after {
@@ -313,6 +446,24 @@ props.children.some(item => item.focus && props.selectComp(item))
       }
     }
 
+    &.group-inner-block {
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    &.group-inner-block--locked {
+      pointer-events: none;
+      cursor: default;
+
+      &:hover {
+        outline: none;
+
+        &::after {
+          opacity: 0;
+        }
+      }
+    }
+
     &.group-inner-block.focus {
       z-index: 20;
     }
@@ -322,6 +473,31 @@ props.children.some(item => item.focus && props.selectComp(item))
       z-index: 100;
       opacity: 0.85;
     }
+
+    &.is-resizing {
+      z-index: 100;
+      opacity: 0.85;
+    }
+  }
+}
+
+.group-inner-resizer {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  box-sizing: border-box;
+  width: 10px;
+  height: 10px;
+  cursor: se-resize;
+
+  &::before {
+    position: absolute;
+    inset: 0 3px 3px 0;
+    content: '';
+    border: 0 solid #444;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
   }
 }
 </style>

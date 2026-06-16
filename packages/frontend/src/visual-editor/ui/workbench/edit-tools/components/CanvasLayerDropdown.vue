@@ -11,17 +11,21 @@ import {
 import { isString } from 'lodash-es'
 import { computed, ref } from 'vue'
 import { SvgIcon } from '@/components/svg-icon'
+import { useControlStore } from '@/stores/controlStore'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { generateNanoid } from '@/visual-editor/lib'
 import { visualConfig } from '@/visual.config'
 
 const { currentPage, currentBlock, setCurrentBlock, recordHistory } = useVisualData()
+const controlStore = useControlStore()
 
 const blocks = computed(() => currentPage.value?.blocks ?? [])
 
 /** 树过滤器关键字 */
 const filterText = ref('')
 const treeRef = ref<any>(null)
+const hoverVid = ref<string | null>(null)
+const isLayerDragging = ref(false)
 const treeData = computed(() => transformToTreeData(blocks.value))
 
 // ---- 工具函数 ----
@@ -67,9 +71,11 @@ function transformToTreeData(data: VisualEditorBlockData[]): TreeNode[] {
 
 function buildTreeNode(item: VisualEditorBlockData): TreeNode {
   const comp = visualConfig.componentMap[item.componentKey]
-  const iconClass = comp?.icon && isString(comp.icon) ? comp.icon : ''
+  let iconClass = comp?.icon && isString(comp.icon) ? comp.icon : ''
+  if (item.componentKey === 'group')
+    iconClass = 'comp-icon-group'
   const moduleColor = getModuleColor(item.moduleName)
-  const moduleLabel = getModuleLabel(item.moduleName)
+  const moduleLabel = item.componentKey === 'group' ? '组' : getModuleLabel(item.moduleName)
 
   const node: TreeNode = {
     ...item,
@@ -87,33 +93,40 @@ function buildTreeNode(item: VisualEditorBlockData): TreeNode {
   if (slotKeys.length > 0) {
     slotKeys.forEach((key) => {
       const children = slots[key]?.children || []
-      if (children.length > 0) {
-        // 插槽分组标题节点
-        const slotGroup: TreeNode = {
-          _vid: `__slot_${item._vid}_${key}`,
-          i: '',
-          moduleName: item.moduleName,
-          componentKey: '',
-          label: `插槽：${key}`,
-          adjustPosition: false,
-          focus: false,
-          w: 0,
-          h: 0,
-          x: 0,
-          y: 0,
-          styles: {},
-          hasResize: false,
-          props: {},
-          draggable: false,
-          showStyleConfig: false,
-          actions: [],
-          events: [],
-          children: children.slice().reverse().map(child => buildTreeNode(child)),
-          isSlotGroup: true,
-          slotKey: key,
-        }
-        node.children.push(slotGroup)
+      if (children.length === 0)
+        return
+
+      // 组内组件直接挂在组节点下，减少一层插槽分组缩进
+      if (item.componentKey === 'group' && key === 'default') {
+        node.children.push(...children.slice().reverse().map(child => buildTreeNode(child)))
+        return
       }
+
+      // 插槽分组标题节点
+      const slotGroup: TreeNode = {
+        _vid: `__slot_${item._vid}_${key}`,
+        i: '',
+        moduleName: item.moduleName,
+        componentKey: '',
+        label: `插槽：${key}`,
+        adjustPosition: false,
+        focus: false,
+        w: 0,
+        h: 0,
+        x: 0,
+        y: 0,
+        styles: {},
+        hasResize: false,
+        props: {},
+        draggable: false,
+        showStyleConfig: false,
+        actions: [],
+        events: [],
+        children: children.slice().reverse().map(child => buildTreeNode(child)),
+        isSlotGroup: true,
+        slotKey: key,
+      }
+      node.children.push(slotGroup)
     })
   }
 
@@ -135,31 +148,6 @@ function filterNode(value: string, data: TreeNode): boolean {
   return false
 }
 
-// ---- 树拖拽 ----
-
-/** 从实际数据中移除指定 _vid 的 block，返回被移除的 block */
-function removeBlockByVid(vid: string): VisualEditorBlockData | null {
-  const walk = (nodes: VisualEditorBlockData[]): VisualEditorBlockData | null => {
-    for (let i = 0; i < nodes.length; i++) {
-      if (nodes[i]._vid === vid) {
-        const removed = nodes.splice(i, 1)[0]
-        return removed
-      }
-      const slots = nodes[i].props?.slots || {}
-      for (const key of Object.keys(slots)) {
-        const children = slots[key]?.children
-        if (children) {
-          const found = walk(children)
-          if (found)
-            return found
-        }
-      }
-    }
-    return null
-  }
-  return walk(blocks.value)
-}
-
 /** 在实际数据中递归查找指定 _vid 的 block */
 function findBlockByVidRaw(vid: string, nodes: VisualEditorBlockData[]): VisualEditorBlockData | null {
   for (const n of nodes) {
@@ -178,80 +166,79 @@ function findBlockByVidRaw(vid: string, nodes: VisualEditorBlockData[]): VisualE
   return null
 }
 
-/** 解析拖拽放置的目标位置 */
-function resolveDropTarget(
-  dropNodeVid: string,
-  dropType: 'before' | 'after' | 'inner',
-): { parent: VisualEditorBlockData[], index: number } | null {
-  // inner → 放入容器的 default 插槽末尾
-  if (dropType === 'inner') {
-    const container = findBlockByVidRaw(dropNodeVid, blocks.value)
-    if (container?.props?.slots?.default?.children) {
-      return { parent: container.props.slots.default.children, index: container.props.slots.default.children.length }
-    }
-    return null
+/** 查找 block 所在的同级数组及索引 */
+function findBlockListContext(vid: string, nodes: VisualEditorBlockData[] = blocks.value): { list: VisualEditorBlockData[], index: number } | null {
+  for (let i = 0; i < nodes.length; i++) {
+    if (nodes[i]._vid === vid)
+      return { list: nodes, index: i }
   }
-
-  // 如果是插槽分组标题（__slot_ 前缀），代表拖到插槽分组上
-  if (dropNodeVid.startsWith('__slot_')) {
-    // 格式: __slot_{parentVid}_{slotKey}
-    const underscoreIdx = dropNodeVid.indexOf('__slot_') + 7
-    const afterPrefix = dropNodeVid.slice(underscoreIdx)
-    const firstUnderscore = afterPrefix.indexOf('_')
-    if (firstUnderscore === -1)
-      return null
-    const parentVid = afterPrefix.slice(0, firstUnderscore)
-    const slotKey = afterPrefix.slice(firstUnderscore + 1)
-    const container = findBlockByVidRaw(parentVid, blocks.value)
-    const children = container?.props?.slots?.[slotKey]?.children
-    if (!children)
-      return null
-    const idx = dropType === 'before' ? 0 : children.length
-    return { parent: children, index: idx }
-  }
-
-  // before / after 普通节点
-  const walk = (nodes: VisualEditorBlockData[]): { parent: VisualEditorBlockData[], index: number } | null => {
-    for (let i = 0; i < nodes.length; i++) {
-      if (nodes[i]._vid === dropNodeVid) {
-        return { parent: nodes, index: dropType === 'before' ? i : i + 1 }
+  for (const node of nodes) {
+    const slots = node.props?.slots || {}
+    for (const key of Object.keys(slots)) {
+      const children = slots[key]?.children
+      if (!children?.length)
+        continue
+      for (let i = 0; i < children.length; i++) {
+        if (children[i]._vid === vid)
+          return { list: children, index: i }
       }
-      const slots = nodes[i].props?.slots || {}
-      for (const key of Object.keys(slots)) {
-        const children = slots[key]?.children
-        if (children) {
-          const found = walk(children)
-          if (found)
-            return found
-        }
-      }
+      const found = findBlockListContext(vid, children)
+      if (found)
+        return found
     }
-    return null
   }
-  return walk(blocks.value)
+  return null
 }
 
-/** 检测 draggedVid 是否是 targetVid 的祖先（防止循环拖拽） */
-function isAncestorOf(draggedVid: string, targetVid: string): boolean {
-  if (draggedVid === targetVid)
-    return true
-  const target = findBlockByVidRaw(targetVid, blocks.value)
-  if (!target)
+/**
+ * 树展示顺序与数据数组相反（slice().reverse()），
+ * 在树顺序中完成 before/after 后再写回数组。
+ */
+function reorderWithinSameList(
+  list: VisualEditorBlockData[],
+  dragIdx: number,
+  dropIdx: number,
+  dropType: 'before' | 'after',
+) {
+  const treeVids = list.map(b => b._vid).reverse()
+  const draggedVid = list[dragIdx]._vid
+  const tDrag = treeVids.indexOf(draggedVid)
+  const tDrop = treeVids.indexOf(list[dropIdx]._vid)
+  let tInsert = dropType === 'before' ? tDrop : tDrop + 1
+
+  const nextTreeVids = treeVids.filter(vid => vid !== draggedVid)
+  if (tDrag < tInsert)
+    tInsert--
+
+  nextTreeVids.splice(tInsert, 0, draggedVid)
+
+  const moved = list.splice(dragIdx, 1)[0]
+  const blockMap = new Map(list.map(b => [b._vid, b]))
+  blockMap.set(moved._vid, moved)
+
+  const reordered = nextTreeVids.reverse().map(vid => blockMap.get(vid)!)
+  list.splice(0, list.length, ...reordered)
+}
+
+function allowTreeDrop(
+  draggingNode: { data: TreeNode },
+  dropNode: { data: TreeNode },
+  type: 'before' | 'after' | 'inner' | string,
+): boolean {
+  // 只允许同级 before/after，禁止 inner 跨层级
+  if (type === 'inner')
     return false
-  const walk = (nodes: VisualEditorBlockData[]): boolean => {
-    for (const n of nodes) {
-      if (n._vid === draggedVid)
-        return true
-      const slots = n.props?.slots || {}
-      for (const key of Object.keys(slots)) {
-        const children = slots[key]?.children
-        if (children && walk(children))
-          return true
-      }
-    }
+  if (draggingNode.data.isSlotGroup || dropNode.data.isSlotGroup)
     return false
-  }
-  return walk([target])
+  if (draggingNode.data._vid === dropNode.data._vid)
+    return false
+
+  const dragCtx = findBlockListContext(draggingNode.data._vid)
+  const dropCtx = findBlockListContext(dropNode.data._vid)
+  if (!dragCtx || !dropCtx)
+    return false
+
+  return dragCtx.list === dropCtx.list
 }
 
 function handleNodeDrop(
@@ -259,32 +246,21 @@ function handleNodeDrop(
   dropNode: { data: TreeNode, key: string },
   dropType: 'before' | 'after' | 'inner',
 ) {
+  if (dropType === 'inner' || draggingNode.data.isSlotGroup || dropNode.data.isSlotGroup)
+    return
+
   const draggedVid = draggingNode.data._vid
   const dropVid = dropNode.data._vid
 
-  // 不允许拖拽插槽分组
-  if (draggingNode.data.isSlotGroup)
+  const dragCtx = findBlockListContext(draggedVid)
+  const dropCtx = findBlockListContext(dropVid)
+  if (!dragCtx || !dropCtx || dragCtx.list !== dropCtx.list)
     return
 
-  // 不允许放入自身或后代
-  if (isAncestorOf(draggedVid, dropVid))
+  if (dragCtx.index === dropCtx.index)
     return
 
-  // 移除被拖拽的 block
-  const movedBlock = removeBlockByVid(draggedVid)
-  if (!movedBlock)
-    return
-
-  // 解析目标位置
-  const target = resolveDropTarget(dropVid, dropType)
-  if (!target) {
-    // 如果目标位置解析失败，尝试放回根节点末尾
-    blocks.value.push(movedBlock)
-    return
-  }
-
-  // 插入到目标位置
-  target.parent.splice(target.index, 0, movedBlock)
+  reorderWithinSameList(dragCtx.list, dragCtx.index, dropCtx.index, dropType)
   selectBlockByVid(draggedVid)
   recordHistory()
 }
@@ -298,49 +274,26 @@ function selectBlockByVid(vid: string) {
 
 // ---- 交互 ----
 
+function onNodeDragStart() {
+  isLayerDragging.value = true
+}
+
+function onNodeDragEnd() {
+  isLayerDragging.value = false
+  hoverVid.value = null
+}
+
 function selectBlock(node: TreeNode) {
+  if (isLayerDragging.value)
+    return
   if (!node?._vid || node.isSlotGroup)
     return
 
-  // 清除所有 focus
-  const resetFocus = (nodes: VisualEditorBlockData[]) => {
-    nodes.forEach((item) => {
-      item.focus = false
-      item.focusWithChild = false
-      const slots = item.props?.slots || {}
-      Object.keys(slots).forEach((key) => {
-        const children = slots[key]?.children
-        if (children)
-          resetFocus(children)
-      })
-    })
-  }
+  const block = findBlockByVidRaw(node._vid, blocks.value)
+  if (!block)
+    return
 
-  resetFocus(blocks.value)
-
-  // 高亮路径
-  const findPath = (leafId: string, nodes: VisualEditorBlockData[], path: VisualEditorBlockData[] = []): VisualEditorBlockData[] => {
-    for (const n of nodes) {
-      const p = [...path, n]
-      if (n._vid === leafId)
-        return p
-      const slots = n.props?.slots || {}
-      for (const key of Object.keys(slots)) {
-        const children = slots[key]?.children
-        if (children) {
-          const found = findPath(leafId, children, p)
-          if (found.length)
-            return found
-        }
-      }
-    }
-    return []
-  }
-
-  const path = findPath(node._vid, blocks.value)
-  path.forEach(item => (item.focusWithChild = true))
-  node.focus = true
-  setCurrentBlock(node)
+  controlStore.selectCanvasBlock(block)
 }
 
 function expandAll() {
@@ -458,19 +411,18 @@ function duplicateNode(node: TreeNode) {
           :data="treeData"
           :props="{ children: 'children', label: 'label' }"
           node-key="_vid"
+          :indent="12"
           default-expand-all
           highlight-current
           draggable
           :current-node-key="currentBlock?._vid"
           :filter-node-method="filterNode"
           :allow-drag="(node: any) => !node.data.isSlotGroup"
-          :allow-drop="(draggingNode: any, dropNode: any, type: string) => {
-            // 不能拖到插槽分组内部或前后
-            if (dropNode.data.isSlotGroup && type !== 'inner') return false
-            return true
-          }"
+          :allow-drop="allowTreeDrop"
           :class="$style['drag-tree']"
           @current-change="selectBlock"
+          @node-drag-start="onNodeDragStart"
+          @node-drag-end="onNodeDragEnd"
           @node-drop="handleNodeDrop"
         >
           <template #default="{ data }: { data: TreeNode }">
@@ -486,9 +438,9 @@ function duplicateNode(node: TreeNode) {
             <!-- 普通节点 -->
             <div
               v-else
-              :class="$style['tree-node']"
-              @mouseenter="data.focusWithChild = true"
-              @mouseleave="data.focusWithChild = false"
+              :class="[$style['tree-node'], hoverVid === data._vid && $style['tree-node--hover']]"
+              @mouseenter="hoverVid = data._vid"
+              @mouseleave="hoverVid = null"
             >
               <!-- 拖拽手柄 -->
               <el-icon :class="$style['drag-handle-icon']" class="drag-handle-icon">
@@ -615,9 +567,9 @@ function duplicateNode(node: TreeNode) {
     background-color: var(--el-color-primary-light-8);
   }
 
-  // 插槽分组缩进
+  // 深层嵌套节点额外缩进（较默认更紧凑）
   :global(.el-tree-node__children) .el-tree-node__children .el-tree-node__content {
-    padding-left: 44px !important;
+    padding-left: 24px !important;
   }
 }
 
@@ -723,6 +675,10 @@ function duplicateNode(node: TreeNode) {
   width: 100%;
   padding: 4px 6px;
   min-height: 30px;
+}
+
+.tree-node--hover .node-actions {
+  display: flex;
 }
 
 .node-icon {

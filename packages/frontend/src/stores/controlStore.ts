@@ -1,6 +1,8 @@
 import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
 import { defineStore } from 'pinia'
 
+export type CanvasSelectHandler = (block: VisualEditorBlockData) => void
+
 /**
  * 临时变量存储
  */
@@ -19,8 +21,19 @@ export const useControlStore = defineStore('useControlStore', {
     asideCollapse: false,
     floatingSettingVisible: false,
     floatingSettingActiveTab: 'attr',
+    /** 画布选中回调（由 PcWrapper 注册，供层级树等调用） */
+    canvasSelectHandler: null,
   }),
   actions: {
+    registerCanvasSelectHandler(handler: CanvasSelectHandler) {
+      this.canvasSelectHandler = handler
+    },
+    unregisterCanvasSelectHandler() {
+      this.canvasSelectHandler = null
+    },
+    selectCanvasBlock(block: VisualEditorBlockData) {
+      this.canvasSelectHandler?.(block)
+    },
     setMoveVisualData(v: VisualEditorBlockData | null) {
       this.moveVisualData = v || null
     },
@@ -44,4 +57,5 @@ export interface ControlStoreState {
   floatingSettingVisible: boolean
   floatingSettingActiveTab: string
   draggingVisualKey?: string
+  canvasSelectHandler: CanvasSelectHandler | null
 }
