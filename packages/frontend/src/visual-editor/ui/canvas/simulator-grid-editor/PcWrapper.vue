@@ -448,6 +448,50 @@ function dragEnd() {
   recordHistory()
 }
 
+/**
+ * 双击添加组件到画布中心
+ */
+function addBlock(componentData: VisualEditorBlockData) {
+  if (!gridLayout.value || !wrapper.value)
+    return
+
+  const parentRect = wrapper.value.getBoundingClientRect()
+  const centerX = parentRect.width / 2
+  const centerY = parentRect.height / 2
+
+  // 计算网格位置
+  const item = gridLayout.value.getItem(dropId)
+  let x = 0
+  let y = 0
+  if (item) {
+    const pos = item.calcXY(centerY, centerX)
+    x = pos.x
+    y = pos.y
+  }
+
+  // 确保不超出边界
+  const w = componentData.w || 24
+  const h = componentData.h || 8
+  const colNum = gridColNum.value
+  x = Math.max(0, Math.min(x, colNum - w))
+  y = Math.max(0, y)
+
+  const newBlock = {
+    ...componentData,
+    x,
+    y,
+    w,
+    h,
+  }
+
+  currentPage.value.blocks.push(newBlock)
+  selectComp(newBlock)
+  recordHistory()
+
+  // 同步组包装样式（如果组件是组内组件）
+  syncGroupWrapperStyles()
+}
+
 // 递归实现
 // @leafId  为你要查找的id，
 // @nodes   为原始Json数据
@@ -1057,6 +1101,7 @@ defineExpose({
   getScale,
   drag: dragging,
   dragEnd,
+  addBlock,
 })
 </script>
 

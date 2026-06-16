@@ -58,6 +58,7 @@ onUnmounted(() => {
           @drag-start="() => wrapperRef?.drag()"
           @drag="() => wrapperRef?.drag()"
           @drag-end="() => wrapperRef?.dragEnd()"
+          @dblclick-add="(block) => wrapperRef?.addBlock(block)"
         />
       </div>
       <div class="simulator-canvas-area">

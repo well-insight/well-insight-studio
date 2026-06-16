@@ -11,6 +11,7 @@ const emits = defineEmits<{
   dragStart: [value: VisualEditorComponent, index: number]
   drag: [k: string]
   dragEnd: []
+  dblclickAdd: [value: VisualEditorComponent]
 }>()
 
 const activeComp = ref('基础组件')
@@ -60,6 +61,11 @@ function dragEnd() {
   controlStore.setIsDragging(false)
   emits('dragEnd')
 }
+
+function onDblClick(w: VisualEditorComponent) {
+  const newBlock = createNewBlock(cloneDeep(w))
+  emits('dblclickAdd', newBlock)
+}
 </script>
 
 <template>
@@ -92,6 +98,7 @@ function dragEnd() {
             @dragstart="(e) => dragStart(e, w, i)"
             @drag="dragging"
             @dragend="dragEnd"
+            @dblclick="onDblClick(w)"
           >
             <el-button class="h-[45px] w-[45px]" text bg>
               <SvgIcon v-if="isString(w?.icon)" :size="35" :name="w?.icon" />
