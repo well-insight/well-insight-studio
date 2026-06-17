@@ -20,26 +20,31 @@ const controlStore = useControlStore()
 
 const widgets = computed(() => {
   const { baseWidgets, containerComponents, formWidgets, chartWidgets } = visualConfig.componentModules
+
+  // 过滤掉不在列表中显示的组件（如组组件）
+  const filterVisible = (widgets: Record<string, any>) =>
+    Object.values(widgets).filter((w: any) => !w.hiddenInList)
+
   return [
     {
       title: '基础组件',
       icon: 'component-base',
-      widgets: baseWidgets,
+      widgets: filterVisible(baseWidgets),
     },
     {
       title: '表单组件',
       icon: 'component-form',
-      widgets: formWidgets,
+      widgets: filterVisible(formWidgets),
     },
     {
       title: '图表组件',
       icon: 'component-chart',
-      widgets: chartWidgets,
+      widgets: filterVisible(chartWidgets),
     },
     {
       title: '容器组件',
       icon: 'component-content',
-      widgets: containerComponents,
+      widgets: filterVisible(containerComponents),
     },
   ]
 })

@@ -4,6 +4,7 @@ import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
 import { useVModel } from '@vueuse/core'
 import { cloneDeep } from 'lodash-es'
 import { computed, onBeforeUnmount, ref } from 'vue'
+import SlotGridCanvas from '@/packages/pc/container-component/shared/SlotGridCanvas.vue'
 import { useControlStore } from '@/stores/controlStore'
 import { generateNanoid } from '@/visual-editor/lib'
 import CompRender from './comp-render'
@@ -44,12 +45,17 @@ const props = defineProps({
     type: Array as PropType<string[]>,
     default: (): string[] => [],
   },
-  /** 当前处于组内编辑模式的组 _vid */
-  editingGroupId: {
+  /** 当前处于容器编辑模式的容器 _vid */
+  editingContainerId: {
     type: String as PropType<string | null>,
     default: null,
   },
-  /** 通过 _vid 选中块（用于点击组内空白区域选中组） */
+  /** 父组件是否为容器 */
+  isContainer: {
+    type: Boolean,
+    default: false,
+  },
+  /** 通过 _vid 选中块（用于点击容器内空白区域选中容器） */
   selectBlockByVid: {
     type: Function as PropType<(vid: string, event?: MouseEvent) => void>,
     default: undefined,
@@ -58,15 +64,28 @@ const props = defineProps({
     type: Function as PropType<(groupVid: string, event: MouseEvent) => void>,
     default: undefined,
   },
-  /** 每个子块应用于外层 .list-group-item 的样式映射 */
+  /** 每个子块应用于外层 .list-group-item 的样式映射（用于组内绝对定位） */
   blockWrapperStyles: {
     type: Object as PropType<Record<string, CSSProperties>>,
     default: (): Record<string, CSSProperties> => ({}),
   },
-  /** 禁止从外部拖入新组件 */
+  /** 禁止从外部拖入新组件（容器插槽默认禁止） */
   disallowDrop: {
     type: Boolean as PropType<boolean>,
     default: false,
+  },
+  /** 拖拽进入容器回调（用于延时进入编辑模式）
+   * @param containerVid 容器ID
+   * @param immediate 是否立即进入编辑模式
+   */
+  onDragEnterContainer: {
+    type: Function as PropType<(containerVid: string, immediate?: boolean) => void>,
+    default: undefined,
+  },
+  /** 拖拽离开容器回调（用于取消延时） */
+  onDragLeaveContainer: {
+    type: Function as PropType<() => void>,
+    default: undefined,
   },
   updateGroupInnerBlockPosition: {
     type: Function as PropType<(vid: string, left: number, top: number) => void>,
@@ -88,12 +107,12 @@ const controlStore = useControlStore()
 const isDrag = useVModel(props, 'drag', emit)
 const slotChildren = useVModel(props, 'children', emit)
 
-/** 是否为组容器插槽 */
-const isGroupSlot = computed(() => props.disallowDrop)
-/** 当前组是否处于组内编辑模式 */
-const isEditingThisGroup = computed(() => isGroupSlot.value && props.editingGroupId === props.parentVid)
+/** 是否为容器插槽 */
+const isContainerSlot = computed(() => props.disallowDrop)
+/** 当前容器是否处于容器编辑模式 */
+const isEditingThisContainer = computed(() => isContainerSlot.value && props.editingContainerId === props.parentVid)
 
-/** 当前正在拖拽的组内组件 */
+/** 当前正在拖拽的容器内组件 */
 const draggingInnerBlock = ref<string | null>(null)
 /** 拖拽开始时的鼠标位置 */
 const dragStartPos = ref({ x: 0, y: 0 })
@@ -101,7 +120,7 @@ const dragStartPos = ref({ x: 0, y: 0 })
 const dragStartBlockPos = ref({ left: 0, top: 0 })
 /** 是否发生了实际移动 */
 const hasInnerDragMoved = ref(false)
-/** 当前正在缩放尺寸的组内组件 */
+/** 当前正在缩放尺寸的容器内组件 */
 const resizingInnerBlock = ref<string | null>(null)
 const resizeStartPos = ref({ x: 0, y: 0 })
 const resizeStartSize = ref({ width: 0, height: 0 })
@@ -116,12 +135,12 @@ function isGroupInnerBlock(block: VisualEditorBlockData) {
 }
 
 function isInnerBlockLocked(block: VisualEditorBlockData) {
-  return isGroupInnerBlock(block) && !isEditingThisGroup.value
+  return isGroupInnerBlock(block) && !isEditingThisContainer.value
 }
 
 function shouldShowInnerResizer(block: VisualEditorBlockData) {
   return isGroupInnerBlock(block)
-    && isEditingThisGroup.value
+    && isEditingThisContainer.value
     && (block.focus || props.selectedBlockIds.includes(block._vid))
 }
 
@@ -129,8 +148,8 @@ function parsePx(value: string | number | undefined, fallback = 0) {
   return Number.parseInt(String(value ?? ''), 10) || fallback
 }
 
-function onGroupSlotMouseDown(e: MouseEvent) {
-  if (!isEditingThisGroup.value)
+function onContainerSlotMouseDown(e: MouseEvent) {
+  if (!isEditingThisContainer.value)
     return
   if ((e.target as HTMLElement).closest('.group-inner-block'))
     return
@@ -138,12 +157,48 @@ function onGroupSlotMouseDown(e: MouseEvent) {
   props.selectBlockByVid?.(props.parentVid, e)
 }
 
+/** 处理拖拽进入容器 - 触发延时进入编辑模式 */
+function onDragEnter(e: DragEvent) {
+  if (!props.isContainer || !props.parentVid)
+    return
+  e.preventDefault()
+  e.stopPropagation()
+  props.onDragEnterContainer?.(props.parentVid)
+}
+
+/** 处理拖拽离开容器 - 取消延时 */
+function onDragLeave(e: DragEvent) {
+  if (!props.isContainer)
+    return
+  e.preventDefault()
+  e.stopPropagation()
+  // 检查是否真的离开了容器（而不是进入了子元素）
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  const x = e.clientX
+  const y = e.clientY
+  if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+    props.onDragLeaveContainer?.()
+  }
+}
+
+/** 处理拖拽在容器上方移动 */
+function _onDragOver(e: DragEvent) {
+  e.preventDefault()
+  e.stopPropagation()
+}
+
+/** 处理 SlotGridCanvas 的放置事件（非编辑模式下） */
+function onSlotGridDrop(_e: DragEvent) {
+  // 通知父容器立即进入编辑模式
+  if (props.isContainer && props.parentVid) {
+    props.onDragEnterContainer?.(props.parentVid, true)
+  }
+}
+
+/** 处理非容器插槽的放置事件 */
 function onNativeDrop(event: DragEvent) {
   event.preventDefault()
   event.stopPropagation()
-
-  if (props.disallowDrop)
-    return
 
   const block = controlStore.moveVisualData
   if (!block) {
@@ -161,7 +216,7 @@ function onNativeDrop(event: DragEvent) {
   props.selectComp(copiedBlock)
 }
 
-/** 处理组内组件的鼠标按下事件 - 选中并准备拖拽 */
+/** 处理容器内组件的鼠标按下事件 - 选中并准备拖拽 */
 function onInnerBlockMouseDown(e: MouseEvent, block: VisualEditorBlockData) {
   if (e.button !== 0)
     return
@@ -190,7 +245,7 @@ function onInnerBlockMouseDown(e: MouseEvent, block: VisualEditorBlockData) {
   document.addEventListener('mouseup', onInnerBlockMouseUp)
 }
 
-/** 处理组内组件的鼠标移动事件 - 实时更新位置 */
+/** 处理容器内组件的鼠标移动事件 - 实时更新位置 */
 function onInnerBlockMouseMove(e: MouseEvent) {
   if (!draggingInnerBlock.value)
     return
@@ -209,7 +264,7 @@ function onInnerBlockMouseMove(e: MouseEvent) {
   props.updateGroupInnerBlockPosition?.(draggingInnerBlock.value, newLeft, newTop)
 }
 
-/** 处理组内组件的鼠标释放事件 - 结束拖拽 */
+/** 处理容器内组件的鼠标释放事件 - 结束拖拽 */
 function onInnerBlockMouseUp() {
   if (hasInnerDragMoved.value)
     props.onGroupInnerDragEnd?.()
@@ -288,20 +343,41 @@ props.children.some(item => item.focus && props.selectComp(item))
 </script>
 
 <template>
+  <!-- 容器插槽：使用 SlotGridCanvas 实现 grid-layout-plus 网格布局 -->
+  <template v-if="isContainer">
+    <div
+      class="container-slot-wrapper"
+      :class="{
+        'is-editing': isEditingThisContainer,
+      }"
+      @mousedown="onContainerSlotMouseDown"
+    >
+      <SlotGridCanvas
+        :children="slotChildren"
+        :slot-key="String(slotKey)"
+        :parent-focus="isContainerSlot"
+        :is-editing="isEditingThisContainer"
+        @update:children="slotChildren = $event"
+        @drag-enter="onDragEnter"
+        @drag-leave="onDragLeave"
+        @drop="onSlotGridDrop"
+      />
+    </div>
+  </template>
+
+  <!-- 非容器插槽：使用 DraggableTransitionGroup 实现拖拽排序 -->
   <DraggableTransitionGroup
+    v-else
     v-model="slotChildren"
     v-model:drag="isDrag"
     class="inner-draggable"
     :class="{
-      'slot': !slotChildren?.length,
-      'group-inner-slot': disallowDrop,
-      'group-inner-slot--editing': isEditingThisGroup,
+      slot: !slotChildren?.length,
     }"
     draggable=".item-drag"
     :data-slot="`插槽（${slotKey}）\n 拖拽组件到此处`"
     @dragover.prevent
     @drop="onNativeDrop"
-    @mousedown="onGroupSlotMouseDown"
   >
     <template #item="{ element: innerElement }">
       <div
@@ -337,13 +413,16 @@ props.children.some(item => item.focus && props.selectComp(item))
               :slot-key="key"
               :parent-vid="innerElement._vid"
               :selected-block-ids="selectedBlockIds"
-              :editing-group-id="editingGroupId"
+              :editing-container-id="editingContainerId"
+              :is-container="['group', 'container', 'layout', 'form'].includes(innerElement.componentKey)"
               :block-wrapper-styles="blockWrapperStyles"
-              :disallow-drop="innerElement.componentKey === 'group' || props.disallowDrop"
+              :disallow-drop="['group', 'container', 'layout', 'form'].includes(innerElement.componentKey) || props.disallowDrop"
               :on-contextmenu-block="onContextmenuBlock"
               :select-comp="selectComp"
               :select-block-by-vid="selectBlockByVid"
               :on-inner-group-dbl-click="onInnerGroupDblClick"
+              :on-drag-enter-container="onDragEnterContainer"
+              :on-drag-leave-container="onDragLeaveContainer"
               :update-group-inner-block-position="updateGroupInnerBlockPosition"
               :update-group-inner-block-size="updateGroupInnerBlockSize"
               :on-group-inner-drag-end="onGroupInnerDragEnd"
@@ -363,24 +442,18 @@ props.children.some(item => item.focus && props.selectComp(item))
 <style lang="scss" scoped>
 @use './func.scss' as *;
 
-.inner-draggable {
-  position: relative;
-}
-
-.inner-draggable.group-inner-slot {
+// 容器插槽包装器样式
+.container-slot-wrapper {
   width: 100%;
   height: 100%;
-
-  :deep(.list-group) {
-    position: relative;
-    height: 100%;
-    min-height: 0;
-    overflow: visible;
-  }
+  position: relative;
+  overflow: hidden;
+  // 始终允许接收事件，让 SlotGridCanvas 自己处理内部交互
+  pointer-events: auto;
 }
 
-.inner-draggable.group-inner-slot--editing {
-  cursor: default;
+.inner-draggable {
+  position: relative;
 }
 
 .inner-draggable.slot::after {

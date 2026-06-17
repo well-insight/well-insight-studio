@@ -28,7 +28,19 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
       // 与前端约定：鉴权失败统一 401，便于请求层统一跳转登录（403 保留给业务权限不足）
       return res.status(401).json({ success: false, error: 'Invalid Token' });
     }
-    req.userId = decoded.userId;
+
+    const userId = decoded?.userId != null ? String(decoded.userId) : '';
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Invalid Token' });
+    }
+
+    // Token 有效但用户已被删除/数据库重建时，避免后续外键约束报错
+    const user = UserModel.findByPk(userId);
+    if (!user || !user.is_active) {
+      return res.status(401).json({ success: false, error: '登录已失效，请重新登录' });
+    }
+
+    req.userId = userId;
     next();
   });
 };

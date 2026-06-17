@@ -1,0 +1,17 @@
+.elContainer {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+}
+
+.elContainerHeader {
+  --el-header-padding: 0 !important;
+}
+
+.elContainerMain {
+  --el-main-padding: 0 !important;
+}
+
+.elContainerFooter {
+  --el-footer-padding: 0 !important;
+}

@@ -5,8 +5,8 @@ import {
   Delete,
   Expand,
   Fold,
+  FolderRemove,
   List,
-  Rank,
 } from '@element-plus/icons-vue'
 import { isString } from 'lodash-es'
 import { computed, ref } from 'vue'
@@ -357,6 +357,150 @@ function duplicateNode(node: TreeNode) {
   if (node._vid)
     cloneNode(node._vid, blocks.value)
 }
+
+/**
+ * 拆分组节点
+ * 将组内的子组件释放到画布上，并恢复它们的原始位置
+ */
+function ungroupNode(node: TreeNode) {
+  if (node.isSlotGroup || node.componentKey !== 'group')
+    return
+
+  ungroupByVid(node._vid)
+}
+
+/**
+ * 拆分当前选中的组块
+ */
+function ungroupCurrentBlock() {
+  if (!currentBlock.value?._vid || currentBlock.value.componentKey !== 'group')
+    return
+  ungroupByVid(currentBlock.value._vid)
+}
+
+/**
+ * 根据 vid 拆分组
+ */
+function ungroupByVid(vid: string) {
+  // 查找实际的组块
+  const findGroupBlock = (vid: string, nodes: VisualEditorBlockData[]): VisualEditorBlockData | null => {
+    for (const n of nodes) {
+      if (n._vid === vid)
+        return n
+      const slots = n.props?.slots || {}
+      for (const key of Object.keys(slots)) {
+        const children = slots[key]?.children
+        if (children) {
+          const found = findGroupBlock(vid, children)
+          if (found)
+            return found
+        }
+      }
+    }
+    return null
+  }
+
+  const group = findGroupBlock(vid, blocks.value)
+  if (!group || group.componentKey !== 'group')
+    return
+
+  // 获取组内的子组件
+  const children = group.props?.slots?.default?.children || []
+
+  if (children.length === 0) {
+    // 空组直接删除
+    const index = blocks.value.findIndex(item => item._vid === vid)
+    if (index !== -1) {
+      blocks.value.splice(index, 1)
+      setCurrentBlock({} as VisualEditorBlockData)
+      recordHistory()
+    }
+    return
+  }
+
+  // 获取网格度量以计算位置
+  const designWidth = currentPage.value?.config?.pageSize?.width || 1920
+  const cols = Math.max(1, Math.floor(designWidth / 15))
+  const gridEl = document.querySelector('.grid-layout-canvas') as HTMLElement | null
+  const containerWidth = gridEl?.clientWidth || designWidth
+  const colWidth = (containerWidth - 0 * (cols + 1)) / cols
+  const rowHeight = 15
+
+  // 计算组的左上角像素位置
+  const groupPixelLeft = (group.x || 0) * colWidth
+  const groupPixelTop = (group.y || 0) * rowHeight
+
+  // 计算每个子组件在画布上的实际位置
+  const releasedBlocks: VisualEditorBlockData[] = children.map((child: VisualEditorBlockData) => {
+    // 使用浅拷贝保持原有数据
+    const releasedBlock = { ...child }
+
+    // 重新生成 vid 和 i
+    releasedBlock._vid = `vid_${generateNanoid()}`
+    releasedBlock.i = releasedBlock._vid
+
+    // 计算在画布上的绝对位置
+    const childStyle = child.groupInnerLayout
+    if (childStyle) {
+      const leftPx = Number.parseInt(childStyle.left || '0', 10)
+      const topPx = Number.parseInt(childStyle.top || '0', 10)
+      const widthPx = Number.parseInt(childStyle.width || '100', 10)
+      const heightPx = Number.parseInt(childStyle.height || '100', 10)
+
+      // 计算在画布上的绝对像素位置
+      const absLeftPx = groupPixelLeft + leftPx
+      const absTopPx = groupPixelTop + topPx
+
+      // 转换回网格坐标
+      const gridX = Math.round(absLeftPx / colWidth)
+      const gridY = Math.round(absTopPx / rowHeight)
+      const gridW = Math.max(1, Math.round(widthPx / colWidth))
+      const gridH = Math.max(1, Math.round(heightPx / rowHeight))
+
+      releasedBlock.x = gridX
+      releasedBlock.y = gridY
+      releasedBlock.w = gridW
+      releasedBlock.h = gridH
+    }
+    else {
+      // 没有 inner layout，使用组的位置作为基础
+      releasedBlock.x = (group.x || 0) + (child.x || 0)
+      releasedBlock.y = (group.y || 0) + (child.y || 0)
+    }
+
+    // 清除组内布局信息
+    delete (releasedBlock as any).groupInnerLayout
+
+    // 清除 focus 状态
+    releasedBlock.focus = false
+    releasedBlock.focusWithChild = false
+
+    return releasedBlock
+  })
+
+  // 找到组在当前 blocks 数组中的位置
+  const groupIndex = blocks.value.findIndex(item => item._vid === vid)
+
+  // 删除组
+  if (groupIndex !== -1) {
+    blocks.value.splice(groupIndex, 1)
+  }
+
+  // 将子组件插入到原来组的位置
+  blocks.value.splice(groupIndex, 0, ...releasedBlocks)
+
+  // 设置第一个子组件为当前选中
+  if (releasedBlocks.length > 0) {
+    setCurrentBlock(releasedBlocks[0])
+    // 通知画布更新选中状态
+    controlStore.selectCanvasBlock(releasedBlocks[0])
+  }
+  else {
+    setCurrentBlock({} as VisualEditorBlockData)
+  }
+
+  recordHistory()
+}
 </script>
 
 <template>
@@ -382,6 +526,15 @@ function duplicateNode(node: TreeNode) {
         </el-button>
         <el-button link :icon="Fold" @click="collapseAll">
           收起
+        </el-button>
+        <el-button
+          v-if="currentBlock?.componentKey === 'group'"
+          link
+          type="warning"
+          :icon="FolderRemove"
+          @click="ungroupCurrentBlock()"
+        >
+          拆分组
         </el-button>
         <el-button
           link
@@ -442,11 +595,6 @@ function duplicateNode(node: TreeNode) {
               @mouseenter="hoverVid = data._vid"
               @mouseleave="hoverVid = null"
             >
-              <!-- 拖拽手柄 -->
-              <el-icon :class="$style['drag-handle-icon']" class="drag-handle-icon">
-                <Rank />
-              </el-icon>
-
               <!-- 图标 -->
               <SvgIcon
                 v-if="data.iconClass"
@@ -473,6 +621,16 @@ function duplicateNode(node: TreeNode) {
 
               <!-- 快速操作 -->
               <span :class="$style['node-actions']" @click.stop>
+                <el-tooltip v-if="data.componentKey === 'group'" content="拆分组" placement="top">
+                  <el-button
+                    link
+                    size="small"
+                    type="warning"
+                    :icon="FolderRemove"
+                    :class="$style['action-btn']"
+                    @click="ungroupNode(data)"
+                  />
+                </el-tooltip>
                 <el-tooltip content="复制" placement="top">
                   <el-button
                     link
@@ -540,7 +698,7 @@ function duplicateNode(node: TreeNode) {
 }
 
 .page-setting-panel {
-  padding: 0 4px;
+  padding: 0 12px;
   width: 340px;
   height: min(420px, calc(100vh - 280px));
   max-height: min(420px, calc(100vh - 280px));
@@ -623,20 +781,6 @@ function duplicateNode(node: TreeNode) {
     bottom: 0;
   }
 
-  // 拖拽手柄图标提示
-  :global(.el-tree-node__content:hover .drag-handle-icon) {
-    opacity: 1;
-  }
-}
-
-.drag-handle-icon {
-  flex-shrink: 0;
-  font-size: 13px;
-  color: var(--el-text-color-disabled);
-  opacity: 0;
-  transition: opacity 0.15s;
-  cursor: grab;
-  margin-right: 2px;
 }
 
 /* ---- 插槽分组标题 ---- */

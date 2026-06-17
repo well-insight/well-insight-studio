@@ -24,13 +24,17 @@ export default defineComponent({
       return createNewBlock(newComp)
     }
 
+    // 过滤掉不在列表中显示的组件（如组组件）
+    const visibleComponents = Object.values(visualConfig.componentModules.containerComponents)
+      .filter((comp: VisualEditorComponent) => !comp.hiddenInList)
+
     return () => (
       <>
         <Draggable
           class={styles.listGroup}
           sort={false}
           forceFallback={false}
-          list={visualConfig.componentModules.containerComponents}
+          list={visibleComponents}
           group={{ name: 'components', pull: 'clone', put: false }}
           clone={cloneDog}
           item-key="_vid"

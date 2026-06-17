@@ -6,9 +6,10 @@ import { useMouseInElement, useResizeObserver } from '@vueuse/core'
 import { vLoading } from 'element-plus'
 import { cloneDeep, debounce, throttle } from 'lodash-es'
 import { storeToRefs } from 'pinia'
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, provide, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { GridLayout } from '@/components/grid-layout-plus'
+import { EditingContainerIdKey } from '@/packages/pc/container-component/container'
 import { useAnimate } from '@/hooks/useAnimate'
 import { useGlobalProperties } from '@/hooks/useGlobalProperties'
 import { useControlStore } from '@/stores/controlStore'
@@ -60,8 +61,18 @@ const { floatingSettingVisible } = storeToRefs(controlStore)
 const drag = ref(false)
 const selectedBlockIds = ref<string[]>([])
 
-/** 当前处于组内编辑模式的组 _vid（双击组进入，Esc/点击画布退出） */
-const editingGroupId = ref<string | null>(null)
+/** 当前处于容器编辑模式的容器 _vid（双击容器进入，Esc/点击画布退出）支持 group, container, layout, form */
+const editingContainerId = ref<string | null>(null)
+
+// 提供编辑状态给子组件
+provide(EditingContainerIdKey, editingContainerId)
+
+/** 拖拽悬停计时器（用于拖拽进入容器一定时间后自动进入编辑模式） */
+const dragHoverTimer = ref<number | null>(null)
+const DRAG_HOVER_DELAY = 800 // 悬停 800ms 后进入编辑模式
+
+/** 容器组件类型 */
+const CONTAINER_COMPONENT_KEYS = ['group', 'container', 'layout', 'form']
 
 /** 子块的外层包装样式映射（用于组内绝对定位） */
 const blockWrapperStyles = ref<Record<string, CSSProperties>>({})
@@ -183,12 +194,12 @@ function keyEvent() {
         deleteComp()
       }
     }
-    // Esc 退出组内编辑模式
-    if (e.code === 'Escape' && editingGroupId.value && !isOutside.value) {
-      const group = findBlockByVid(editingGroupId.value, currentPage.value.blocks)
-      exitGroupEditMode()
-      if (group)
-        selectComp(group)
+    // Esc 退出容器编辑模式
+    if (e.code === 'Escape' && editingContainerId.value && !isOutside.value) {
+      const container = findBlockByVid(editingContainerId.value, currentPage.value.blocks)
+      exitContainerEditMode()
+      if (container)
+        selectComp(container)
       e.preventDefault()
     }
   })
@@ -902,17 +913,71 @@ function lockGroupAndAncestors(groupVid: string) {
   syncGroupGridAfterLockChange()
 }
 
-function enterGroupEditMode(groupVid: string) {
-  const group = findBlockByVid(groupVid, currentPage.value.blocks)
-  if (!group || group.componentKey !== 'group')
+/** 检查是否为容器组件 */
+function isContainerComponent(componentKey: string): boolean {
+  return CONTAINER_COMPONENT_KEYS.includes(componentKey)
+}
+
+/** 进入容器编辑模式 */
+function enterContainerEditMode(containerVid: string) {
+  const container = findBlockByVid(containerVid, currentPage.value.blocks)
+  if (!container || !isContainerComponent(container.componentKey))
     return
-  editingGroupId.value = groupVid
-  lockGroupAndAncestors(groupVid)
+  editingContainerId.value = containerVid
+  lockGroupAndAncestors(containerVid)
+}
+
+/** 退出容器编辑模式 */
+function exitContainerEditMode() {
+  editingContainerId.value = null
+  unlockAllEditingGroups()
+  // 清除拖拽悬停计时器
+  if (dragHoverTimer.value) {
+    clearTimeout(dragHoverTimer.value)
+    dragHoverTimer.value = null
+  }
+}
+
+/** 处理拖拽悬停进入容器 - 延时进入编辑模式
+ * @param containerVid 容器ID
+ * @param immediate 是否立即进入编辑模式（直接放置时使用）
+ */
+function handleDragEnterContainer(containerVid: string, immediate?: boolean) {
+  debugger
+  // 清除之前的计时器
+  if (dragHoverTimer.value) {
+    clearTimeout(dragHoverTimer.value)
+    dragHoverTimer.value = null
+  }
+
+  // 如果要求立即进入（直接放置），则立即进入编辑模式
+  if (immediate) {
+    enterContainerEditMode(containerVid)
+    return
+  }
+
+  // 设置新的计时器（悬停延时进入）
+  dragHoverTimer.value = window.setTimeout(() => {
+    enterContainerEditMode(containerVid)
+    dragHoverTimer.value = null
+  }, DRAG_HOVER_DELAY)
+}
+
+/** 处理拖拽离开容器 - 取消计时器 */
+function handleDragLeaveContainer() {
+  if (dragHoverTimer.value) {
+    clearTimeout(dragHoverTimer.value)
+    dragHoverTimer.value = null
+  }
+}
+
+// 保留旧函数名用于兼容
+function enterGroupEditMode(groupVid: string) {
+  enterContainerEditMode(groupVid)
 }
 
 function exitGroupEditMode() {
-  editingGroupId.value = null
-  unlockAllEditingGroups()
+  exitContainerEditMode()
 }
 
 function selectBlockByVid(vid: string, event?: MouseEvent) {
@@ -941,23 +1006,23 @@ function selectComp(element: VisualEditorBlockData, event?: MouseEvent) {
     return
   }
 
-  // 未进入组内编辑模式时，点击组内组件应选中其所属组
+  // 未进入容器编辑模式时，点击容器内组件应选中其所属容器
   if (isGroupInnerBlockData(element)) {
-    const parentGroup = findParentGroup(element._vid)
-    if (!parentGroup || editingGroupId.value !== parentGroup._vid) {
-      if (parentGroup)
-        selectComp(parentGroup, event)
+    const parentContainer = findParentGroup(element._vid)
+    if (!parentContainer || editingContainerId.value !== parentContainer._vid) {
+      if (parentContainer)
+        selectComp(parentContainer, event)
       return
     }
   }
 
-  // 选中组外元素时退出组内编辑模式
-  if (editingGroupId.value) {
-    const isEditingGroup = element._vid === editingGroupId.value
-    const isInnerOfEditingGroup = isGroupInnerBlockData(element)
-      && findParentGroup(element._vid)?._vid === editingGroupId.value
-    if (!isEditingGroup && !isInnerOfEditingGroup)
-      exitGroupEditMode()
+  // 选中容器外元素时退出容器编辑模式
+  if (editingContainerId.value) {
+    const isEditingContainer = element._vid === editingContainerId.value
+    const isInnerOfEditingContainer = isGroupInnerBlockData(element)
+      && findParentGroup(element._vid)?._vid === editingContainerId.value
+    if (!isEditingContainer && !isInnerOfEditingContainer)
+      exitContainerEditMode()
   }
 
   const multiSelect = Boolean(event?.metaKey || event?.ctrlKey)
@@ -997,17 +1062,18 @@ function selectComp(element: VisualEditorBlockData, event?: MouseEvent) {
 
 function getCompRenderPointerEvents(item: VisualEditorBlockData) {
   const hasSlots = !!Object.keys(item.props?.slots || {}).length
-  // 组未进入编辑模式时，内部层不拦截鼠标，以便正常拖拽/操作组本身
-  if (item.componentKey === 'group' && editingGroupId.value !== item._vid)
+  // 容器未进入编辑模式时，内部层不拦截鼠标，以便正常拖拽/操作容器本身
+  if (isContainerComponent(item.componentKey) && editingContainerId.value !== item._vid)
     return 'none'
   return hasSlots ? 'auto' : 'none'
 }
 
 function onBlockDblClick(item: VisualEditorBlockData, e: MouseEvent) {
-  if (item.componentKey !== 'group')
+  // 双击容器组件进入编辑模式
+  if (!isContainerComponent(item.componentKey))
     return
   e.stopPropagation()
-  enterGroupEditMode(item._vid)
+  enterContainerEditMode(item._vid)
   selectComp(item, e)
 }
 
@@ -1144,14 +1210,14 @@ function finishBoxSelection(rect: { left: number, top: number, width: number, he
     blocks.forEach((block) => {
       const isInner = isGroupInnerBlockData(block)
 
-      // 普通模式：不参与框选组内组件
-      if (!editingGroupId.value && isInner)
+      // 普通模式：不参与框选容器内组件
+      if (!editingContainerId.value && isInner)
         return
 
-      // 组内编辑模式：仅框选当前组内的组件
-      if (editingGroupId.value && isInner) {
-        const parentGroup = findParentGroup(block._vid)
-        if (parentGroup?._vid !== editingGroupId.value)
+      // 容器编辑模式：仅框选当前容器内的组件
+      if (editingContainerId.value && isInner) {
+        const parentContainer = findParentGroup(block._vid)
+        if (parentContainer?._vid !== editingContainerId.value)
           return
       }
 
@@ -1421,6 +1487,127 @@ function mergeToGroup() {
   recordHistory()
 }
 
+/**
+ * 拆分选中的组
+ * 将组内的子组件释放到画布上，并恢复它们的原始位置
+ */
+function ungroup() {
+  // 查找选中的组块
+  const groupVid = selectedBlockIds.value.find((vid) => {
+    const block = findBlockByVid(vid, currentPage.value.blocks)
+    return block?.componentKey === 'group'
+  })
+
+  if (!groupVid)
+    return
+
+  const group = findBlockByVid(groupVid, currentPage.value.blocks)
+  if (!group || group.componentKey !== 'group')
+    return
+
+  // 获取组内的子组件（从 default 插槽）
+  const children = group.props?.slots?.default?.children || []
+
+  if (children.length === 0) {
+    // 空组直接删除
+    const index = currentPage.value.blocks.findIndex(item => item._vid === groupVid)
+    if (index !== -1) {
+      currentPage.value.blocks.splice(index, 1)
+    }
+    selectedBlockIds.value = []
+    setCurrentBlock(null)
+    recordHistory()
+    return
+  }
+
+  // 获取网格度量以计算位置
+  const metrics = getGridMetrics()
+  const groupOriginLeft = calcGridColLeft(group.x || 0, metrics)
+  const groupOriginTop = calcGridRowTop(group.y || 0, metrics)
+
+  // 移除组的 wrapper styles
+  const newWrapperStyles = { ...blockWrapperStyles.value }
+  children.forEach((child: VisualEditorBlockData) => {
+    delete newWrapperStyles[child._vid]
+  })
+  blockWrapperStyles.value = newWrapperStyles
+
+  // 计算每个子组件在画布上的实际位置
+  const releasedBlocks: VisualEditorBlockData[] = children.map((child: VisualEditorBlockData) => {
+    const clonedChild = cloneDeep(child)
+
+    // 重新生成 vid 和 i
+    clonedChild._vid = `vid_${generateNanoid()}`
+    clonedChild.i = clonedChild._vid
+
+    // 计算在画布上的绝对位置
+    const childStyle = child.groupInnerLayout
+    if (childStyle) {
+      const leftPx = Number.parseInt(childStyle.left || '0', 10)
+      const topPx = Number.parseInt(childStyle.top || '0', 10)
+      const widthPx = Number.parseInt(childStyle.width || '100', 10)
+      const heightPx = Number.parseInt(childStyle.height || '100', 10)
+
+      // 计算在画布上的绝对像素位置
+      const absLeftPx = groupOriginLeft + leftPx
+      const absTopPx = groupOriginTop + topPx
+
+      // 转换回网格坐标
+      const colWidth = metrics.colWidth
+      const rowHeight = metrics.rowHeight
+
+      const gridX = Math.round(absLeftPx / colWidth)
+      const gridY = Math.round(absTopPx / rowHeight)
+      const gridW = Math.max(1, Math.round(widthPx / colWidth))
+      const gridH = Math.max(1, Math.round(heightPx / rowHeight))
+
+      clonedChild.x = gridX
+      clonedChild.y = gridY
+      clonedChild.w = gridW
+      clonedChild.h = gridH
+    }
+    else {
+      // 没有 inner layout，使用组的位置作为基础
+      clonedChild.x = (group.x || 0) + (child.x || 0)
+      clonedChild.y = (group.y || 0) + (child.y || 0)
+    }
+
+    // 清除组内布局信息
+    delete clonedChild.groupInnerLayout
+
+    // 清除 focus 状态
+    clonedChild.focus = false
+    clonedChild.focusWithChild = false
+
+    return clonedChild
+  })
+
+  // 找到组在当前 blocks 数组中的位置
+  const groupIndex = currentPage.value.blocks.findIndex(item => item._vid === groupVid)
+
+  // 删除组
+  if (groupIndex !== -1) {
+    delete globalProperties.$$refs[groupVid]
+    currentPage.value.blocks.splice(groupIndex, 1)
+  }
+
+  // 将子组件插入到原来组的位置
+  currentPage.value.blocks.splice(groupIndex, 0, ...releasedBlocks)
+
+  // 更新选中状态为释放后的子组件
+  selectedBlockIds.value = releasedBlocks.map(b => b._vid)
+  clearAllBlockFocus(currentPage.value.blocks)
+  setMultiFocus(currentPage.value.blocks, selectedBlockIds.value)
+
+  // 设置第一个子组件为当前选中
+  if (releasedBlocks.length > 0) {
+    setCurrentBlock(releasedBlocks[0])
+  }
+
+  exitGroupEditMode()
+  recordHistory()
+}
+
 function onContextmenuBlock(e: MouseEvent, block: VisualEditorBlockData, parentBlocks = currentPage.value.blocks) {
   const menuOptions: any[] = [
     {
@@ -1478,6 +1665,15 @@ function onContextmenuBlock(e: MouseEvent, block: VisualEditorBlockData, parentB
       label: '合并为组',
       icon: 'el-icon-folder-opened',
       onClick: () => mergeToGroup(),
+    })
+  }
+
+  // 选中单个组时显示"拆分组"
+  if (selectedBlockIds.value.length === 1 && selectedBlockIds.value[0] === block._vid && block.componentKey === 'group') {
+    menuOptions.push({
+      label: '拆分组',
+      icon: 'el-icon-folder-remove',
+      onClick: () => ungroup(),
     })
   }
 
@@ -1577,7 +1773,7 @@ defineExpose({
                   'focus': item.focus,
                   'focusWithChild': item.focusWithChild,
                   'multi-focus': selectedBlockIds.includes(item._vid),
-                  'is-editing-group': item.componentKey === 'group' && editingGroupId === item._vid,
+                  'is-editing-container': isContainerComponent(item.componentKey) && editingContainerId === item._vid,
                   drag,
                   'has-slot': !!Object.keys(item.props?.slots || {}).length,
                   'has-inner-title': item.showTitle === true && isInnerBlockTitle(item.titleStyle),
@@ -1616,11 +1812,14 @@ defineExpose({
                         :slot-key="slotKey"
                         :parent-vid="item._vid"
                         :selected-block-ids="selectedBlockIds"
-                        :editing-group-id="editingGroupId"
+                        :editing-container-id="editingContainerId"
+                        :is-container="isContainerComponent(item.componentKey)"
                         :block-wrapper-styles="blockWrapperStyles"
-                        :disallow-drop="item.componentKey === 'group'"
+                        :disallow-drop="isContainerComponent(item.componentKey)"
                         :on-contextmenu-block="onContextmenuBlock"
                         :select-comp="selectComp"
+                        :on-drag-enter-container="handleDragEnterContainer"
+                        :on-drag-leave-container="handleDragLeaveContainer"
                         :select-block-by-vid="selectBlockByVid"
                         :on-inner-group-dbl-click="onInnerGroupDblClick"
                         :delete-comp="deleteComp"

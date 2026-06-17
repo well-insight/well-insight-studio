@@ -1,7 +1,8 @@
-import type { VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
+import type { VisualEditorBlockData, VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
 import { ElCol, ElRow } from 'element-plus'
-import { renderSlot, useSlots, watchEffect } from 'vue'
-import { useGlobalProperties } from '@/hooks/useGlobalProperties'
+import { computed, h, inject, watchEffect } from 'vue'
+import SlotGridCanvas from '../shared/SlotGridCanvas.vue'
+import { EditingContainerIdKey } from '../container'
 import {
   createEditorInputNumberProp,
   createEditorSelectProp,
@@ -45,8 +46,8 @@ export default {
     </ElRow>
   ),
   render: ({ props, styles, block, custom }) => {
-    const slots = useSlots()
-    const { registerRef } = useGlobalProperties()
+    // 注入当前处于编辑模式的容器 id
+    const editingContainerId = inject<string | null>(EditingContainerIdKey, null)
 
     // 初始化当前 block 的临时存储
     if (!slotsTemp[block._vid])
@@ -66,27 +67,57 @@ export default {
       })
     })
 
+    // 获取所有列配置（排除 value 字段）
+    const slotEntries = computed(() =>
+      Object.entries<SlotItem>(props.slots || createSlots('12:12'))
+        .filter(([key]) => key !== 'value'),
+    )
+
+    // 容器是否被选中
+    const isFocus = computed(() => block?.focus || false)
+    // 是否处于编辑模式
+    const isEditing = computed(() => editingContainerId === block?._vid)
+
+    // 创建插槽画布渲染函数
+    const renderSlotCanvas = (slotKey: string, children: VisualEditorBlockData[]) => {
+      return h(SlotGridCanvas, {
+        slotKey,
+        children,
+        colNum: 12, // 容器内使用较少的列数
+        rowHeight: 15,
+        parentFocus: isFocus.value,
+        isEditing: isEditing.value,
+        'onUpdate:children': (newChildren: VisualEditorBlockData[]) => {
+          const slot = props.slots?.[slotKey]
+          if (slot) {
+            slot.children = newChildren
+          }
+        },
+      })
+    }
+
     return () => (
       <div style={{ width: '100%', height: '100%', ...styles }}>
         <ElRow
-          ref={el => registerRef(el, block._vid)}
           {...custom}
           {...props}
           class="h-full w-full"
         >
-          {/* 获取所有列配置（排除 value 字段） */}
-          {Object.entries(props.slots || createSlots('12:12'))
-            .filter(([key]) => key !== 'value')
-            .map(([slotKey, slotItem]) => {
-              // 保存当前插槽的 children 到临时存储（拖拽时会自动更新）
-              slotsTemp[block._vid][slotKey] = slotItem
+          {slotEntries.value.map(([slotKey, slotItem]) => {
+            // 保存当前插槽的 children 到临时存储（拖拽时会自动更新）
+            slotsTemp[block._vid][slotKey] = slotItem
 
-              return (
-                <ElCol key={slotKey} class="h-full" span={Number(slotItem.span)}>
-                  {renderSlot(slots, slotKey)}
-                </ElCol>
-              )
-            })}
+            return (
+              <ElCol
+                key={slotKey}
+                class="h-full"
+                span={Number(slotItem.span)}
+                style={{ position: 'relative', overflow: 'hidden' }}
+              >
+                {renderSlotCanvas(slotKey, slotItem.children || [])}
+              </ElCol>
+            )
+          })}
         </ElRow>
       </div>
     )

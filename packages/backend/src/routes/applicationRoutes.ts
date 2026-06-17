@@ -2,6 +2,7 @@ import { Request, Response, Router } from "express";
 import { z } from "zod";
 import { db } from "../config/database";
 import { authenticateToken } from "../middleware/authMiddleware";
+import { UserModel } from "../models/User";
 import { generateSnowflakeId } from "../utils/snowflake";
 
 const router: Router = Router();
@@ -153,6 +154,11 @@ router.post("/", (req: Request, res: Response) => {
     const schema = body.schema ?? defaultSchema(clientType);
     const schemaJson = JSON.stringify(schema);
 
+    const owner = UserModel.findByPk(userId);
+    if (!owner || !owner.is_active) {
+      return res.status(401).json({ success: false, error: "登录已失效，请重新登录" });
+    }
+
     db.prepare(
       `INSERT INTO applications (id, title, status, client_type, schema_json, starred, owner_id, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?)`,
@@ -171,6 +177,13 @@ router.post("/", (req: Request, res: Response) => {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ success: false, error: "数据验证失败", details: error.errors });
+    }
+    if (
+      error instanceof Error
+      && "code" in error
+      && (error as { code?: string }).code === "SQLITE_CONSTRAINT_FOREIGNKEY"
+    ) {
+      return res.status(401).json({ success: false, error: "登录已失效，请重新登录" });
     }
     console.error("applications create error:", error);
     res.status(500).json({ success: false, error: "服务器内部错误" });
