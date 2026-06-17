@@ -82,6 +82,12 @@ function handleCanvasMousedown(e: MouseEvent) {
   e.stopPropagation()
 }
 
+function handleCanvasPointerdown(e: PointerEvent) {
+  if (!isEditingMode.value)
+    return
+  e.stopPropagation()
+}
+
 function handleContainerDblClick(e: MouseEvent) {
   if (isEditingMode.value)
     return
@@ -90,6 +96,12 @@ function handleContainerDblClick(e: MouseEvent) {
     return
   editorCtx?.enterContainerEditMode?.(props.containerVid)
   editorCtx?.selectContainerByVid?.(props.containerVid, e)
+}
+
+function onInnerBlockPointerdown(e: PointerEvent) {
+  if (!isEditingMode.value)
+    return
+  e.stopPropagation()
 }
 
 function onInnerBlockMouseDown(e: MouseEvent, block: VisualEditorBlockData) {
@@ -220,6 +232,7 @@ onBeforeUnmount(() => {
       'is-focused': parentFocus && !isEditingMode,
     }"
     @mousedown="handleCanvasMousedown"
+    @pointerdown="handleCanvasPointerdown"
     @dblclick.stop="handleContainerDblClick"
   >
     <div
@@ -235,6 +248,7 @@ onBeforeUnmount(() => {
       }"
       :style="getInnerBlockStyle(child)"
       @mousedown.stop="onInnerBlockMouseDown($event, child)"
+      @pointerdown.stop="onInnerBlockPointerdown($event)"
       @dblclick.stop="onInnerBlockDblClick($event, child)"
       @contextmenu.stop.prevent="onInnerContextmenu($event, child)"
     >
@@ -270,8 +284,14 @@ onBeforeUnmount(() => {
   touch-action: none;
   cursor: default;
 
+  :deep(.comp-render-root),
+  :deep(.comp-render-root *) {
+    pointer-events: none !important;
+  }
+
   &.is-editing {
     cursor: grab;
+    z-index: 20;
   }
 
   &.is-selected,

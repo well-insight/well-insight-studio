@@ -290,6 +290,13 @@ watch(
   },
 )
 watch(
+  () => [props.dragIgnoreFrom, props.isDraggable, props.isResizable] as const,
+  () => {
+    nextTickOnce(tryMakeDraggable)
+    nextTickOnce(tryMakeResizable)
+  },
+)
+watch(
   () => state.draggable,
   () => {
     nextTickOnce(tryMakeDraggable)
