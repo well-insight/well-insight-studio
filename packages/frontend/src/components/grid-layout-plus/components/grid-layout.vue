@@ -64,6 +64,8 @@ const emit = defineEmits([
   'breakpoint-changed',
   'update:layout',
   'layout-ready',
+  'move',
+  'moved',
 ])
 
 const state = reactive({
@@ -538,6 +540,8 @@ function findDifference(layout: Layout, originalLayout: Layout) {
         :key="item.i"
         v-bind="item"
         :z-index="allowOverlap ? index + 1 : undefined"
+        @move="(i, x, y) => emit('move', i, x, y)"
+        @moved="(i, x, y) => emit('moved', i, x, y)"
       >
         <slot name="item" :item="item" />
       </GridItem>

@@ -49,9 +49,13 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:children', 'dragEnter', 'dragLeave', 'drop'])
+const emit = defineEmits(['update:children', 'drag-enter', 'drag-leave', 'drop'])
 
 const controlStore = useControlStore()
+
+// 根元素 ref
+const canvasRef = ref<HTMLElement>()
+const emptyRef = ref<HTMLElement>()
 
 // 本地数据
 const localChildren = computed({
@@ -148,14 +152,14 @@ const isResizable = computed(() => props.isEditing)
 function handleDragEnter(e: DragEvent) {
   e.preventDefault()
   e.stopPropagation()
-  emit('dragEnter', e)
+  emit('drag-enter', e)
 }
 
 // 处理拖放离开
 function handleDragLeave(e: DragEvent) {
   e.preventDefault()
   e.stopPropagation()
-  emit('dragLeave', e)
+  emit('drag-leave', e)
 }
 
 // 处理拖放悬停
@@ -175,10 +179,11 @@ function handleDrop(e: DragEvent) {
     return
   }
 
-  // 如果不在编辑模式，先通知父组件进入编辑模式
-  if (!props.isEditing) {
+  // 如果不在编辑模式，先通知父组件进入编辑模式（同时继续放置）
+  const wasEditing = props.isEditing
+  if (!wasEditing) {
     emit('drop', e)
-    return
+    // 不再 return，继续执行放置
   }
 
   // 计算放置位置（相对于 GridLayout）
@@ -215,15 +220,16 @@ function handleDrop(e: DragEvent) {
 
 <template>
   <div
+    ref="canvasRef"
     class="slot-grid-canvas"
     :class="{
       'is-editing': isEditing,
       'is-focused': parentFocus && !isEditing,
     }"
-    @dragenter.stop.prevent="handleDragEnter"
-    @dragleave.stop.prevent="handleDragLeave"
-    @dragover.stop.prevent="handleDragOver"
-    @drop.stop.prevent="handleDrop"
+    @dragenter.prevent="handleDragEnter"
+    @dragleave.prevent="handleDragLeave"
+    @dragover.prevent="handleDragOver"
+    @drop.prevent="handleDrop"
     @mousedown.stop
     @click.stop
   >
@@ -245,6 +251,10 @@ function handleDrop(e: DragEvent) {
       @layout-updated="handleLayoutUpdated"
       @move="handleMove"
       @resize="handleResize"
+      @dragenter.prevent="handleDragEnter"
+      @dragleave.prevent="handleDragLeave"
+      @dragover.prevent="handleDragOver"
+      @drop.prevent="handleDrop"
     >
       <grid-item
         v-for="item in layout"
@@ -273,7 +283,15 @@ function handleDrop(e: DragEvent) {
       </grid-item>
     </GridLayout>
     <!-- 空状态 -->
-    <div v-else class="slot-grid-empty">
+    <div
+      v-else
+      ref="emptyRef"
+      class="slot-grid-empty"
+      @dragenter.prevent="handleDragEnter"
+      @dragleave.prevent="handleDragLeave"
+      @dragover.prevent="handleDragOver"
+      @drop.prevent="handleDrop"
+    >
       <span class="empty-text">
         {{ isEditing ? '拖入组件' : '双击容器进入编辑模式' }}
       </span>

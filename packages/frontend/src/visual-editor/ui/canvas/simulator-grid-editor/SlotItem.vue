@@ -3,7 +3,7 @@ import type { CSSProperties, PropType } from 'vue'
 import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
 import { useVModel } from '@vueuse/core'
 import { cloneDeep } from 'lodash-es'
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import SlotGridCanvas from '@/packages/pc/container-component/shared/SlotGridCanvas.vue'
 import { useControlStore } from '@/stores/controlStore'
 import { generateNanoid } from '@/visual-editor/lib'
@@ -107,6 +107,14 @@ const controlStore = useControlStore()
 const isDrag = useVModel(props, 'drag', emit)
 const slotChildren = useVModel(props, 'children', emit)
 
+// 容器包装器 ref，用于原生事件调试
+const containerSlotRef = ref<HTMLElement>()
+
+// 原生事件监听（调试用，可移除）
+onMounted(() => {
+  // 调试时可在此添加原生事件监听
+})
+
 /** 是否为容器插槽 */
 const isContainerSlot = computed(() => props.disallowDrop)
 /** 当前容器是否处于容器编辑模式 */
@@ -159,10 +167,11 @@ function onContainerSlotMouseDown(e: MouseEvent) {
 
 /** 处理拖拽进入容器 - 触发延时进入编辑模式 */
 function onDragEnter(e: DragEvent) {
-  if (!props.isContainer || !props.parentVid)
-    return
+  // 必须先阻止默认行为，否则元素不会成为可放置目标
   e.preventDefault()
   e.stopPropagation()
+  if (!props.isContainer || !props.parentVid)
+    return
   props.onDragEnterContainer?.(props.parentVid)
 }
 
@@ -190,9 +199,8 @@ function _onDragOver(e: DragEvent) {
 /** 处理 SlotGridCanvas 的放置事件（非编辑模式下） */
 function onSlotGridDrop(_e: DragEvent) {
   // 通知父容器立即进入编辑模式
-  if (props.isContainer && props.parentVid) {
+  if (props.isContainer && props.parentVid)
     props.onDragEnterContainer?.(props.parentVid, true)
-  }
 }
 
 /** 处理非容器插槽的放置事件 */
@@ -346,6 +354,7 @@ props.children.some(item => item.focus && props.selectComp(item))
   <!-- 容器插槽：使用 SlotGridCanvas 实现 grid-layout-plus 网格布局 -->
   <template v-if="isContainer">
     <div
+      ref="containerSlotRef"
       class="container-slot-wrapper"
       :class="{
         'is-editing': isEditingThisContainer,

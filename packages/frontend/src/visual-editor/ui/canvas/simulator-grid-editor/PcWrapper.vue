@@ -606,32 +606,101 @@ function findBlockByVid(vid: string, blocks: VisualEditorBlockData[]): VisualEdi
  * 通过鼠标坐标检测是否落在某个容器插槽内
  */
 function findSlotContextAtPoint(x: number, y: number): { parentBlock: VisualEditorBlockData, slotKey: string } | null {
+  console.log('[DEBUG findSlotContextAtPoint] ========== START ==========')
+  console.log('[DEBUG findSlotContextAtPoint] x:', x, 'y:', y)
   const elements = document.elementsFromPoint(x, y)
+  console.log('[DEBUG findSlotContextAtPoint] elementsFromPoint 数量:', elements.length)
+  console.log('[DEBUG findSlotContextAtPoint] 元素列表:')
+  elements.slice(0, 10).forEach((el, i) => {
+    const classes = (el as HTMLElement).className
+    console.log(`  [${i}]`, el.tagName, classes?.substring?.(0, 80) || '(no class)')
+  })
+
   for (const el of elements) {
-    const slotEl = (el as HTMLElement).closest('.inner-draggable')
-    if (!slotEl)
-      continue
-    const parentEl = (slotEl as HTMLElement).closest('[class*="list-group-item-"]') as HTMLElement | null
-    if (!parentEl)
-      continue
-    const classList = Array.from(parentEl.classList)
-    const vidClass = classList.find(c => c.startsWith('list-group-item-'))
-    const parentVid = vidClass?.replace('list-group-item-', '')
-    if (!parentVid)
-      continue
-    const parentBlock = findBlockByVid(parentVid, currentPage.value.blocks)
-    if (!parentBlock)
-      continue
-    // 组容器不允许从外部拖入组件
-    if (parentBlock.componentKey === 'group')
-      continue
-    const dataSlot = (slotEl as HTMLElement).getAttribute('data-slot') || ''
-    const match = dataSlot.match(/插槽（(.+?)）/)
-    const slotKey = match ? match[1] : ''
-    if (slotKey && parentBlock.props?.slots?.[slotKey]) {
-      return { parentBlock, slotKey }
+    // 先尝试查找非容器插槽 (.inner-draggable)
+    const innerSlotEl = (el as HTMLElement).closest('.inner-draggable')
+    if (innerSlotEl) {
+      console.log('[DEBUG findSlotContextAtPoint] ✅ 找到 .inner-draggable')
+      const parentEl = (innerSlotEl as HTMLElement).closest('[class*="list-group-item-"]') as HTMLElement | null
+      if (parentEl) {
+        const classList = Array.from(parentEl.classList)
+        console.log('[DEBUG findSlotContextAtPoint] 父元素 classList:', classList)
+        const vidClass = classList.find(c => c.startsWith('list-group-item-'))
+        const parentVid = vidClass?.replace('list-group-item-', '')
+        console.log('[DEBUG findSlotContextAtPoint] 提取的 parentVid:', parentVid)
+        if (parentVid) {
+          const parentBlock = findBlockByVid(parentVid, currentPage.value.blocks)
+          console.log('[DEBUG findSlotContextAtPoint] findBlockByVid 结果:', parentBlock?._vid, parentBlock?.componentKey)
+          if (parentBlock && parentBlock.componentKey !== 'group') {
+            const dataSlot = (innerSlotEl as HTMLElement).getAttribute('data-slot') || ''
+            const match = dataSlot.match(/插槽（(.+?)）/)
+            const slotKey = match ? match[1] : ''
+            console.log('[DEBUG findSlotContextAtPoint] data-slot:', dataSlot, '提取的 slotKey:', slotKey)
+            if (slotKey && parentBlock.props?.slots?.[slotKey]) {
+              console.log('[DEBUG findSlotContextAtPoint] ✅ 返回非容器插槽结果')
+              console.log('[DEBUG findSlotContextAtPoint] ========== END ==========')
+              return { parentBlock, slotKey }
+            }
+            else {
+              console.log('[DEBUG findSlotContextAtPoint] ❌ slotKey 无效或不存在 slots')
+            }
+          }
+          else {
+            console.log('[DEBUG findSlotContextAtPoint] ❌ parentBlock 无效或为 group')
+          }
+        }
+        else {
+          console.log('[DEBUG findSlotContextAtPoint] ❌ 未提取到 parentVid')
+        }
+      }
+      else {
+        console.log('[DEBUG findSlotContextAtPoint] ❌ 未找到 list-group-item- 父元素')
+      }
+    }
+
+    // 再尝试查找容器插槽 (.slot-grid-canvas)
+    const containerSlotEl = (el as HTMLElement).closest('.slot-grid-canvas') as HTMLElement | null
+    if (containerSlotEl) {
+      console.log('[DEBUG findSlotContextAtPoint] ✅ 找到 .slot-grid-canvas')
+      // 向上查找容器组件
+      const parentEl = containerSlotEl.closest('[class*="list-group-item-"]') as HTMLElement | null
+      if (parentEl) {
+        const classList = Array.from(parentEl.classList)
+        console.log('[DEBUG findSlotContextAtPoint] 容器父元素 classList:', classList)
+        const vidClass = classList.find(c => c.startsWith('list-group-item-'))
+        const parentVid = vidClass?.replace('list-group-item-', '')
+        console.log('[DEBUG findSlotContextAtPoint] 容器提取的 parentVid:', parentVid)
+        if (parentVid) {
+          const parentBlock = findBlockByVid(parentVid, currentPage.value.blocks)
+          console.log('[DEBUG findSlotContextAtPoint] 容器 findBlockByVid 结果:', parentBlock?._vid, parentBlock?.componentKey)
+          if (parentBlock && isContainerComponent(parentBlock.componentKey)) {
+            // 容器组件使用默认插槽 'default'
+            const slotKey = 'default'
+            console.log('[DEBUG findSlotContextAtPoint] 容器 props.slots:', Object.keys(parentBlock.props?.slots || {}))
+            if (parentBlock.props?.slots?.[slotKey]) {
+              console.log('[DEBUG findSlotContextAtPoint] ✅ 返回容器插槽结果')
+              console.log('[DEBUG findSlotContextAtPoint] ========== END ==========')
+              return { parentBlock, slotKey }
+            }
+            else {
+              console.log('[DEBUG findSlotContextAtPoint] ❌ 容器没有 default 插槽')
+            }
+          }
+          else {
+            console.log('[DEBUG findSlotContextAtPoint] ❌ parentBlock 无效或不是容器组件')
+          }
+        }
+        else {
+          console.log('[DEBUG findSlotContextAtPoint] ❌ 未提取到容器 parentVid')
+        }
+      }
+      else {
+        console.log('[DEBUG findSlotContextAtPoint] ❌ 未找到容器的 list-group-item- 父元素')
+      }
     }
   }
+  console.log('[DEBUG findSlotContextAtPoint] ❌ 未找到任何插槽')
+  console.log('[DEBUG findSlotContextAtPoint] ========== END ==========')
   return null
 }
 
@@ -943,7 +1012,7 @@ function exitContainerEditMode() {
  * @param immediate 是否立即进入编辑模式（直接放置时使用）
  */
 function handleDragEnterContainer(containerVid: string, immediate?: boolean) {
-  debugger
+  console.log('[DEBUG handleDragEnterContainer] 被调用', 'containerVid:', containerVid, 'immediate:', immediate)
   // 清除之前的计时器
   if (dragHoverTimer.value) {
     clearTimeout(dragHoverTimer.value)
@@ -952,12 +1021,15 @@ function handleDragEnterContainer(containerVid: string, immediate?: boolean) {
 
   // 如果要求立即进入（直接放置），则立即进入编辑模式
   if (immediate) {
+    console.log('[DEBUG handleDragEnterContainer] 立即进入编辑模式')
     enterContainerEditMode(containerVid)
     return
   }
 
+  console.log('[DEBUG handleDragEnterContainer] 设置延时计时器 800ms')
   // 设置新的计时器（悬停延时进入）
   dragHoverTimer.value = window.setTimeout(() => {
+    console.log('[DEBUG handleDragEnterContainer] 计时器触发，进入编辑模式')
     enterContainerEditMode(containerVid)
     dragHoverTimer.value = null
   }, DRAG_HOVER_DELAY)
@@ -969,6 +1041,179 @@ function handleDragLeaveContainer() {
     clearTimeout(dragHoverTimer.value)
     dragHoverTimer.value = null
   }
+}
+
+/** 当前正在拖拽的画布组件 */
+const draggingBlockId = ref<string | null>(null)
+
+/**
+ * 检查块是否是另一个块的子孙（防止拖拽到自身或子孙容器中）
+ */
+function isDescendantOf(parentBlock: VisualEditorBlockData, childVid: string): boolean {
+  const slots = parentBlock.props?.slots || {}
+  for (const key of Object.keys(slots)) {
+    const children = slots[key]?.children || []
+    for (const child of children) {
+      if (child._vid === childVid)
+        return true
+      if (isDescendantOf(child, childVid))
+        return true
+    }
+  }
+  return false
+}
+
+/**
+ * 处理 GridItem 移动中 - 检测是否悬停在容器插槽上
+ * @param i 组件 id
+ * @param x 新 x 坐标
+ * @param y 新 y 坐标
+ */
+function onGridItemMove(i: string | number, x: number, y: number) {
+  console.log('[DEBUG onGridItemMove] ========== START ==========')
+  console.log('[DEBUG onGridItemMove] i:', i, 'x:', x, 'y:', y)
+  draggingBlockId.value = String(i)
+
+  // 获取被拖拽组件的数据
+  const block = currentPage.value.blocks.find(b => b._vid === i || b.i === i)
+  if (!block) {
+    console.log('[DEBUG onGridItemMove] ❌ 未找到 block')
+    return
+  }
+  console.log('[DEBUG onGridItemMove] ✅ 找到 block:', block._vid, block.label)
+
+  // 查找组件的中心点位置
+  const selector = `.list-group-item-${block._vid}`
+  const blockEl = document.querySelector(selector) as HTMLElement | null
+  console.log('[DEBUG onGridItemMove] 查找 DOM selector:', selector)
+  if (!blockEl) {
+    console.log('[DEBUG onGridItemMove] ❌ 未找到 DOM 元素')
+    return
+  }
+  console.log('[DEBUG onGridItemMove] ✅ 找到 DOM 元素')
+
+  const rect = blockEl.getBoundingClientRect()
+  const centerX = rect.left + rect.width / 2
+  const centerY = rect.top + rect.height / 2
+  console.log('[DEBUG onGridItemMove] 组件中心点:', { centerX, centerY })
+
+  // 检测是否悬停在容器插槽上
+  console.log('[DEBUG onGridItemMove] 调用 findSlotContextAtPoint...')
+  const slotContext = findSlotContextAtPoint(centerX, centerY)
+  console.log('[DEBUG onGridItemMove] slotContext 结果:', slotContext)
+
+  if (slotContext) {
+    console.log('[DEBUG onGridItemMove] ✅ 检测到容器:', slotContext.parentBlock._vid, '插槽:', slotContext.slotKey)
+    // 防止拖拽到自身或自身的子孙容器中
+    if (slotContext.parentBlock._vid === block._vid || isDescendantOf(block, slotContext.parentBlock._vid)) {
+      console.log('[DEBUG onGridItemMove] ⚠️ 拖拽到自身或子孙容器，取消')
+      handleDragLeaveContainer()
+      return
+    }
+
+    // 悬停在容器插槽上，触发进入容器编辑模式
+    const parentVid = slotContext.parentBlock._vid
+    console.log('[DEBUG onGridItemMove] 当前编辑容器:', editingContainerId.value, '目标容器:', parentVid)
+    if (editingContainerId.value !== parentVid) {
+      console.log('[DEBUG onGridItemMove] 🔄 触发进入容器编辑模式:', parentVid)
+      handleDragEnterContainer(parentVid)
+    }
+    else {
+      console.log('[DEBUG onGridItemMove] 已在该容器编辑模式中')
+    }
+  }
+  else {
+    console.log('[DEBUG onGridItemMove] ❌ 未检测到容器插槽')
+    // 离开容器范围，取消计时器
+    handleDragLeaveContainer()
+  }
+  console.log('[DEBUG onGridItemMove] ========== END ==========')
+}
+
+/**
+ * 处理 GridItem 移动结束 - 放置到容器插槽或画布
+ * @param i 组件 id
+ * @param x 新 x 坐标
+ * @param y 新 y 坐标
+ */
+function onGridItemMoved(i: string | number, x: number, y: number) {
+  console.log('[DEBUG onGridItemMoved] ========== START ==========')
+  console.log('[DEBUG onGridItemMoved] i:', i, 'x:', x, 'y:', y)
+  const blockId = draggingBlockId.value
+  draggingBlockId.value = null
+  console.log('[DEBUG onGridItemMoved] draggingBlockId:', blockId)
+
+  if (!blockId) {
+    console.log('[DEBUG onGridItemMoved] ❌ blockId 为空，退出')
+    return
+  }
+
+  // 获取被拖拽组件的数据
+  const blockIndex = currentPage.value.blocks.findIndex(b => b._vid === blockId || b.i === blockId)
+  console.log('[DEBUG onGridItemMoved] 查找 block 索引:', blockIndex)
+  if (blockIndex === -1) {
+    console.log('[DEBUG onGridItemMoved] ❌ 未找到 block')
+    return
+  }
+
+  const block = currentPage.value.blocks[blockIndex]
+  console.log('[DEBUG onGridItemMoved] ✅ 找到 block:', block._vid, block.label)
+
+  // 查找组件的中心点位置
+  const blockEl = document.querySelector(`.list-group-item-${block._vid}`) as HTMLElement | null
+  if (!blockEl) {
+    console.log('[DEBUG onGridItemMoved] ❌ 未找到 DOM 元素')
+    return
+  }
+  console.log('[DEBUG onGridItemMoved] ✅ 找到 DOM 元素')
+
+  const rect = blockEl.getBoundingClientRect()
+  const centerX = rect.left + rect.width / 2
+  const centerY = rect.top + rect.height / 2
+  console.log('[DEBUG onGridItemMoved] 组件中心点:', { centerX, centerY })
+
+  // 检测是否放置在容器插槽上
+  console.log('[DEBUG onGridItemMoved] 调用 findSlotContextAtPoint...')
+  const slotContext = findSlotContextAtPoint(centerX, centerY)
+  console.log('[DEBUG onGridItemMoved] slotContext 结果:', slotContext)
+
+  if (slotContext) {
+    console.log('[DEBUG onGridItemMoved] ✅ 检测到容器:', slotContext.parentBlock._vid, '插槽:', slotContext.slotKey)
+    // 防止放置到自身或自身的子孙容器中
+    if (slotContext.parentBlock._vid === block._vid || isDescendantOf(block, slotContext.parentBlock._vid)) {
+      console.log('[DEBUG onGridItemMoved] ⚠️ 拖拽到自身或子孙容器，取消')
+      return
+    }
+
+    // 放置在容器插槽中
+    const slotChildren = slotContext.parentBlock.props!.slots![slotContext.slotKey]!.children
+    console.log('[DEBUG onGridItemMoved] 目标插槽 children 存在:', !!slotChildren)
+    if (slotChildren) {
+      console.log('[DEBUG onGridItemMoved] 🔄 开始移动组件到容器...')
+      // 从画布根层级移除
+      currentPage.value.blocks.splice(blockIndex, 1)
+      console.log('[DEBUG onGridItemMoved] ✅ 从画布移除')
+
+      // 修改组件坐标为相对容器内的坐标
+      block.x = 0
+      block.y = 0
+      console.log('[DEBUG onGridItemMoved] ✅ 重置坐标为 0,0')
+
+      // 添加到容器插槽
+      slotChildren.push(block)
+      console.log('[DEBUG onGridItemMoved] ✅ 添加到容器插槽，当前数量:', slotChildren.length)
+
+      // 立即进入容器编辑模式
+      handleDragEnterContainer(slotContext.parentBlock._vid, true)
+
+      recordHistory()
+      console.log('[DEBUG onGridItemMoved] ✅ 历史记录已保存')
+    }
+  }
+  else {
+    console.log('[DEBUG onGridItemMoved] ❌ 未检测到容器插槽，留在原地')
+  }
+  console.log('[DEBUG onGridItemMoved] ========== END ==========')
 }
 
 // 保留旧函数名用于兼容
@@ -1762,6 +2007,8 @@ defineExpose({
             :margin="[0, 0]"
             :allow-overlap="true"
             @layout-updated="onLayoutUpdated"
+            @move="onGridItemMove"
+            @moved="onGridItemMoved"
           >
             <template #item="{ item }: { item: VisualEditorBlockData }">
               <div
