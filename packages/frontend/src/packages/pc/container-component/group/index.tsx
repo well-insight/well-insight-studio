@@ -1,7 +1,8 @@
 import type { VisualEditorBlockData, VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
-import { computed, h, inject } from 'vue'
+import { computed, h, ref } from 'vue'
+import GroupAbsoluteCanvas from '../shared/GroupAbsoluteCanvas.vue'
 import SlotGridCanvas from '../shared/SlotGridCanvas.vue'
-import { EditingContainerIdKey } from '../container'
+import { type ContainerRenderCustom, resolveEditingContainerId } from '../container'
 import { createEditorTableProp } from '@/visual-editor/visual-editor.props'
 
 export default {
@@ -16,9 +17,8 @@ export default {
       组
     </div>
   ),
-  render: ({ props, styles, block }) => {
-    // 注入当前处于编辑模式的容器 id
-    const editingContainerId = inject<string | null>(EditingContainerIdKey, null)
+  render: ({ props, styles, block, custom }) => {
+    const editingContainerId = resolveEditingContainerId(custom as ContainerRenderCustom | undefined)
 
     // 获取插槽子组件
     const children = computed<VisualEditorBlockData[]>({
@@ -33,12 +33,26 @@ export default {
     // 容器是否被选中
     const isFocus = computed(() => block?.focus || false)
     // 是否处于编辑模式
-    const isEditing = computed(() => editingContainerId === block?._vid)
+    const isEditing = computed(() => editingContainerId.value === block?._vid)
+    // 合并为组后的子组件使用绝对定位，不走网格布局
+    const useAbsoluteLayout = computed(() =>
+      children.value.some(child => child.groupInnerLayout),
+    )
+
+    const renderAbsoluteChildren = () => {
+      return h(GroupAbsoluteCanvas, {
+        children: children.value,
+        containerVid: block?._vid || '',
+        parentFocus: isFocus.value,
+        isEditing: isEditing.value,
+      })
+    }
 
     // 创建插槽画布
     const renderSlotCanvas = () => {
       return h(SlotGridCanvas, {
         slotKey: 'default',
+        containerVid: block?._vid || '',
         children: children.value,
         colNum: 12, // 容器内使用较少的列数
         rowHeight: 15,
@@ -56,12 +70,12 @@ export default {
           width: '100%',
           height: '100%',
           position: 'relative',
-          overflow: 'hidden',
+          overflow: useAbsoluteLayout.value ? 'visible' : 'hidden',
           boxSizing: 'border-box',
-          ...styles,
+          backgroundColor: styles.backgroundColor || 'transparent',
         }}
       >
-        {renderSlotCanvas()}
+        {useAbsoluteLayout.value ? renderAbsoluteChildren() : renderSlotCanvas()}
       </div>
     )
   },

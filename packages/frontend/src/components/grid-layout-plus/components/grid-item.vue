@@ -221,6 +221,9 @@ onMounted(() => {
   emitter.on('setMaxRows', setMaxRowsHandler)
   emitter.on('directionchange', directionchangeHandler)
   emitter.on('setColNum', setColNum)
+
+  nextTickOnce(tryMakeDraggable)
+  nextTickOnce(tryMakeResizable)
 })
 
 onBeforeUnmount(() => {

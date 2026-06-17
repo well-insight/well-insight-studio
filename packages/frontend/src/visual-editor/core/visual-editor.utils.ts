@@ -404,6 +404,12 @@ export interface VisualEditorMarkLines {
   y: { top: number, showTop: number }[]
 }
 
+const CONTAINER_COMPONENT_KEYS = new Set(['group', 'container', 'layout', 'form'])
+
+function isContainerLike(block: VisualEditorBlockData) {
+  return CONTAINER_COMPONENT_KEYS.has(block.componentKey)
+}
+
 /** 清除编辑态选中信息，不参与保存/脏检查/操作历史 */
 export function stripBlockEditorEphemeral(block: VisualEditorBlockData): VisualEditorBlockData {
   const next: VisualEditorBlockData = {
@@ -411,7 +417,8 @@ export function stripBlockEditorEphemeral(block: VisualEditorBlockData): VisualE
     focus: false,
     focusWithChild: false,
   }
-  if (next._groupEditLocked || (next.componentKey === 'group' && next.static)) {
+  if (next._containerEditLocked || next._groupEditLocked || (isContainerLike(next) && next.static)) {
+    delete next._containerEditLocked
     delete next._groupEditLocked
     delete next.static
     delete next.isDraggable
@@ -458,6 +465,7 @@ export function createNewBlock(
   config?: Partial<VisualEditorBlockData>,
 ): VisualEditorBlockData {
   const _vid = config?._vid ?? `vid_${generateNanoid()}`
+  const isContainerModule = component.moduleName === 'containerComponents'
   return {
     moduleName: component.moduleName,
     componentKey: component!.key,
@@ -466,17 +474,28 @@ export function createNewBlock(
     focus: false,
     w: component.props?.width || 24,
     h: component.props?.height || 8,
-    styles: {
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'transparent',
-      paddingTop: '0px',
-      paddingRight: '0px',
-      paddingLeft: '0px',
-      paddingBottom: '0px',
-      tempPadding: '0px',
-    },
+    styles: isContainerModule
+      ? {
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'transparent',
+          paddingTop: '0px',
+          paddingRight: '0px',
+          paddingLeft: '0px',
+          paddingBottom: '0px',
+          tempPadding: '0px',
+        }
+      : {
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: 'transparent',
+          paddingTop: '0px',
+          paddingRight: '0px',
+          paddingLeft: '0px',
+          paddingBottom: '0px',
+          tempPadding: '0px',
+        },
     hasResize: false,
     props: Object.entries(component.props || {}).reduce((prev: any, [propName, propSchema]) => {
       const { propObj, prop } = useDotProp(prev, propName)

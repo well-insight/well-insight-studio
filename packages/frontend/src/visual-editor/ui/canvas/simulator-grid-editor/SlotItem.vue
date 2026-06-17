@@ -346,8 +346,12 @@ function onInnerBlockDblClick(e: MouseEvent, block: VisualEditorBlockData) {
   props.onInnerGroupDblClick?.(block._vid, e)
 }
 
-// 初始化时设置上次选中的组件
-props.children.some(item => item.focus && props.selectComp(item))
+// 初始化时恢复上次选中的组件（放在 onMounted，避免 setup 阶段触发选中导致递归更新）
+onMounted(() => {
+  const focusedChild = props.children.find(item => item.focus)
+  if (focusedChild)
+    props.selectComp(focusedChild)
+})
 </script>
 
 <template>
@@ -364,6 +368,7 @@ props.children.some(item => item.focus && props.selectComp(item))
       <SlotGridCanvas
         :children="slotChildren"
         :slot-key="String(slotKey)"
+        :container-vid="parentVid"
         :parent-focus="isContainerSlot"
         :is-editing="isEditingThisContainer"
         @update:children="slotChildren = $event"

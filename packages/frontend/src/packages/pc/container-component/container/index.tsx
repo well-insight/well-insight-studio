@@ -1,6 +1,6 @@
 import type { VisualEditorBlockData, VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
 import { ElAside, ElContainer, ElFooter, ElHeader, ElMain } from 'element-plus'
-import { type VNode, computed, defineComponent, h, inject, ref } from 'vue'
+import { type Ref, computed, h, ref } from 'vue'
 import SlotGridCanvas from '../shared/SlotGridCanvas.vue'
 import {
   createEditorInputProp,
@@ -12,10 +12,44 @@ import {
 // 容器编辑模式的注入 key
 export const EditingContainerIdKey = Symbol('editingContainerId')
 
+/** 画布容器编辑上下文（选中、右键、历史记录） */
+export const ContainerEditorContextKey = Symbol('containerEditorContext')
+
+export interface ContainerEditorContext {
+  selectComp: (block: VisualEditorBlockData, event?: MouseEvent) => void
+  selectedBlockIds: Ref<string[]>
+  onContextmenuBlock: (e: MouseEvent, block: VisualEditorBlockData, parentBlocks?: VisualEditorBlockData[]) => void
+  recordHistory: () => void
+  enterContainerEditMode: (containerVid: string) => void
+  selectContainerByVid: (containerVid: string, event?: MouseEvent) => void
+  updateGroupInnerBlockPosition?: (vid: string, left: number, top: number) => void
+  updateGroupInnerBlockSize?: (vid: string, width: number, height: number) => void
+  onGroupInnerDragEnd?: () => void
+}
+
+export interface ContainerRenderCustom {
+  editingContainerId?: Ref<string | null>
+  editorCtx?: ContainerEditorContext | null
+}
+
+const CONTAINER_SLOT_KEYS = ['header', 'aside', 'main', 'footer'] as const
+
+export function ensureContainerSlots(props: Record<string, any>) {
+  props.slots ??= {}
+  for (const key of CONTAINER_SLOT_KEYS) {
+    props.slots[key] ??= { key, children: [] }
+    props.slots[key].children ??= []
+  }
+}
+
+export function resolveEditingContainerId(custom?: ContainerRenderCustom) {
+  return custom?.editingContainerId ?? ref(null)
+}
+
 export default {
   key: 'container',
   moduleName: 'containerComponents',
-  label: '容器布局',
+  label: '页面容器',
   icon: 'comp-icon-container',
   preview: () => (
     <div style={{
@@ -37,8 +71,8 @@ export default {
     </div>
   ),
   render: ({ props, styles, block, custom }) => {
-    // 注入当前处于编辑模式的容器 id
-    const editingContainerId = inject<string | null>(EditingContainerIdKey, null)
+    ensureContainerSlots(props)
+    const editingContainerId = resolveEditingContainerId(custom as ContainerRenderCustom | undefined)
     // 控制各区域的显示
     const showHeader = props.showHeader !== false
     const showAside = props.showAside !== false
@@ -81,14 +115,13 @@ export default {
     // 容器是否被选中
     const isFocus = computed(() => block?.focus || false)
     // 是否处于编辑模式（通过注入的 editingContainerId 判断）
-    const isEditing = computed(() => {
-      return editingContainerId === block?._vid
-    })
+    const isEditing = computed(() => editingContainerId.value === block?._vid)
 
     // 创建插槽画布渲染函数
     const renderSlotCanvas = (slotKey: string, children: VisualEditorBlockData[]) => {
       return h(SlotGridCanvas, {
         slotKey,
+        containerVid: block?._vid || '',
         children,
         colNum: 12, // 容器内使用较少的列数
         rowHeight: 15,
@@ -109,7 +142,9 @@ export default {
         style={{
           width: '100%',
           height: '100%',
-          ...styles,
+          boxSizing: 'border-box',
+          overflow: 'hidden',
+          backgroundColor: styles.backgroundColor || 'transparent',
         }}
       >
         <ElContainer

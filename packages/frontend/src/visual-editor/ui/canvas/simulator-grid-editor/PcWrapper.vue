@@ -9,11 +9,12 @@ import { storeToRefs } from 'pinia'
 import { computed, nextTick, onBeforeUnmount, onMounted, provide, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { GridLayout } from '@/components/grid-layout-plus'
-import { EditingContainerIdKey } from '@/packages/pc/container-component/container'
+import { ContainerEditorContextKey, EditingContainerIdKey } from '@/packages/pc/container-component/container'
 import { useAnimate } from '@/hooks/useAnimate'
 import { useGlobalProperties } from '@/hooks/useGlobalProperties'
 import { useControlStore } from '@/stores/controlStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { calcSlotDropLayout } from '@/packages/pc/container-component/shared/slot-grid.utils'
 import { resolveBlockBorderCss } from '@/utils/blockBorder'
 import {
   getBlockTitleInlineStyle,
@@ -66,10 +67,6 @@ const editingContainerId = ref<string | null>(null)
 
 // 提供编辑状态给子组件
 provide(EditingContainerIdKey, editingContainerId)
-
-/** 拖拽悬停计时器（用于拖拽进入容器一定时间后自动进入编辑模式） */
-const dragHoverTimer = ref<number | null>(null)
-const DRAG_HOVER_DELAY = 800 // 悬停 800ms 后进入编辑模式
 
 /** 容器组件类型 */
 const CONTAINER_COMPONENT_KEYS = ['group', 'container', 'layout', 'form']
@@ -221,8 +218,8 @@ onMounted(() => {
   keyEvent()
 
   nextTick(() => {
-    resetAllGroupGridLocks()
-    syncGroupGridAfterLockChange()
+    resetAllContainerGridLocks()
+    syncContainerGridAfterLockChange()
     syncGroupWrapperStyles()
     setTimeout(() => {
       initAnimate()
@@ -674,16 +671,14 @@ function findSlotContextAtPoint(x: number, y: number): { parentBlock: VisualEdit
           const parentBlock = findBlockByVid(parentVid, currentPage.value.blocks)
           console.log('[DEBUG findSlotContextAtPoint] 容器 findBlockByVid 结果:', parentBlock?._vid, parentBlock?.componentKey)
           if (parentBlock && isContainerComponent(parentBlock.componentKey)) {
-            // 容器组件使用默认插槽 'default'
-            const slotKey = 'default'
-            console.log('[DEBUG findSlotContextAtPoint] 容器 props.slots:', Object.keys(parentBlock.props?.slots || {}))
+            const slotKey = containerSlotEl.getAttribute('data-slot-key') || 'default'
             if (parentBlock.props?.slots?.[slotKey]) {
-              console.log('[DEBUG findSlotContextAtPoint] ✅ 返回容器插槽结果')
+              console.log('[DEBUG findSlotContextAtPoint] ✅ 返回容器插槽结果, slotKey:', slotKey)
               console.log('[DEBUG findSlotContextAtPoint] ========== END ==========')
               return { parentBlock, slotKey }
             }
             else {
-              console.log('[DEBUG findSlotContextAtPoint] ❌ 容器没有 default 插槽')
+              console.log('[DEBUG findSlotContextAtPoint] ❌ 容器没有对应插槽:', slotKey, '可用插槽:', Object.keys(parentBlock.props?.slots || {}))
             }
           }
           else {
@@ -701,6 +696,20 @@ function findSlotContextAtPoint(x: number, y: number): { parentBlock: VisualEdit
   }
   console.log('[DEBUG findSlotContextAtPoint] ❌ 未找到任何插槽')
   console.log('[DEBUG findSlotContextAtPoint] ========== END ==========')
+  return null
+}
+
+function findSlotElementAtPoint(x: number, y: number): HTMLElement | null {
+  const elements = document.elementsFromPoint(x, y)
+  for (const el of elements) {
+    const containerSlotEl = (el as HTMLElement).closest('.slot-grid-canvas') as HTMLElement | null
+    if (containerSlotEl)
+      return containerSlotEl
+
+    const innerSlotEl = (el as HTMLElement).closest('.inner-draggable') as HTMLElement | null
+    if (innerSlotEl)
+      return innerSlotEl
+  }
   return null
 }
 
@@ -732,13 +741,19 @@ function dragEnd() {
   }
 
   // 获取拖拽传递的数据
+  const sourceBlock = controlStore.moveVisualData!
+  const slotEl = slotContext ? findSlotElementAtPoint(mouseAt.x, mouseAt.y) : null
+  const slotLayout = slotEl
+    ? calcSlotDropLayout(slotEl, mouseAt.x, mouseAt.y, sourceBlock)
+    : null
+
   const moveData = {
-    ...controlStore.moveVisualData,
-    x: slotContext ? 0 : dragItem.value.x,
-    y: slotContext ? 0 : dragItem.value.y,
-    w: dragItem.value.w,
-    h: dragItem.value.h,
-    i: controlStore.moveVisualData?._vid ?? controlStore.moveVisualData?.i,
+    ...sourceBlock,
+    x: slotLayout?.x ?? dragItem.value.x,
+    y: slotLayout?.y ?? dragItem.value.y,
+    w: slotLayout?.w ?? dragItem.value.w,
+    h: slotLayout?.h ?? dragItem.value.h,
+    i: sourceBlock._vid ?? sourceBlock.i,
   }
 
   if (slotContext) {
@@ -879,21 +894,24 @@ function setMultiFocus(blocks: VisualEditorBlockData[], ids: string[]) {
 /**
  * 查找组内组件所属的组
  */
-function findParentGroup(
+function findParentContainer(
   vid: string,
   blocks: VisualEditorBlockData[] = currentPage.value.blocks,
 ): VisualEditorBlockData | null {
   for (const block of blocks) {
-    if (block.componentKey === 'group') {
-      const children = block.props?.slots?.default?.children || []
-      if (children.some(c => c._vid === vid))
-        return block
+    if (isContainerComponent(block.componentKey)) {
+      const slots = block.props?.slots || {}
+      for (const key of Object.keys(slots)) {
+        const children = slots[key]?.children || []
+        if (children.some(child => child._vid === vid))
+          return block
+      }
     }
     const slots = block.props?.slots || {}
     for (const key of Object.keys(slots)) {
       const children = slots[key]?.children
       if (children) {
-        const found = findParentGroup(vid, children)
+        const found = findParentContainer(vid, children)
         if (found)
           return found
       }
@@ -902,84 +920,85 @@ function findParentGroup(
   return null
 }
 
-function isGroupInnerBlockData(block: VisualEditorBlockData) {
-  return Boolean(block.groupInnerLayout || blockWrapperStyles.value[block._vid])
+function isContainerInnerBlockData(block: VisualEditorBlockData) {
+  if (block.groupInnerLayout || blockWrapperStyles.value[block._vid])
+    return true
+  return Boolean(findParentContainer(block._vid))
 }
 
-function setGroupGridLocked(block: VisualEditorBlockData, locked: boolean) {
-  if (block.componentKey !== 'group')
+function setContainerGridLocked(block: VisualEditorBlockData, locked: boolean) {
+  if (!isContainerComponent(block.componentKey))
     return
 
   if (locked) {
-    // 仅用 static 锁定，避免 isDraggable=false 导致退出后 grid-item 内部状态无法恢复
     block.static = true
-    block._groupEditLocked = true
+    block._containerEditLocked = true
   }
   else {
     delete block.static
     delete block.isDraggable
     delete block.isResizable
-    delete block._groupEditLocked
+    delete block._containerEditLocked
     delete block.dragIgnoreFrom
   }
 }
 
-/** 恢复组的 grid-item 拖拽/缩放内部状态（退出编辑模式时调用） */
-function restoreGroupGridInteract(blocks: VisualEditorBlockData[] = currentPage.value.blocks) {
+/** 恢复容器在画布 grid-item 上的拖拽/缩放状态 */
+function restoreContainerGridInteract(blocks: VisualEditorBlockData[] = currentPage.value.blocks) {
   blocks.forEach((block) => {
-    const item = gridLayout.value?.getItem(block.i ?? block._vid)
-    if (item?.state) {
-      const locked = Boolean(block.static)
-      item.state.draggable = !locked
-      item.state.resizable = !locked
+    if (isContainerComponent(block.componentKey)) {
+      const item = gridLayout.value?.getItem(block.i ?? block._vid)
+      if (item?.state) {
+        const locked = Boolean(block.static)
+        item.state.draggable = !locked
+        item.state.resizable = !locked
+      }
     }
     const slots = block.props?.slots || {}
     Object.keys(slots).forEach((key) => {
       const children = slots[key]?.children
       if (children)
-        restoreGroupGridInteract(children)
+        restoreContainerGridInteract(children)
     })
   })
 }
 
-/** 清除所有组的编辑态网格锁定（含持久化残留） */
-function resetAllGroupGridLocks(blocks: VisualEditorBlockData[] = currentPage.value.blocks) {
+function resetAllContainerGridLocks(blocks: VisualEditorBlockData[] = currentPage.value.blocks) {
   blocks.forEach((block) => {
-    if (block.componentKey === 'group')
-      setGroupGridLocked(block, false)
+    if (isContainerComponent(block.componentKey))
+      setContainerGridLocked(block, false)
 
     const slots = block.props?.slots || {}
     Object.keys(slots).forEach((key) => {
       const children = slots[key]?.children
       if (children)
-        resetAllGroupGridLocks(children)
+        resetAllContainerGridLocks(children)
     })
   })
 }
 
-function syncGroupGridAfterLockChange() {
+function syncContainerGridAfterLockChange() {
   nextTick(() => {
-    restoreGroupGridInteract(currentPage.value.blocks)
+    restoreContainerGridInteract(currentPage.value.blocks)
     gridLayout.value?.layoutUpdate?.()
   })
 }
 
-function unlockAllEditingGroups() {
-  resetAllGroupGridLocks()
-  syncGroupGridAfterLockChange()
+function unlockAllEditingContainers() {
+  resetAllContainerGridLocks()
+  syncContainerGridAfterLockChange()
 }
 
-function lockGroupAndAncestors(groupVid: string) {
-  resetAllGroupGridLocks()
-  let currentVid: string | null = groupVid
+function lockContainerAndAncestors(containerVid: string) {
+  resetAllContainerGridLocks()
+  let currentVid: string | null = containerVid
   while (currentVid) {
     const block = findBlockByVid(currentVid, currentPage.value.blocks)
-    if (block?.componentKey === 'group')
-      setGroupGridLocked(block, true)
-    const parent = findParentGroup(currentVid)
-    currentVid = parent?._vid ?? null
+    if (block && isContainerComponent(block.componentKey))
+      setContainerGridLocked(block, true)
+    currentVid = findParentContainer(currentVid)?._vid ?? null
   }
-  syncGroupGridAfterLockChange()
+  syncContainerGridAfterLockChange()
 }
 
 /** 检查是否为容器组件 */
@@ -993,55 +1012,19 @@ function enterContainerEditMode(containerVid: string) {
   if (!container || !isContainerComponent(container.componentKey))
     return
   editingContainerId.value = containerVid
-  lockGroupAndAncestors(containerVid)
+  lockContainerAndAncestors(containerVid)
 }
 
 /** 退出容器编辑模式 */
 function exitContainerEditMode() {
   editingContainerId.value = null
-  unlockAllEditingGroups()
-  // 清除拖拽悬停计时器
-  if (dragHoverTimer.value) {
-    clearTimeout(dragHoverTimer.value)
-    dragHoverTimer.value = null
-  }
+  unlockAllEditingContainers()
 }
 
-/** 处理拖拽悬停进入容器 - 延时进入编辑模式
- * @param containerVid 容器ID
- * @param immediate 是否立即进入编辑模式（直接放置时使用）
- */
-function handleDragEnterContainer(containerVid: string, immediate?: boolean) {
-  console.log('[DEBUG handleDragEnterContainer] 被调用', 'containerVid:', containerVid, 'immediate:', immediate)
-  // 清除之前的计时器
-  if (dragHoverTimer.value) {
-    clearTimeout(dragHoverTimer.value)
-    dragHoverTimer.value = null
-  }
+/** 保留空实现，供 SlotItem 拖放事件兼容 */
+function handleDragEnterContainer(_containerVid: string, _immediate?: boolean) {}
 
-  // 如果要求立即进入（直接放置），则立即进入编辑模式
-  if (immediate) {
-    console.log('[DEBUG handleDragEnterContainer] 立即进入编辑模式')
-    enterContainerEditMode(containerVid)
-    return
-  }
-
-  console.log('[DEBUG handleDragEnterContainer] 设置延时计时器 800ms')
-  // 设置新的计时器（悬停延时进入）
-  dragHoverTimer.value = window.setTimeout(() => {
-    console.log('[DEBUG handleDragEnterContainer] 计时器触发，进入编辑模式')
-    enterContainerEditMode(containerVid)
-    dragHoverTimer.value = null
-  }, DRAG_HOVER_DELAY)
-}
-
-/** 处理拖拽离开容器 - 取消计时器 */
-function handleDragLeaveContainer() {
-  if (dragHoverTimer.value) {
-    clearTimeout(dragHoverTimer.value)
-    dragHoverTimer.value = null
-  }
-}
+function handleDragLeaveContainer() {}
 
 /** 当前正在拖拽的画布组件 */
 const draggingBlockId = ref<string | null>(null)
@@ -1203,9 +1186,6 @@ function onGridItemMoved(i: string | number, x: number, y: number) {
       slotChildren.push(block)
       console.log('[DEBUG onGridItemMoved] ✅ 添加到容器插槽，当前数量:', slotChildren.length)
 
-      // 立即进入容器编辑模式
-      handleDragEnterContainer(slotContext.parentBlock._vid, true)
-
       recordHistory()
       console.log('[DEBUG onGridItemMoved] ✅ 历史记录已保存')
     }
@@ -1252,8 +1232,8 @@ function selectComp(element: VisualEditorBlockData, event?: MouseEvent) {
   }
 
   // 未进入容器编辑模式时，点击容器内组件应选中其所属容器
-  if (isGroupInnerBlockData(element)) {
-    const parentContainer = findParentGroup(element._vid)
+  if (isContainerInnerBlockData(element)) {
+    const parentContainer = findParentContainer(element._vid)
     if (!parentContainer || editingContainerId.value !== parentContainer._vid) {
       if (parentContainer)
         selectComp(parentContainer, event)
@@ -1264,8 +1244,8 @@ function selectComp(element: VisualEditorBlockData, event?: MouseEvent) {
   // 选中容器外元素时退出容器编辑模式
   if (editingContainerId.value) {
     const isEditingContainer = element._vid === editingContainerId.value
-    const isInnerOfEditingContainer = isGroupInnerBlockData(element)
-      && findParentGroup(element._vid)?._vid === editingContainerId.value
+    const isInnerOfEditingContainer = isContainerInnerBlockData(element)
+      && findParentContainer(element._vid)?._vid === editingContainerId.value
     if (!isEditingContainer && !isInnerOfEditingContainer)
       exitContainerEditMode()
   }
@@ -1306,15 +1286,25 @@ function selectComp(element: VisualEditorBlockData, event?: MouseEvent) {
 }
 
 function getCompRenderPointerEvents(item: VisualEditorBlockData) {
-  const hasSlots = !!Object.keys(item.props?.slots || {}).length
-  // 容器未进入编辑模式时，内部层不拦截鼠标，以便正常拖拽/操作容器本身
-  if (isContainerComponent(item.componentKey) && editingContainerId.value !== item._vid)
+  // 容器/组统一穿透事件，由 SlotGridCanvas / GroupAbsoluteCanvas 处理交互
+  if (isContainerComponent(item.componentKey))
     return 'none'
+  const hasSlots = !!Object.keys(item.props?.slots || {}).length
   return hasSlots ? 'auto' : 'none'
 }
 
+function onBlockMousedown(item: VisualEditorBlockData, e: MouseEvent) {
+  const target = e.target as HTMLElement
+  // 容器编辑模式下，插槽内交互由 SlotGridCanvas / GroupAbsoluteCanvas 处理
+  if (editingContainerId.value === item._vid) {
+    if (target.closest('.slot-grid-canvas, .group-absolute-canvas'))
+      return
+  }
+  e.stopPropagation()
+  selectComp(item, e)
+}
+
 function onBlockDblClick(item: VisualEditorBlockData, e: MouseEvent) {
-  // 双击容器组件进入编辑模式
   if (!isContainerComponent(item.componentKey))
     return
   e.stopPropagation()
@@ -1453,7 +1443,7 @@ function finishBoxSelection(rect: { left: number, top: number, width: number, he
   // 遍历所有可交互的 block（递归 slots）
   const collectBlocks = (blocks: VisualEditorBlockData[]) => {
     blocks.forEach((block) => {
-      const isInner = isGroupInnerBlockData(block)
+      const isInner = isContainerInnerBlockData(block)
 
       // 普通模式：不参与框选容器内组件
       if (!editingContainerId.value && isInner)
@@ -1461,7 +1451,7 @@ function finishBoxSelection(rect: { left: number, top: number, width: number, he
 
       // 容器编辑模式：仅框选当前容器内的组件
       if (editingContainerId.value && isInner) {
-        const parentContainer = findParentGroup(block._vid)
+        const parentContainer = findParentContainer(block._vid)
         if (parentContainer?._vid !== editingContainerId.value)
           return
       }
@@ -1706,6 +1696,7 @@ function mergeToGroup() {
         },
       },
     },
+    model: {},
     draggable: true,
     showStyleConfig: true,
     showTitle: true,
@@ -1961,8 +1952,8 @@ function initAnimate() {
 watch(visualLoading, (value, oldValue) => {
   if (!value && oldValue) {
     nextTick(() => {
-      resetAllGroupGridLocks()
-      syncGroupGridAfterLockChange()
+      resetAllContainerGridLocks()
+      syncContainerGridAfterLockChange()
       syncGroupWrapperStyles()
       initAnimate()
     })
@@ -1975,6 +1966,22 @@ watch(() => props?.scale, () => {
 
 watch(currentScale, () => {
   emits('changeScale', currentScale.value)
+})
+
+provide(ContainerEditorContextKey, {
+  selectComp,
+  selectedBlockIds,
+  onContextmenuBlock,
+  recordHistory,
+  enterContainerEditMode,
+  selectContainerByVid: (vid: string, event?: MouseEvent) => {
+    const block = findBlockByVid(vid, currentPage.value.blocks)
+    if (block)
+      selectComp(block, event)
+  },
+  updateGroupInnerBlockPosition,
+  updateGroupInnerBlockSize,
+  onGroupInnerDragEnd,
 })
 
 defineExpose({
@@ -2026,7 +2033,7 @@ defineExpose({
                   'has-inner-title': item.showTitle === true && isInnerBlockTitle(item.titleStyle),
                   [`list-group-item-${item._vid}`]: true,
                 }"
-                @mousedown.stop="selectComp(item, $event)"
+                @mousedown.stop="onBlockMousedown(item, $event)"
                 @dblclick.stop="onBlockDblClick(item, $event)"
                 @contextmenu.stop.prevent="onContextmenuBlock($event, item)"
               >
@@ -2154,10 +2161,17 @@ defineExpose({
   overflow: hidden;
   outline: none;
 
-  &.is-editing-group {
+  &.is-editing-group,
+  &.is-editing-container {
     outline: 2px dashed var(--el-color-primary);
     outline-offset: -1px;
     z-index: 15;
+    cursor: default;
+    pointer-events: none;
+
+    .list-group-item__body {
+      pointer-events: auto;
+    }
   }
 
   /* 组内的组件不需要滚动条 */

@@ -1,8 +1,8 @@
 import type { VisualEditorBlockData, VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
 import { ElCol, ElRow } from 'element-plus'
-import { computed, h, inject, watchEffect } from 'vue'
+import { computed, h, ref, watchEffect } from 'vue'
 import SlotGridCanvas from '../shared/SlotGridCanvas.vue'
-import { EditingContainerIdKey } from '../container'
+import { type ContainerRenderCustom, resolveEditingContainerId } from '../container'
 import {
   createEditorInputNumberProp,
   createEditorSelectProp,
@@ -36,7 +36,7 @@ function createSlots(str: string): SlotItem {
 export default {
   key: 'layout',
   moduleName: 'containerComponents',
-  label: '布局容器',
+  label: '分栏容器',
   icon: 'comp-icon-layout',
   preview: () => (
     <ElRow gutter={20}>
@@ -46,8 +46,7 @@ export default {
     </ElRow>
   ),
   render: ({ props, styles, block, custom }) => {
-    // 注入当前处于编辑模式的容器 id
-    const editingContainerId = inject<string | null>(EditingContainerIdKey, null)
+    const editingContainerId = resolveEditingContainerId(custom as ContainerRenderCustom | undefined)
 
     // 初始化当前 block 的临时存储
     if (!slotsTemp[block._vid])
@@ -76,12 +75,13 @@ export default {
     // 容器是否被选中
     const isFocus = computed(() => block?.focus || false)
     // 是否处于编辑模式
-    const isEditing = computed(() => editingContainerId === block?._vid)
+    const isEditing = computed(() => editingContainerId.value === block?._vid)
 
     // 创建插槽画布渲染函数
     const renderSlotCanvas = (slotKey: string, children: VisualEditorBlockData[]) => {
       return h(SlotGridCanvas, {
         slotKey,
+        containerVid: block?._vid || '',
         children,
         colNum: 12, // 容器内使用较少的列数
         rowHeight: 15,
@@ -97,7 +97,7 @@ export default {
     }
 
     return () => (
-      <div style={{ width: '100%', height: '100%', ...styles }}>
+      <div style={{ width: '100%', height: '100%', boxSizing: 'border-box', overflow: 'hidden', backgroundColor: styles.backgroundColor || 'transparent' }}>
         <ElRow
           {...custom}
           {...props}

@@ -1,9 +1,16 @@
 <script lang="ts" setup>
 import type { CSSProperties, PropType } from 'vue'
 import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
-import { GridLayout } from '@/components/grid-layout-plus'
+import { useResizeObserver } from '@vueuse/core'
 import { cloneDeep } from 'lodash-es'
-import { computed, ref } from 'vue'
+import { computed, inject, nextTick, onMounted, ref, watch } from 'vue'
+import { GridItem, GridLayout } from '@/components/grid-layout-plus'
+import { ContainerEditorContextKey, EditingContainerIdKey } from '@/packages/pc/container-component/container'
+import {
+  calcSlotColNum,
+  calcSlotDropLayout,
+  SLOT_ROW_HEIGHT,
+} from '@/packages/pc/container-component/shared/slot-grid.utils'
 import { useControlStore } from '@/stores/controlStore'
 import { generateNanoid } from '@/visual-editor/lib'
 import CompRender from '@/visual-editor/ui/canvas/simulator-grid-editor/comp-render'
@@ -17,32 +24,30 @@ interface GridItemLayout {
 }
 
 const props = defineProps({
-  /** 插槽中的子组件数组 */
   children: {
     type: Array as PropType<VisualEditorBlockData[]>,
     default: (): VisualEditorBlockData[] => [],
   },
-  /** 插槽名称 */
   slotKey: {
     type: String,
     default: '',
   },
-  /** 网格列数 */
   colNum: {
     type: Number,
     default: 12,
   },
-  /** 网格行高 */
   rowHeight: {
     type: Number,
     default: 15,
   },
-  /** 父容器是否被选中（简单选中状态） */
   parentFocus: {
     type: Boolean,
     default: false,
   },
-  /** 父容器是否处于编辑模式（双击后进入） */
+  containerVid: {
+    type: String,
+    default: '',
+  },
   isEditing: {
     type: Boolean,
     default: false,
@@ -52,87 +57,122 @@ const props = defineProps({
 const emit = defineEmits(['update:children', 'drag-enter', 'drag-leave', 'drop'])
 
 const controlStore = useControlStore()
+const editorCtx = inject(ContainerEditorContextKey, null)
+const editingContainerId = inject(EditingContainerIdKey, ref<string | null>(null))
 
-// 根元素 ref
+/** 直接读取画布注入的编辑态，避免 h() 传参快照滞后 */
+const isEditingMode = computed(() =>
+  Boolean(props.containerVid) && editingContainerId.value === props.containerVid,
+)
+
 const canvasRef = ref<HTMLElement>()
 const emptyRef = ref<HTMLElement>()
+const gridLayoutRef = ref<InstanceType<typeof GridLayout>>()
+const slotWidth = ref(0)
 
-// 本地数据
-const localChildren = computed({
-  get: () => props.children || [],
-  set: (val) => emit('update:children', val),
+useResizeObserver(canvasRef, (entries) => {
+  slotWidth.value = entries[0]?.contentRect.width ?? 0
 })
 
-// 构建组件查找映射，避免每次遍历数组
+onMounted(() => {
+  if (canvasRef.value)
+    slotWidth.value = canvasRef.value.clientWidth
+})
+
+/** 与主画布一致：按插槽实际宽度动态计算列数，保持 15px 步长 */
+const effectiveColNum = computed(() =>
+  slotWidth.value > 0 ? calcSlotColNum(slotWidth.value) : props.colNum,
+)
+
+const localChildren = computed({
+  get: () => props.children || [],
+  set: val => emit('update:children', val),
+})
+
 const childMap = computed(() => {
   const map = new Map<string, VisualEditorBlockData>()
-  for (const child of localChildren.value) {
+  for (const child of localChildren.value)
     map.set(child._vid, child)
-  }
   return map
 })
 
-// 转换为 GridLayout 布局格式 - 使用 computed 缓存
 const layout = computed<GridItemLayout[]>(() =>
-  localChildren.value.map((child) => ({
+  localChildren.value.map(child => ({
     x: child.x ?? 0,
     y: child.y ?? 0,
     w: child.w ?? 4,
     h: child.h ?? 2,
     i: child._vid,
-  }))
+  })),
 )
 
-// 当前选中的组件 id
-const selectedId = ref<string | null>(null)
+const isDraggable = computed(() => isEditingMode.value)
+const isResizable = computed(() => isEditingMode.value)
 
-// 网格布局 ref
-const gridLayoutRef = ref<InstanceType<typeof GridLayout>>()
+watch(isEditingMode, (editing) => {
+  if (editing) {
+    nextTick(() => {
+      gridLayoutRef.value?.layoutUpdate?.()
+    })
+  }
+})
 
-// 处理布局更新
+function isBlockSelected(vid: string) {
+  return editorCtx?.selectedBlockIds.value.includes(vid) ?? false
+}
+
 function handleLayoutUpdated(newLayout: GridItemLayout[]) {
+  let changed = false
   const updated = localChildren.value.map((child) => {
-    const item = newLayout.find((l) => l.i === child._vid)
+    const item = newLayout.find(l => l.i === child._vid)
     if (item && (child.x !== item.x || child.y !== item.y || child.w !== item.w || child.h !== item.h)) {
-      return { ...child, x: item.x, y: item.y, w: item.w, h: item.h }
+      changed = true
+      return {
+        ...child,
+        x: item.x,
+        y: item.y,
+        w: item.w,
+        h: item.h,
+        hasResize: child.w !== item.w || child.h !== item.h ? true : child.hasResize,
+      }
     }
     return child
   })
-  emit('update:children', updated)
+  if (changed)
+    emit('update:children', updated)
 }
 
-// 处理拖拽移动
-function handleMove(i: string, newX: number, newY: number) {
-  const child = childMap.value.get(i)
-  if (child) {
-    child.x = newX
-    child.y = newY
-  }
+function handleMove(_i: string, _newX: number, _newY: number) {
+  // 拖拽过程中不写入 children，避免 layout 重算打断 interact 拖拽
 }
 
-// 处理调整大小
-function handleResize(i: string, newH: number, newW: number) {
-  const child = childMap.value.get(i)
-  if (child) {
-    child.w = newW
-    child.h = newH
-  }
+function handleResize(_i: string, _oldH: number, _oldW: number, _newH: number, _newW: number) {
+  // 缩放过程中不写入 children，由 layout-updated 统一同步
 }
 
-// 处理组件选中 - 阻止事件冒泡
+function handleInteractionEnd() {
+  editorCtx?.recordHistory()
+}
+
 function handleSelect(block: VisualEditorBlockData | undefined, e: MouseEvent) {
-  if (!block) return
+  if (!block || !isEditingMode.value)
+    return
   e.stopPropagation()
+  if (editorCtx)
+    editorCtx.selectComp(block, e)
+  else
+    controlStore.selectCanvasBlock(block)
+}
+
+function handleContextmenu(block: VisualEditorBlockData | undefined, e: MouseEvent) {
+  if (!block || !isEditingMode.value)
+    return
   e.preventDefault()
-  selectedId.value = block._vid
-}
-
-// 阻止事件冒泡
-function stopPropagation(e: Event) {
   e.stopPropagation()
+  if (editorCtx)
+    editorCtx.onContextmenuBlock(e, block, localChildren.value)
 }
 
-// 获取组件样式
 function getBlockStyle(block: VisualEditorBlockData): CSSProperties {
   const styles = block.styles || {}
   return {
@@ -144,77 +184,89 @@ function getBlockStyle(block: VisualEditorBlockData): CSSProperties {
   }
 }
 
-// 是否启用拖拽 - 只有在编辑模式下才启用
-const isDraggable = computed(() => props.isEditing)
-const isResizable = computed(() => props.isEditing)
-
-// 处理拖放进入
 function handleDragEnter(e: DragEvent) {
   e.preventDefault()
   e.stopPropagation()
   emit('drag-enter', e)
 }
 
-// 处理拖放离开
 function handleDragLeave(e: DragEvent) {
   e.preventDefault()
   e.stopPropagation()
   emit('drag-leave', e)
 }
 
-// 处理拖放悬停
 function handleDragOver(e: DragEvent) {
   e.preventDefault()
   e.stopPropagation()
 }
 
-// 处理放置 - 从外部拖入组件
+function handleCanvasMousedown(e: MouseEvent) {
+  if (!isEditingMode.value) {
+    e.stopPropagation()
+    if (props.containerVid)
+      editorCtx?.selectContainerByVid?.(props.containerVid, e)
+    return
+  }
+
+  e.stopPropagation()
+
+  const target = e.target as HTMLElement
+  if (!target.closest('.vgl-item') && props.containerVid)
+    editorCtx?.selectContainerByVid?.(props.containerVid, e)
+}
+
+function handleContainerDblClick(e: MouseEvent) {
+  if (isEditingMode.value)
+    return
+  e.stopPropagation()
+  if (!props.containerVid)
+    return
+  editorCtx?.enterContainerEditMode?.(props.containerVid)
+  editorCtx?.selectContainerByVid?.(props.containerVid, e)
+}
+
+const NESTED_CONTAINER_KEYS = new Set(['group', 'container', 'layout', 'form'])
+
+function handleInnerContainerDblClick(block: VisualEditorBlockData | undefined, e: MouseEvent) {
+  if (!block || !isEditingMode.value || !NESTED_CONTAINER_KEYS.has(block.componentKey))
+    return
+  e.stopPropagation()
+  editorCtx?.enterContainerEditMode?.(block._vid)
+  editorCtx?.selectContainerByVid?.(block._vid, e)
+}
+
 function handleDrop(e: DragEvent) {
   e.preventDefault()
   e.stopPropagation()
 
-  // 获取拖拽数据
   const block = controlStore.moveVisualData
-  if (!block) {
+  if (!block)
     return
-  }
 
-  // 如果不在编辑模式，先通知父组件进入编辑模式（同时继续放置）
-  const wasEditing = props.isEditing
-  if (!wasEditing) {
+  if (!isEditingMode.value)
     emit('drop', e)
-    // 不再 return，继续执行放置
-  }
 
-  // 计算放置位置（相对于 GridLayout）
-  const gridEl = gridLayoutRef.value?.$el as HTMLElement | undefined
-  if (!gridEl) {
+  const dropTarget = (gridLayoutRef.value?.$el ?? canvasRef.value ?? emptyRef.value) as HTMLElement | undefined
+  if (!dropTarget)
     return
-  }
 
-  const rect = gridEl.getBoundingClientRect()
-  const x = e.clientX - rect.left
-  const y = e.clientY - rect.top
+  const dropRoot = (dropTarget.closest('.slot-grid-canvas') ?? dropTarget) as HTMLElement
+  const { x: gridX, y: gridY, w, h } = calcSlotDropLayout(dropRoot, e.clientX, e.clientY, block)
 
-  // 转换为网格坐标
-  const colWidth = rect.width / props.colNum
-  const gridX = Math.max(0, Math.min(props.colNum - 4, Math.floor(x / colWidth)))
-  const gridY = Math.max(0, Math.floor(y / props.rowHeight))
-
-  // 创建新组件
   const copiedBlock = cloneDeep(block) as VisualEditorBlockData
   copiedBlock._vid = `vid_${generateNanoid()}`
   copiedBlock.i = copiedBlock._vid
   copiedBlock.x = gridX
   copiedBlock.y = gridY
-  copiedBlock.w = 4 // 默认宽度
-  copiedBlock.h = 2 // 默认高度
+  copiedBlock.w = w
+  copiedBlock.h = h
   copiedBlock.focus = false
   copiedBlock.focusWithChild = false
 
-  // 添加到子组件列表
   localChildren.value = [...localChildren.value, copiedBlock]
   controlStore.setMoveVisualData(null)
+  editorCtx?.recordHistory()
 }
 </script>
 
@@ -222,41 +274,41 @@ function handleDrop(e: DragEvent) {
   <div
     ref="canvasRef"
     class="slot-grid-canvas"
+    :data-slot-key="slotKey"
     :class="{
-      'is-editing': isEditing,
-      'is-focused': parentFocus && !isEditing,
+      'is-editing': isEditingMode,
+      'is-focused': parentFocus && !isEditingMode,
     }"
     @dragenter.prevent="handleDragEnter"
     @dragleave.prevent="handleDragLeave"
     @dragover.prevent="handleDragOver"
     @drop.prevent="handleDrop"
-    @mousedown.stop
-    @click.stop
+    @mousedown="handleCanvasMousedown"
+    @dblclick.stop="handleContainerDblClick"
   >
     <GridLayout
       v-if="layout.length > 0"
       ref="gridLayoutRef"
       :layout="layout"
       class="slot-grid-layout"
-      :class="{ 'is-editing': isEditing }"
-      :col-num="colNum"
-      :row-height="rowHeight"
+      :class="{ 'is-editing': isEditingMode }"
+      :col-num="effectiveColNum"
+      :row-height="SLOT_ROW_HEIGHT"
       :is-draggable="isDraggable"
       :is-resizable="isResizable"
+      :allow-overlap="true"
       :vertical-compact="false"
       :use-css-transforms="true"
       :margin="[0, 0]"
       :prevent-collision="false"
       :is-bounded="true"
       @layout-updated="handleLayoutUpdated"
-      @move="handleMove"
-      @resize="handleResize"
       @dragenter.prevent="handleDragEnter"
       @dragleave.prevent="handleDragLeave"
       @dragover.prevent="handleDragOver"
       @drop.prevent="handleDrop"
     >
-      <grid-item
+      <GridItem
         v-for="item in layout"
         :key="item.i"
         :x="item.x"
@@ -266,23 +318,34 @@ function handleDrop(e: DragEvent) {
         :i="item.i"
         class="slot-grid-item"
         :class="{
-          'is-selected': selectedId === item.i,
-          'is-editing': isEditing,
+          'is-selected': isBlockSelected(item.i),
+          'is-editing': isEditingMode,
+          'focus': childMap.get(item.i)?.focus,
         }"
+        :static="false"
+        :is-draggable="isDraggable"
+        :is-resizable="isResizable"
+        @move="(i: string, x: number, y: number) => handleMove(i, x, y)"
+        @moved="handleInteractionEnd"
+        @resize="(i: string, _h: number, _w: number, newH: number, newW: number) => handleResize(i, _h, _w, newH, newW)"
+        @resized="handleInteractionEnd"
         @click.stop="(e: MouseEvent) => handleSelect(childMap.get(item.i), e)"
-        @mousedown.stop
+        @dblclick.stop="(e: MouseEvent) => handleInnerContainerDblClick(childMap.get(item.i), e)"
+        @contextmenu.stop.prevent="(e: MouseEvent) => handleContextmenu(childMap.get(item.i), e)"
       >
         <div
           v-if="childMap.get(item.i)"
           class="slot-block-wrapper"
-          :class="{ 'is-editing': isEditing }"
+          :class="{ 'is-editing': isEditingMode }"
           :style="getBlockStyle(childMap.get(item.i)!)"
         >
-          <CompRender :element="childMap.get(item.i)!" />
+          <CompRender
+            :element="childMap.get(item.i)!"
+            :style="{ pointerEvents: 'none' }"
+          />
         </div>
-      </grid-item>
+      </GridItem>
     </GridLayout>
-    <!-- 空状态 -->
     <div
       v-else
       ref="emptyRef"
@@ -293,7 +356,7 @@ function handleDrop(e: DragEvent) {
       @drop.prevent="handleDrop"
     >
       <span class="empty-text">
-        {{ isEditing ? '拖入组件' : '双击容器进入编辑模式' }}
+        {{ isEditingMode ? '拖入组件' : '双击容器进入编辑模式' }}
       </span>
     </div>
   </div>
@@ -306,37 +369,26 @@ function handleDrop(e: DragEvent) {
   position: relative;
   overflow: hidden;
   background: transparent;
-  // 始终允许接收拖放事件
   pointer-events: auto;
 
-  // 非编辑模式下禁用内部元素的交互
   &:not(.is-editing) {
-    .slot-grid-layout {
-      pointer-events: none;
-    }
-
+    .slot-grid-layout,
     .slot-grid-item {
       pointer-events: none;
     }
 
-    // 但保留空状态的交互能力
     .slot-grid-empty {
       pointer-events: auto;
     }
   }
 
-  // 编辑模式下启用所有鼠标事件
   &.is-editing {
-    .slot-grid-layout {
-      pointer-events: auto;
-    }
-
+    .slot-grid-layout,
     .slot-grid-item {
       pointer-events: auto;
     }
   }
 
-  // 仅被选中但未进入编辑模式时的样式
   &.is-focused {
     .slot-grid-empty {
       background: #f0f7ff;
@@ -362,7 +414,7 @@ function handleDrop(e: DragEvent) {
   justify-content: center;
   border: 1px dashed #dcdfe6;
   background: #fafafa;
-  pointer-events: auto; // 空状态需要接收拖入事件
+  pointer-events: auto;
 
   .empty-text {
     color: #909399;
@@ -373,23 +425,28 @@ function handleDrop(e: DragEvent) {
 .slot-grid-item {
   position: relative;
   touch-action: none;
+  cursor: default;
 
-  &.is-selected {
+  &.is-editing {
+    cursor: grab;
+  }
+
+  &.is-selected,
+  &.focus {
     outline: 2px solid var(--el-color-primary);
     outline-offset: -1px;
     z-index: 10;
   }
 
-  // 拖拽手柄
   :deep(.vue-resizable-handle) {
     z-index: 20;
     pointer-events: auto;
   }
 
-  // 拖拽时的样式
   &.vue-grid-item.vue-grid-item-dragging {
     z-index: 100;
     opacity: 0.9;
+    cursor: grabbing;
   }
 }
 
@@ -398,5 +455,6 @@ function handleDrop(e: DragEvent) {
   height: 100%;
   position: relative;
   overflow: hidden;
+  pointer-events: none;
 }
 </style>

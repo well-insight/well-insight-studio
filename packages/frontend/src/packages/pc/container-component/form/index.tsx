@@ -1,8 +1,15 @@
-import type { VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
-import { Button, Field, Form } from 'vant'
-import { renderSlot, useSlots } from 'vue'
-import { useGlobalProperties } from '@/hooks/useGlobalProperties'
+import type { VisualEditorBlockData, VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
+import { ElForm } from 'element-plus'
+import { computed, h } from 'vue'
+import SlotGridCanvas from '../shared/SlotGridCanvas.vue'
+import { type ContainerRenderCustom, resolveEditingContainerId } from '../container'
 import { compProps } from './compProps'
+
+function ensureDefaultSlot(props: Record<string, any>) {
+  props.slots ??= {}
+  props.slots.default ??= { key: 'default', children: [] }
+  props.slots.default.children ??= []
+}
 
 export default {
   key: 'form',
@@ -10,34 +17,65 @@ export default {
   label: '表单容器',
   icon: 'comp-icon-form',
   preview: () => (
-    <Form>
-      <Field name="用户名" label="用户名" placeholder="用户名" />
-      <Field type="password" name="密码" label="密码" placeholder="密码" />
-      <div style="margin: 16px;">
-        <Button round size="small" block type="primary">
-          提交
-        </Button>
+    <div style={{
+      padding: '8px',
+      border: '1px solid #dcdfe6',
+      borderRadius: '4px',
+      fontSize: '12px',
+      color: '#606266',
+    }}
+    >
+      <div style={{ marginBottom: '6px' }}>用户名</div>
+      <div style={{ marginBottom: '6px', height: '24px', border: '1px solid #dcdfe6', borderRadius: '4px' }} />
+      <div style={{ marginBottom: '6px' }}>密码</div>
+      <div style={{ marginBottom: '8px', height: '24px', border: '1px solid #dcdfe6', borderRadius: '4px' }} />
+      <div style={{ textAlign: 'center' }}>
+        <span style={{ display: 'inline-block', padding: '2px 12px', background: '#409eff', color: '#fff', borderRadius: '4px' }}>提交</span>
       </div>
-    </Form>
+    </div>
   ),
-  render({ props, styles, block }) {
-    const slots = useSlots()
-    const { registerRef } = useGlobalProperties()
+  render: ({ props, styles, block, custom }) => {
+    ensureDefaultSlot(props)
+    const editingContainerId = resolveEditingContainerId(custom as ContainerRenderCustom | undefined)
 
-    const onSubmit = (values) => {
-      console.log('onSubmit:', values)
-    }
+    const children = computed<VisualEditorBlockData[]>({
+      get: () => props.slots?.default?.children || [],
+      set: (val) => {
+        if (props.slots?.default)
+          props.slots.default.children = val
+      },
+    })
+
+    const isFocus = computed(() => block?.focus || false)
+    const isEditing = computed(() => editingContainerId.value === block?._vid)
+
+    const { slots: _slots, ...formProps } = props
 
     return () => (
-      <div style={styles}>
-        <Form
-          ref={el => registerRef(el, block._vid)}
-          {...props}
-          style={{ width: '100%' }}
-          onSubmit={onSubmit}
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          boxSizing: 'border-box',
+          overflow: 'hidden',
+          backgroundColor: styles.backgroundColor || 'transparent',
+        }}
+      >
+        <ElForm
+          {...formProps}
+          style={{ width: '100%', height: '100%', position: 'relative' }}
         >
-          {renderSlot(slots, 'default')}
-        </Form>
+          {h(SlotGridCanvas, {
+            slotKey: 'default',
+            containerVid: block?._vid || '',
+            children: children.value,
+            parentFocus: isFocus.value,
+            isEditing: isEditing.value,
+            'onUpdate:children': (newChildren: VisualEditorBlockData[]) => {
+              children.value = newChildren
+            },
+          })}
+        </ElForm>
       </div>
     )
   },
