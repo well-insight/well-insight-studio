@@ -69,6 +69,7 @@ export default {
             slotKey: 'default',
             containerVid: block?._vid || '',
             children: children.value,
+            rowHeight: 1,
             parentFocus: isFocus.value,
             isEditing: isEditing.value,
             'onUpdate:children': (newChildren: VisualEditorBlockData[]) => {

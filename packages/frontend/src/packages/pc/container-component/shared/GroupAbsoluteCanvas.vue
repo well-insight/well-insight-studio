@@ -104,7 +104,9 @@ function onItemResizeEnd(child: VisualEditorBlockData, size: { width: number, he
 }
 
 function onInnerBlockDblClick(e: MouseEvent, block: VisualEditorBlockData) {
-  if (!isEditingMode.value || block.componentKey !== 'group')
+  // Allow direct dive into nested groups (and other containers) when dblclicked inside an editing parent
+  const isGroupOrContainer = block.componentKey === 'group' || block.componentKey === 'container' || block.componentKey === 'layout' || block.componentKey === 'form'
+  if (!isEditingMode.value || !isGroupOrContainer)
     return
   e.stopPropagation()
   editorCtx?.enterContainerEditMode?.(block._vid)

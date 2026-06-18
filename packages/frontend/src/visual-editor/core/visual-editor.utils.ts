@@ -1,4 +1,3 @@
-import type { GridItemProps } from 'grid-layout-plus'
 import type { CSSProperties } from 'vue'
 import type { VisualEditorProps } from './visual-editor.props'
 import type { ContentTypeEnum, RequestEnum } from '@/enums/httpEnum'
@@ -8,9 +7,21 @@ import { useDotProp } from '@/visual-editor/hooks/useDotProp'
 import { generateNanoid } from '@/visual-editor/lib'
 
 /**
+ * Grid 位置信息（自研实现，取代 grid-layout-plus）。
+ */
+export interface GridPosition {
+  i?: string | number
+  x: number
+  y: number
+  w: number
+  h: number
+  static?: boolean
+}
+
+/**
  * @description 组件属性
  */
-export interface VisualEditorBlockData extends GridItemProps {
+export interface VisualEditorBlockData extends GridPosition {
   /** 组件id 时间戳, 组件唯一标识 */
   _vid: string
   /** 组件所属的模块（基础组件、容器组件） */
@@ -23,10 +34,6 @@ export interface VisualEditorBlockData extends GridItemProps {
   adjustPosition: boolean
   /** 当前是否为选中状态 */
   focus: boolean
-  w: number
-  h: number
-  x: number
-  y: number
   /** 当前组件的样式 */
   styles: CSSProperties & {
     tempPadding?: string
@@ -460,20 +467,31 @@ export function serializeProjectContent(data: VisualEditorModelValue): string {
   return JSON.stringify(stripProjectEditorEphemeral(data))
 }
 
+/**
+ * 组件默认网格尺寸（1px 步长）。
+ * 旧步长为 15px 时常用默认 24×8，现按 15 倍缩放以保持拖入后的视觉大小。
+ */
+export const DEFAULT_BLOCK_WIDTH = 360
+export const DEFAULT_BLOCK_HEIGHT = 120
+
 export function createNewBlock(
   component: VisualEditorComponent,
   config?: Partial<VisualEditorBlockData>,
 ): VisualEditorBlockData {
   const _vid = config?._vid ?? `vid_${generateNanoid()}`
   const isContainerModule = component.moduleName === 'containerComponents'
+  // 支持在组件注册对象上直接声明 width/height（推荐），或放在 props 下（兼容旧写法）
+  const compAny = component as any
+  const defaultW = compAny.width ?? compAny.props?.width ?? DEFAULT_BLOCK_WIDTH
+  const defaultH = compAny.height ?? compAny.props?.height ?? DEFAULT_BLOCK_HEIGHT
   return {
     moduleName: component.moduleName,
     componentKey: component!.key,
     label: component!.label,
     adjustPosition: true,
     focus: false,
-    w: component.props?.width || 24,
-    h: component.props?.height || 8,
+    w: defaultW,
+    h: defaultH,
     styles: isContainerModule
       ? {
           width: '100%',

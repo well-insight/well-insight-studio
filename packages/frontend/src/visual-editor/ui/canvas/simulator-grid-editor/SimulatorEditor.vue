@@ -135,11 +135,11 @@ onUnmounted(() => {
 .simulator-editor {
   width: 100%;
   overflow: hidden auto;
-  background-image: linear-gradient(#fafafc 14px, transparent 0), linear-gradient(90deg, transparent 14px, #373739 0);
+  background-image: linear-gradient(#fafafc 9px, transparent 0), linear-gradient(90deg, transparent 9px, #373739 0);
   background-color: #fff;
   background-size:
-    15px 15px,
-    15px 15px;
+    10px 10px,
+    10px 10px;
   position: relative;
   overflow: hidden;
   box-sizing: border-box;

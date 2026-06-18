@@ -1,6 +1,6 @@
 import type { VisualEditorBlockData, VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
 import { computed, h, ref } from 'vue'
-import GridCanvas from '../shared/GridCanvas.vue'  // 统一内层网格画布（插槽、组、布局等全部使用同一套网格度量 + CanvasItem）
+import GridCanvas from '../shared/GridCanvas.vue' // 统一内层网格画布（插槽、组、布局等全部使用同一套网格度量 + CanvasItem）
 import { type ContainerRenderCustom, resolveEditingContainerId } from '../container'
 import { createEditorTableProp } from '@/visual-editor/visual-editor.props'
 
@@ -54,7 +54,7 @@ export default {
         containerVid: block?._vid || '',
         children: children.value,
         colNum: innerColNum.value,
-        rowHeight: 15,
+        rowHeight: 1, // 1px 步长
         parentFocus: isFocus.value,
         isEditing: isEditing.value,
         'onUpdate:children': (newChildren: VisualEditorBlockData[]) => {

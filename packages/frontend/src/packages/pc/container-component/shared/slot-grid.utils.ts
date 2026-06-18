@@ -1,6 +1,6 @@
-/** 与根画布横向网格逻辑一致：每列约 15px 步长（仅用于回退）。 */
-export const SLOT_COL_STEP_PX = 15
-export const SLOT_ROW_HEIGHT = 15
+/** 画布步长：1px（每个网格单位代表 1px）。横向列数基于设计宽度或显式传入，colWidth 随容器实时宽度变化。 */
+export const SLOT_COL_STEP_PX = 1
+export const SLOT_ROW_HEIGHT = 1
 
 export function calcSlotColNum(containerWidthPx: number) {
   return Math.max(1, Math.floor(containerWidthPx / SLOT_COL_STEP_PX))
@@ -15,9 +15,8 @@ export interface SlotGridMetrics {
 }
 
 /**
- * 与 PcWrapper.getGridMetrics / GridLayoutPlus 保持一致的槽内网格度量。
- * - cols 必须是稳定的（来自设计宽度或显式 colNum prop），不能随当前容器像素宽度变化。
- * - 仅使用 containerWidthPx 计算当前的 colWidth，实现“列数固定、宽度变化时左右贴边”。
+ * 槽内网格度量（1px 步长）。
+ * - cols 通常等于设计宽度（或组的跨度像素数），实现“列数固定、宽度变化时左右贴边”。
  * - colWidth = (containerWidth - margin*(cols+1)) / cols
  * - 位置公式：round( totalSpace * col / cols ) + margin*(col+1)
  */
@@ -25,7 +24,7 @@ export function getSlotGridMetrics(containerWidthPx: number, cols?: number): Slo
   const rowHeight = SLOT_ROW_HEIGHT
   const margin: [number, number] = [0, 0]
   const containerWidth = Math.max(1, containerWidthPx || 100)
-  // 优先使用调用方提供的稳定列数；否则回退到按宽度动态（旧行为，不推荐）
+  // 优先使用调用方提供的稳定列数（组的 innerColNum 或设计宽度）；否则回退到按当前宽度（1px 步长下 ≈ 宽度本身）
   let c = cols && cols > 0 ? Math.floor(cols) : 0
   if (!c) {
     c = Math.max(1, Math.floor(containerWidth / SLOT_COL_STEP_PX))

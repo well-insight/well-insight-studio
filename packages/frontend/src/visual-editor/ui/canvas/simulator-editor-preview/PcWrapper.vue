@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import type { CSSProperties } from 'vue'
 import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
-import { GridLayout } from 'grid-layout-plus'
 import { cloneDeep } from 'lodash-es'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useAnimate } from '@/hooks/useAnimate'
@@ -34,7 +33,7 @@ const { currentPage } = useVisualData()
 
 const gridColNum = computed(() => {
   const designWidth = currentPage.value?.config?.pageSize?.width || 1920
-  return Math.max(1, Math.floor(designWidth / 15))
+  return Math.max(1, Math.floor(designWidth)) // 1px 步长：列数 = 设计宽度
 })
 
 function getBlockBorderStyle(item: VisualEditorBlockData): CSSProperties {
@@ -117,59 +116,54 @@ onMounted(() => {
   <div :class="$style.previewRoot">
     <el-scrollbar class="h-full w-full">
       <div :class="$style.canvas" :style="editCanvasStyle">
-        <div :class="$style.canvasInner">
-          <GridLayout
-            v-if="previewLayout.length > 0"
-            v-model:layout="previewLayout"
-            class="grid-layout-preview"
-            :col-num="gridColNum"
-            :row-height="30"
-            :margin="[8, 8]"
-            :is-draggable="false"
-            :is-resizable="false"
-            :vertical-compact="true"
-            :allow-overlap="true"
-            :use-style-cursor="false"
-          >
-            <template #item="{ item }: { item: VisualEditorBlockData }">
+        <div :class="$style.canvasInner" :style="{ position: 'relative', minHeight: '400px' }">
+          <template v-if="previewLayout.length > 0">
+            <!-- 预览使用自研绝对定位（不再依赖 grid-layout-plus） -->
+            <div
+              v-for="item in previewLayout"
+              :key="item._vid"
+              class="preview-block"
+              :style="{
+                ...getBlockBorderStyle(item),
+                position: 'absolute',
+                left: `${(item.x || 0)}px`,
+                top: `${(item.y || 0)}px`,
+                width: `${(item.w || 120)}px`,
+                height: `${(item.h || 40)}px`,
+              }"
+              :class="{
+                'preview-block--inner-title':
+                  item.showTitle === true && isInnerBlockTitle(item.titleStyle),
+              }"
+            >
               <div
-                :key="item._vid"
-                class="preview-block"
-                :style="getBlockBorderStyle(item)"
-                :class="{
-                  'preview-block--inner-title':
-                    item.showTitle === true && isInnerBlockTitle(item.titleStyle),
-                }"
+                v-if="item.showTitle === true && isInnerBlockTitle(item.titleStyle)"
+                class="preview-block__title-inner"
+                :style="getBlockTitleInlineStyle(item.titleStyle)"
               >
-                <div
-                  v-if="item.showTitle === true && isInnerBlockTitle(item.titleStyle)"
-                  class="preview-block__title-inner"
+                {{ getBlockTitleText(item) }}
+              </div>
+              <div class="preview-block__body">
+                <span
+                  v-if="item.showTitle === true && !isInnerBlockTitle(item.titleStyle)"
+                  class="preview-block__title-outer"
+                  :class="`preview-block__title-outer--${item.titleStyle?.position || 'outer-left'}`"
                   :style="getBlockTitleInlineStyle(item.titleStyle)"
                 >
                   {{ getBlockTitleText(item) }}
-                </div>
-                <div class="preview-block__body">
-                  <span
-                    v-if="item.showTitle === true && !isInnerBlockTitle(item.titleStyle)"
-                    class="preview-block__title-outer"
-                    :class="`preview-block__title-outer--${item.titleStyle?.position || 'outer-left'}`"
-                    :style="getBlockTitleInlineStyle(item.titleStyle)"
+                </span>
+                <CompRender :element="item">
+                  <template
+                    v-for="(slotValue, slotKey) in item.props?.slots"
+                    :key="slotKey"
+                    #[slotKey]
                   >
-                    {{ getBlockTitleText(item) }}
-                  </span>
-                  <CompRender :element="item">
-                    <template
-                      v-for="(slotValue, slotKey) in item.props?.slots"
-                      :key="slotKey"
-                      #[slotKey]
-                    >
-                      <PreviewSlotItem :children="slotValue.children ?? []" />
-                    </template>
-                  </CompRender>
-                </div>
+                    <PreviewSlotItem :children="slotValue.children ?? []" />
+                  </template>
+                </CompRender>
               </div>
-            </template>
-          </GridLayout>
+            </div>
+          </template>
           <div v-else :class="$style.empty">
             当前页面暂无组件
           </div>

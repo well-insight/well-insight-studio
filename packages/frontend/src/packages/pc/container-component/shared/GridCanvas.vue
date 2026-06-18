@@ -21,7 +21,6 @@
 import type { CSSProperties, PropType } from 'vue'
 import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
 import { useResizeObserver } from '@vueuse/core'
-import { cloneDeep } from 'lodash-es'
 import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ContainerEditorContextKey, EditingContainerIdKey } from '@/packages/pc/container-component/container'
 import {
@@ -33,6 +32,8 @@ import {
 import { useControlStore } from '@/stores/controlStore'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { generateNanoid } from '@/visual-editor/lib'
+import ReferenceGuides from '@/visual-editor/ui/canvas/shared/ReferenceGuides.vue'
+import { buildSnapTargets } from '@/visual-editor/ui/canvas/shared/snap'
 import CompRender from '@/visual-editor/ui/canvas/simulator-grid-editor/comp-render'
 import CanvasItem from './CanvasItem.vue'
 
@@ -47,11 +48,11 @@ const props = defineProps({
   },
   colNum: {
     type: Number,
-    default: 12,
+    default: 0, // 0 表示让 GridCanvas 根据测量宽度或显式传入决定（1px 步长下推荐）
   },
   rowHeight: {
     type: Number,
-    default: 15,
+    default: 1,
   },
   parentFocus: {
     type: Boolean,
@@ -89,14 +90,19 @@ const isEditingMode = computed(() =>
 const canvasRef = ref<HTMLElement>()
 const emptyRef = ref<HTMLElement>()
 const slotWidth = ref(0)
+const slotHeight = ref(0)
 
 useResizeObserver(canvasRef, (entries) => {
-  slotWidth.value = entries[0]?.contentRect.width ?? 0
+  const rect = entries[0]?.contentRect
+  slotWidth.value = rect?.width ?? 0
+  slotHeight.value = rect?.height ?? 0
 })
 
 onMounted(() => {
-  if (canvasRef.value)
+  if (canvasRef.value) {
     slotWidth.value = canvasRef.value.clientWidth
+    slotHeight.value = canvasRef.value.clientHeight
+  }
 })
 
 onBeforeUnmount(() => {
@@ -104,29 +110,107 @@ onBeforeUnmount(() => {
 })
 
 /**
- * 稳定的列数（fixed cols），与 GridLayoutPlus 行为一致：
- * - 优先使用 props.colNum（各容器传入的固定值，如 12）
- * - 回退时使用与根画布相同的“按页面设计宽度计算”的列数
- * - 仅 containerWidth（实时测量）用于计算 colWidth，实现宽度变化时左/右贴边。
+ * 列数（1px 步长）：
+ * - 优先使用显式 props.colNum（组传入合并时的跨度单位数 = 像素跨度）
+ * - 否则使用当前测量的容器宽度作为列数（实现内部 1px 网格）
+ * - 最后回退到页面设计宽度
+ * - 仅使用测量宽度计算 colWidth（宽度变化时内容按比例贴边）
  */
 const effectiveColNum = computed(() => {
   const n = Number(props.colNum)
   if (n && n > 0) {
     return Math.floor(n)
   }
-  // 与 PcWrapper.gridColNum 一致的回退
+  if (slotWidth.value > 0) {
+    return Math.max(1, Math.floor(slotWidth.value))
+  }
   const designWidth = currentPage.value?.config?.pageSize?.width || 1920
-  return Math.max(1, Math.floor(designWidth / 15))
+  return Math.max(1, Math.floor(designWidth))
 })
 
 const slotMetrics = computed(() => {
-  const w = slotWidth.value > 0 ? slotWidth.value : effectiveColNum.value * 15
+  const w = slotWidth.value > 0 ? slotWidth.value : effectiveColNum.value
   return getSlotGridMetrics(w, effectiveColNum.value)
 })
 
 const localChildren = computed({
   get: () => props.children || [],
   set: val => emit('update:children', val),
+})
+
+// ---- Reference guides + snapping state ----
+const activeDrag = ref<{ vid: string, left: number, top: number, width: number, height: number } | null>(null)
+const activeResize = ref<{ vid: string, left: number, top: number, width: number, height: number } | null>(null)
+
+function getBaseRectForVid(vid: string) {
+  const child = localChildren.value.find(c => c._vid === vid)
+  return child ? getItemPixelRect(child) : { left: 0, top: 0, width: 20, height: 20 }
+}
+
+function onDragStart(child: VisualEditorBlockData) {
+  // Seed the rect from base so guides can appear as soon as movement starts
+  if (!isEditingMode.value) {
+    return
+  }
+  const r = getItemPixelRect(child)
+  activeDrag.value = {
+    vid: child._vid,
+    left: r.left,
+    top: r.top,
+    width: r.width,
+    height: r.height,
+  }
+  activeResize.value = null
+}
+
+function onDragUpdate(child: VisualEditorBlockData, pos: { left: number, top: number }) {
+  if (!isEditingMode.value) {
+    return
+  }
+  activeResize.value = null
+  const base = getBaseRectForVid(child._vid)
+  if (!activeDrag.value || activeDrag.value.vid !== child._vid) {
+    activeDrag.value = {
+      vid: child._vid,
+      left: pos.left,
+      top: pos.top,
+      width: base.width,
+      height: base.height,
+    }
+  }
+  else {
+    activeDrag.value.left = pos.left
+    activeDrag.value.top = pos.top
+  }
+}
+
+function clearActiveDrag() {
+  activeDrag.value = null
+  activeResize.value = null
+}
+
+function _clearActiveResize() {
+  activeResize.value = null
+}
+
+// Unified for guides
+const guideRect = computed(() => activeDrag.value || activeResize.value)
+const isGuideVisible = computed(() => !!guideRect.value)
+
+// Other rects (exclude whichever is active)
+const otherRectsForGuides = computed(() => {
+  const activeVid = guideRect.value?.vid
+  if (!activeVid) {
+    return localChildren.value.map(c => getItemPixelRect(c))
+  }
+  return localChildren.value
+    .filter(c => c._vid !== activeVid)
+    .map(c => getItemPixelRect(c))
+})
+
+// Snap targets derived from other rects + container bounds + centers
+const snapTargets = computed(() => {
+  return buildSnapTargets(otherRectsForGuides.value, slotWidth.value || 0, slotHeight.value || 0)
 })
 
 function isBlockSelected(vid: string) {
@@ -264,21 +348,31 @@ function handleInnerContainerDblClick(block: VisualEditorBlockData | undefined, 
   if (!block)
     return
   e.stopPropagation()
-  if (!isEditingMode.value) {
-    // 双击子项进入当前容器编辑模式（无论子项是否为嵌套容器）
-    if (props.containerVid)
-      editorCtx?.enterContainerEditMode?.(props.containerVid)
-    editorCtx?.selectContainerByVid?.(props.containerVid, e)
+
+  const isNestedContainer = NESTED_CONTAINER_KEYS.has(block.componentKey)
+
+  // Prefer direct entry into a nested group/container when dblclicked (common expectation)
+  if (isNestedContainer) {
+    editorCtx?.enterContainerEditMode?.(block._vid)
+    editorCtx?.selectContainerByVid?.(block._vid, e)
     return
   }
-  if (!NESTED_CONTAINER_KEYS.has(block.componentKey))
+
+  if (!isEditingMode.value) {
+    // Double-click non-container child (or canvas bg) when not editing → enter the current slot's container
+    if (props.containerVid) {
+      editorCtx?.enterContainerEditMode?.(props.containerVid)
+      editorCtx?.selectContainerByVid?.(props.containerVid, e)
+    }
     return
-  editorCtx?.enterContainerEditMode?.(block._vid)
-  editorCtx?.selectContainerByVid?.(block._vid, e)
+  }
+
+  // Already editing this layer, non-container child dblclick does nothing special here
 }
 
 // ---- 共享 CanvasItem 拖拽/缩放结束回调（像素值），此处负责转网格并提交
 function onItemDragEnd(child: VisualEditorBlockData, pos: { left: number, top: number }) {
+  clearActiveDrag()
   if (!isEditingMode.value)
     return
   const m = slotMetrics.value
@@ -295,7 +389,44 @@ function onItemDragEnd(child: VisualEditorBlockData, pos: { left: number, top: n
   editorCtx?.recordHistory()
 }
 
+function onItemResizeStart(child: VisualEditorBlockData) {
+  if (!isEditingMode.value) {
+    return
+  }
+  activeDrag.value = null
+  const r = getItemPixelRect(child)
+  activeResize.value = {
+    vid: child._vid,
+    left: r.left,
+    top: r.top,
+    width: r.width,
+    height: r.height,
+  }
+}
+
+function onItemResizeUpdate(child: VisualEditorBlockData, size: { width: number, height: number }) {
+  if (!isEditingMode.value) {
+    return
+  }
+  activeDrag.value = null
+  const base = getBaseRectForVid(child._vid)
+  if (!activeResize.value || activeResize.value.vid !== child._vid) {
+    activeResize.value = {
+      vid: child._vid,
+      left: base.left,
+      top: base.top,
+      width: size.width,
+      height: size.height,
+    }
+  }
+  else {
+    activeResize.value.width = size.width
+    activeResize.value.height = size.height
+  }
+}
+
 function onItemResizeEnd(child: VisualEditorBlockData, size: { width: number, height: number }) {
+  clearActiveDrag()
   if (!isEditingMode.value)
     return
   const m = slotMetrics.value
@@ -313,6 +444,8 @@ function onItemResizeEnd(child: VisualEditorBlockData, size: { width: number, he
 }
 
 // ---- 拖放处理 ----
+// Palette drops (from component list) are now centralized in PcWrapper dragEnd + findSlotContextAtPoint.
+// This avoids duplicate insertion and ensures consistent cross-container / into-closed-container behavior.
 function handleDrop(e: DragEvent) {
   e.preventDefault()
   e.stopPropagation()
@@ -324,26 +457,19 @@ function handleDrop(e: DragEvent) {
   if (!isEditingMode.value)
     emit('drop', e)
 
-  const dropTarget = (canvasRef.value ?? emptyRef.value) as HTMLElement | undefined
-  if (!dropTarget)
+  // For palette from list: let root PcWrapper's dragEnd decide (using improved slot detection)
+  // and insert into the correct slot's children (works for both open and closed containers).
+  // Internal block moves inside an editing container are handled via CanvasItem @drag-end etc.
+  // If this was triggered by other native drags while editing, we still allow direct insert as fallback.
+  if (!isEditingMode.value) {
+    // closed container: root will handle palette placement via slotCtx
     return
+  }
 
-  const dropRoot = (dropTarget.closest('.grid-canvas') ?? dropTarget) as HTMLElement
-  const { x: gridX, y: gridY, w, h } = calcSlotDropLayout(dropRoot, e.clientX, e.clientY, block, effectiveColNum.value)
-
-  const copiedBlock = cloneDeep(block) as VisualEditorBlockData
-  copiedBlock._vid = `vid_${generateNanoid()}`
-  copiedBlock.i = copiedBlock._vid
-  copiedBlock.x = gridX
-  copiedBlock.y = gridY
-  copiedBlock.w = w
-  copiedBlock.h = h
-  copiedBlock.focus = false
-  copiedBlock.focusWithChild = false
-
-  localChildren.value = [...localChildren.value, copiedBlock]
-  controlStore.setMoveVisualData(null)
-  editorCtx?.recordHistory()
+  // When editing: still delegate palette-from-list to root dragEnd (which will locate this slot via findSlot
+  // and push into the same children array). This keeps a single decision path and avoids dupes.
+  // (CanvasItem internal drags handle repositioning of existing children inside this canvas.)
+  return
 }
 
 /** 适配 CanvasItem 发出的 mousedown（非编辑态下点击子项选中容器） */
@@ -383,6 +509,16 @@ function handleItemMouseDown(e: MouseEvent, _child?: VisualEditorBlockData) {
       class="grid-layout slot-grid-layout"
       :class="{ 'is-editing': isEditingMode }"
     >
+      <!-- Reference / alignment guides overlay (drag or resize) -->
+      <ReferenceGuides
+        :container-width="slotWidth"
+        :container-height="slotHeight"
+        :other-rects="otherRectsForGuides"
+        :active-rect="guideRect"
+        :visible="isGuideVisible"
+        :threshold="6"
+      />
+
       <CanvasItem
         v-for="child in localChildren"
         :key="child._vid"
@@ -396,11 +532,18 @@ function handleItemMouseDown(e: MouseEvent, _child?: VisualEditorBlockData) {
         :is-focused="child.focus"
         :disabled="!canInteract(child)"
         item-class="slot-grid-item"
+        :snap-x-lines="snapTargets.xs"
+        :snap-y-lines="snapTargets.ys"
+        :snap-threshold="6"
         @mousedown="(e: MouseEvent) => handleItemMouseDown(e, child)"
         @select="handleSelect(child, $event)"
         @contextmenu="handleContextmenu(child, $event)"
         @dblclick="handleInnerContainerDblClick(child, $event)"
+        @drag-start="onDragStart(child)"
+        @drag-update="onDragUpdate(child, $event)"
         @drag-end="onItemDragEnd(child, $event)"
+        @resize-start="onItemResizeStart(child)"
+        @resize-update="onItemResizeUpdate(child, $event)"
         @resize-end="onItemResizeEnd(child, $event)"
       >
         <div

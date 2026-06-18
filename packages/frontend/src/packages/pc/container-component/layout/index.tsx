@@ -84,7 +84,7 @@ export default {
         containerVid: block?._vid || '',
         children,
         colNum: 12, // 固定列数（与 GridLayoutPlus 一致：列数不随容器像素宽度变化）
-        rowHeight: 15,
+        rowHeight: 1, // 1px 步长
         parentFocus: isFocus.value,
         isEditing: isEditing.value,
         'onUpdate:children': (newChildren: VisualEditorBlockData[]) => {

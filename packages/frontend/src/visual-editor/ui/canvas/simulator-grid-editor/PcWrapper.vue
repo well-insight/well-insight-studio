@@ -8,15 +8,17 @@ import { cloneDeep, debounce, throttle } from 'lodash-es'
 import { storeToRefs } from 'pinia'
 import { computed, nextTick, onBeforeUnmount, onMounted, provide, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { GridLayout } from '@/components/grid-layout-plus'
-import { ContainerEditorContextKey, EditingContainerIdKey } from '@/packages/pc/container-component/container'
+import CanvasItem from '@/packages/pc/container-component/shared/CanvasItem.vue'
 import { useAnimate } from '@/hooks/useAnimate'
 import { useGlobalProperties } from '@/hooks/useGlobalProperties'
+import { ContainerEditorContextKey, EditingContainerIdKey } from '@/packages/pc/container-component/container'
+import { calcSlotDropLayout } from '@/packages/pc/container-component/shared/slot-grid.utils'
 import { useControlStore } from '@/stores/controlStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
-import { calcSlotDropLayout } from '@/packages/pc/container-component/shared/slot-grid.utils'
 import { resolveBlockBorderCss } from '@/utils/blockBorder'
 import {
+  DEFAULT_BLOCK_HEIGHT,
+  DEFAULT_BLOCK_WIDTH,
   getBlockTitleInlineStyle,
   getBlockTitleText,
   isInnerBlockTitle,
@@ -25,6 +27,8 @@ import { useModal } from '@/visual-editor/hooks/useModal'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { generateNanoid } from '@/visual-editor/lib'
 import { $$dropdown, DropdownOption } from '@/visual-editor/lib/dropdown-service'
+import ReferenceGuides from '@/visual-editor/ui/canvas/shared/ReferenceGuides.vue'
+import { buildSnapTargets, snapDrag } from '@/visual-editor/ui/canvas/shared/snap'
 import MonacoEditor from '@/visual-editor/ui/shared/monaco-editor/MonacoEditor'
 import { getBlockAnimationElement } from '@/visual-editor/visual-editor.utils'
 import CompRender from './comp-render'
@@ -152,6 +156,17 @@ const componentLoading = ref(false)
 
 const wrapper = ref<HTMLElement>()
 const canvasRef = useTemplateRef('canvasRef')
+const rootGridRef = useTemplateRef<HTMLElement>('rootGridRef')
+
+const rootWidth = ref(0)
+const rootHeight = ref(0)
+
+useResizeObserver(rootGridRef, (entries) => {
+  const rect = entries[0]?.contentRect
+  rootWidth.value = rect?.width ?? 0
+  rootHeight.value = rect?.height ?? 0
+})
+
 const sketchRuleKey = ref<string>('')
 
 const { isOutside } = useMouseInElement(wrapper)
@@ -247,40 +262,62 @@ const editCanvasStyle = computed(() => {
   } as CSSProperties
 })
 
-const gridLayout = ref<InstanceType<typeof GridLayout>>()
+// gridLayoutPlus 已移除，根画布使用自研 CanvasItem + 像素绝对定位 + 网格度量
+// 所有位置计算改用 getGridMetrics + calc* 函数
 
-/** 基于页面设计宽度计算固定列数，使每列步长接近15px（不随窗口大小变化） */
+/** 基于页面设计宽度计算固定列数（1px 步长：列数 = 设计宽度，每个单位 1px） */
 const gridColNum = computed(() => {
   const designWidth = currentPage.value?.config?.pageSize?.width || 1920
-  return Math.max(1, Math.floor(designWidth / 15))
+  return Math.max(1, Math.floor(designWidth))
 })
 
-type GridLayoutMetrics = {
+interface MainGridMetrics {
   containerWidth: number
   cols: number
   rowHeight: number
   margin: [number, number]
 }
 
-function getGridMetrics(): GridLayoutMetrics & { colWidth: number } {
-  const rowHeight = 15
+function getGridMetrics(): MainGridMetrics & { colWidth: number } {
+  const rowHeight = 1
   const margin: [number, number] = [0, 0]
-  const gridEl = document.querySelector('.grid-layout-canvas') as HTMLElement | null
-  const containerWidth = gridEl?.clientWidth || currentPage.value?.config?.pageSize?.width || 1920
+  // 优先使用 resize observer 测量的实际容器宽度（像 GridCanvas 的 slotWidth）
+  // 回退到页面设计宽度（显式固定宽度）
+  const containerWidth = rootWidth.value > 0
+    ? rootWidth.value
+    : (currentPage.value?.config?.pageSize?.width || 1920)
   const cols = gridColNum.value
   const totalSpace = containerWidth - margin[0] * (cols + 1)
   const colWidth = totalSpace / cols
   return { rowHeight, colWidth, containerWidth, cols, margin }
 }
 
+/** 获取根块的像素位置（用于 CanvasItem） */
+function getRootItemPixelRect(block: VisualEditorBlockData) {
+  return calcGridItemPixelRect(
+    block.x || 0,
+    block.y || 0,
+    block.w || DEFAULT_BLOCK_WIDTH,
+    block.h || DEFAULT_BLOCK_HEIGHT,
+    getGridMetrics(),
+  )
+}
+
+/** 像素 -> 网格（用于拖拽结束提交） */
+function pixelToGrid(left: number, top: number, m = getGridMetrics()) {
+  const x = Math.max(0, Math.round(left / m.colWidth))
+  const y = Math.max(0, Math.round(top / m.rowHeight))
+  return { x, y }
+}
+
 /** 与 grid-layout-plus 中 calcGridColLeft 保持一致 */
-function calcGridColLeft(col: number, metrics: GridLayoutMetrics) {
+function calcGridColLeft(col: number, metrics: MainGridMetrics) {
   const totalSpace = metrics.containerWidth - metrics.margin[0] * (metrics.cols + 1)
   return Math.round(totalSpace * col / metrics.cols) + metrics.margin[0] * (col + 1)
 }
 
 /** 与 grid-layout-plus 中 calcGridRowTop 保持一致 */
-function calcGridRowTop(row: number, metrics: GridLayoutMetrics) {
+function calcGridRowTop(row: number, metrics: MainGridMetrics) {
   return Math.round(metrics.rowHeight * row) + metrics.margin[1] * (row + 1)
 }
 
@@ -290,7 +327,7 @@ function calcGridItemPixelRect(
   y: number,
   w: number,
   h: number,
-  metrics: GridLayoutMetrics,
+  metrics: MainGridMetrics,
 ) {
   const left = calcGridColLeft(x, metrics)
   const top = calcGridRowTop(y, metrics)
@@ -332,7 +369,7 @@ function migrateGroupInnerStyles(block: VisualEditorBlockData) {
   if (styles.position !== 'absolute' || styles.left == null || styles.top == null)
     return
 
-  const childRect = calcGridItemPixelRect(block.x || 0, block.y || 0, block.w || 24, block.h || 8, getGridMetrics())
+  const childRect = calcGridItemPixelRect(block.x || 0, block.y || 0, block.w || DEFAULT_BLOCK_WIDTH, block.h || DEFAULT_BLOCK_HEIGHT, getGridMetrics())
   block.groupInnerLayout = {
     left: toPxString(styles.left, '0px'),
     top: toPxString(styles.top, '0px'),
@@ -353,7 +390,7 @@ function setGroupInnerLayout(
 
 function buildGroupInnerWrapperStyle(
   block: VisualEditorBlockData,
-  metrics: GridLayoutMetrics,
+  metrics: MainGridMetrics,
   originLeft = 0,
   originTop = 0,
 ): CSSProperties {
@@ -375,7 +412,7 @@ function buildGroupInnerWrapperStyle(
     }
   }
 
-  const rect = calcGridItemPixelRect(block.x || 0, block.y || 0, block.w || 24, block.h || 8, metrics)
+  const rect = calcGridItemPixelRect(block.x || 0, block.y || 0, block.w || DEFAULT_BLOCK_WIDTH, block.h || DEFAULT_BLOCK_HEIGHT, metrics)
   return {
     position: 'absolute',
     left: toPxStyle(rect.left - originLeft),
@@ -411,8 +448,8 @@ function syncGroupWrapperStyles() {
             const childRect = calcGridItemPixelRect(
               child.x || 0,
               child.y || 0,
-              child.w || 24,
-              child.h || 8,
+              child.w || DEFAULT_BLOCK_WIDTH,
+              child.h || DEFAULT_BLOCK_HEIGHT,
               metrics,
             )
             styles[child._vid] = existing
@@ -493,11 +530,21 @@ function onGroupInnerDragEnd() {
 
 onMounted(() => {
   document.addEventListener('dragover', syncMousePosition)
+  document.addEventListener('mousemove', syncMousePosition, true)
   controlStore.registerCanvasSelectHandler(selectComp)
+
+  // Initial measurement for root grid (like GridCanvas slotWidth)
+  nextTick(() => {
+    if (rootGridRef.value) {
+      rootWidth.value = rootGridRef.value.clientWidth
+      rootHeight.value = rootGridRef.value.clientHeight
+    }
+  })
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('dragover', syncMousePosition)
+  document.removeEventListener('mousemove', syncMousePosition, true)
   controlStore.unregisterCanvasSelectHandler()
 })
 
@@ -523,11 +570,9 @@ function defaultDragItem() {
 
 const dragging = throttle(() => {
   const parentRect = wrapper.value?.getBoundingClientRect()
-
-  if (!parentRect || !gridLayout.value)
+  if (!parentRect)
     return
 
-  // 检测是否拖拽到容器插槽上，如果是则跳过网格占位
   const overSlot = Boolean(findSlotContextAtPoint(mouseAt.x, mouseAt.y))
 
   const mouseInGrid
@@ -536,50 +581,54 @@ const dragging = throttle(() => {
       && mouseAt.y > parentRect.top
       && mouseAt.y < parentRect.bottom
 
-  if (mouseInGrid && !currentPage.value.blocks.some(item => item.i === dropId) && !overSlot) {
+  // 确保有占位 ghost
+  let ghostIndex = currentPage.value.blocks.findIndex(item => item.i === dropId)
+  if (mouseInGrid && ghostIndex === -1 && !overSlot && controlStore.moveVisualData) {
     const colNum = gridColNum.value
-    const moveData = { ...controlStore.moveVisualData, x: (currentPage.value.blocks.length * 10) % colNum, y: currentPage.value.blocks.length + 5, i: dropId }
-    dragItem.value.h = moveData?.h
-    dragItem.value.w = moveData?.w
+    const moveData: any = {
+      ...controlStore.moveVisualData,
+      x: (currentPage.value.blocks.length * 10) % colNum,
+      y: currentPage.value.blocks.length + 5,
+      i: dropId,
+      _vid: dropId, // 临时
+    }
+    dragItem.value.h = moveData.h || DEFAULT_BLOCK_HEIGHT
+    dragItem.value.w = moveData.w || DEFAULT_BLOCK_WIDTH
     dragItem.value.i = dropId
     currentPage.value.blocks.push(moveData)
+    ghostIndex = currentPage.value.blocks.length - 1
   }
 
-  // 如果光标在插槽上，清理可能残留的占位块
   if (overSlot) {
     currentPage.value.blocks = currentPage.value.blocks.filter(item => item.i !== dropId)
     return
   }
 
-  const index = currentPage.value.blocks.findIndex(item => item.i === dropId)
-
-  if (index !== -1) {
-    const item = gridLayout.value.getItem(dropId)
-
-    if (!item)
+  if (ghostIndex !== -1) {
+    const ghost = currentPage.value.blocks[ghostIndex]
+    if (!ghost)
       return
 
-    try {
-      item.wrapper.style.display = 'none'
-    }
-    catch (error) {
-      console.warn(error)
-    }
+    // 直接用鼠标像素算网格坐标（不再依赖 GridLayoutPlus）
+    const localX = mouseAt.x - parentRect.left
+    const localY = mouseAt.y - parentRect.top
+    const m = getGridMetrics()
+    const gx = Math.max(0, Math.round(localX / m.colWidth))
+    const gy = Math.max(0, Math.round(localY / m.rowHeight))
 
-    Object.assign(item.state, {
-      top: mouseAt.y - parentRect.top,
-      left: mouseAt.x - parentRect.left,
-    })
-    const newPos = item.calcXY(mouseAt.y - parentRect.top, mouseAt.x - parentRect.left)
+    const w = ghost.w || dragItem.value.w || DEFAULT_BLOCK_WIDTH
+    const h = ghost.h || dragItem.value.h || DEFAULT_BLOCK_HEIGHT
+    const clampedX = Math.max(0, Math.min(gx, m.cols - w))
+    const clampedY = Math.max(0, gy)
 
     if (mouseInGrid) {
-      gridLayout.value.dragEvent('dragstart', dropId, newPos.x, newPos.y, dragItem.value.h, dragItem.value.w)
-      dragItem.value.i = String(index)
-      dragItem.value.x = currentPage.value.blocks[index].x
-      dragItem.value.y = currentPage.value.blocks[index].y
+      ghost.x = clampedX
+      ghost.y = clampedY
+      dragItem.value.i = String(ghostIndex)
+      dragItem.value.x = ghost.x
+      dragItem.value.y = ghost.y
     }
     else {
-      gridLayout.value.dragEvent('dragend', dropId, newPos.x, newPos.y, dragItem.value.h, dragItem.value.w)
       currentPage.value.blocks = currentPage.value.blocks.filter(item => item.i !== dropId)
     }
   }
@@ -606,49 +655,75 @@ function findBlockByVid(vid: string, blocks: VisualEditorBlockData[]): VisualEdi
 }
 
 /**
- * 通过鼠标坐标检测是否落在某个容器插槽内
+ * 通过鼠标坐标检测是否落在某个容器插槽内。
+ * 优先使用 elementsFromPoint + closest；失败时回退到几何命中所有 .slot-grid-canvas，
+ * 选择面积最小的（最内层嵌套优先），以支持拖拽加入容器/组插槽。
  */
 function findSlotContextAtPoint(x: number, y: number): { parentBlock: VisualEditorBlockData, slotKey: string } | null {
+  // 1) 快速路径：elementsFromPoint
   const elements = document.elementsFromPoint(x, y)
-
   for (const el of elements) {
-    // 所有插槽现在统一使用 .slot-grid-canvas (包括原非容器插槽)
     const slotCanvasEl = (el as HTMLElement).closest('.slot-grid-canvas') as HTMLElement | null
     if (slotCanvasEl) {
-      const parentEl = slotCanvasEl.closest('[class*="list-group-item-"]') as HTMLElement | null
-      if (parentEl) {
-        const classList = Array.from(parentEl.classList)
-        const vidClass = classList.find(c => c.startsWith('list-group-item-'))
-        const parentVid = vidClass?.replace('list-group-item-', '')
-        if (parentVid) {
-          const parentBlock = findBlockByVid(parentVid, currentPage.value.blocks)
-          if (parentBlock) {
-            const slotKey = slotCanvasEl.getAttribute('data-slot-key') || 'default'
-            if (parentBlock.props?.slots?.[slotKey]) {
-              return { parentBlock, slotKey }
-            }
-          }
-        }
-      }
+      const ctx = extractSlotContextFromCanvas(slotCanvasEl)
+      if (ctx) return ctx
     }
+  }
+
+  // 2) 几何回退：遍历所有 slot 画布，找包含点的（优先最小面积=更内层）
+  const all = Array.from(document.querySelectorAll<HTMLElement>('.slot-grid-canvas'))
+  let best: { el: HTMLElement, area: number } | null = null
+  for (const slot of all) {
+    const r = slot.getBoundingClientRect()
+    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+      const area = Math.max(1, r.width * r.height)
+      if (!best || area < best.area) best = { el: slot, area }
+    }
+  }
+  if (best) {
+    const ctx = extractSlotContextFromCanvas(best.el)
+    if (ctx) return ctx
   }
   return null
 }
 
+function extractSlotContextFromCanvas(slotCanvasEl: HTMLElement): { parentBlock: VisualEditorBlockData, slotKey: string } | null {
+  const parentEl = slotCanvasEl.closest('[class*="list-group-item-"]') as HTMLElement | null
+  if (!parentEl) return null
+  const classList = Array.from(parentEl.classList)
+  const vidClass = classList.find(c => c.startsWith('list-group-item-'))
+  const parentVid = vidClass?.replace('list-group-item-', '')
+  if (!parentVid) return null
+  const parentBlock = findBlockByVid(parentVid, currentPage.value.blocks)
+  if (!parentBlock) return null
+  const slotKey = slotCanvasEl.getAttribute('data-slot-key') || 'default'
+  if (!parentBlock.props?.slots?.[slotKey]) return null
+  return { parentBlock, slotKey }
+}
+
 function findSlotElementAtPoint(x: number, y: number): HTMLElement | null {
+  // 优先 elementsFromPoint
   const elements = document.elementsFromPoint(x, y)
   for (const el of elements) {
-    const slotCanvas = (el as HTMLElement).closest('.slot-grid-canvas') as HTMLElement | null
-    if (slotCanvas)
-      return slotCanvas
+    const slot = (el as HTMLElement).closest('.slot-grid-canvas') as HTMLElement | null
+    if (slot) return slot
   }
-  return null
+  // 几何回退
+  const all = Array.from(document.querySelectorAll<HTMLElement>('.slot-grid-canvas'))
+  let best: { el: HTMLElement, area: number } | null = null
+  for (const slot of all) {
+    const r = slot.getBoundingClientRect()
+    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+      const area = Math.max(1, r.width * r.height)
+      if (!best || area < best.area) best = { el: slot, area }
+    }
+  }
+  return best ? best.el : null
 }
 
 function dragEnd() {
   const parentRect = wrapper.value?.getBoundingClientRect()
-
-  if (!parentRect || !gridLayout.value)
+  if (!parentRect)
     return
 
   const mouseInGrid
@@ -658,13 +733,15 @@ function dragEnd() {
       && mouseAt.y < parentRect.bottom
 
   if (!mouseInGrid) {
+    // 清理 ghost
+    currentPage.value.blocks = currentPage.value.blocks.filter(item => item.i !== dropId)
+    dragItem.value = defaultDragItem()
     return
   }
 
-  // 检查是否拖放到容器插槽中
   const slotContext = findSlotContextAtPoint(mouseAt.x, mouseAt.y)
 
-  gridLayout.value.dragEvent('dragend', dropId, dragItem.value.x, dragItem.value.y, dragItem.value.h, dragItem.value.w)
+  // 移除临时 ghost
   currentPage.value.blocks = currentPage.value.blocks.filter(item => item.i !== dropId)
 
   if (!controlStore.moveVisualData) {
@@ -672,52 +749,45 @@ function dragEnd() {
     return
   }
 
-  // 获取拖拽传递的数据
   const sourceBlock = controlStore.moveVisualData!
   const slotEl = slotContext ? findSlotElementAtPoint(mouseAt.x, mouseAt.y) : null
   const slotLayout = slotEl
     ? calcSlotDropLayout(slotEl, mouseAt.x, mouseAt.y, sourceBlock)
     : null
 
-  const moveData = {
+  // 如果没有 slotLayout，用最后记录的 dragItem 像素位置转网格
+  const m = getGridMetrics()
+  let finalX = dragItem.value.x ?? 0
+  let finalY = dragItem.value.y ?? 0
+  if (!slotLayout && dragItem.value.x != null) {
+    // dragItem 存的是网格坐标（我们在 dragging 里已经转过了）
+    finalX = dragItem.value.x
+    finalY = dragItem.value.y
+  }
+
+  const moveData: any = {
     ...sourceBlock,
-    x: slotLayout?.x ?? dragItem.value.x,
-    y: slotLayout?.y ?? dragItem.value.y,
-    w: slotLayout?.w ?? dragItem.value.w,
-    h: slotLayout?.h ?? dragItem.value.h,
+    x: slotLayout?.x ?? finalX,
+    y: slotLayout?.y ?? finalY,
+    w: slotLayout?.w ?? (dragItem.value.w || sourceBlock.w || DEFAULT_BLOCK_WIDTH),
+    h: slotLayout?.h ?? (dragItem.value.h || sourceBlock.h || DEFAULT_BLOCK_HEIGHT),
     i: sourceBlock._vid ?? sourceBlock.i,
   }
 
   if (slotContext) {
-    // 将组件放入容器插槽
     const slotChildren = slotContext.parentBlock.props!.slots![slotContext.slotKey]!.children
     if (slotChildren) {
       slotChildren.push(moveData)
     }
   }
   else {
-    // 放入画布根层级
     currentPage.value.blocks.push(moveData)
   }
 
   selectComp(moveData)
   controlStore.setMoveVisualData(null)
 
-  gridLayout.value.dragEvent('dragend', dragItem.value.i, dragItem.value.x, dragItem.value.y, dragItem.value.h, dragItem.value.w)
-
-  const item = gridLayout.value.getItem(dropId)
-
-  if (item) {
-    try {
-      item.wrapper.style.display = ''
-    }
-    catch (error) {
-      console.warn(error)
-    }
-  }
-
   dragItem.value = defaultDragItem()
-
   recordHistory()
 }
 
@@ -725,26 +795,21 @@ function dragEnd() {
  * 双击添加组件到画布中心
  */
 function addBlock(componentData: VisualEditorBlockData) {
-  if (!gridLayout.value || !wrapper.value)
+  if (!wrapper.value)
     return
 
   const parentRect = wrapper.value.getBoundingClientRect()
-  const centerX = parentRect.width / 2
-  const centerY = parentRect.height / 2
+  const centerX = parentRect.left + parentRect.width / 2
+  const centerY = parentRect.top + parentRect.height / 2
 
-  // 计算网格位置
-  const item = gridLayout.value.getItem(dropId)
-  let x = 0
-  let y = 0
-  if (item) {
-    const pos = item.calcXY(centerY, centerX)
-    x = pos.x
-    y = pos.y
-  }
+  const m = getGridMetrics()
+  const localX = centerX - parentRect.left
+  const localY = centerY - parentRect.top
+  let x = Math.max(0, Math.round(localX / m.colWidth))
+  let y = Math.max(0, Math.round(localY / m.rowHeight))
 
-  // 确保不超出边界
-  const w = componentData.w || 24
-  const h = componentData.h || 8
+  const w = componentData.w || DEFAULT_BLOCK_WIDTH
+  const h = componentData.h || DEFAULT_BLOCK_HEIGHT
   const colNum = gridColNum.value
   x = Math.max(0, Math.min(x, colNum - w))
   y = Math.max(0, y)
@@ -878,24 +943,10 @@ function setContainerGridLocked(block: VisualEditorBlockData, locked: boolean) {
   }
 }
 
-/** 恢复容器在画布 grid-item 上的拖拽/缩放状态 */
-function restoreContainerGridInteract(blocks: VisualEditorBlockData[] = currentPage.value.blocks) {
-  blocks.forEach((block) => {
-    if (isContainerComponent(block.componentKey)) {
-      const item = gridLayout.value?.getItem(block.i ?? block._vid)
-      if (item?.state) {
-        const locked = Boolean(block.static || block._containerEditLocked)
-        item.state.draggable = !locked
-        item.state.resizable = !locked
-      }
-    }
-    const slots = block.props?.slots || {}
-    Object.keys(slots).forEach((key) => {
-      const children = slots[key]?.children
-      if (children)
-        restoreContainerGridInteract(children)
-    })
-  })
+/** 容器编辑锁（自研画布下主要靠 isEditing + dragIgnoreFrom 控制，保留字段兼容老逻辑） */
+function restoreContainerGridInteract(_blocks: VisualEditorBlockData[] = currentPage.value.blocks) {
+  // 根画布已不再使用 GridLayoutPlus，内层 GridCanvas/CanvasItem 通过 isEditing 控制交互。
+  // 此函数保留为空实现，避免历史调用报错。
 }
 
 function resetAllContainerGridLocks(blocks: VisualEditorBlockData[] = currentPage.value.blocks) {
@@ -915,7 +966,7 @@ function resetAllContainerGridLocks(blocks: VisualEditorBlockData[] = currentPag
 function syncContainerGridAfterLockChange() {
   nextTick(() => {
     restoreContainerGridInteract(currentPage.value.blocks)
-    gridLayout.value?.layoutUpdate?.()
+    // 不再需要 gridLayout.layoutUpdate
   })
 }
 
@@ -980,6 +1031,64 @@ function handleDragLeaveContainer() {}
 /** 当前正在拖拽的画布组件 */
 const draggingBlockId = ref<string | null>(null)
 
+/** Live pixel rect (in the main canvas coordinate) of the item being dragged, for reference guides */
+const activeDragRect = ref<{ vid: string, left: number, top: number, width: number, height: number } | null>(null)
+
+watch(draggingBlockId, (val) => {
+  if (!val)
+    activeDragRect.value = null
+})
+
+/** Live rect while resizing on main canvas (for guides) */
+const activeResizeRect = ref<{ vid: string, left: number, top: number, width: number, height: number } | null>(null)
+
+// 旧的 GridLayoutPlus resize tracker 已移除（CanvasItem 直接通过 resize-update 事件驱动 activeResizeRect）。
+
+// Other top-level rects for guides on main canvas (pixel space)
+const mainOtherRects = computed(() => {
+  const active = activeDragRect.value || activeResizeRect.value
+  if (!active)
+    return []
+  const m = getGridMetrics()
+  return currentPage.value.blocks
+    .filter(b => b._vid !== active.vid)
+    .map(b => calcGridItemPixelRect(b.x || 0, b.y || 0, b.w || DEFAULT_BLOCK_WIDTH, b.h || DEFAULT_BLOCK_HEIGHT, m))
+})
+
+// Approximate canvas pixel size for main guides overlay (uses measured root size when available)
+const mainGuidesSize = computed(() => {
+  const m = getGridMetrics()
+  // Estimate height from current blocks or measured / minimum viewport
+  let maxY = rootHeight.value > 0 ? rootHeight.value : 0
+  currentPage.value.blocks.forEach((b) => {
+    const bottom = calcGridRowTop((b.y || 0) + (b.h || DEFAULT_BLOCK_HEIGHT), m)
+    if (bottom > maxY)
+      maxY = bottom
+  })
+  const h = Math.max(rootHeight.value || 1200, Math.ceil(maxY + 200))
+  return { width: m.containerWidth, height: h }
+})
+
+// 根画布的吸附目标（所有其他块 + 画布边界/中线）
+const mainSnapTargets = computed(() => {
+  const m = getGridMetrics()
+  const others = currentPage.value.blocks.map(b =>
+    calcGridItemPixelRect(
+      b.x || 0,
+      b.y || 0,
+      b.w || DEFAULT_BLOCK_WIDTH,
+      b.h || DEFAULT_BLOCK_HEIGHT,
+      m,
+    ),
+  )
+  let estH = 1200
+  currentPage.value.blocks.forEach((b) => {
+    const bottom = calcGridRowTop((b.y || 0) + (b.h || DEFAULT_BLOCK_HEIGHT), m)
+    if (bottom > estH) estH = bottom + 300
+  })
+  return buildSnapTargets(others, m.containerWidth, estH)
+})
+
 /**
  * 检查块是否是另一个块的子孙（防止拖拽到自身或子孙容器中）
  */
@@ -997,92 +1106,129 @@ function isDescendantOf(parentBlock: VisualEditorBlockData, childVid: string): b
   return false
 }
 
-/**
- * 处理 GridItem 移动中 - 检测是否悬停在容器插槽上
- * @param i 组件 id
- * @param x 新 x 坐标
- * @param y 新 y 坐标
- */
-function onGridItemMove(i: string | number, x: number, y: number) {
-  draggingBlockId.value = String(i)
+// 旧的 GridLayoutPlus 移动处理函数已移除（根画布现使用 CanvasItem 自研逻辑）。
 
-  const block = currentPage.value.blocks.find(b => b._vid === i || b.i === i)
-  if (!block) return
+// ===================== 自研根画布（CanvasItem）事件处理 =====================
 
-  const blockEl = document.querySelector(`.list-group-item-${block._vid}`) as HTMLElement | null
-  if (!blockEl) return
+function onRootDragStart(block: VisualEditorBlockData) {
+  if (isRootItemDisabled(block)) return
+  draggingBlockId.value = block._vid
+  activeResizeRect.value = null
+}
 
-  const rect = blockEl.getBoundingClientRect()
-  const centerX = rect.left + rect.width / 2
-  const centerY = rect.top + rect.height / 2
-
-  const slotContext = findSlotContextAtPoint(centerX, centerY)
-
-  if (slotContext) {
-    if (slotContext.parentBlock._vid === block._vid || isDescendantOf(block, slotContext.parentBlock._vid)) {
-      handleDragLeaveContainer()
-      return
+function onRootDragUpdate(block: VisualEditorBlockData, pos: { left: number; top: number }) {
+  // Prefer measured ref, fallback to query (for live relative rect of guides)
+  const container = rootGridRef.value || document.querySelector('.main-grid-canvas') || document.querySelector('.edit-canvas-inner')
+  if (container) {
+    const cRect = (container as HTMLElement).getBoundingClientRect()
+    const base = getRootItemPixelRect(block)
+    activeDragRect.value = {
+      vid: block._vid,
+      left: pos.left,
+      top: pos.top,
+      width: base.width,
+      height: base.height,
     }
-
-    const parentVid = slotContext.parentBlock._vid
-    if (editingContainerId.value !== parentVid) {
-      handleDragEnterContainer(parentVid)
-    }
+    activeResizeRect.value = null
   }
-  else {
-    handleDragLeaveContainer()
+
+  // 复用原有的悬停插槽检测
+  const el = document.querySelector(`.list-group-item-${block._vid}`) as HTMLElement | null
+  if (el) {
+    const r = el.getBoundingClientRect()
+    const cx = r.left + r.width / 2
+    const cy = r.top + r.height / 2
+    const slotCtx = findSlotContextAtPoint(cx, cy)
+    if (slotCtx && slotCtx.parentBlock._vid !== block._vid && !isDescendantOf(block, slotCtx.parentBlock._vid)) {
+      if (editingContainerId.value !== slotCtx.parentBlock._vid) {
+        handleDragEnterContainer(slotCtx.parentBlock._vid)
+      }
+    }
+    else {
+      handleDragLeaveContainer()
+    }
   }
 }
 
-/**
- * 处理 GridItem 移动结束 - 放置到容器插槽或画布
- * @param i 组件 id
- * @param x 新 x 坐标
- * @param y 新 y 坐标
- */
-function onGridItemMoved(i: string | number, x: number, y: number) {
-  const blockId = draggingBlockId.value
+function onRootDragEnd(block: VisualEditorBlockData, pos: { left: number; top: number }) {
   draggingBlockId.value = null
+  activeDragRect.value = null
+  handleDragLeaveContainer()
 
-  if (!blockId) return
+  const m = getGridMetrics()
+  // 结束时吸附（与原来 onGridItemMoved 里的 post-commit snap 一致）
+  try {
+    const others = currentPage.value.blocks
+      .filter(b => b._vid !== block._vid)
+      .map(b => calcGridItemPixelRect(b.x || 0, b.y || 0, b.w || DEFAULT_BLOCK_WIDTH, b.h || DEFAULT_BLOCK_HEIGHT, m))
+    const estH = Math.max(900, (block.y || 0) * m.rowHeight + (block.h || DEFAULT_BLOCK_HEIGHT) * m.rowHeight + 300)
+    const targets = buildSnapTargets(others, m.containerWidth, estH)
+    const cur = { left: pos.left, top: pos.top, width: getRootItemPixelRect(block).width, height: getRootItemPixelRect(block).height }
+    const s = snapDrag(cur, targets, 8)
+    const sl = cur.left + s.dx
+    const st = cur.top + s.dy
+    const snapped = pixelToGrid(sl, st, m)
 
-  const blockIndex = currentPage.value.blocks.findIndex(b => b._vid === blockId || b.i === blockId)
-  if (blockIndex === -1) return
+    // 检测是否落在插槽上
+    const el = document.querySelector(`.list-group-item-${block._vid}`) as HTMLElement | null
+    const cx = el ? (el.getBoundingClientRect().left + el.getBoundingClientRect().width / 2) : sl + 20
+    const cy = el ? (el.getBoundingClientRect().top + el.getBoundingClientRect().height / 2) : st + 20
+    const slotCtx = findSlotContextAtPoint(cx, cy)
 
-  const block = currentPage.value.blocks[blockIndex]
-
-  const blockEl = document.querySelector(`.list-group-item-${block._vid}`) as HTMLElement | null
-  if (!blockEl) return
-
-  const rect = blockEl.getBoundingClientRect()
-  const centerX = rect.left + rect.width / 2
-  const centerY = rect.top + rect.height / 2
-
-  const slotContext = findSlotContextAtPoint(centerX, centerY)
-
-  if (slotContext) {
-    if (slotContext.parentBlock._vid === block._vid || isDescendantOf(block, slotContext.parentBlock._vid)) {
+    const blockIndex = currentPage.value.blocks.findIndex(b => b._vid === block._vid)
+    if (blockIndex === -1)
       return
+
+    if (slotCtx && slotCtx.parentBlock._vid !== block._vid && !isDescendantOf(block, slotCtx.parentBlock._vid)) {
+      const [moved] = currentPage.value.blocks.splice(blockIndex, 1)
+      const slotChildren = slotCtx.parentBlock.props?.slots?.[slotCtx.slotKey]?.children
+      if (slotChildren) {
+        const slotEl = findSlotElementAtPoint(cx, cy)
+        const slotLayout = slotEl ? calcSlotDropLayout(slotEl, cx, cy, moved) : null
+        moved.x = slotLayout?.x ?? snapped.x
+        moved.y = slotLayout?.y ?? snapped.y
+        moved.w = slotLayout?.w ?? moved.w
+        moved.h = slotLayout?.h ?? moved.h
+        slotChildren.push(moved)
+      }
+    }
+    else {
+      block.x = snapped.x
+      block.y = snapped.y
     }
 
-    const slotChildren = slotContext.parentBlock.props!.slots![slotContext.slotKey]!.children
-    if (slotChildren) {
-      currentPage.value.blocks.splice(blockIndex, 1)
-
-      const slotEl = findSlotElementAtPoint(centerX, centerY)
-      const slotLayout = slotEl
-        ? calcSlotDropLayout(slotEl, centerX, centerY, block)
-        : null
-
-      block.x = slotLayout?.x ?? 0
-      block.y = slotLayout?.y ?? 0
-      block.w = slotLayout?.w ?? block.w
-      block.h = slotLayout?.h ?? block.h
-
-      slotChildren.push(block)
-      recordHistory()
+    // Multi-select: apply offset to siblings (post-commit, since root is self-managed)
+    if (multiDragState.active) {
+      applyMultiDrag()
+      clearMultiDrag()
     }
   }
+  catch {}
+  recordHistory()
+}
+
+function onRootResizeUpdate(block: VisualEditorBlockData, size: { width: number; height: number }) {
+  if (isRootItemDisabled(block)) return
+  const container = rootGridRef.value || document.querySelector('.main-grid-canvas') || document.querySelector('.edit-canvas-inner')
+  if (container) {
+    const base = getRootItemPixelRect(block)
+    activeResizeRect.value = {
+      vid: block._vid,
+      left: base.left,
+      top: base.top,
+      width: size.width,
+      height: size.height,
+    }
+    activeDragRect.value = null
+  }
+}
+
+function onRootResizeEnd(block: VisualEditorBlockData, size: { width: number; height: number }) {
+  activeResizeRect.value = null
+  const m = getGridMetrics()
+  block.w = Math.max(1, Math.round(size.width / m.colWidth))
+  block.h = Math.max(1, Math.round(size.height / m.rowHeight))
+  recordHistory()
 }
 
 // 保留旧函数名用于兼容
@@ -1175,11 +1321,32 @@ function selectComp(element: VisualEditorBlockData, event?: MouseEvent) {
 }
 
 function getCompRenderPointerEvents(item: VisualEditorBlockData) {
-  // 容器/组统一穿透事件，由 GridCanvas（统一网格画布）处理交互
-  if (isContainerComponent(item.componentKey))
+  // For containers/groups:
+  // - When this container is the one being edited (inner GridCanvas active), let its content receive events.
+  // - Otherwise, punch through so the outer frame or inner slot logic can handle as before.
+  if (isContainerComponent(item.componentKey)) {
+    if (editingContainerId.value === item._vid) {
+      return 'auto'
+    }
     return 'none'
+  }
   const hasSlots = !!Object.keys(item.props?.slots || {}).length
   return hasSlots ? 'auto' : 'none'
+}
+
+/** Root level equivalent of inner canInteract / isChildGridLocked.
+ * When a container is being edited, its representation on the parent canvas should be locked (no drag/resize on the frame).
+ */
+function isRootItemDisabled(item: VisualEditorBlockData) {
+  if (item.static || item._containerEditLocked)
+    return true
+  if (editingContainerId.value && item._vid === editingContainerId.value)
+    return true
+  return false
+}
+
+function isEditingContainerVid(vid: string) {
+  return editingContainerId.value === vid
 }
 
 function onBlockMousedown(item: VisualEditorBlockData, e: MouseEvent) {
@@ -1207,6 +1374,9 @@ function onBlockPointerdown(item: VisualEditorBlockData, e: PointerEvent) {
 function onBlockDblClick(item: VisualEditorBlockData, e: MouseEvent) {
   if (!isContainerComponent(item.componentKey))
     return
+  // If this representation is currently locked (e.g. we are editing inside it), don't re-enter via dblclick on frame
+  if (isRootItemDisabled(item))
+    return
   e.stopPropagation()
   enterContainerEditMode(item._vid)
   selectComp(item, e)
@@ -1223,7 +1393,7 @@ function onCanvasMousedown(e: MouseEvent) {
   if (
     target.classList.contains('edit-canvas')
     || target.classList.contains('edit-canvas-inner')
-    || target.classList.contains('vgl-layout')
+    || target.classList.contains('main-grid-canvas')
   ) {
     deSelectComp()
     // 开始框选
@@ -1410,18 +1580,7 @@ function onDragover(e: DragEvent) {
   e.preventDefault()
 }
 
-function onLayoutUpdated() {
-  // 多选拖动：将拖拽偏移同步到其他选中块
-  if (multiDragState.active) {
-    applyMultiDrag()
-  }
-
-  const focused = currentPage.value.blocks.find(item => item._vid === currentBlock.value?._vid)
-  if (focused) {
-    setCurrentBlock(focused)
-  }
-  recordHistory()
-}
+// onLayoutUpdated (原 GridLayoutPlus 事件) 已移除
 
 // 清理多选拖动状态（在 selectComp 被再次调用时触发）
 function clearMultiDragIfNeeded() {
@@ -1521,8 +1680,8 @@ function mergeToGroup() {
   selectedBlocks.forEach((b) => {
     minX = Math.min(minX, b.x ?? 0)
     minY = Math.min(minY, b.y ?? 0)
-    maxX = Math.max(maxX, (b.x ?? 0) + (b.w || 24))
-    maxY = Math.max(maxY, (b.y ?? 0) + (b.h || 8))
+    maxX = Math.max(maxX, (b.x ?? 0) + (b.w || DEFAULT_BLOCK_WIDTH))
+    maxY = Math.max(maxY, (b.y ?? 0) + (b.h || DEFAULT_BLOCK_HEIGHT))
   })
 
   const groupW = Math.max(1, maxX - minX)
@@ -1861,91 +2020,119 @@ defineExpose({
         @dragover="onDragover"
         @mousedown="onCanvasMousedown"
       >
-        <div class="edit-canvas-inner">
-          <GridLayout
-            ref="gridLayout"
-            v-model:layout="currentPage.blocks"
-            class="grid-layout-canvas"
-            :col-num="gridColNum"
-            :row-height="15"
-            :margin="[0, 0]"
-            :allow-overlap="true"
-            :use-style-cursor="false"
-            @layout-updated="onLayoutUpdated"
-            @move="onGridItemMove"
-            @moved="onGridItemMoved"
+        <div ref="rootGridRef" class="edit-canvas-inner main-grid-canvas" style="position: relative; min-height: 400px;">
+          <!-- Reference guides for main canvas (drag or resize) -->
+          <ReferenceGuides
+            v-if="activeDragRect || activeResizeRect"
+            :container-width="mainGuidesSize.width"
+            :container-height="mainGuidesSize.height"
+            :other-rects="mainOtherRects"
+            :active-rect="activeDragRect || activeResizeRect"
+            :visible="!!(activeDragRect || activeResizeRect)"
+            :threshold="6"
+          />
+
+          <!-- 自研根画布：使用 CanvasItem 替代 GridLayoutPlus -->
+          <CanvasItem
+            v-for="item in currentPage.blocks"
+            :key="item._vid"
+            :vid="item._vid"
+            :left="getRootItemPixelRect(item).left"
+            :top="getRootItemPixelRect(item).top"
+            :width="getRootItemPixelRect(item).width"
+            :height="getRootItemPixelRect(item).height"
+            :is-editing="true"
+            :is-selected="selectedBlockIds.includes(item._vid)"
+            :is-focused="item.focus"
+            item-class="root-grid-item"
+            :disabled="isRootItemDisabled(item)"
+            :show-selection-outline="false"
+            :snap-x-lines="mainSnapTargets.xs"
+            :snap-y-lines="mainSnapTargets.ys"
+            :snap-threshold="8"
+            @mousedown="(e: MouseEvent) => onBlockMousedown(item, e)"
+            @pointerdown="(e: any) => onBlockPointerdown(item, e)"
+            @dblclick.stop="(e: MouseEvent) => onBlockDblClick(item, e)"
+            @contextmenu.stop.prevent="(e: MouseEvent) => onContextmenuBlock(e, item)"
+            @drag-start="onRootDragStart(item)"
+            @drag-update="(p: any) => onRootDragUpdate(item, p)"
+            @drag-end="(p: any) => onRootDragEnd(item, p)"
+            @resize-update="(s: any) => onRootResizeUpdate(item, s)"
+            @resize-end="(s: any) => onRootResizeEnd(item, s)"
+            :data-vid-root="item._vid"
           >
-            <template #item="{ item }: { item: VisualEditorBlockData }">
+            <div
+              :key="item._vid"
+              :data-label="item.label"
+              class="list-group-item"
+              :style="getBlockBorderStyle(item)"
+              :class="{
+                'focus': item.focus,
+                'focusWithChild': item.focusWithChild,
+                'multi-focus': selectedBlockIds.includes(item._vid),
+                'is-editing-container': isContainerComponent(item.componentKey) && isContainerInEditHierarchy(item._vid),
+                'is-editing-group': item.componentKey === 'group' && isContainerInEditHierarchy(item._vid),
+                'is-locked-for-inner': isContainerComponent(item.componentKey) && isEditingContainerVid(item._vid),
+                drag,
+                'has-slot': !!Object.keys(item.props?.slots || {}).length,
+                'has-inner-title': item.showTitle === true && isInnerBlockTitle(item.titleStyle),
+                [`list-group-item-${item._vid}`]: true,
+              }"
+              @mousedown="onBlockMousedown(item, $event)"
+              @pointerdown="onBlockPointerdown(item, $event)"
+              @dblclick.stop="onBlockDblClick(item, $event)"
+              @contextmenu.stop.prevent="onContextmenuBlock($event, item)"
+            >
               <div
-                :key="item._vid"
-                :data-label="item.label"
-                class="list-group-item"
-                :style="getBlockBorderStyle(item)"
-                :class="{
-                  'focus': item.focus,
-                  'focusWithChild': item.focusWithChild,
-                  'multi-focus': selectedBlockIds.includes(item._vid),
-                  'is-editing-container': isContainerComponent(item.componentKey) && isContainerInEditHierarchy(item._vid),
-                  drag,
-                  'has-slot': !!Object.keys(item.props?.slots || {}).length,
-                  'has-inner-title': item.showTitle === true && isInnerBlockTitle(item.titleStyle),
-                  [`list-group-item-${item._vid}`]: true,
-                }"
-                @mousedown="onBlockMousedown(item, $event)"
-                @pointerdown="onBlockPointerdown(item, $event)"
-                @dblclick.stop="onBlockDblClick(item, $event)"
-                @contextmenu.stop.prevent="onContextmenuBlock($event, item)"
+                v-if="item.showTitle === true && isInnerBlockTitle(item.titleStyle)"
+                class="block-title-inner"
+                :style="getBlockTitleInlineStyle(item.titleStyle)"
               >
-                <div
-                  v-if="item.showTitle === true && isInnerBlockTitle(item.titleStyle)"
-                  class="block-title-inner"
+                {{ getBlockTitleText(item) }}
+              </div>
+              <div class="list-group-item__body">
+                <span
+                  v-if="item.showTitle === true && !isInnerBlockTitle(item.titleStyle)"
+                  class="block-title-outer"
+                  :class="`block-title-outer--${item.titleStyle?.position || 'outer-left'}`"
                   :style="getBlockTitleInlineStyle(item.titleStyle)"
                 >
                   {{ getBlockTitleText(item) }}
-                </div>
-                <div class="list-group-item__body">
-                  <span
-                    v-if="item.showTitle === true && !isInnerBlockTitle(item.titleStyle)"
-                    class="block-title-outer"
-                    :class="`block-title-outer--${item.titleStyle?.position || 'outer-left'}`"
-                    :style="getBlockTitleInlineStyle(item.titleStyle)"
-                  >
-                    {{ getBlockTitleText(item) }}
-                  </span>
-                  <CompRender
-                    :element="item"
-                    :style="{
-                      pointerEvents: getCompRenderPointerEvents(item),
-                    }"
-                  >
-                    <template v-for="(value, slotKey) in item.props?.slots" :key="slotKey" #[slotKey]>
-                      <SlotItem
-                        v-model:children="value.children"
-                        v-model:drag="drag"
-                        :slot-key="slotKey"
-                        :parent-vid="item._vid"
-                        :selected-block-ids="selectedBlockIds"
-                        :editing-container-id="editingContainerId"
-                        :is-container="isContainerComponent(item.componentKey)"
-                        :block-wrapper-styles="blockWrapperStyles"
-                        :disallow-drop="isContainerComponent(item.componentKey)"
-                        :on-contextmenu-block="onContextmenuBlock"
-                        :select-comp="selectComp"
-                        :on-drag-enter-container="handleDragEnterContainer"
-                        :on-drag-leave-container="handleDragLeaveContainer"
-                        :select-block-by-vid="selectBlockByVid"
-                        :on-inner-group-dbl-click="onInnerGroupDblClick"
-                        :delete-comp="deleteComp"
-                        :update-group-inner-block-position="updateGroupInnerBlockPosition"
-                        :update-group-inner-block-size="updateGroupInnerBlockSize"
-                        :on-group-inner-drag-end="onGroupInnerDragEnd"
-                      />
-                    </template>
-                  </CompRender>
-                </div>
+                </span>
+                <CompRender
+                  :element="item"
+                  :style="{
+                    pointerEvents: getCompRenderPointerEvents(item),
+                  }"
+                >
+                  <template v-for="(value, slotKey) in item.props?.slots" :key="slotKey" #[slotKey]>
+                    <SlotItem
+                      v-model:children="value.children"
+                      v-model:drag="drag"
+                      :slot-key="slotKey"
+                      :parent-vid="item._vid"
+                      :selected-block-ids="selectedBlockIds"
+                      :editing-container-id="editingContainerId"
+                      :is-container="isContainerComponent(item.componentKey)"
+                      :block-wrapper-styles="blockWrapperStyles"
+                      :disallow-drop="isContainerComponent(item.componentKey)"
+                      :on-contextmenu-block="onContextmenuBlock"
+                      :select-comp="selectComp"
+                      :on-drag-enter-container="handleDragEnterContainer"
+                      :on-drag-leave-container="handleDragLeaveContainer"
+                      :select-block-by-vid="selectBlockByVid"
+                      :on-inner-group-dbl-click="onInnerGroupDblClick"
+                      :delete-comp="deleteComp"
+                      :update-group-inner-block-position="updateGroupInnerBlockPosition"
+                      :update-group-inner-block-size="updateGroupInnerBlockSize"
+                      :on-group-inner-drag-end="onGroupInnerDragEnd"
+                    />
+                  </template>
+                </CompRender>
               </div>
-            </template>
-          </GridLayout>
+            </div>
+          </CanvasItem>
+
           <!-- 框选遮罩 -->
           <div
             v-if="boxSelectionRect"
@@ -2021,9 +2208,9 @@ defineExpose({
   outline: none;
 
   &.is-editing-group,
-  &.is-editing-container {
-    outline: 2px dashed var(--el-color-primary);
-    outline-offset: -1px;
+  &.is-editing-container,
+  &.is-locked-for-inner {
+    /* 外框锁定（双击进入编辑内部）时的视觉提示通过 ::after 虚线边框实现 */
     z-index: 15;
     cursor: default;
     /* Do not use pointer-events:none here; it interferes with inner custom drag (GridCanvas)
@@ -2067,6 +2254,23 @@ defineExpose({
 
   &.focusWithChild:not(.focus)::after {
     border: 2px dashed var(--el-color-primary-light-7);
+  }
+
+  /* 双击锁定容器/组后，外框使用虚线边框（通过 ::after 实现，与 focus 机制一致） */
+  &.is-editing-container::after,
+  &.is-editing-group::after,
+  &.is-locked-for-inner::after {
+    border-style: dashed;
+    border-color: var(--el-color-primary);
+    border-width: 2px;
+  }
+
+  /* 即使同时有 focus，也保持虚线以明确“正在编辑其内部” */
+  &.focus.is-editing-container::after,
+  &.focus.is-editing-group::after,
+  &.focus.is-locked-for-inner::after {
+    border-style: dashed;
+    border-color: var(--el-color-primary);
   }
 
   &.focusWithChild::before {

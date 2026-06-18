@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { CSSProperties, PropType } from 'vue'
 import { onBeforeUnmount, ref } from 'vue'
+import { snapDrag, snapResizeSE } from '@/visual-editor/ui/canvas/shared/snap'
 
 const props = defineProps({
   vid: {
@@ -45,6 +46,30 @@ const props = defineProps({
     type: [String, Object, Array] as PropType<string | Record<string, boolean> | string[]>,
     default: '',
   },
+  /** Snap target X lines (vertical guides) */
+  snapXLines: {
+    type: Array as PropType<number[]>,
+    default: () => [] as number[],
+  },
+  /** Snap target Y lines (horizontal guides) */
+  snapYLines: {
+    type: Array as PropType<number[]>,
+    default: () => [] as number[],
+  },
+  /** Pixel threshold for snapping */
+  snapThreshold: {
+    type: Number,
+    default: 8,
+  },
+  /**
+   * Whether to render the built-in selection outline (blue) when isSelected or isFocused.
+   * Set to false when the inner content (e.g. .list-group-item) already provides its own
+   * richer selection visuals via ::after (focus / multi-focus / focusWithChild).
+   */
+  showSelectionOutline: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 const emit = defineEmits([
@@ -53,8 +78,10 @@ const emit = defineEmits([
   'contextmenu',
   'dblclick',
   'drag-start',
+  'drag-update', // live during drag for guides (snapped)
   'drag-end',
   'resize-start',
+  'resize-update', // live during resize for guides + snapping (snapped)
   'resize-end',
 ])
 
@@ -71,7 +98,7 @@ const dragStartRect = ref({ left: 0, top: 0 })
 const resizeStartPos = ref({ x: 0, y: 0 })
 const resizeStartSize = ref({ width: 0, height: 0 })
 
-function parsePx(value: string | number | undefined, fallback = 0) {
+function _parsePx(value: string | number | undefined, fallback = 0) {
   return Number.parseInt(String(value ?? ''), 10) || fallback
 }
 
@@ -151,10 +178,36 @@ function onMouseMove(e: MouseEvent) {
 
   hasMoved.value = true
 
-  const newLeft = dragStartRect.value.left + dx
-  const newTop = dragStartRect.value.top + dy
+  let newLeft = dragStartRect.value.left + dx
+  let newTop = dragStartRect.value.top + dy
+
+  // Apply snapping if targets provided
+  const targets = {
+    xs: props.snapXLines || [],
+    ys: props.snapYLines || [],
+  }
+  if ((targets.xs.length || targets.ys.length) && props.snapThreshold > 0) {
+    const snap = snapDrag(
+      {
+        left: newLeft,
+        top: newTop,
+        width: props.width,
+        height: props.height,
+      },
+      targets,
+      props.snapThreshold,
+    )
+    newLeft += snap.dx
+    newTop += snap.dy
+  }
+
+  // Light clamp to avoid negative during live drag (parent grid will further constrain on commit)
+  newLeft = Math.max(0, newLeft)
+  newTop = Math.max(0, newTop)
 
   dragVisual.value = { left: newLeft, top: newTop }
+
+  emit('drag-update', { left: newLeft, top: newTop })
 }
 
 function onMouseUp() {
@@ -213,10 +266,32 @@ function onResizeMove(e: MouseEvent) {
 
   hasMoved.value = true
 
-  const newW = Math.max(20, resizeStartSize.value.width + dx)
-  const newH = Math.max(20, resizeStartSize.value.height + dy)
+  let newW = Math.max(20, resizeStartSize.value.width + dx)
+  let newH = Math.max(20, resizeStartSize.value.height + dy)
+
+  // Apply snapping for SE resize (snap the moving right/bottom edges)
+  const targets = {
+    xs: props.snapXLines || [],
+    ys: props.snapYLines || [],
+  }
+  if ((targets.xs.length || targets.ys.length) && props.snapThreshold > 0) {
+    const snap = snapResizeSE(
+      {
+        left: props.left,
+        top: props.top,
+        width: newW,
+        height: newH,
+      },
+      targets,
+      props.snapThreshold,
+    )
+    newW = snap.width
+    newH = snap.height
+  }
 
   resizeVisual.value = { width: newW, height: newH }
+
+  emit('resize-update', { width: newW, height: newH })
 }
 
 function onResizeUp() {
@@ -263,6 +338,9 @@ onBeforeUnmount(() => {
         'is-dragging': !!dragVisual,
         'is-resizing': !!resizeVisual,
         'is-disabled': disabled,
+        'no-selection-outline': !showSelectionOutline,
+        // Only capture pointer for drag when actively editable and not locked
+        'capture-for-drag': isEditing && !disabled,
       },
     ]"
     :style="getStyle()"
@@ -294,8 +372,18 @@ onBeforeUnmount(() => {
     cursor: grab;
   }
 
-  &.is-selected,
-  &.focus {
+  /* Locked frame (e.g. container being edited inside): dashed border + default cursor; events pass to children.
+     Only for cases where the consumer does not provide its own border (i.e. inner slots).
+     Root-level items pass show-selection-outline=false and use .list-group-item::after dashed instead. */
+  &.is-editing.is-disabled:not(.no-selection-outline) {
+    cursor: default;
+    outline: 2px dashed var(--el-color-primary);
+    outline-offset: -1px;
+    z-index: 15;
+  }
+
+  &.is-selected:not(.no-selection-outline),
+  &.focus:not(.no-selection-outline) {
     outline: 2px solid var(--el-color-primary);
     outline-offset: -1px;
     z-index: 10;
@@ -313,8 +401,12 @@ onBeforeUnmount(() => {
     z-index: 100;
   }
 
+  /* Do NOT set pointer-events:none here when disabled.
+     "disabled" means "this frame cannot be dragged/resized" (e.g. when editing inside a container),
+     but descendants (inner GridCanvas, child components) must still receive events. */
   &.is-disabled {
-    pointer-events: none;
+    /* Ensure the wrapper itself does not block hit testing for inner editable content */
+    pointer-events: auto;
   }
 
   .canvas-item__body {
@@ -322,10 +414,23 @@ onBeforeUnmount(() => {
     height: 100%;
     position: relative;
     overflow: hidden;
+  }
 
-    /* 强制内容不拦截鼠标，由外层处理拖拽 */
+  /* Only when this CanvasItem is the active drag surface (editing and not locked),
+     we force slotted content to be non-interactive so the item's own rect can capture drag.
+     When disabled (locked container frame) or not capturing, let inner content (GridCanvas etc.) handle events. */
+  &.capture-for-drag .canvas-item__body {
     :deep(*) {
       pointer-events: none !important;
+    }
+  }
+
+  /* When the consumer provides its own selection visuals (e.g. .list-group-item::after),
+     suppress the default outline to avoid double borders. */
+  &.no-selection-outline {
+    &.is-selected,
+    &.focus {
+      outline: none;
     }
   }
 }
