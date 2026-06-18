@@ -1,7 +1,7 @@
 import type { VisualEditorBlockData, VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
 import { ElAside, ElContainer, ElFooter, ElHeader, ElMain } from 'element-plus'
 import { type Ref, computed, h, ref } from 'vue'
-import SlotGridCanvas from '../shared/SlotGridCanvas.vue'
+import GridCanvas from '../shared/GridCanvas.vue'
 import {
   createEditorInputProp,
   createEditorSelectProp,
@@ -106,12 +106,6 @@ export default {
       set: (val) => { if (props.slots?.footer) props.slots.footer.children = val },
     })
 
-    // 根据容器尺寸计算网格列数（与设计画布一致）
-    const containerWidth = 1200 // 默认宽度，实际使用时通过 ref 获取
-    const colNum = computed(() => {
-      return Math.max(1, Math.floor(containerWidth / 15))
-    })
-
     // 容器是否被选中
     const isFocus = computed(() => block?.focus || false)
     // 是否处于编辑模式（通过注入的 editingContainerId 判断）
@@ -119,11 +113,11 @@ export default {
 
     // 创建插槽画布渲染函数
     const renderSlotCanvas = (slotKey: string, children: VisualEditorBlockData[]) => {
-      return h(SlotGridCanvas, {
+      return h(GridCanvas, {
         slotKey,
         containerVid: block?._vid || '',
         children,
-        colNum: 12, // 容器内使用较少的列数
+        colNum: 12, // 固定列数（与 GridLayoutPlus 一致：列数不随容器像素宽度变化，仅 colWidth 随宽度变化）
         rowHeight: 15,
         parentFocus: isFocus.value,
         isEditing: isEditing.value,

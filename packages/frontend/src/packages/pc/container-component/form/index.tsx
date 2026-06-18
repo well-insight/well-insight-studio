@@ -1,7 +1,7 @@
 import type { VisualEditorBlockData, VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
 import { ElForm } from 'element-plus'
 import { computed, h } from 'vue'
-import SlotGridCanvas from '../shared/SlotGridCanvas.vue'
+import GridCanvas from '../shared/GridCanvas.vue'
 import { type ContainerRenderCustom, resolveEditingContainerId } from '../container'
 import { compProps } from './compProps'
 
@@ -65,7 +65,7 @@ export default {
           {...formProps}
           style={{ width: '100%', height: '100%', position: 'relative' }}
         >
-          {h(SlotGridCanvas, {
+          {h(GridCanvas, {
             slotKey: 'default',
             containerVid: block?._vid || '',
             children: children.value,

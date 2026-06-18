@@ -1,8 +1,9 @@
 <script lang="ts" setup>
-import type { CSSProperties, PropType } from 'vue'
+import type { PropType } from 'vue'
 import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
-import { computed, inject, onBeforeUnmount, ref } from 'vue'
+import { computed, inject, ref } from 'vue'
 import { ContainerEditorContextKey, EditingContainerIdKey } from '@/packages/pc/container-component/container'
+import CanvasItem from './CanvasItem.vue'
 import CompRender from '@/visual-editor/ui/canvas/simulator-grid-editor/comp-render'
 
 const props = defineProps({
@@ -32,44 +33,19 @@ const isEditingMode = computed(() =>
 )
 
 const selectedIds = computed(() => editorCtx?.selectedBlockIds.value ?? [])
-const draggingInnerBlock = ref<string | null>(null)
-const dragStartPos = ref({ x: 0, y: 0 })
-const dragStartBlockPos = ref({ left: 0, top: 0 })
-const hasInnerDragMoved = ref(false)
-const resizingInnerBlock = ref<string | null>(null)
-const resizeStartPos = ref({ x: 0, y: 0 })
-const resizeStartSize = ref({ width: 0, height: 0 })
-const hasInnerResizeChanged = ref(false)
-
-function getInnerBlockStyle(child: VisualEditorBlockData): CSSProperties {
-  const layout = child.groupInnerLayout
-  if (!layout)
-    return {}
-
-  return {
-    position: 'absolute',
-    left: layout.left,
-    top: layout.top,
-    width: layout.width,
-    height: layout.height,
-    margin: '0',
-    padding: '0',
-    boxSizing: 'border-box',
-    flex: 'none',
-    overflow: 'visible',
-  }
-}
-
-function parsePx(value: string | number | undefined, fallback = 0) {
-  return Number.parseInt(String(value ?? ''), 10) || fallback
-}
 
 function isBlockSelected(vid: string) {
   return selectedIds.value.includes(vid)
 }
 
-function shouldShowResizer(child: VisualEditorBlockData) {
-  return isEditingMode.value && (child.focus || isBlockSelected(child._vid))
+function getChildPixelRect(child: VisualEditorBlockData) {
+  const layout = child.groupInnerLayout
+  return {
+    left: Number.parseInt(String(layout?.left ?? '0'), 10) || 0,
+    top: Number.parseInt(String(layout?.top ?? '0'), 10) || 0,
+    width: Number.parseInt(String(layout?.width ?? '100'), 10) || 100,
+    height: Number.parseInt(String(layout?.height ?? '100'), 10) || 100,
+  }
 }
 
 function handleCanvasMousedown(e: MouseEvent) {
@@ -104,100 +80,27 @@ function onInnerBlockPointerdown(e: PointerEvent) {
   e.stopPropagation()
 }
 
-function onInnerBlockMouseDown(e: MouseEvent, block: VisualEditorBlockData) {
-  if (!isEditingMode.value || e.button !== 0)
+/** 非编辑态下点击组内子项 → 选中组容器本身 */
+function handleItemMouseDown(e: MouseEvent) {
+  if (!isEditingMode.value) {
+    if (props.containerVid) {
+      editorCtx?.selectContainerByVid?.(props.containerVid, e)
+    }
+    e.stopPropagation()
     return
-
-  editorCtx?.selectComp(block, e)
-  e.preventDefault()
-  e.stopPropagation()
-
-  const blockStyle = getInnerBlockStyle(block)
-  draggingInnerBlock.value = block._vid
-  hasInnerDragMoved.value = false
-  dragStartPos.value = { x: e.clientX, y: e.clientY }
-  dragStartBlockPos.value = {
-    left: parsePx(blockStyle.left as string, 0),
-    top: parsePx(blockStyle.top as string, 0),
   }
-
-  document.addEventListener('mousemove', onInnerBlockMouseMove)
-  document.addEventListener('mouseup', onInnerBlockMouseUp)
 }
 
-function onInnerBlockMouseMove(e: MouseEvent) {
-  if (!draggingInnerBlock.value)
-    return
-
-  const dx = e.clientX - dragStartPos.value.x
-  const dy = e.clientY - dragStartPos.value.y
-  if (dx === 0 && dy === 0)
-    return
-
-  hasInnerDragMoved.value = true
-  editorCtx?.updateGroupInnerBlockPosition?.(
-    draggingInnerBlock.value,
-    dragStartBlockPos.value.left + dx,
-    dragStartBlockPos.value.top + dy,
-  )
+// 拖拽结束：直接提交像素位置（组使用绝对定位）
+function onItemDragEnd(child: VisualEditorBlockData, pos: { left: number, top: number }) {
+  editorCtx?.updateGroupInnerBlockPosition?.(child._vid, pos.left, pos.top)
+  editorCtx?.onGroupInnerDragEnd?.()
 }
 
-function onInnerBlockMouseUp() {
-  if (hasInnerDragMoved.value)
-    editorCtx?.onGroupInnerDragEnd?.()
-
-  draggingInnerBlock.value = null
-  hasInnerDragMoved.value = false
-  document.removeEventListener('mousemove', onInnerBlockMouseMove)
-  document.removeEventListener('mouseup', onInnerBlockMouseUp)
-}
-
-function onInnerBlockResizeStart(e: MouseEvent, block: VisualEditorBlockData) {
-  if (!isEditingMode.value || e.button !== 0)
-    return
-
-  e.preventDefault()
-  e.stopPropagation()
-  editorCtx?.selectComp(block, e)
-
-  const blockStyle = getInnerBlockStyle(block)
-  resizingInnerBlock.value = block._vid
-  hasInnerResizeChanged.value = false
-  resizeStartPos.value = { x: e.clientX, y: e.clientY }
-  resizeStartSize.value = {
-    width: parsePx(blockStyle.width as string, 100),
-    height: parsePx(blockStyle.height as string, 100),
-  }
-
-  document.addEventListener('mousemove', onInnerBlockResizeMove)
-  document.addEventListener('mouseup', onInnerBlockResizeUp)
-}
-
-function onInnerBlockResizeMove(e: MouseEvent) {
-  if (!resizingInnerBlock.value)
-    return
-
-  const dx = e.clientX - resizeStartPos.value.x
-  const dy = e.clientY - resizeStartPos.value.y
-  if (dx === 0 && dy === 0)
-    return
-
-  hasInnerResizeChanged.value = true
-  editorCtx?.updateGroupInnerBlockSize?.(
-    resizingInnerBlock.value,
-    resizeStartSize.value.width + dx,
-    resizeStartSize.value.height + dy,
-  )
-}
-
-function onInnerBlockResizeUp() {
-  if (hasInnerResizeChanged.value)
-    editorCtx?.onGroupInnerDragEnd?.()
-
-  resizingInnerBlock.value = null
-  hasInnerResizeChanged.value = false
-  document.removeEventListener('mousemove', onInnerBlockResizeMove)
-  document.removeEventListener('mouseup', onInnerBlockResizeUp)
+// 缩放结束：直接提交像素尺寸
+function onItemResizeEnd(child: VisualEditorBlockData, size: { width: number, height: number }) {
+  editorCtx?.updateGroupInnerBlockSize?.(child._vid, size.width, size.height)
+  editorCtx?.onGroupInnerDragEnd?.()
 }
 
 function onInnerBlockDblClick(e: MouseEvent, block: VisualEditorBlockData) {
@@ -215,13 +118,6 @@ function onInnerContextmenu(e: MouseEvent, block: VisualEditorBlockData) {
   e.stopPropagation()
   editorCtx?.onContextmenuBlock(e, block, props.children)
 }
-
-onBeforeUnmount(() => {
-  document.removeEventListener('mousemove', onInnerBlockMouseMove)
-  document.removeEventListener('mouseup', onInnerBlockMouseUp)
-  document.removeEventListener('mousemove', onInnerBlockResizeMove)
-  document.removeEventListener('mouseup', onInnerBlockResizeUp)
-})
 </script>
 
 <template>
@@ -235,33 +131,32 @@ onBeforeUnmount(() => {
     @pointerdown="handleCanvasPointerdown"
     @dblclick.stop="handleContainerDblClick"
   >
-    <div
+    <CanvasItem
       v-for="child in children"
       :key="child._vid"
-      class="group-absolute-item"
-      :class="{
-        'is-selected': isBlockSelected(child._vid),
-        'is-editing': isEditingMode,
-        'focus': child.focus,
-        'is-dragging': draggingInnerBlock === child._vid,
-        'is-resizing': resizingInnerBlock === child._vid,
-      }"
-      :style="getInnerBlockStyle(child)"
-      @mousedown.stop="onInnerBlockMouseDown($event, child)"
-      @pointerdown.stop="onInnerBlockPointerdown($event)"
-      @dblclick.stop="onInnerBlockDblClick($event, child)"
-      @contextmenu.stop.prevent="onInnerContextmenu($event, child)"
+      :vid="child._vid"
+      :left="getChildPixelRect(child).left"
+      :top="getChildPixelRect(child).top"
+      :width="getChildPixelRect(child).width"
+      :height="getChildPixelRect(child).height"
+      :is-editing="isEditingMode"
+      :is-selected="isBlockSelected(child._vid)"
+      :is-focused="child.focus"
+      :disabled="child.static || child._containerEditLocked"
+      item-class="group-absolute-item"
+      @mousedown="handleItemMouseDown"
+      @select="editorCtx?.selectComp(child, $event)"
+      @contextmenu="onInnerContextmenu($event, child)"
+      @dblclick="onInnerBlockDblClick($event, child)"
+      @drag-end="onItemDragEnd(child, $event)"
+      @resize-end="onItemResizeEnd(child, $event)"
     >
       <CompRender
         :element="child"
         :style="{ pointerEvents: 'none' }"
       />
-      <span
-        v-if="shouldShowResizer(child)"
-        class="group-inner-resizer"
-        @mousedown.stop="onInnerBlockResizeStart($event, child)"
-      />
-    </div>
+    </CanvasItem>
+
     <div v-if="!children.length" class="group-absolute-empty">
       <span class="empty-text">
         {{ isEditingMode ? '组内暂无组件' : '双击组进入编辑模式' }}
@@ -279,44 +174,12 @@ onBeforeUnmount(() => {
   pointer-events: auto;
 }
 
+/* 组内子项使用共享 CanvasItem，额外加 group 特定包裹类以便定位 */
 .group-absolute-item {
-  position: absolute;
-  touch-action: none;
-  cursor: default;
-
-  :deep(.comp-render-root),
-  :deep(.comp-render-root *) {
-    pointer-events: none !important;
+  /* CanvasItem 提供基础定位、grab/grabbing、选中描边、resizer 样式 */
+  :deep(.canvas-item__body) {
+    overflow: visible; /* 组允许内容溢出 */
   }
-
-  &.is-editing {
-    cursor: grab;
-    z-index: 20;
-  }
-
-  &.is-selected,
-  &.focus {
-    outline: 2px solid var(--el-color-primary);
-    outline-offset: -1px;
-    z-index: 10;
-  }
-
-  &.is-dragging {
-    cursor: grabbing;
-    z-index: 100;
-    opacity: 0.9;
-  }
-}
-
-.group-inner-resizer {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 10px;
-  height: 10px;
-  cursor: se-resize;
-  background: var(--el-color-primary);
-  z-index: 20;
 }
 
 .group-absolute-empty {

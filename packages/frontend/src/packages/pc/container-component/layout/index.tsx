@@ -1,7 +1,7 @@
 import type { VisualEditorBlockData, VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
 import { ElCol, ElRow } from 'element-plus'
 import { computed, h, ref, watchEffect } from 'vue'
-import SlotGridCanvas from '../shared/SlotGridCanvas.vue'
+import GridCanvas from '../shared/GridCanvas.vue'
 import { type ContainerRenderCustom, resolveEditingContainerId } from '../container'
 import {
   createEditorInputNumberProp,
@@ -79,11 +79,11 @@ export default {
 
     // 创建插槽画布渲染函数
     const renderSlotCanvas = (slotKey: string, children: VisualEditorBlockData[]) => {
-      return h(SlotGridCanvas, {
+      return h(GridCanvas, {
         slotKey,
         containerVid: block?._vid || '',
         children,
-        colNum: 12, // 容器内使用较少的列数
+        colNum: 12, // 固定列数（与 GridLayoutPlus 一致：列数不随容器像素宽度变化）
         rowHeight: 15,
         parentFocus: isFocus.value,
         isEditing: isEditing.value,

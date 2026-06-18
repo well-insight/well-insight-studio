@@ -1,4 +1,4 @@
-/** 与根画布横向网格逻辑一致：每列约 15px 步长，按容器实际宽度自适应 */
+/** 与根画布横向网格逻辑一致：每列约 15px 步长（仅用于回退）。 */
 export const SLOT_COL_STEP_PX = 15
 export const SLOT_ROW_HEIGHT = 15
 
@@ -15,18 +15,24 @@ export interface SlotGridMetrics {
 }
 
 /**
- * 与 PcWrapper.getGridMetrics 逻辑完全一致的槽内网格度量计算。
- * 横向网格按照画布容器宽度自适应（cols = floor(width/15)），
- * colWidth = (containerWidth - margin*(cols+1)) / cols
+ * 与 PcWrapper.getGridMetrics / GridLayoutPlus 保持一致的槽内网格度量。
+ * - cols 必须是稳定的（来自设计宽度或显式 colNum prop），不能随当前容器像素宽度变化。
+ * - 仅使用 containerWidthPx 计算当前的 colWidth，实现“列数固定、宽度变化时左右贴边”。
+ * - colWidth = (containerWidth - margin*(cols+1)) / cols
+ * - 位置公式：round( totalSpace * col / cols ) + margin*(col+1)
  */
-export function getSlotGridMetrics(containerWidthPx: number): SlotGridMetrics {
+export function getSlotGridMetrics(containerWidthPx: number, cols?: number): SlotGridMetrics {
   const rowHeight = SLOT_ROW_HEIGHT
   const margin: [number, number] = [0, 0]
-  const containerWidth = Math.max(1, containerWidthPx || (12 * 15))
-  const cols = Math.max(1, Math.floor(containerWidth / SLOT_COL_STEP_PX))
-  const totalSpace = containerWidth - margin[0] * (cols + 1)
-  const colWidth = totalSpace / cols
-  return { containerWidth, cols, colWidth, rowHeight, margin }
+  const containerWidth = Math.max(1, containerWidthPx || 100)
+  // 优先使用调用方提供的稳定列数；否则回退到按宽度动态（旧行为，不推荐）
+  let c = cols && cols > 0 ? Math.floor(cols) : 0
+  if (!c) {
+    c = Math.max(1, Math.floor(containerWidth / SLOT_COL_STEP_PX))
+  }
+  const totalSpace = containerWidth - margin[0] * (c + 1)
+  const colWidth = totalSpace / c
+  return { containerWidth, cols: c, colWidth, rowHeight, margin }
 }
 
 /** 与根画布 calcGridColLeft 一致 */
@@ -60,15 +66,23 @@ export function preserveBlockSizeInSlot(
   }
 }
 
-/** 根据鼠标落点计算插槽内网格坐标（横向网格逻辑与根画布一致） */
+/**
+ * 根据鼠标落点计算插槽内网格坐标。
+ * 优先使用显式 targetCols 或元素上的 data-col-num 作为稳定列数。
+ * 这样当容器/页面宽度变化时，x/w 相对“列数”是固定的，左右贴边行为与 GridLayoutPlus 一致。
+ */
 export function calcSlotDropLayout(
   slotEl: HTMLElement,
   clientX: number,
   clientY: number,
   block: { w?: number, h?: number },
+  targetCols?: number,
 ): SlotGridLayout {
   const rect = slotEl.getBoundingClientRect()
-  const m = getSlotGridMetrics(rect.width)
+  // 尝试从 DOM 属性或参数获取稳定的列数
+  const dataColsAttr = Number.parseInt(slotEl.getAttribute('data-col-num') || '0', 10)
+  const resolvedCols = targetCols && targetCols > 0 ? targetCols : (dataColsAttr > 0 ? dataColsAttr : undefined)
+  const m = getSlotGridMetrics(rect.width, resolvedCols)
   const { w, h } = preserveBlockSizeInSlot(block, m.cols)
 
   const localX = clientX - rect.left

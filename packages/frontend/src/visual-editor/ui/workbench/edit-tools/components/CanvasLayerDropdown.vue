@@ -418,60 +418,18 @@ function ungroupByVid(vid: string) {
     return
   }
 
-  // 获取网格度量以计算位置
-  const designWidth = currentPage.value?.config?.pageSize?.width || 1920
-  const cols = Math.max(1, Math.floor(designWidth / 15))
-  const gridEl = document.querySelector('.grid-layout-canvas') as HTMLElement | null
-  const containerWidth = gridEl?.clientWidth || designWidth
-  const colWidth = (containerWidth - 0 * (cols + 1)) / cols
-  const rowHeight = 15
-
-  // 计算组的左上角像素位置
-  const groupPixelLeft = (group.x || 0) * colWidth
-  const groupPixelTop = (group.y || 0) * rowHeight
-
-  // 计算每个子组件在画布上的实际位置
+  // 统一网格度量：子组件 x/y 为相对于组的网格偏移
   const releasedBlocks: VisualEditorBlockData[] = children.map((child: VisualEditorBlockData) => {
-    // 使用浅拷贝保持原有数据
     const releasedBlock = { ...child }
 
-    // 重新生成 vid 和 i
     releasedBlock._vid = `vid_${generateNanoid()}`
     releasedBlock.i = releasedBlock._vid
 
-    // 计算在画布上的绝对位置
-    const childStyle = child.groupInnerLayout
-    if (childStyle) {
-      const leftPx = Number.parseInt(childStyle.left || '0', 10)
-      const topPx = Number.parseInt(childStyle.top || '0', 10)
-      const widthPx = Number.parseInt(childStyle.width || '100', 10)
-      const heightPx = Number.parseInt(childStyle.height || '100', 10)
+    // 直接网格相加
+    releasedBlock.x = (group.x || 0) + (child.x || 0)
+    releasedBlock.y = (group.y || 0) + (child.y || 0)
 
-      // 计算在画布上的绝对像素位置
-      const absLeftPx = groupPixelLeft + leftPx
-      const absTopPx = groupPixelTop + topPx
-
-      // 转换回网格坐标
-      const gridX = Math.round(absLeftPx / colWidth)
-      const gridY = Math.round(absTopPx / rowHeight)
-      const gridW = Math.max(1, Math.round(widthPx / colWidth))
-      const gridH = Math.max(1, Math.round(heightPx / rowHeight))
-
-      releasedBlock.x = gridX
-      releasedBlock.y = gridY
-      releasedBlock.w = gridW
-      releasedBlock.h = gridH
-    }
-    else {
-      // 没有 inner layout，使用组的位置作为基础
-      releasedBlock.x = (group.x || 0) + (child.x || 0)
-      releasedBlock.y = (group.y || 0) + (child.y || 0)
-    }
-
-    // 清除组内布局信息
     delete (releasedBlock as any).groupInnerLayout
-
-    // 清除 focus 状态
     releasedBlock.focus = false
     releasedBlock.focusWithChild = false
 

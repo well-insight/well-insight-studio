@@ -398,27 +398,33 @@ function syncGroupWrapperStyles() {
   const syncGroupChildren = (blocks: VisualEditorBlockData[]) => {
     blocks.forEach((block) => {
       if (block.componentKey === 'group') {
-        const groupOriginLeft = calcGridColLeft(block.x || 0, metrics)
-        const groupOriginTop = calcGridRowTop(block.y || 0, metrics)
         const children = block.props?.slots?.default?.children || []
-        children.forEach((child: VisualEditorBlockData) => {
-          migrateGroupInnerStyles(child)
-          const existing = styles[child._vid]
-          const childRect = calcGridItemPixelRect(
-            child.x || 0,
-            child.y || 0,
-            child.w || 24,
-            child.h || 8,
-            metrics,
-          )
-          styles[child._vid] = existing
-            ? {
-                ...existing,
-                width: child.groupInnerLayout?.width ?? toPxStyle(childRect.width),
-                height: child.groupInnerLayout?.height ?? toPxStyle(childRect.height),
-              }
-            : buildGroupInnerWrapperStyle(child, metrics, groupOriginLeft, groupOriginTop)
-        })
+        // 新模型（合并后）：子组件使用相对网格 x/y，不再生成旧的绝对 wrapper 样式。
+        // 只有仍携带 groupInnerLayout 的老数据才需要同步绝对定位样式。
+        const hasLegacy = children.some((c: any) => c.groupInnerLayout)
+        if (hasLegacy) {
+          const groupOriginLeft = calcGridColLeft(block.x || 0, metrics)
+          const groupOriginTop = calcGridRowTop(block.y || 0, metrics)
+          children.forEach((child: VisualEditorBlockData) => {
+            migrateGroupInnerStyles(child)
+            const existing = styles[child._vid]
+            const childRect = calcGridItemPixelRect(
+              child.x || 0,
+              child.y || 0,
+              child.w || 24,
+              child.h || 8,
+              metrics,
+            )
+            styles[child._vid] = existing
+              ? {
+                  ...existing,
+                  width: child.groupInnerLayout?.width ?? toPxStyle(childRect.width),
+                  height: child.groupInnerLayout?.height ?? toPxStyle(childRect.height),
+                }
+              : buildGroupInnerWrapperStyle(child, metrics, groupOriginLeft, groupOriginTop)
+          })
+        }
+        // 对于新模型的组，不写入任何 blockWrapperStyles 条目，避免用“相对小数字”在外部度量下算出错误像素样式。
       }
 
       const slots = block.props?.slots || {}
@@ -606,40 +612,18 @@ function findSlotContextAtPoint(x: number, y: number): { parentBlock: VisualEdit
   const elements = document.elementsFromPoint(x, y)
 
   for (const el of elements) {
-    // 先尝试查找非容器插槽 (.inner-draggable)
-    const innerSlotEl = (el as HTMLElement).closest('.inner-draggable')
-    if (innerSlotEl) {
-      const parentEl = (innerSlotEl as HTMLElement).closest('[class*="list-group-item-"]') as HTMLElement | null
+    // 所有插槽现在统一使用 .slot-grid-canvas (包括原非容器插槽)
+    const slotCanvasEl = (el as HTMLElement).closest('.slot-grid-canvas') as HTMLElement | null
+    if (slotCanvasEl) {
+      const parentEl = slotCanvasEl.closest('[class*="list-group-item-"]') as HTMLElement | null
       if (parentEl) {
         const classList = Array.from(parentEl.classList)
         const vidClass = classList.find(c => c.startsWith('list-group-item-'))
         const parentVid = vidClass?.replace('list-group-item-', '')
         if (parentVid) {
           const parentBlock = findBlockByVid(parentVid, currentPage.value.blocks)
-          if (parentBlock && parentBlock.componentKey !== 'group') {
-            const dataSlot = (innerSlotEl as HTMLElement).getAttribute('data-slot') || ''
-            const match = dataSlot.match(/插槽（(.+?)）/)
-            const slotKey = match ? match[1] : ''
-            if (slotKey && parentBlock.props?.slots?.[slotKey]) {
-              return { parentBlock, slotKey }
-            }
-          }
-        }
-      }
-    }
-
-    // 再尝试查找容器插槽 (.slot-grid-canvas)
-    const containerSlotEl = (el as HTMLElement).closest('.slot-grid-canvas') as HTMLElement | null
-    if (containerSlotEl) {
-      const parentEl = containerSlotEl.closest('[class*="list-group-item-"]') as HTMLElement | null
-      if (parentEl) {
-        const classList = Array.from(parentEl.classList)
-        const vidClass = classList.find(c => c.startsWith('list-group-item-'))
-        const parentVid = vidClass?.replace('list-group-item-', '')
-        if (parentVid) {
-          const parentBlock = findBlockByVid(parentVid, currentPage.value.blocks)
-          if (parentBlock && isContainerComponent(parentBlock.componentKey)) {
-            const slotKey = containerSlotEl.getAttribute('data-slot-key') || 'default'
+          if (parentBlock) {
+            const slotKey = slotCanvasEl.getAttribute('data-slot-key') || 'default'
             if (parentBlock.props?.slots?.[slotKey]) {
               return { parentBlock, slotKey }
             }
@@ -654,13 +638,9 @@ function findSlotContextAtPoint(x: number, y: number): { parentBlock: VisualEdit
 function findSlotElementAtPoint(x: number, y: number): HTMLElement | null {
   const elements = document.elementsFromPoint(x, y)
   for (const el of elements) {
-    const containerSlotEl = (el as HTMLElement).closest('.slot-grid-canvas') as HTMLElement | null
-    if (containerSlotEl)
-      return containerSlotEl
-
-    const innerSlotEl = (el as HTMLElement).closest('.inner-draggable') as HTMLElement | null
-    if (innerSlotEl)
-      return innerSlotEl
+    const slotCanvas = (el as HTMLElement).closest('.slot-grid-canvas') as HTMLElement | null
+    if (slotCanvas)
+      return slotCanvas
   }
   return null
 }
@@ -855,7 +835,7 @@ function findParentContainer(
       const slots = block.props?.slots || {}
       for (const key of Object.keys(slots)) {
         const children = slots[key]?.children || []
-        if (children.some(child => child._vid === vid))
+        if (children.some((child: any) => child._vid === vid))
           return block
       }
     }
@@ -1195,7 +1175,7 @@ function selectComp(element: VisualEditorBlockData, event?: MouseEvent) {
 }
 
 function getCompRenderPointerEvents(item: VisualEditorBlockData) {
-  // 容器/组统一穿透事件，由 SlotGridCanvas / GroupAbsoluteCanvas 处理交互
+  // 容器/组统一穿透事件，由 GridCanvas（统一网格画布）处理交互
   if (isContainerComponent(item.componentKey))
     return 'none'
   const hasSlots = !!Object.keys(item.props?.slots || {}).length
@@ -1204,7 +1184,7 @@ function getCompRenderPointerEvents(item: VisualEditorBlockData) {
 
 function onBlockMousedown(item: VisualEditorBlockData, e: MouseEvent) {
   const target = e.target as HTMLElement
-  // 容器编辑模式下，插槽内交互由 SlotGridCanvas / GroupAbsoluteCanvas 处理
+  // 容器编辑模式下，插槽内交互由 GridCanvas（统一网格画布）处理
   if (isContainerInEditHierarchy(item._vid)) {
     if (target.closest('.slot-grid-canvas, .group-absolute-canvas'))
       return
@@ -1533,56 +1513,31 @@ function mergeToGroup() {
     return
   }
 
-  // 计算边界框
+  // 计算边界框（网格单位）。maxX/maxY 是“右/下边缘列号”
   let minX = Infinity
   let minY = Infinity
   let maxX = -Infinity
   let maxY = -Infinity
   selectedBlocks.forEach((b) => {
-    minX = Math.min(minX, b.x)
-    minY = Math.min(minY, b.y)
-    maxX = Math.max(maxX, b.x + (b.w || 24))
-    maxY = Math.max(maxY, b.y + (b.h || 8))
+    minX = Math.min(minX, b.x ?? 0)
+    minY = Math.min(minY, b.y ?? 0)
+    maxX = Math.max(maxX, (b.x ?? 0) + (b.w || 24))
+    maxY = Math.max(maxY, (b.y ?? 0) + (b.h || 8))
   })
 
-  // 保留子组件在组内的相对位置（与 GridItem calcPosition 算法一致，优先读取 DOM 实测）
-  const metrics = getGridMetrics()
-  const gridEl = document.querySelector('.grid-layout-canvas') as HTMLElement | null
-  const groupOriginLeft = calcGridColLeft(minX, metrics)
-  const groupOriginTop = calcGridRowTop(minY, metrics)
+  const groupW = Math.max(1, maxX - minX)
+  const groupH = Math.max(1, maxY - minY)
 
-  const newWrapperStyles: Record<string, CSSProperties> = {}
+  // 统一使用相对网格坐标（不再使用绝对像素 groupInnerLayout）
+  // 组内子组件的 x/y 是相对于组左上角的网格偏移，单位与“组的跨度 groupW”一致。
+  // 这样在组内部使用 colNum = groupW 时，子组件的像素位置/大小与合并前在父画布上一致。
   selectedBlocks.forEach((b) => {
-    const domRect = gridEl ? getBlockDomRect(b._vid, gridEl) : null
-    const gridRect = calcGridItemPixelRect(b.x, b.y, b.w || 24, b.h || 8, metrics)
-    const sourceRect = domRect ?? gridRect
-
-    const left = toPxStyle(sourceRect.left - groupOriginLeft)
-    const top = toPxStyle(sourceRect.top - groupOriginTop)
-    const width = toPxStyle(sourceRect.width)
-    const height = toPxStyle(sourceRect.height)
-
-    newWrapperStyles[b._vid] = {
-      position: 'absolute',
-      left,
-      top,
-      width,
-      height,
-      margin: '0',
-      padding: '0',
-      boxSizing: 'border-box',
-      flex: 'none',
-      overflow: 'visible',
-    }
-    setGroupInnerLayout(b, { left, top, width, height })
-    b.x = 0
-    b.y = 0
+    b.x = (b.x ?? 0) - minX
+    b.y = (b.y ?? 0) - minY
     b.focus = false
+    // 清理可能的旧绝对布局数据（新数据不使用）
+    delete (b as any).groupInnerLayout
   })
-  blockWrapperStyles.value = {
-    ...blockWrapperStyles.value,
-    ...newWrapperStyles,
-  }
 
   const groupVid = `vid_${generateNanoid()}`
 
@@ -1596,8 +1551,8 @@ function mergeToGroup() {
     adjustPosition: true,
     focus: false,
     focusWithChild: false,
-    w: Math.max(1, maxX - minX),
-    h: Math.max(1, maxY - minY),
+    w: groupW,
+    h: groupH,
     x: minX,
     y: minY,
     styles: {
@@ -1609,6 +1564,9 @@ function mergeToGroup() {
     },
     hasResize: false,
     props: {
+      // 记录组内部网格的列数 = 合并时计算的跨度。
+      // GridCanvas 将使用这个固定的列数，保证子项的相对网格坐标映射到正确的像素尺寸。
+      innerColNum: groupW,
       slots: {
         default: {
           key: 'default',
@@ -1635,6 +1593,12 @@ function mergeToGroup() {
   }
 
   currentPage.value.blocks.push(groupBlock)
+
+  // 清理这些子组件在旧的绝对定位 wrapper styles 里的残留记录（新模型的组内部使用 GridCanvas 自己的网格定位）
+  const newWrapperStyles = { ...blockWrapperStyles.value }
+  selectedBlocks.forEach((b) => { delete newWrapperStyles[b._vid] })
+  blockWrapperStyles.value = newWrapperStyles
+
   exitGroupEditMode()
   selectedBlockIds.value = [groupVid]
   clearAllBlockFocus(currentPage.value.blocks)
@@ -1688,7 +1652,7 @@ function ungroup() {
   })
   blockWrapperStyles.value = newWrapperStyles
 
-  // 计算每个子组件在画布上的实际位置
+  // 统一使用网格度量：子组件的 x/y 是相对于组的网格偏移
   const releasedBlocks: VisualEditorBlockData[] = children.map((child: VisualEditorBlockData) => {
     const clonedChild = cloneDeep(child)
 
@@ -1696,40 +1660,13 @@ function ungroup() {
     clonedChild._vid = `vid_${generateNanoid()}`
     clonedChild.i = clonedChild._vid
 
-    // 计算在画布上的绝对位置
-    const childStyle = child.groupInnerLayout
-    if (childStyle) {
-      const leftPx = Number.parseInt(childStyle.left || '0', 10)
-      const topPx = Number.parseInt(childStyle.top || '0', 10)
-      const widthPx = Number.parseInt(childStyle.width || '100', 10)
-      const heightPx = Number.parseInt(childStyle.height || '100', 10)
+    // 简单网格偏移（新数据模型）
+    clonedChild.x = (group.x || 0) + (child.x || 0)
+    clonedChild.y = (group.y || 0) + (child.y || 0)
+    // w/h 保持不变
 
-      // 计算在画布上的绝对像素位置
-      const absLeftPx = groupOriginLeft + leftPx
-      const absTopPx = groupOriginTop + topPx
-
-      // 转换回网格坐标
-      const colWidth = metrics.colWidth
-      const rowHeight = metrics.rowHeight
-
-      const gridX = Math.round(absLeftPx / colWidth)
-      const gridY = Math.round(absTopPx / rowHeight)
-      const gridW = Math.max(1, Math.round(widthPx / colWidth))
-      const gridH = Math.max(1, Math.round(heightPx / rowHeight))
-
-      clonedChild.x = gridX
-      clonedChild.y = gridY
-      clonedChild.w = gridW
-      clonedChild.h = gridH
-    }
-    else {
-      // 没有 inner layout，使用组的位置作为基础
-      clonedChild.x = (group.x || 0) + (child.x || 0)
-      clonedChild.y = (group.y || 0) + (child.y || 0)
-    }
-
-    // 清除组内布局信息
-    delete clonedChild.groupInnerLayout
+    // 清理旧的绝对布局信息
+    delete (clonedChild as any).groupInnerLayout
 
     // 清除 focus 状态
     clonedChild.focus = false
@@ -1933,6 +1870,7 @@ defineExpose({
             :row-height="15"
             :margin="[0, 0]"
             :allow-overlap="true"
+            :use-style-cursor="false"
             @layout-updated="onLayoutUpdated"
             @move="onGridItemMove"
             @moved="onGridItemMoved"
@@ -2077,7 +2015,7 @@ defineExpose({
   flex-direction: column;
   align-items: stretch;
   box-sizing: border-box;
-  cursor: pointer;
+  cursor: inherit;
   // background-color: #fff;
   overflow: hidden;
   outline: none;
@@ -2088,7 +2026,7 @@ defineExpose({
     outline-offset: -1px;
     z-index: 15;
     cursor: default;
-    /* Do not use pointer-events:none here; it interferes with inner custom drag (SlotGridCanvas/GroupAbsoluteCanvas)
+    /* Do not use pointer-events:none here; it interferes with inner custom drag (GridCanvas)
        and outer interact hit-testing. Isolation is handled by:
        - static + dragIgnoreFrom on the block (reconfigures interact)
        - explicit early return in onBlockMousedown/onBlockPointerdown for slot targets
@@ -2194,12 +2132,32 @@ defineExpose({
   z-index: 12;
 }
 
+/*
+  鼠标样式规则（与统一 GridCanvas 保持一致）：
+  - 可拖拽块：grab
+  - 拖拽中：grabbing
+  - 静态块：default
+  手柄（resizer）外观则统一使用 GridLayoutPlus 原生样式（深色 L 形边框），
+  GridCanvas 的 resizer 已与 GridLayoutPlus 保持一致的外观。
+*/
+:deep(.vgl-item:not(.vgl-item--static)) {
+  cursor: grab;
+}
+
+:deep(.vgl-item--static) {
+  cursor: default;
+}
+
 :deep(.vgl-item) {
   transition: box-shadow 0.15s ease;
 }
 
-:deep(.vgl-item--resizing),
 :deep(.vgl-item--dragging) {
+  cursor: grabbing !important;
+  z-index: 10;
+}
+
+:deep(.vgl-item--resizing) {
   z-index: 10;
 }
 
