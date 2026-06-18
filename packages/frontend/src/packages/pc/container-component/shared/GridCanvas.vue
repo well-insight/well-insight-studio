@@ -30,7 +30,6 @@ import {
   getSlotGridMetrics,
 } from '@/packages/pc/container-component/shared/slot-grid.utils'
 import { useControlStore } from '@/stores/controlStore'
-import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { generateNanoid } from '@/visual-editor/lib'
 import ReferenceGuides from '@/visual-editor/ui/canvas/shared/ReferenceGuides.vue'
 import { buildSnapTargets } from '@/visual-editor/ui/canvas/shared/snap'
@@ -211,6 +210,26 @@ const otherRectsForGuides = computed(() => {
 // Snap targets derived from other rects + container bounds + centers
 const snapTargets = computed(() => {
   return buildSnapTargets(otherRectsForGuides.value, slotWidth.value || 0, slotHeight.value || 0)
+})
+
+/**
+ * Local desired min-height for this slot's content area.
+ * Lets children be placed/dragged lower than the "natural" container slot height.
+ * When the outer container block is tall enough (or user resizes it), lower content becomes visible.
+ */
+const localContentMinHeight = computed(() => {
+  const m = slotMetrics.value
+  let maxB = Math.max(300, slotHeight.value || 300)
+  localChildren.value.forEach((c) => {
+    const bottom = calcSlotRowTop((c.y || 0) + (c.h || 4), m) + 120
+    if (bottom > maxB) maxB = bottom
+  })
+  // Consider live guide rect (drag inside this canvas)
+  if (guideRect.value) {
+    const liveB = guideRect.value.top + guideRect.value.height + 80
+    if (liveB > maxB) maxB = liveB
+  }
+  return Math.ceil(maxB)
 })
 
 function isBlockSelected(vid: string) {
@@ -508,6 +527,7 @@ function handleItemMouseDown(e: MouseEvent, _child?: VisualEditorBlockData) {
       v-if="localChildren.length > 0"
       class="grid-layout slot-grid-layout"
       :class="{ 'is-editing': isEditingMode }"
+      :style="isEditingMode ? { minHeight: localContentMinHeight + 'px' } : undefined"
     >
       <!-- Reference / alignment guides overlay (drag or resize) -->
       <ReferenceGuides
@@ -564,6 +584,7 @@ function handleItemMouseDown(e: MouseEvent, _child?: VisualEditorBlockData) {
       v-else
       ref="emptyRef"
       class="grid-empty slot-grid-empty"
+      :style="isEditingMode ? { minHeight: localContentMinHeight + 'px' } : undefined"
       @dragenter.prevent="handleDragEnter"
       @dragleave.prevent="handleDragLeave"
       @dragover.prevent="handleDragOver"
@@ -610,6 +631,9 @@ function handleItemMouseDown(e: MouseEvent, _child?: VisualEditorBlockData) {
 
     // 编辑态提升层级，优先接收事件，避免外层 grid-layout interact 干扰
     z-index: 20;
+
+    /* Allow children placed lower than the container's current box to be visible (canvas can visually extend) */
+    overflow: visible;
   }
 
   &.is-focused {
@@ -629,13 +653,14 @@ function handleItemMouseDown(e: MouseEvent, _child?: VisualEditorBlockData) {
 .slot-grid-layout {
   position: relative;
   width: 100%;
-  min-height: 100%;
+  /* Base; when editing we bind a larger min-height inline so children can be placed lower */
+  min-height: 200px;
 }
 
 .grid-empty,
 .slot-grid-empty {
   width: 100%;
-  height: 100%;
+  min-height: 160px;
   display: flex;
   align-items: center;
   justify-content: center;

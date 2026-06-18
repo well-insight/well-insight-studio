@@ -129,7 +129,13 @@ onUnmounted(() => {
   flex: 1;
   min-width: 0;
   height: 100%;
-  overflow: hidden;
+  /* Allow vertical scrolling when the page canvas grows taller than the available area */
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* When the page is tall, start it from the top of the scroll viewport (horizontally still centered) */
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
 }
 
 .simulator-editor {

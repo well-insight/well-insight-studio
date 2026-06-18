@@ -253,7 +253,8 @@ const editCanvasStyle = computed(() => {
   const normalizedBgSize = bgSize || 'cover'
   return {
     width: '100%',
-    height: '100%',
+    // Allow vertical growth; the minHeight is driven by content + drag extension below.
+    minHeight: rootContentMinHeight.value + 'px',
     backgroundColor: normalizedBgColor,
     backgroundImage: normalizedBgImage,
     backgroundRepeat: normalizedBgRepeat,
@@ -627,6 +628,10 @@ const dragging = throttle(() => {
       dragItem.value.i = String(ghostIndex)
       dragItem.value.x = ghost.x
       dragItem.value.y = ghost.y
+
+      // Auto-scroll when dragging a new component (from palette) downward.
+      // Canvas height grows automatically because the temp ghost block participates in rootContentMinHeight computation.
+      autoScrollDuringDrag(mouseAt.y)
     }
     else {
       currentPage.value.blocks = currentPage.value.blocks.filter(item => item.i !== dropId)
@@ -778,6 +783,12 @@ function dragEnd() {
     const slotChildren = slotContext.parentBlock.props!.slots![slotContext.slotKey]!.children
     if (slotChildren) {
       slotChildren.push(moveData)
+
+      // Auto-extend the target container's height if the dropped item lands below its current bottom
+      const neededH = (moveData.y || 0) + (moveData.h || DEFAULT_BLOCK_HEIGHT) + 3
+      if ((slotContext.parentBlock.h || 0) < neededH) {
+        slotContext.parentBlock.h = neededH
+      }
     }
   }
   else {
@@ -823,6 +834,7 @@ function addBlock(componentData: VisualEditorBlockData) {
   }
 
   currentPage.value.blocks.push(newBlock)
+
   selectComp(newBlock)
   recordHistory()
 
@@ -1058,14 +1070,8 @@ const mainOtherRects = computed(() => {
 // Approximate canvas pixel size for main guides overlay (uses measured root size when available)
 const mainGuidesSize = computed(() => {
   const m = getGridMetrics()
-  // Estimate height from current blocks or measured / minimum viewport
-  let maxY = rootHeight.value > 0 ? rootHeight.value : 0
-  currentPage.value.blocks.forEach((b) => {
-    const bottom = calcGridRowTop((b.y || 0) + (b.h || DEFAULT_BLOCK_HEIGHT), m)
-    if (bottom > maxY)
-      maxY = bottom
-  })
-  const h = Math.max(rootHeight.value || 1200, Math.ceil(maxY + 200))
+  // Base on the dynamic content height so guides cover the entire (possibly extended) canvas
+  const h = Math.max(rootContentMinHeight.value, rootHeight.value || 0, 800)
   return { width: m.containerWidth, height: h }
 })
 
@@ -1081,13 +1087,55 @@ const mainSnapTargets = computed(() => {
       m,
     ),
   )
-  let estH = 1200
-  currentPage.value.blocks.forEach((b) => {
-    const bottom = calcGridRowTop((b.y || 0) + (b.h || DEFAULT_BLOCK_HEIGHT), m)
-    if (bottom > estH) estH = bottom + 300
-  })
+  // Use the live canvas content height so snapping includes the extended bottom area
+  const estH = Math.max(rootContentMinHeight.value, 800)
   return buildSnapTargets(others, m.containerWidth, estH)
 })
+
+/**
+ * The effective min-height the root canvas (edit-canvas + inner) should have.
+ * Computed from current blocks' positions + any live drag/resize visual rect + generous bottom padding.
+ * - Palette drag ghosts are temporarily present in blocks, so they contribute to height automatically.
+ * - Live CanvasItem drags feed activeDragRect/activeResizeRect.
+ * This allows the page surface to extend downward on demand and shrink when bottom content is removed.
+ */
+const rootContentMinHeight = computed(() => {
+  const m = getGridMetrics()
+  let maxBottom = 600
+  currentPage.value.blocks.forEach((b) => {
+    const bottom = calcGridRowTop((b.y || 0) + (b.h || DEFAULT_BLOCK_HEIGHT), m) + 400
+    if (bottom > maxBottom) maxBottom = bottom
+  })
+  // Include live drag/resize so the surface visibly grows while the user is dragging downward
+  const live = activeDragRect.value || activeResizeRect.value
+  if (live) {
+    const liveBottom = (live.top + live.height) + 300
+    if (liveBottom > maxBottom) maxBottom = liveBottom
+  }
+  // Also respect any externally measured size (e.g. after style application or initial load)
+  if (rootHeight.value > maxBottom) maxBottom = rootHeight.value
+  return Math.max(600, Math.ceil(maxBottom))
+})
+
+/** Auto-scroll the simulator viewport when the mouse is near the bottom (or top) edge while dragging. */
+function autoScrollDuringDrag(clientY: number) {
+  const scroller = document.querySelector('.simulator-canvas-area') as HTMLElement | null
+  if (!scroller) return
+  const r = scroller.getBoundingClientRect()
+  const thresholdBottom = 70
+  const thresholdTop = 50
+  const stepBase = 18
+  const distBottom = r.bottom - clientY
+  const distTop = clientY - r.top
+  if (distBottom < thresholdBottom && distBottom > 0) {
+    const speed = Math.max(6, (thresholdBottom - distBottom) / 2.5)
+    scroller.scrollTop += stepBase + speed
+  }
+  if (distTop < thresholdTop && distTop > 0) {
+    const speed = Math.max(6, (thresholdTop - distTop) / 2.5)
+    scroller.scrollTop -= stepBase + speed
+  }
+}
 
 /**
  * 检查块是否是另一个块的子孙（防止拖拽到自身或子孙容器中）
@@ -1119,9 +1167,9 @@ function onRootDragStart(block: VisualEditorBlockData) {
 function onRootDragUpdate(block: VisualEditorBlockData, pos: { left: number; top: number }) {
   // Prefer measured ref, fallback to query (for live relative rect of guides)
   const container = rootGridRef.value || document.querySelector('.main-grid-canvas') || document.querySelector('.edit-canvas-inner')
+  const base = getRootItemPixelRect(block)
   if (container) {
     const cRect = (container as HTMLElement).getBoundingClientRect()
-    const base = getRootItemPixelRect(block)
     activeDragRect.value = {
       vid: block._vid,
       left: pos.left,
@@ -1131,6 +1179,9 @@ function onRootDragUpdate(block: VisualEditorBlockData, pos: { left: number; top
     }
     activeResizeRect.value = null
   }
+
+  // Auto-scroll the outer viewport to follow the drag (height grows reactively via rootContentMinHeight from live rect)
+  autoScrollDuringDrag(mouseAt.y)
 
   // 复用原有的悬停插槽检测
   const el = document.querySelector(`.list-group-item-${block._vid}`) as HTMLElement | null
@@ -1190,6 +1241,12 @@ function onRootDragEnd(block: VisualEditorBlockData, pos: { left: number; top: n
         moved.w = slotLayout?.w ?? moved.w
         moved.h = slotLayout?.h ?? moved.h
         slotChildren.push(moved)
+
+        // If the item dropped inside requires more vertical room than the container currently has, grow the container
+        const neededH = (moved.y || 0) + (moved.h || DEFAULT_BLOCK_HEIGHT) + 3
+        if ((slotCtx.parentBlock.h || 0) < neededH) {
+          slotCtx.parentBlock.h = neededH
+        }
       }
     }
     else {
@@ -1210,8 +1267,8 @@ function onRootDragEnd(block: VisualEditorBlockData, pos: { left: number; top: n
 function onRootResizeUpdate(block: VisualEditorBlockData, size: { width: number; height: number }) {
   if (isRootItemDisabled(block)) return
   const container = rootGridRef.value || document.querySelector('.main-grid-canvas') || document.querySelector('.edit-canvas-inner')
+  const base = getRootItemPixelRect(block)
   if (container) {
-    const base = getRootItemPixelRect(block)
     activeResizeRect.value = {
       vid: block._vid,
       left: base.left,
@@ -1221,6 +1278,8 @@ function onRootResizeUpdate(block: VisualEditorBlockData, size: { width: number;
     }
     activeDragRect.value = null
   }
+  // Auto-scroll while vertically resizing downward (height grows from activeResizeRect in the computed)
+  autoScrollDuringDrag(mouseAt.y)
 }
 
 function onRootResizeEnd(block: VisualEditorBlockData, size: { width: number; height: number }) {
@@ -1228,6 +1287,7 @@ function onRootResizeEnd(block: VisualEditorBlockData, size: { width: number; he
   const m = getGridMetrics()
   block.w = Math.max(1, Math.round(size.width / m.colWidth))
   block.h = Math.max(1, Math.round(size.height / m.rowHeight))
+
   recordHistory()
 }
 
@@ -2020,7 +2080,11 @@ defineExpose({
         @dragover="onDragover"
         @mousedown="onCanvasMousedown"
       >
-        <div ref="rootGridRef" class="edit-canvas-inner main-grid-canvas" style="position: relative; min-height: 400px;">
+        <div
+          ref="rootGridRef"
+          class="edit-canvas-inner main-grid-canvas"
+          :style="{ position: 'relative', minHeight: rootContentMinHeight + 'px' }"
+        >
           <!-- Reference guides for main canvas (drag or resize) -->
           <ReferenceGuides
             v-if="activeDragRect || activeResizeRect"
@@ -2148,16 +2212,20 @@ defineExpose({
 <style lang="scss" module>
 .edit-control-container {
   width: 100%;
-  height: 100%;
+  /* height auto allows tall page content to expand; min-height keeps reasonable size for short pages */
+  height: auto;
+  min-height: 100%;
   padding: 16px;
 
   .wrap-container {
     width: 100%;
-    height: 100%;
+    /* height auto so the tall page card can expand and cause outer scrollers to activate */
+    height: auto;
+    min-height: 100%;
     box-shadow: 0 8px 10px #00000012;
     background-color: #f5f5f5;
     border-radius: var(--el-border-radius-base);
-    overflow: hidden;
+    overflow: visible;
   }
 }
 </style>
@@ -2179,13 +2247,15 @@ defineExpose({
   box-shadow: 0 8px 24px rgb(0 0 0 / 8%);
   border-radius: var(--el-border-radius-base);
   overflow: visible;
+  /* min-height is set via :style from rootContentMinHeight so the page can grow vertically */
 }
 
 .edit-canvas-inner {
   width: 100%;
-  height: 100%;
-  min-height: inherit;
-  overflow: hidden;
+  /* Do not force height:100% which would clip tall content. min-height (inline) drives the size for absolute children. */
+  height: auto;
+  min-height: 400px;
+  overflow: visible;
   border-radius: inherit;
 }
 
