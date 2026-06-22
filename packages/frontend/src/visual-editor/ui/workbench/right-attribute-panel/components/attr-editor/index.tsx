@@ -111,40 +111,20 @@ export const AttrEditor = defineComponent({
                         </ElInput>
                       </ElFormItem>
                     </el-space>
-                  </AttrEditorCard>
-                </>,
-              )
-            }
 
-            content.push(
-              <>
-                {isChartComponent(componentKey) && (
-                  <AttrEditorCard header="数据配置" class="mb-3">
-                    <ChartDatasetBindPanel block={currentBlock.value} />
-                  </AttrEditorCard>
-                )}
-                <AttrEditorCard header="组件配置" class="mb-3">
-                  <PropConfig component={component} block={currentBlock.value} exclude-dataset />
-                </AttrEditorCard>
-              </>,
-            )
-
-            if (currentBlock.value?.showStyleConfig) {
-              content.push(
-                <>
-                  <AttrEditorCard header="样式配置">
-                    <ElFormItem label="水平对齐方式" labelWidth="auto">
+                    {/* 样式配置合并到基础配置中 */}
+                    <ElFormItem label="水平对齐" labelWidth="auto">
                       <ElRadioGroup v-model={currentBlock.value.styles.justifyContent}>
-                        <ElRadioButton value="flex-start">左对齐</ElRadioButton>
-                        <ElRadioButton value="center">居中</ElRadioButton>
-                        <ElRadioButton value="flex-end">右对齐</ElRadioButton>
+                        <ElRadioButton value="flex-start">左</ElRadioButton>
+                        <ElRadioButton value="center">中</ElRadioButton>
+                        <ElRadioButton value="flex-end">右</ElRadioButton>
                       </ElRadioGroup>
                     </ElFormItem>
-                    <ElFormItem label="垂直对齐方式" labelWidth="auto">
+                    <ElFormItem label="垂直对齐" labelWidth="auto">
                       <ElRadioGroup v-model={currentBlock.value.styles.alignItems}>
-                        <ElRadioButton value="flex-start">上对齐</ElRadioButton>
-                        <ElRadioButton value="center">居中</ElRadioButton>
-                        <ElRadioButton value="flex-end">下对齐</ElRadioButton>
+                        <ElRadioButton value="flex-start">上</ElRadioButton>
+                        <ElRadioButton value="center">中</ElRadioButton>
+                        <ElRadioButton value="flex-end">下</ElRadioButton>
                       </ElRadioGroup>
                     </ElFormItem>
                     <ElFormItem label="组件内边距">
@@ -177,6 +157,21 @@ export const AttrEditor = defineComponent({
                 </>,
               )
             }
+
+            content.push(
+              <>
+                {isChartComponent(componentKey) && (
+                  <AttrEditorCard header="数据配置" class="mb-3">
+                    <ChartDatasetBindPanel block={currentBlock.value} />
+                  </AttrEditorCard>
+                )}
+                <AttrEditorCard header="组件配置" class="mb-3">
+                  <PropConfig component={component} block={currentBlock.value} exclude-dataset />
+                </AttrEditorCard>
+              </>,
+            )
+
+
           }
         }
       }

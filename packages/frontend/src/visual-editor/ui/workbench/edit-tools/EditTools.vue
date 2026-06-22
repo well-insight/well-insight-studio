@@ -13,10 +13,10 @@ import { useRoute } from 'vue-router'
 import { updateApplication } from '@/api/application'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { localKey, useVisualData } from '@/visual-editor/hooks/useVisualData'
+import { ThemePanel } from '@/visual-editor/ui/workbench/theme-panel'
 import CanvasLayerDropdown from './components/CanvasLayerDropdown.vue'
 import PageSettingButton from './components/PageSetting.vue'
 import Preview from './components/Preview.vue'
-import { ThemePanel } from '@/visual-editor/ui/workbench/theme-panel'
 
 const workspaceStore = useWorkspaceStore()
 const { currentApp } = storeToRefs(workspaceStore)
@@ -123,7 +123,7 @@ function previewPage() {
       <el-popover
         placement="bottom"
         trigger="click"
-        :width="280"
+        :width="300"
         transition="el-zoom-in-top"
         :popper-class="$style['theme-popover']"
       >

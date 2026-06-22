@@ -1,9 +1,6 @@
 import type { VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
 import { ElAutoResizer } from 'element-plus'
-import {
-  createEditorInputProp,
-  createEditorSwitchProp,
-} from '@/visual-editor/visual-editor.props'
+import { createEditorInputProp, createEditorSwitchProp } from '@/visual-editor/visual-editor.props'
 import BarChartView from './BarChartView'
 
 export default {
@@ -26,7 +23,6 @@ export default {
               <BarChartView
                 bindings={block.datasetBindings}
                 useSampleData={props.useSampleData}
-                showRefresh={props.showRefresh}
                 width={Math.max(size.width, 200)}
                 height={Math.max(size.height, 120)}
               />
@@ -52,10 +48,6 @@ export default {
       label: '未绑定时显示示例',
       defaultValue: true,
       tips: '未配置数据集时展示演示数据',
-    }),
-    showRefresh: createEditorSwitchProp({
-      label: '显示刷新按钮',
-      defaultValue: true,
     }),
   },
   showStyleConfig: true,

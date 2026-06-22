@@ -276,8 +276,8 @@ function resetToDefault() {
 .preset-list {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  padding: 12px;
+  gap: 6px;
+  padding: 10px;
 }
 
 .preset-item {
@@ -285,12 +285,13 @@ function resetToDefault() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 10px 8px 8px;
+  gap: 4px;
+  padding: 8px 6px 6px;
   border-radius: 10px;
   cursor: pointer;
   border: 2px solid transparent;
   transition: all 0.2s ease;
+  overflow: hidden;
 
   &:hover {
     background-color: var(--el-color-primary-light-9);
@@ -305,19 +306,20 @@ function resetToDefault() {
 
 .preset-preview {
   width: 100%;
-  height: 40px;
+  height: 36px;
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 0 8px;
+  gap: 3px;
+  padding: 0 6px;
   border: 1px solid var(--el-border-color-light);
+  flex-shrink: 0;
 }
 
 .preset-dot {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   flex-shrink: 0;
   border: 1px solid rgba(0, 0, 0, 0.1);

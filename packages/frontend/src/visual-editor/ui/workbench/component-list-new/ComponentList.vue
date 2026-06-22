@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
+import type { VisualEditorBlockData, VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
 import { cloneDeep, isString } from 'lodash-es'
 import { computed, ref } from 'vue'
 import { SvgIcon } from '@/components/svg-icon'
@@ -11,12 +11,51 @@ const emits = defineEmits<{
   dragStart: [value: VisualEditorComponent, index: number]
   drag: [k: string]
   dragEnd: []
-  dblclickAdd: [value: VisualEditorComponent]
+  dblclickAdd: [value: VisualEditorBlockData]
 }>()
 
 const activeComp = ref('基础组件')
 
 const controlStore = useControlStore()
+
+/** 当前 hover 打开的 popover 标题 */
+const hoveredPopover = ref<string | null>(null)
+let closeTimer: ReturnType<typeof setTimeout> | null = null
+
+function cancelCloseTimer() {
+  if (closeTimer !== null) {
+    clearTimeout(closeTimer)
+    closeTimer = null
+  }
+}
+
+function onBtnMouseEnter(title: string) {
+  cancelCloseTimer()
+  hoveredPopover.value = title
+}
+
+function onBtnMouseLeave() {
+  cancelCloseTimer()
+  // 延迟关闭，给鼠标移动到面板内容的时间
+  closeTimer = setTimeout(() => {
+    if (!controlStore.isDragging) {
+      hoveredPopover.value = null
+    }
+    closeTimer = null
+  }, 150)
+}
+
+function onContentMouseEnter() {
+  cancelCloseTimer()
+}
+
+function onContentMouseLeave() {
+  cancelCloseTimer()
+  closeTimer = setTimeout(() => {
+    hoveredPopover.value = null
+    closeTimer = null
+  }, 200)
+}
 
 const widgets = computed(() => {
   const { baseWidgets, containerComponents, formWidgets, chartWidgets } = visualConfig.componentModules
@@ -64,11 +103,13 @@ function dragging() {
 
 function dragEnd() {
   controlStore.setIsDragging(false)
+  hoveredPopover.value = null
   emits('dragEnd')
 }
 
 function onDblClick(w: VisualEditorComponent) {
   const newBlock = createNewBlock(cloneDeep(w))
+  hoveredPopover.value = null
   emits('dblclickAdd', newBlock)
 }
 </script>
@@ -81,12 +122,12 @@ function onDblClick(w: VisualEditorComponent) {
     <el-popover
       v-for="(e, i) in widgets"
       :key="i"
-      trigger="hover"
       placement="right"
       transition="el-zoom-in-left"
       :width="280"
       :popper-class="$style['component-popover']"
       :teleported="true"
+      :visible="hoveredPopover === e.title"
     >
       <template #reference>
         <el-button
@@ -95,40 +136,43 @@ function onDblClick(w: VisualEditorComponent) {
             $style['nav-btn'],
             { [$style['nav-btn--active']]: activeComp === e.title },
           ]"
-          @click="activeComp = e.title"
+          @mouseenter="onBtnMouseEnter(e.title)"
+          @mouseleave="onBtnMouseLeave()"
         >
           <SvgIcon :size="20" :name="e.icon" />
         </el-button>
       </template>
 
-      <el-scrollbar class="w-full select-none" view-style="padding: 6px" max-height="520px">
-        <div :class="$style['popover-header']">
-          <SvgIcon :size="16" :name="e.icon" />
-          <span>{{ e.title }}</span>
-        </div>
-        <template v-for="(w, i) in e.widgets" :key="i">
-          <div
-            :class="$style['component-item']"
-            draggable="true"
-            @dragstart="(e) => dragStart(e, w, i)"
-            @drag="dragging"
-            @dragend="dragEnd"
-            @dblclick="onDblClick(w)"
-          >
-            <div :class="$style['component-item__icon']">
-              <SvgIcon v-if="isString(w?.icon)" :size="28" :name="w?.icon" />
-            </div>
-            <div :class="$style['component-item__info']">
-              <span :class="$style['component-item__label']">
-                {{ w.label }}
-              </span>
-              <span :class="$style['component-item__desc']">
-                {{ w.description }}
-              </span>
-            </div>
+      <div @mouseenter="onContentMouseEnter" @mouseleave="onContentMouseLeave">
+        <el-scrollbar class="w-full select-none" view-style="padding: 6px" max-height="520px">
+          <div :class="$style['popover-header']">
+            <SvgIcon :size="16" :name="e.icon" />
+            <span>{{ e.title }}</span>
           </div>
-        </template>
-      </el-scrollbar>
+          <template v-for="(w, idx) in e.widgets" :key="idx">
+            <div
+              :class="$style['component-item']"
+              draggable="true"
+              @dragstart="(ev) => dragStart(ev, w, idx)"
+              @drag="dragging"
+              @dragend="dragEnd"
+              @dblclick="onDblClick(w)"
+            >
+              <div :class="$style['component-item__icon']">
+                <SvgIcon v-if="isString(w?.icon)" :size="28" :name="w?.icon" />
+              </div>
+              <div :class="$style['component-item__info']">
+                <span :class="$style['component-item__label']">
+                  {{ w.label }}
+                </span>
+                <span :class="$style['component-item__desc']">
+                  {{ w.description }}
+                </span>
+              </div>
+            </div>
+          </template>
+        </el-scrollbar>
+      </div>
     </el-popover>
   </div>
 </template>

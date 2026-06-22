@@ -1,7 +1,6 @@
 import type { PropType } from 'vue'
 import type { BlockDatasetBindings } from '@/utils/datasetBinding'
-import { Refresh } from '@element-plus/icons-vue'
-import { ElButton, ElEmpty, ElIcon } from 'element-plus'
+import { ElEmpty } from 'element-plus'
 import { computed, defineComponent } from 'vue'
 import { buildBarChartOption, EChartsView } from '@/components/echarts'
 import { useChartThemeColors } from '@/hooks/useChartThemeColors'
@@ -15,7 +14,6 @@ export default defineComponent({
       default: undefined,
     },
     useSampleData: { type: Boolean, default: true },
-    showRefresh: { type: Boolean, default: true },
     compact: { type: Boolean, default: false },
     width: { type: Number as PropType<number>, default: 320 },
     height: { type: Number as PropType<number>, default: 200 },
@@ -42,20 +40,6 @@ export default defineComponent({
         class="relative flex h-full w-full flex-col overflow-hidden bg-[var(--el-bg-color)]"
         style={{ minHeight: props.compact ? '80px' : '120px' }}
       >
-        {props.showRefresh && !props.compact && (
-          <ElButton
-            text
-            size="small"
-            class="absolute right-8px top-8px z-1"
-            loading={loading.value}
-            onClick={() => void refresh()}
-          >
-            <ElIcon>
-              <Refresh />
-            </ElIcon>
-          </ElButton>
-        )}
-
         <div class="relative min-h-0 flex-1">
           {error.value && data.value.length === 0
             ? (

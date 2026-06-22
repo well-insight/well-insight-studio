@@ -63,11 +63,12 @@ export function buildBarChartOption(params: BarChartOptionParams): EChartsOption
     series: [
       {
         type: 'bar',
-        data: data.map((d, i) => ({
-          value: d.value,
-          itemStyle: { color: getColor(colors, i), borderRadius: [3, 3, 0, 0] },
-        })),
+        data: data.map(d => d.value),
         barMaxWidth: compact ? 28 : 48,
+        itemStyle: {
+          color: getColor(colors, 0),
+          borderRadius: [3, 3, 0, 0],
+        },
         label: compact
           ? { show: false }
           : {

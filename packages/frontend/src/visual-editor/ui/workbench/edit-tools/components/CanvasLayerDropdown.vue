@@ -463,7 +463,6 @@ function ungroupByVid(vid: string) {
 
 <template>
   <el-popover
-    title="画布层级"
     placement="bottom"
     trigger="click"
     width="340"
@@ -476,34 +475,30 @@ function ungroupByVid(vid: string) {
       </el-button>
     </template>
 
-    <div class="w-full h-full flex flex-col">
+    <!-- 自定义标题栏 -->
+    <div :class="$style['custom-header']">
+      <span :class="$style['header-title']">画布层级</span>
+      <div :class="$style['header-actions']">
+        <el-tooltip content="展开/收起全部节点" placement="bottom">
+          <el-button text size="small" :icon="Expand" @click="expandAll" />
+        </el-tooltip>
+      </div>
+    </div>
+
+    <div class="w-full flex flex-col">
       <!-- 工具栏 -->
-      <el-space class="mx-3 my-2" wrap>
-        <el-button link :icon="Expand" @click="expandAll">
-          展开
-        </el-button>
-        <el-button link :icon="Fold" @click="collapseAll">
-          收起
-        </el-button>
+      <div :class="$style['toolbar']">
         <el-button
           v-if="currentBlock?.componentKey === 'group'"
-          link
+          text
+          size="small"
           type="warning"
           :icon="FolderRemove"
           @click="ungroupCurrentBlock()"
         >
           拆分组
         </el-button>
-        <el-button
-          link
-          type="danger"
-          :icon="Delete"
-          :disabled="!currentBlock?._vid"
-          @click="deleteCurrentBlock"
-        >
-          删除
-        </el-button>
-      </el-space>
+      </div>
 
       <!-- 搜索框 -->
       <div :class="$style['search-box']">
@@ -634,16 +629,68 @@ function ungroupByVid(vid: string) {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-shadow: var(--el-box-shadow-dark);
 
   :global(.el-popover__title) {
-    height: 40px;
-    width: 100%;
-    padding: 0 16px;
-    display: flex;
-    align-items: center;
-    margin-bottom: 0;
-    border-bottom: 1px solid var(--el-border-color-lighter);
-    flex-shrink: 0;
+    display: none;
+  }
+}
+
+.custom-header {
+  height: 44px;
+  padding: 0 14px 0 18px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--el-border-color-light);
+  flex-shrink: 0;
+}
+
+.header-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 14px;
+    border-radius: 2px;
+    background: var(--el-color-primary);
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+}
+
+.header-actions {
+  margin-left: auto;
+
+  :global(.el-button) {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+    color: var(--el-text-color-secondary);
+
+    &:hover {
+      color: var(--el-color-primary);
+      background-color: var(--el-color-primary-light-9);
+    }
+  }
+}
+
+.toolbar {
+  display: flex;
+  gap: 4px;
+  padding: 10px 12px 6px;
+  flex-shrink: 0;
+
+  :global(.el-button) {
+    height: 28px;
+    font-size: 12px;
+    padding: 0 8px;
+    border-radius: 6px;
   }
 }
 
@@ -658,12 +705,12 @@ function ungroupByVid(vid: string) {
 .page-setting-panel {
   padding: 0 12px;
   width: 340px;
-  height: min(420px, calc(100vh - 280px));
-  max-height: min(420px, calc(100vh - 280px));
+  height: min(480px, calc(100vh - 200px));
+  max-height: min(480px, calc(100vh - 200px));
   box-sizing: border-box;
 
   :global(.el-scrollbar__wrap) {
-    max-height: min(420px, calc(100vh - 280px));
+    max-height: min(480px, calc(100vh - 200px));
   }
 
   // 树节点样式

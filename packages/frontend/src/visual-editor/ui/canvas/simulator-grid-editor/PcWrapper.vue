@@ -1,6 +1,6 @@
 <script lang="tsx" setup>
-import type { CSSProperties } from 'vue'
 import type { ScrollbarInstance } from 'element-plus'
+import type { CSSProperties } from 'vue'
 
 import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
 import { useMouseInElement, useResizeObserver } from '@vueuse/core'
@@ -9,13 +9,13 @@ import { cloneDeep, debounce, throttle } from 'lodash-es'
 import { storeToRefs } from 'pinia'
 import { computed, nextTick, onBeforeUnmount, onMounted, provide, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import CanvasItem from '@/packages/pc/container-component/shared/CanvasItem.vue'
 import { useAnimate } from '@/hooks/useAnimate'
 import { useGlobalProperties } from '@/hooks/useGlobalProperties'
 import { ContainerEditorContextKey, EditingContainerIdKey } from '@/packages/pc/container-component/container'
+import CanvasItem from '@/packages/pc/container-component/shared/CanvasItem.vue'
 import { calcSlotDropLayout } from '@/packages/pc/container-component/shared/slot-grid.utils'
-import { useControlStore } from '@/stores/controlStore'
 import { useCanvasThemeStore } from '@/stores/canvasThemeStore'
+import { useControlStore } from '@/stores/controlStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { resolveBlockBorderCss } from '@/utils/blockBorder'
 import {
@@ -32,7 +32,8 @@ import { $$dropdown, DropdownOption } from '@/visual-editor/lib/dropdown-service
 import ReferenceGuides from '@/visual-editor/ui/canvas/shared/ReferenceGuides.vue'
 import { buildSnapTargets, snapDrag } from '@/visual-editor/ui/canvas/shared/snap'
 import MonacoEditor from '@/visual-editor/ui/shared/monaco-editor/MonacoEditor'
-import { getBlockAnimationElement } from '@/visual-editor/visual-editor.utils'
+import { createNewBlock, getBlockAnimationElement } from '@/visual-editor/visual-editor.utils'
+import { visualConfig } from '@/visual.config'
 import CompRender from './comp-render'
 import SlotItem from './SlotItem.vue'
 
@@ -712,7 +713,8 @@ function findSlotContextAtPoint(x: number, y: number): { parentBlock: VisualEdit
     const slotCanvasEl = (el as HTMLElement).closest('.slot-grid-canvas') as HTMLElement | null
     if (slotCanvasEl) {
       const ctx = extractSlotContextFromCanvas(slotCanvasEl)
-      if (ctx) return ctx
+      if (ctx)
+        return ctx
     }
   }
 
@@ -725,27 +727,33 @@ function findSlotContextAtPoint(x: number, y: number): { parentBlock: VisualEdit
     const r = slot.getBoundingClientRect()
     if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
       const area = Math.max(1, r.width * r.height)
-      if (!best || area < best.area) best = { el: slot, area }
+      if (!best || area < best.area)
+        best = { el: slot, area }
     }
   }
   if (best) {
     const ctx = extractSlotContextFromCanvas(best.el)
-    if (ctx) return ctx
+    if (ctx)
+      return ctx
   }
   return null
 }
 
 function extractSlotContextFromCanvas(slotCanvasEl: HTMLElement): { parentBlock: VisualEditorBlockData, slotKey: string } | null {
   const parentEl = slotCanvasEl.closest('[class*="list-group-item-"]') as HTMLElement | null
-  if (!parentEl) return null
+  if (!parentEl)
+    return null
   const classList = Array.from(parentEl.classList)
   const vidClass = classList.find(c => c.startsWith('list-group-item-'))
   const parentVid = vidClass?.replace('list-group-item-', '')
-  if (!parentVid || parentVid === dropId) return null
+  if (!parentVid || parentVid === dropId)
+    return null
   const parentBlock = findBlockByVid(parentVid, currentPage.value.blocks)
-  if (!parentBlock || isPaletteGhostBlock(parentBlock)) return null
+  if (!parentBlock || isPaletteGhostBlock(parentBlock))
+    return null
   const slotKey = slotCanvasEl.getAttribute('data-slot-key') || 'default'
-  if (!parentBlock.props?.slots?.[slotKey]) return null
+  if (!parentBlock.props?.slots?.[slotKey])
+    return null
   return { parentBlock, slotKey }
 }
 
@@ -754,7 +762,8 @@ function findSlotElementAtPoint(x: number, y: number): HTMLElement | null {
   const elements = document.elementsFromPoint(x, y)
   for (const el of elements) {
     const slot = (el as HTMLElement).closest('.slot-grid-canvas') as HTMLElement | null
-    if (slot && !slot.closest(`.list-group-item-${dropId}`)) return slot
+    if (slot && !slot.closest(`.list-group-item-${dropId}`))
+      return slot
   }
   // 几何回退
   const all = Array.from(document.querySelectorAll<HTMLElement>('.slot-grid-canvas'))
@@ -765,7 +774,8 @@ function findSlotElementAtPoint(x: number, y: number): HTMLElement | null {
     const r = slot.getBoundingClientRect()
     if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
       const area = Math.max(1, r.width * r.height)
-      if (!best || area < best.area) best = { el: slot, area }
+      if (!best || area < best.area)
+        best = { el: slot, area }
     }
   }
   return best ? best.el : null
@@ -1116,14 +1126,17 @@ const rootContentHeightFromBlocks = computed(() => {
   let maxBottom = 0
   currentPage.value.blocks.forEach((b) => {
     const bottom = calcGridRowTop((b.y || 0) + (b.h || DEFAULT_BLOCK_HEIGHT), m) + 400
-    if (bottom > maxBottom) maxBottom = bottom
+    if (bottom > maxBottom)
+      maxBottom = bottom
   })
   const live = activeDragRect.value || activeResizeRect.value
   if (live) {
     const liveBottom = (live.top + live.height) + 300
-    if (liveBottom > maxBottom) maxBottom = liveBottom
+    if (liveBottom > maxBottom)
+      maxBottom = liveBottom
   }
-  if (rootHeight.value > maxBottom) maxBottom = rootHeight.value
+  if (rootHeight.value > maxBottom)
+    maxBottom = rootHeight.value
   return Math.ceil(maxBottom)
 })
 
@@ -1161,14 +1174,14 @@ const mainSnapTargets = computed(() => {
   const others = currentPage.value.blocks
     .filter(b => !isPaletteGhostBlock(b))
     .map(b =>
-    calcGridItemPixelRect(
-      b.x || 0,
-      b.y || 0,
-      b.w || DEFAULT_BLOCK_WIDTH,
-      b.h || DEFAULT_BLOCK_HEIGHT,
-      m,
-    ),
-  )
+      calcGridItemPixelRect(
+        b.x || 0,
+        b.y || 0,
+        b.w || DEFAULT_BLOCK_WIDTH,
+        b.h || DEFAULT_BLOCK_HEIGHT,
+        m,
+      ),
+    )
   const estH = Math.max(rootContentHeightFromBlocks.value, getCanvasBaselineHeight())
   return buildSnapTargets(others, m.containerWidth, estH)
 })
@@ -1216,12 +1229,13 @@ function isDescendantOf(parentBlock: VisualEditorBlockData, childVid: string): b
 // ===================== 自研根画布（CanvasItem）事件处理 =====================
 
 function onRootDragStart(block: VisualEditorBlockData) {
-  if (isRootItemDisabled(block) || isPaletteGhostBlock(block)) return
+  if (isRootItemDisabled(block) || isPaletteGhostBlock(block))
+    return
   draggingBlockId.value = block._vid
   activeResizeRect.value = null
 }
 
-function onRootDragUpdate(block: VisualEditorBlockData, pos: { left: number; top: number }) {
+function onRootDragUpdate(block: VisualEditorBlockData, pos: { left: number, top: number }) {
   // Prefer measured ref, fallback to query (for live relative rect of guides)
   const container = rootGridRef.value || document.querySelector('.main-grid-canvas') || document.querySelector('.edit-canvas-inner')
   const base = getRootItemPixelRect(block)
@@ -1258,7 +1272,7 @@ function onRootDragUpdate(block: VisualEditorBlockData, pos: { left: number; top
   }
 }
 
-function onRootDragEnd(block: VisualEditorBlockData, pos: { left: number; top: number }) {
+function onRootDragEnd(block: VisualEditorBlockData, pos: { left: number, top: number }) {
   if (isPaletteGhostBlock(block))
     return
   draggingBlockId.value = null
@@ -1329,8 +1343,9 @@ function onRootDragEnd(block: VisualEditorBlockData, pos: { left: number; top: n
   recordHistory()
 }
 
-function onRootResizeUpdate(block: VisualEditorBlockData, size: { width: number; height: number }) {
-  if (isRootItemDisabled(block)) return
+function onRootResizeUpdate(block: VisualEditorBlockData, size: { width: number, height: number }) {
+  if (isRootItemDisabled(block))
+    return
   const container = rootGridRef.value || document.querySelector('.main-grid-canvas') || document.querySelector('.edit-canvas-inner')
   const base = getRootItemPixelRect(block)
   if (container) {
@@ -1347,7 +1362,7 @@ function onRootResizeUpdate(block: VisualEditorBlockData, size: { width: number;
   autoScrollDuringDrag(mouseAt.y)
 }
 
-function onRootResizeEnd(block: VisualEditorBlockData, size: { width: number; height: number }) {
+function onRootResizeEnd(block: VisualEditorBlockData, size: { width: number, height: number }) {
   activeResizeRect.value = null
   const m = getGridMetrics()
   const maxW = Math.max(1, m.cols - (block.x || 0))
@@ -1705,7 +1720,41 @@ function finishBoxSelection(rect: { left: number, top: number, width: number, he
 // ---- 框选结束 ----
 
 function onDragover(e: DragEvent) {
+  // HTML5 拖拽期间 mousemove 被抑制，必须从 dragover 事件同步鼠标位置
+  mouseAt.x = e.clientX
+  mouseAt.y = e.clientY
   e.preventDefault()
+}
+
+/** 原生 drop 处理器 — 使用 drop 事件本身的坐标而非 mouseAt */
+function onDrop(e: DragEvent) {
+  e.preventDefault()
+  const compKey = e.dataTransfer?.getData('text/plain')
+  if (!compKey)
+    return
+
+  const comp = visualConfig.componentMap[compKey]
+  if (!comp)
+    return
+
+  const local = mouseToCanvasLocal(e.clientX, e.clientY)
+  if (!local)
+    return
+
+  const m = getGridMetrics()
+  const newBlock = createNewBlock(comp)
+  newBlock.x = Math.max(0, Math.min(Math.round(local.x / m.colWidth), m.cols - newBlock.w))
+  newBlock.y = Math.max(0, Math.round(local.y / m.rowHeight))
+  newBlock.focus = true
+
+  // 清除之前的选中
+  currentPage.value.blocks.forEach((b) => {
+    b.focus = false
+  })
+  currentPage.value.blocks.push(newBlock)
+  setCurrentBlock(newBlock)
+  controlStore.setMoveVisualData(null)
+  recordHistory()
 }
 
 // onLayoutUpdated (原 GridLayoutPlus 事件) 已移除
@@ -2153,6 +2202,7 @@ defineExpose({
               class="edit-canvas"
               :style="editCanvasStyle"
               @dragover="onDragover"
+              @drop="onDrop"
               @mousedown="onCanvasMousedown"
             >
               <div
@@ -2160,128 +2210,128 @@ defineExpose({
                 class="edit-canvas-inner main-grid-canvas"
                 :style="{ position: 'relative', minHeight: rootCanvasMinHeightStyle }"
               >
-          <!-- Reference guides for main canvas (drag or resize) -->
-          <ReferenceGuides
-            v-if="activeDragRect || activeResizeRect"
-            :container-width="mainGuidesSize.width"
-            :container-height="mainGuidesSize.height"
-            :other-rects="mainOtherRects"
-            :active-rect="activeDragRect || activeResizeRect"
-            :visible="!!(activeDragRect || activeResizeRect)"
-            :threshold="6"
-          />
+                <!-- Reference guides for main canvas (drag or resize) -->
+                <ReferenceGuides
+                  v-if="activeDragRect || activeResizeRect"
+                  :container-width="mainGuidesSize.width"
+                  :container-height="mainGuidesSize.height"
+                  :other-rects="mainOtherRects"
+                  :active-rect="activeDragRect || activeResizeRect"
+                  :visible="!!(activeDragRect || activeResizeRect)"
+                  :threshold="6"
+                />
 
-          <!-- 自研根画布：使用 CanvasItem 替代 GridLayoutPlus -->
-          <CanvasItem
-            v-for="item in currentPage.blocks"
-            :key="item._vid"
-            :vid="item._vid"
-            :left="getRootItemPixelRect(item).left"
-            :top="getRootItemPixelRect(item).top"
-            :width="getRootItemPixelRect(item).width"
-            :height="getRootItemPixelRect(item).height"
-            :is-editing="true"
-            :is-selected="selectedBlockIds.includes(item._vid)"
-            :is-focused="item.focus"
-            :item-class="['root-grid-item', { 'palette-ghost-item': isPaletteGhostBlock(item) }]"
-            :disabled="isRootItemDisabled(item)"
-            :show-selection-outline="false"
-            :snap-x-lines="mainSnapTargets.xs"
-            :snap-y-lines="mainSnapTargets.ys"
-            :snap-threshold="8"
-            :container-width="rootContainerWidth"
-            @mousedown="(e: MouseEvent) => onBlockMousedown(item, e)"
-            @pointerdown="(e: any) => onBlockPointerdown(item, e)"
-            @dblclick.stop="(e: MouseEvent) => onBlockDblClick(item, e)"
-            @contextmenu.stop.prevent="(e: MouseEvent) => onContextmenuBlock(e, item)"
-            @drag-start="onRootDragStart(item)"
-            @drag-update="(p: any) => onRootDragUpdate(item, p)"
-            @drag-end="(p: any) => onRootDragEnd(item, p)"
-            @resize-update="(s: any) => onRootResizeUpdate(item, s)"
-            @resize-end="(s: any) => onRootResizeEnd(item, s)"
-            :data-vid-root="item._vid"
-          >
-            <div
-              :key="item._vid"
-              :data-label="item.label"
-              class="list-group-item"
-              :style="getBlockBorderStyle(item)"
-              :class="{
-                'focus': item.focus,
-                'focusWithChild': item.focusWithChild,
-                'multi-focus': selectedBlockIds.includes(item._vid),
-                'is-editing-container': isContainerComponent(item.componentKey) && isContainerInEditHierarchy(item._vid),
-                'is-editing-group': item.componentKey === 'group' && isContainerInEditHierarchy(item._vid),
-                'is-locked-for-inner': isContainerComponent(item.componentKey) && isEditingContainerVid(item._vid),
-                drag,
-                'has-slot': !!Object.keys(item.props?.slots || {}).length,
-                'has-inner-title': item.showTitle === true && isInnerBlockTitle(item.titleStyle),
-                'palette-ghost': isPaletteGhostBlock(item),
-                [`list-group-item-${item._vid}`]: true,
-              }"
-              @mousedown="onBlockMousedown(item, $event)"
-              @pointerdown="onBlockPointerdown(item, $event)"
-              @dblclick.stop="onBlockDblClick(item, $event)"
-              @contextmenu.stop.prevent="onContextmenuBlock($event, item)"
-            >
-              <div
-                v-if="item.showTitle === true && isInnerBlockTitle(item.titleStyle)"
-                class="block-title-inner"
-                :style="getBlockTitleInlineStyle(item.titleStyle)"
-              >
-                {{ getBlockTitleText(item) }}
-              </div>
-              <div class="list-group-item__body">
-                <span
-                  v-if="item.showTitle === true && !isInnerBlockTitle(item.titleStyle)"
-                  class="block-title-outer"
-                  :class="`block-title-outer--${item.titleStyle?.position || 'outer-left'}`"
-                  :style="getBlockTitleInlineStyle(item.titleStyle)"
+                <!-- 自研根画布：使用 CanvasItem 替代 GridLayoutPlus -->
+                <CanvasItem
+                  v-for="item in currentPage.blocks"
+                  :key="item._vid"
+                  :vid="item._vid"
+                  :left="getRootItemPixelRect(item).left"
+                  :top="getRootItemPixelRect(item).top"
+                  :width="getRootItemPixelRect(item).width"
+                  :height="getRootItemPixelRect(item).height"
+                  :is-editing="true"
+                  :is-selected="selectedBlockIds.includes(item._vid)"
+                  :is-focused="item.focus"
+                  :item-class="['root-grid-item', { 'palette-ghost-item': isPaletteGhostBlock(item) }]"
+                  :disabled="isRootItemDisabled(item)"
+                  :show-selection-outline="false"
+                  :snap-x-lines="mainSnapTargets.xs"
+                  :snap-y-lines="mainSnapTargets.ys"
+                  :snap-threshold="8"
+                  :container-width="rootContainerWidth"
+                  :data-vid-root="item._vid"
+                  @mousedown="(e: MouseEvent) => onBlockMousedown(item, e)"
+                  @pointerdown="(e: any) => onBlockPointerdown(item, e)"
+                  @dblclick.stop="(e: MouseEvent) => onBlockDblClick(item, e)"
+                  @contextmenu.stop.prevent="(e: MouseEvent) => onContextmenuBlock(e, item)"
+                  @drag-start="onRootDragStart(item)"
+                  @drag-update="(p: any) => onRootDragUpdate(item, p)"
+                  @drag-end="(p: any) => onRootDragEnd(item, p)"
+                  @resize-update="(s: any) => onRootResizeUpdate(item, s)"
+                  @resize-end="(s: any) => onRootResizeEnd(item, s)"
                 >
-                  {{ getBlockTitleText(item) }}
-                </span>
-                <CompRender
-                  :element="item"
-                  :style="{
-                    pointerEvents: getCompRenderPointerEvents(item),
-                  }"
-                >
-                  <template v-for="(value, slotKey) in item.props?.slots" :key="slotKey" #[slotKey]>
-                    <SlotItem
-                      v-model:children="value.children"
-                      v-model:drag="drag"
-                      :slot-key="slotKey"
-                      :parent-vid="item._vid"
-                      :selected-block-ids="selectedBlockIds"
-                      :editing-container-id="editingContainerId"
-                      :is-container="isContainerComponent(item.componentKey)"
-                      :block-wrapper-styles="blockWrapperStyles"
-                      :disallow-drop="isContainerComponent(item.componentKey)"
-                      :on-contextmenu-block="onContextmenuBlock"
-                      :select-comp="selectComp"
-                      :on-drag-enter-container="handleDragEnterContainer"
-                      :on-drag-leave-container="handleDragLeaveContainer"
-                      :select-block-by-vid="selectBlockByVid"
-                      :on-inner-group-dbl-click="onInnerGroupDblClick"
-                      :delete-comp="deleteComp"
-                      :update-group-inner-block-position="updateGroupInnerBlockPosition"
-                      :update-group-inner-block-size="updateGroupInnerBlockSize"
-                      :on-group-inner-drag-end="onGroupInnerDragEnd"
-                    />
-                  </template>
-                </CompRender>
+                  <div
+                    :key="item._vid"
+                    :data-label="item.label"
+                    class="list-group-item"
+                    :style="getBlockBorderStyle(item)"
+                    :class="{
+                      'focus': item.focus,
+                      'focusWithChild': item.focusWithChild,
+                      'multi-focus': selectedBlockIds.includes(item._vid),
+                      'is-editing-container': isContainerComponent(item.componentKey) && isContainerInEditHierarchy(item._vid),
+                      'is-editing-group': item.componentKey === 'group' && isContainerInEditHierarchy(item._vid),
+                      'is-locked-for-inner': isContainerComponent(item.componentKey) && isEditingContainerVid(item._vid),
+                      drag,
+                      'has-slot': !!Object.keys(item.props?.slots || {}).length,
+                      'has-inner-title': item.showTitle === true && isInnerBlockTitle(item.titleStyle),
+                      'palette-ghost': isPaletteGhostBlock(item),
+                      [`list-group-item-${item._vid}`]: true,
+                    }"
+                    @mousedown="onBlockMousedown(item, $event)"
+                    @pointerdown="onBlockPointerdown(item, $event)"
+                    @dblclick.stop="onBlockDblClick(item, $event)"
+                    @contextmenu.stop.prevent="onContextmenuBlock($event, item)"
+                  >
+                    <div
+                      v-if="item.showTitle === true && isInnerBlockTitle(item.titleStyle)"
+                      class="block-title-inner"
+                      :style="getBlockTitleInlineStyle(item.titleStyle)"
+                    >
+                      {{ getBlockTitleText(item) }}
+                    </div>
+                    <div class="list-group-item__body">
+                      <span
+                        v-if="item.showTitle === true && !isInnerBlockTitle(item.titleStyle)"
+                        class="block-title-outer"
+                        :class="`block-title-outer--${item.titleStyle?.position || 'outer-left'}`"
+                        :style="getBlockTitleInlineStyle(item.titleStyle)"
+                      >
+                        {{ getBlockTitleText(item) }}
+                      </span>
+                      <CompRender
+                        :element="item"
+                        :style="{
+                          pointerEvents: getCompRenderPointerEvents(item),
+                        }"
+                      >
+                        <template v-for="(value, slotKey) in item.props?.slots" :key="slotKey" #[slotKey]>
+                          <SlotItem
+                            v-model:children="value.children"
+                            v-model:drag="drag"
+                            :slot-key="slotKey"
+                            :parent-vid="item._vid"
+                            :selected-block-ids="selectedBlockIds"
+                            :editing-container-id="editingContainerId"
+                            :is-container="isContainerComponent(item.componentKey)"
+                            :block-wrapper-styles="blockWrapperStyles"
+                            :disallow-drop="isContainerComponent(item.componentKey)"
+                            :on-contextmenu-block="onContextmenuBlock"
+                            :select-comp="selectComp"
+                            :on-drag-enter-container="handleDragEnterContainer"
+                            :on-drag-leave-container="handleDragLeaveContainer"
+                            :select-block-by-vid="selectBlockByVid"
+                            :on-inner-group-dbl-click="onInnerGroupDblClick"
+                            :delete-comp="deleteComp"
+                            :update-group-inner-block-position="updateGroupInnerBlockPosition"
+                            :update-group-inner-block-size="updateGroupInnerBlockSize"
+                            :on-group-inner-drag-end="onGroupInnerDragEnd"
+                          />
+                        </template>
+                      </CompRender>
+                    </div>
+                  </div>
+                </CanvasItem>
+
+                <!-- 框选遮罩 -->
+                <div
+                  v-if="boxSelectionRect"
+                  class="box-selection-overlay"
+                  :style="boxSelectionStyle"
+                />
               </div>
             </div>
-          </CanvasItem>
-
-              <!-- 框选遮罩 -->
-              <div
-                v-if="boxSelectionRect"
-                class="box-selection-overlay"
-                :style="boxSelectionStyle"
-              />
-            </div>
-          </div>
           </el-scrollbar>
         </template>
       </el-auto-resizer>

@@ -443,6 +443,8 @@ export function initVisualData() {
   resetEditorSession()
 
   async function saveProject(): Promise<boolean> {
+    // 手动保存时取消自动保存定时器
+    cancelAutoSave()
     if (saveStatus.value === 'saving') {
       pendingSave = true
       return false
@@ -493,6 +495,43 @@ export function initVisualData() {
         void saveProject()
       }
     }
+  }
+
+  // ── 静默防抖自动保存 ──
+  const AUTO_SAVE_DELAY = 3000 // 3 秒无操作后自动保存
+  let autoSaveTimer: ReturnType<typeof setTimeout> | null = null
+
+  function cancelAutoSave() {
+    if (autoSaveTimer !== null) {
+      clearTimeout(autoSaveTimer)
+      autoSaveTimer = null
+    }
+  }
+
+  function scheduleAutoSave() {
+    cancelAutoSave()
+    // 如果当前没有未保存的更改，跳过
+    if (!isDirty.value) return
+    autoSaveTimer = setTimeout(async () => {
+      autoSaveTimer = null
+      // 再次检查是否仍有未保存的更改
+      if (!isDirty.value) return
+      await saveProject()
+      // 静默保存：不弹 toast，saveStatus 由 saveProject 内部管理
+    }, AUTO_SAVE_DELAY)
+  }
+
+  // 监听数据变化，调度防抖自动保存
+  watch(
+    () => serializeProjectContent(state.jsonData),
+    () => {
+      scheduleAutoSave()
+    },
+  )
+
+  // 页面离开前主动取消定时器
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', cancelAutoSave)
   }
 
   return {
