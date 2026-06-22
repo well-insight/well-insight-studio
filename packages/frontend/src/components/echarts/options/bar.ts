@@ -4,16 +4,28 @@ import { getEChartsThemeColors } from '../theme'
 
 export interface BarChartOptionParams {
   data: ChartDatum[]
-  barColor?: string
+  /** 颜色调色板，按类目索引分配 */
+  colors?: string[]
   compact?: boolean
 }
 
+/**
+ * 根据调色板获取指定索引的颜色
+ */
+function getColor(colors: string[] | undefined, index: number): string {
+  if (!colors || colors.length === 0) {
+    return '#409EFF'
+  }
+  return colors[index % colors.length]
+}
+
 export function buildBarChartOption(params: BarChartOptionParams): EChartsOption {
-  const { data, barColor = '#409EFF', compact = false } = params
+  const { data, colors, compact = false } = params
   const theme = getEChartsThemeColors()
 
   return {
     animation: !compact,
+    color: colors,
     grid: {
       left: compact ? 36 : 44,
       right: 12,
@@ -51,12 +63,11 @@ export function buildBarChartOption(params: BarChartOptionParams): EChartsOption
     series: [
       {
         type: 'bar',
-        data: data.map(d => d.value),
+        data: data.map((d, i) => ({
+          value: d.value,
+          itemStyle: { color: getColor(colors, i), borderRadius: [3, 3, 0, 0] },
+        })),
         barMaxWidth: compact ? 28 : 48,
-        itemStyle: {
-          color: barColor,
-          borderRadius: [3, 3, 0, 0],
-        },
         label: compact
           ? { show: false }
           : {
@@ -64,6 +75,7 @@ export function buildBarChartOption(params: BarChartOptionParams): EChartsOption
               position: 'top',
               color: theme.text,
               fontSize: 10,
+              formatter: (p: { value: number }) => p.value,
             },
       },
     ],
