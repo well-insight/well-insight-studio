@@ -127,7 +127,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 <style scoped lang="scss">
 .import-template-table {
-  background-color: #fff;
+  background-color: var(--el-bg-color);
   border-radius: 8px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
   width: 100%;
@@ -141,13 +141,13 @@ const props = withDefaults(defineProps<Props>(), {
     margin: 0 0 8px 0;
     // font-size: 18px;
     font-weight: 600;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 
   .description {
     margin: 0;
     font-size: 13px;
-    color: #909399;
+    color: var(--el-text-color-secondary);
     line-height: 1.5;
   }
 }
@@ -178,8 +178,8 @@ const props = withDefaults(defineProps<Props>(), {
   font-size: 14px;
 
   th.el-table__cell {
-    background-color: #f5f7fa;
-    color: #303133;
+    background-color: var(--el-fill-color-light);
+    color: var(--el-text-color-primary);
     font-weight: 600;
   }
 

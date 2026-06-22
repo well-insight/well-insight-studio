@@ -1,0 +1,130 @@
+/* ===========================================
+   WellCube 暗黑模式 - 自定义 CSS 变量
+   基于 Element Plus dark/css-vars.css 之上补充
+   =========================================== */
+
+html.dark {
+  /* --- 自定义组件变量 --- */
+  --wc-bg-color: #1a1a2e;
+  --wc-bg-color-secondary: #16213e;
+  --wc-bg-color-tertiary: #1a1a2e;
+  --wc-text-color: #e0e0e0;
+  --wc-text-color-secondary: #a0a0a0;
+  --wc-border-color: #2d2d4a;
+  --wc-border-color-lighter: #2d2d4a;
+
+  /* --- 滚动条 --- */
+  ::-webkit-scrollbar-thumb {
+    background: #3a3a5c !important;
+  }
+
+  /* --- Loading 背景 --- */
+  #app-loading {
+    background: #1a1a2e !important;
+  }
+
+  /* --- Matrix dots --- */
+  .matrix-dot {
+    background-color: #5b8def !important;
+  }
+
+  /* --- Placeholder --- */
+  .placeholder {
+    color: #4a4a6a !important;
+  }
+
+  /* --- Logo bar --- */
+  .logo-bar__title {
+    color: var(--el-text-color-primary) !important;
+  }
+
+  /* --- ECharts 容器默认背景 --- */
+  .echarts-container {
+    background: transparent !important;
+  }
+
+  /* --- 登录页 --- */
+  .login-container {
+    background: var(--el-bg-color) !important;
+  }
+
+  .login-card {
+    background: var(--el-bg-color-overlay) !important;
+    border-color: var(--el-border-color) !important;
+  }
+
+  .login-title {
+    color: var(--el-text-color-primary) !important;
+  }
+
+  .login-subtitle {
+    color: var(--el-text-color-secondary) !important;
+  }
+
+  /* --- 应用列表页卡片 --- */
+  .app-card {
+    background: var(--el-bg-color-overlay) !important;
+    border-color: var(--el-border-color) !important;
+  }
+
+  .app-card:hover {
+    border-color: var(--el-color-primary) !important;
+  }
+
+  /* --- 导入模板表格 --- */
+  .import-template-table {
+    background-color: var(--el-bg-color-overlay) !important;
+  }
+
+  .table-footer {
+    background-color: rgba(230, 162, 60, 0.1) !important;
+    border-left-color: #e6a23c !important;
+  }
+
+  /* --- E-Layout 组件适配 --- */
+  .e-layout-sider {
+    background: var(--el-bg-color) !important;
+    border-color: var(--el-border-color-light) !important;
+  }
+
+  .e-layout-header {
+    background: var(--el-bg-color-overlay) !important;
+    border-color: var(--el-border-color-light) !important;
+  }
+
+  /* --- 画布编辑器网格背景 --- */
+  .simulator-editor {
+    background-color: var(--el-bg-color-page) !important;
+  }
+
+  /* --- 画布包裹容器 --- */
+  .wrap-container,
+  .edit-control-container .wrap-container {
+    background-color: var(--el-bg-color-page) !important;
+  }
+
+  /* --- 画布编辑区域（页面背景之上） --- */
+  .edit-canvas {
+    background-color: var(--el-bg-color) !important;
+  }
+
+  /* --- 画布内网格项悬停/选中边框 --- */
+  .list-group-item {
+    &.focus::after {
+      border-color: var(--el-color-primary) !important;
+    }
+    &:hover:not(.focus)::after {
+      border-color: var(--el-color-primary-light-3) !important;
+    }
+  }
+
+  /* --- 预览外壳 --- */
+  .pc-preview-container {
+    background-color: var(--el-fill-color) !important;
+  }
+
+  /* --- Monaco 编辑器外壳 --- */
+  .monaco-editor-container {
+    border-color: var(--el-border-color) !important;
+  }
+}

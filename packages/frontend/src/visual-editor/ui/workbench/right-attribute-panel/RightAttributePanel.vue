@@ -102,7 +102,7 @@ watch(
   position: relative;
   height: 100%;
   width: 100%;
-  background-color: white;
+  background-color: var(--el-bg-color);
   transform: translateX(100%);
   // box-shadow: $boxShadow;
   transition: transform 0.5s ease-in-out;
@@ -134,7 +134,7 @@ watch(
   border: var(--el-border);
   border-radius: 50%;
   cursor: pointer;
-  background: #fff;
+  background: var(--el-bg-color);
   transform: translateX(-50%);
   // box-shadow: $boxShadow;
   transition: transform 0.5s ease-in-out;
@@ -147,6 +147,6 @@ watch(
   width: 100%;
   height: 100%;
   overflow-y: hidden;
-  background-color: white;
+  background-color: var(--el-bg-color);
 }
 </style>

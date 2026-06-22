@@ -129,20 +129,25 @@ onUnmounted(() => {
   flex: 1;
   min-width: 0;
   height: 100%;
-  /* Allow vertical scrolling when the page canvas grows taller than the available area */
-  overflow-y: auto;
-  overflow-x: hidden;
-  /* When the page is tall, start it from the top of the scroll viewport (horizontally still centered) */
+  overflow: hidden;
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   justify-content: center;
+
+  /* 画布根节点撑满可视区域 */
+  :deep(> *) {
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    min-height: 0;
+  }
 }
 
 .simulator-editor {
   width: 100%;
   overflow: hidden auto;
-  background-image: linear-gradient(#fafafc 9px, transparent 0), linear-gradient(90deg, transparent 9px, #373739 0);
-  background-color: #fff;
+  background-image: linear-gradient(var(--el-fill-color-lighter) 9px, transparent 0), linear-gradient(90deg, transparent 9px, var(--el-border-color-darker) 0);
+  background-color: var(--el-bg-color);
   background-size:
     10px 10px,
     10px 10px;
@@ -171,7 +176,7 @@ onUnmounted(() => {
   &-content {
     background-color: var(--el-bg-color);
     // transform: translate(0);
-    box-shadow: 0 8px 12px #ebedf0;
+    box-shadow: var(--el-box-shadow-light);
     margin-top: 32px;
     border-radius: var(--el-border-radius-base);
     position: absolute;
@@ -239,7 +244,7 @@ onUnmounted(() => {
   background: var(--el-bg-color-overlay);
   border: 1px solid var(--el-border-color-light);
   border-radius: 12px;
-  box-shadow: 0 12px 28px rgb(0 0 0 / 12%);
+  box-shadow: var(--el-box-shadow-dark);
   overflow: hidden;
 }
 

@@ -1,5 +1,6 @@
 <script lang="tsx" setup>
 import type { CSSProperties } from 'vue'
+import type { ScrollbarInstance } from 'element-plus'
 
 import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
 import { useMouseInElement, useResizeObserver } from '@vueuse/core'
@@ -133,7 +134,8 @@ function applyMultiDrag() {
   if (dx === 0 && dy === 0)
     return
 
-  // 将偏移量应用到其他选中块
+  // 将偏移量应用到其他选中块，并夹在主画布边界内（避免多选拖动导致组件移出）
+  const m = getGridMetrics()
   selectedBlockIds.value.forEach((vid) => {
     if (vid === multiDragState.dragVid)
       return
@@ -142,8 +144,13 @@ function applyMultiDrag() {
       return
     const otherBlock = findBlockByVid(vid, currentPage.value.blocks)
     if (otherBlock) {
-      otherBlock.x = otherStart.x + dx
-      otherBlock.y = otherStart.y + dy
+      let nx = otherStart.x + dx
+      let ny = otherStart.y + dy
+      const maxX = Math.max(0, m.cols - (otherBlock.w || DEFAULT_BLOCK_WIDTH))
+      nx = Math.max(0, Math.min(nx, maxX))
+      ny = Math.max(0, ny)
+      otherBlock.x = nx
+      otherBlock.y = ny
     }
   })
 }
@@ -156,10 +163,46 @@ const componentLoading = ref(false)
 
 const wrapper = ref<HTMLElement>()
 const canvasRef = useTemplateRef('canvasRef')
+const canvasScrollbarRef = useTemplateRef<ScrollbarInstance>('canvasScrollbarRef')
 const rootGridRef = useTemplateRef<HTMLElement>('rootGridRef')
 
 const rootWidth = ref(0)
 const rootHeight = ref(0)
+/** .wrap-container 可视高度（作为画布默认高度） */
+const wrapContainerHeight = ref(0)
+
+function getCanvasScrollWrap(): HTMLElement | null {
+  return canvasScrollbarRef.value?.wrapRef ?? null
+}
+
+/** 将屏幕坐标转为画布内局部坐标（考虑 el-scrollbar 滚动） */
+function mouseToCanvasLocal(clientX: number, clientY: number) {
+  const canvasRect = canvasRef.value?.getBoundingClientRect()
+  if (!canvasRect)
+    return null
+  return {
+    x: clientX - canvasRect.left,
+    y: clientY - canvasRect.top,
+  }
+}
+
+/** 鼠标是否在画布滚动视口内 */
+function isMouseInCanvasViewport(clientX: number, clientY: number) {
+  const viewport = getCanvasScrollWrap()?.getBoundingClientRect()
+    ?? wrapper.value?.getBoundingClientRect()
+  if (!viewport)
+    return false
+  return clientX >= viewport.left
+    && clientX <= viewport.right
+    && clientY >= viewport.top
+    && clientY <= viewport.bottom
+}
+
+useResizeObserver(wrapper, (entries) => {
+  const rect = entries[0]?.contentRect
+  if (rect && rect.height > 0)
+    wrapContainerHeight.value = rect.height
+})
 
 useResizeObserver(rootGridRef, (entries) => {
   const rect = entries[0]?.contentRect
@@ -247,14 +290,14 @@ onMounted(() => {
  */
 const editCanvasStyle = computed(() => {
   const { bgImage, bgColor, pageSize, bgRepeat, bgSize } = currentPage.value.config
-  const normalizedBgColor = bgColor || '#ffffff'
+  // 当未设置背景色时，使用 CSS 变量自适应暗黑/明亮模式
+  const normalizedBgColor = bgColor || 'var(--el-bg-color)'
   const normalizedBgImage = bgImage ? `url(${bgImage})` : 'none'
   const normalizedBgRepeat = bgRepeat || 'no-repeat'
   const normalizedBgSize = bgSize || 'cover'
   return {
     width: '100%',
-    // Allow vertical growth; the minHeight is driven by content + drag extension below.
-    minHeight: rootContentMinHeight.value + 'px',
+    minHeight: rootCanvasMinHeightStyle.value,
     backgroundColor: normalizedBgColor,
     backgroundImage: normalizedBgImage,
     backgroundRepeat: normalizedBgRepeat,
@@ -292,6 +335,9 @@ function getGridMetrics(): MainGridMetrics & { colWidth: number } {
   const colWidth = totalSpace / cols
   return { rowHeight, colWidth, containerWidth, cols, margin }
 }
+
+/** Root canvas logical width for drag clamping (prevents items moving out horizontally) */
+const rootContainerWidth = computed(() => getGridMetrics().containerWidth)
 
 /** 获取根块的像素位置（用于 CanvasItem） */
 function getRootItemPixelRect(block: VisualEditorBlockData) {
@@ -559,6 +605,11 @@ function syncMousePosition(event: MouseEvent) {
 const dropId = 'drop'
 const dragItem = ref(defaultDragItem())
 
+/** 从组件库拖入时的临时占位块（完整渲染容器时会自带 slot，需排除插槽命中） */
+function isPaletteGhostBlock(block: VisualEditorBlockData | null | undefined) {
+  return block?.i === dropId || block?._vid === dropId
+}
+
 function defaultDragItem() {
   return {
     x: -1,
@@ -570,32 +621,31 @@ function defaultDragItem() {
 }
 
 const dragging = throttle(() => {
-  const parentRect = wrapper.value?.getBoundingClientRect()
-  if (!parentRect)
+  const mouseInGrid = isMouseInCanvasViewport(mouseAt.x, mouseAt.y)
+  const local = mouseToCanvasLocal(mouseAt.x, mouseAt.y)
+  if (!local)
     return
 
   const overSlot = Boolean(findSlotContextAtPoint(mouseAt.x, mouseAt.y))
 
-  const mouseInGrid
-    = mouseAt.x > parentRect.left
-      && mouseAt.x < parentRect.right
-      && mouseAt.y > parentRect.top
-      && mouseAt.y < parentRect.bottom
-
   // 确保有占位 ghost
   let ghostIndex = currentPage.value.blocks.findIndex(item => item.i === dropId)
   if (mouseInGrid && ghostIndex === -1 && !overSlot && controlStore.moveVisualData) {
-    const colNum = gridColNum.value
+    const m = getGridMetrics()
     const moveData: any = {
       ...controlStore.moveVisualData,
-      x: (currentPage.value.blocks.length * 10) % colNum,
-      y: currentPage.value.blocks.length + 5,
       i: dropId,
       _vid: dropId, // 临时
     }
-    dragItem.value.h = moveData.h || DEFAULT_BLOCK_HEIGHT
-    dragItem.value.w = moveData.w || DEFAULT_BLOCK_WIDTH
+    const w = moveData.w || DEFAULT_BLOCK_WIDTH
+    const h = moveData.h || DEFAULT_BLOCK_HEIGHT
+    moveData.x = Math.max(0, Math.min(Math.round(local.x / m.colWidth), m.cols - w))
+    moveData.y = Math.max(0, Math.round(local.y / m.rowHeight))
+    dragItem.value.h = h
+    dragItem.value.w = w
     dragItem.value.i = dropId
+    dragItem.value.x = moveData.x
+    dragItem.value.y = moveData.y
     currentPage.value.blocks.push(moveData)
     ghostIndex = currentPage.value.blocks.length - 1
   }
@@ -611,11 +661,9 @@ const dragging = throttle(() => {
       return
 
     // 直接用鼠标像素算网格坐标（不再依赖 GridLayoutPlus）
-    const localX = mouseAt.x - parentRect.left
-    const localY = mouseAt.y - parentRect.top
     const m = getGridMetrics()
-    const gx = Math.max(0, Math.round(localX / m.colWidth))
-    const gy = Math.max(0, Math.round(localY / m.rowHeight))
+    const gx = Math.max(0, Math.round(local.x / m.colWidth))
+    const gy = Math.max(0, Math.round(local.y / m.rowHeight))
 
     const w = ghost.w || dragItem.value.w || DEFAULT_BLOCK_WIDTH
     const h = ghost.h || dragItem.value.h || DEFAULT_BLOCK_HEIGHT
@@ -623,8 +671,10 @@ const dragging = throttle(() => {
     const clampedY = Math.max(0, gy)
 
     if (mouseInGrid) {
-      ghost.x = clampedX
-      ghost.y = clampedY
+      if (ghost.x !== clampedX)
+        ghost.x = clampedX
+      if (ghost.y !== clampedY)
+        ghost.y = clampedY
       dragItem.value.i = String(ghostIndex)
       dragItem.value.x = ghost.x
       dragItem.value.y = ghost.y
@@ -679,6 +729,8 @@ function findSlotContextAtPoint(x: number, y: number): { parentBlock: VisualEdit
   const all = Array.from(document.querySelectorAll<HTMLElement>('.slot-grid-canvas'))
   let best: { el: HTMLElement, area: number } | null = null
   for (const slot of all) {
+    if (slot.closest(`.list-group-item-${dropId}`))
+      continue
     const r = slot.getBoundingClientRect()
     if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
       const area = Math.max(1, r.width * r.height)
@@ -698,9 +750,9 @@ function extractSlotContextFromCanvas(slotCanvasEl: HTMLElement): { parentBlock:
   const classList = Array.from(parentEl.classList)
   const vidClass = classList.find(c => c.startsWith('list-group-item-'))
   const parentVid = vidClass?.replace('list-group-item-', '')
-  if (!parentVid) return null
+  if (!parentVid || parentVid === dropId) return null
   const parentBlock = findBlockByVid(parentVid, currentPage.value.blocks)
-  if (!parentBlock) return null
+  if (!parentBlock || isPaletteGhostBlock(parentBlock)) return null
   const slotKey = slotCanvasEl.getAttribute('data-slot-key') || 'default'
   if (!parentBlock.props?.slots?.[slotKey]) return null
   return { parentBlock, slotKey }
@@ -711,12 +763,14 @@ function findSlotElementAtPoint(x: number, y: number): HTMLElement | null {
   const elements = document.elementsFromPoint(x, y)
   for (const el of elements) {
     const slot = (el as HTMLElement).closest('.slot-grid-canvas') as HTMLElement | null
-    if (slot) return slot
+    if (slot && !slot.closest(`.list-group-item-${dropId}`)) return slot
   }
   // 几何回退
   const all = Array.from(document.querySelectorAll<HTMLElement>('.slot-grid-canvas'))
   let best: { el: HTMLElement, area: number } | null = null
   for (const slot of all) {
+    if (slot.closest(`.list-group-item-${dropId}`))
+      continue
     const r = slot.getBoundingClientRect()
     if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
       const area = Math.max(1, r.width * r.height)
@@ -727,15 +781,7 @@ function findSlotElementAtPoint(x: number, y: number): HTMLElement | null {
 }
 
 function dragEnd() {
-  const parentRect = wrapper.value?.getBoundingClientRect()
-  if (!parentRect)
-    return
-
-  const mouseInGrid
-    = mouseAt.x > parentRect.left
-      && mouseAt.x < parentRect.right
-      && mouseAt.y > parentRect.top
-      && mouseAt.y < parentRect.bottom
+  const mouseInGrid = isMouseInCanvasViewport(mouseAt.x, mouseAt.y)
 
   if (!mouseInGrid) {
     // 清理 ghost
@@ -806,16 +852,21 @@ function dragEnd() {
  * 双击添加组件到画布中心
  */
 function addBlock(componentData: VisualEditorBlockData) {
-  if (!wrapper.value)
+  if (!canvasRef.value)
     return
 
-  const parentRect = wrapper.value.getBoundingClientRect()
-  const centerX = parentRect.left + parentRect.width / 2
-  const centerY = parentRect.top + parentRect.height / 2
+  const viewport = getCanvasScrollWrap()?.getBoundingClientRect()
+    ?? wrapper.value?.getBoundingClientRect()
+  const canvasRect = canvasRef.value.getBoundingClientRect()
+  if (!viewport)
+    return
+
+  const centerX = viewport.left + viewport.width / 2
+  const centerY = viewport.top + viewport.height / 2
 
   const m = getGridMetrics()
-  const localX = centerX - parentRect.left
-  const localY = centerY - parentRect.top
+  const localX = centerX - canvasRect.left
+  const localY = centerY - canvasRect.top
   let x = Math.max(0, Math.round(localX / m.colWidth))
   let y = Math.max(0, Math.round(localY / m.rowHeight))
 
@@ -1063,22 +1114,62 @@ const mainOtherRects = computed(() => {
     return []
   const m = getGridMetrics()
   return currentPage.value.blocks
-    .filter(b => b._vid !== active.vid)
+    .filter(b => b._vid !== active.vid && !isPaletteGhostBlock(b))
     .map(b => calcGridItemPixelRect(b.x || 0, b.y || 0, b.w || DEFAULT_BLOCK_WIDTH, b.h || DEFAULT_BLOCK_HEIGHT, m))
 })
 
 // Approximate canvas pixel size for main guides overlay (uses measured root size when available)
+/** 由页面内容（块位置 + 拖拽/缩放视觉态）推算的最小高度（不含视口 100% 基准）。 */
+const rootContentHeightFromBlocks = computed(() => {
+  const m = getGridMetrics()
+  let maxBottom = 0
+  currentPage.value.blocks.forEach((b) => {
+    const bottom = calcGridRowTop((b.y || 0) + (b.h || DEFAULT_BLOCK_HEIGHT), m) + 400
+    if (bottom > maxBottom) maxBottom = bottom
+  })
+  const live = activeDragRect.value || activeResizeRect.value
+  if (live) {
+    const liveBottom = (live.top + live.height) + 300
+    if (liveBottom > maxBottom) maxBottom = liveBottom
+  }
+  if (rootHeight.value > maxBottom) maxBottom = rootHeight.value
+  return Math.ceil(maxBottom)
+})
+
+/** 画布默认高度基准：.wrap-container 可视高度，回退到页面设计高度 */
+function getCanvasBaselineHeight() {
+  if (wrapContainerHeight.value > 0)
+    return wrapContainerHeight.value
+  const pageH = Number(currentPage.value?.config?.pageSize?.height) || 0
+  if (pageH > 0)
+    return pageH
+  return 720
+}
+
+/** 画布 min-height：默认填满可视区域，内容超出时继续增高（使用 px，避免 % 在 flex 下塌陷） */
+const rootCanvasMinHeightStyle = computed(() => {
+  const baseline = getCanvasBaselineHeight()
+  const content = rootContentHeightFromBlocks.value
+  return `${Math.max(baseline, content)}px`
+})
+
+/** 画布实际最小高度（像素） */
+const rootContentMinHeight = computed(() => {
+  return Math.max(getCanvasBaselineHeight(), rootContentHeightFromBlocks.value)
+})
+
 const mainGuidesSize = computed(() => {
   const m = getGridMetrics()
-  // Base on the dynamic content height so guides cover the entire (possibly extended) canvas
-  const h = Math.max(rootContentMinHeight.value, rootHeight.value || 0, 800)
+  const h = Math.max(rootContentHeightFromBlocks.value, getCanvasBaselineHeight(), rootHeight.value || 0)
   return { width: m.containerWidth, height: h }
 })
 
 // 根画布的吸附目标（所有其他块 + 画布边界/中线）
 const mainSnapTargets = computed(() => {
   const m = getGridMetrics()
-  const others = currentPage.value.blocks.map(b =>
+  const others = currentPage.value.blocks
+    .filter(b => !isPaletteGhostBlock(b))
+    .map(b =>
     calcGridItemPixelRect(
       b.x || 0,
       b.y || 0,
@@ -1087,40 +1178,15 @@ const mainSnapTargets = computed(() => {
       m,
     ),
   )
-  // Use the live canvas content height so snapping includes the extended bottom area
-  const estH = Math.max(rootContentMinHeight.value, 800)
+  const estH = Math.max(rootContentHeightFromBlocks.value, getCanvasBaselineHeight())
   return buildSnapTargets(others, m.containerWidth, estH)
 })
 
-/**
- * The effective min-height the root canvas (edit-canvas + inner) should have.
- * Computed from current blocks' positions + any live drag/resize visual rect + generous bottom padding.
- * - Palette drag ghosts are temporarily present in blocks, so they contribute to height automatically.
- * - Live CanvasItem drags feed activeDragRect/activeResizeRect.
- * This allows the page surface to extend downward on demand and shrink when bottom content is removed.
- */
-const rootContentMinHeight = computed(() => {
-  const m = getGridMetrics()
-  let maxBottom = 600
-  currentPage.value.blocks.forEach((b) => {
-    const bottom = calcGridRowTop((b.y || 0) + (b.h || DEFAULT_BLOCK_HEIGHT), m) + 400
-    if (bottom > maxBottom) maxBottom = bottom
-  })
-  // Include live drag/resize so the surface visibly grows while the user is dragging downward
-  const live = activeDragRect.value || activeResizeRect.value
-  if (live) {
-    const liveBottom = (live.top + live.height) + 300
-    if (liveBottom > maxBottom) maxBottom = liveBottom
-  }
-  // Also respect any externally measured size (e.g. after style application or initial load)
-  if (rootHeight.value > maxBottom) maxBottom = rootHeight.value
-  return Math.max(600, Math.ceil(maxBottom))
-})
-
-/** Auto-scroll the simulator viewport when the mouse is near the bottom (or top) edge while dragging. */
+/** 拖拽时靠近边缘自动滚动（在 wrap-container 内的 el-scrollbar 上滚动） */
 function autoScrollDuringDrag(clientY: number) {
-  const scroller = document.querySelector('.simulator-canvas-area') as HTMLElement | null
-  if (!scroller) return
+  const scroller = getCanvasScrollWrap()
+  if (!scroller)
+    return
   const r = scroller.getBoundingClientRect()
   const thresholdBottom = 70
   const thresholdTop = 50
@@ -1159,7 +1225,7 @@ function isDescendantOf(parentBlock: VisualEditorBlockData, childVid: string): b
 // ===================== 自研根画布（CanvasItem）事件处理 =====================
 
 function onRootDragStart(block: VisualEditorBlockData) {
-  if (isRootItemDisabled(block)) return
+  if (isRootItemDisabled(block) || isPaletteGhostBlock(block)) return
   draggingBlockId.value = block._vid
   activeResizeRect.value = null
 }
@@ -1202,6 +1268,8 @@ function onRootDragUpdate(block: VisualEditorBlockData, pos: { left: number; top
 }
 
 function onRootDragEnd(block: VisualEditorBlockData, pos: { left: number; top: number }) {
+  if (isPaletteGhostBlock(block))
+    return
   draggingBlockId.value = null
   activeDragRect.value = null
   handleDragLeaveContainer()
@@ -1212,7 +1280,10 @@ function onRootDragEnd(block: VisualEditorBlockData, pos: { left: number; top: n
     const others = currentPage.value.blocks
       .filter(b => b._vid !== block._vid)
       .map(b => calcGridItemPixelRect(b.x || 0, b.y || 0, b.w || DEFAULT_BLOCK_WIDTH, b.h || DEFAULT_BLOCK_HEIGHT, m))
-    const estH = Math.max(900, (block.y || 0) * m.rowHeight + (block.h || DEFAULT_BLOCK_HEIGHT) * m.rowHeight + 300)
+    const estH = Math.max(
+      getCanvasBaselineHeight(),
+      (block.y || 0) * m.rowHeight + (block.h || DEFAULT_BLOCK_HEIGHT) * m.rowHeight + 300,
+    )
     const targets = buildSnapTargets(others, m.containerWidth, estH)
     const cur = { left: pos.left, top: pos.top, width: getRootItemPixelRect(block).width, height: getRootItemPixelRect(block).height }
     const s = snapDrag(cur, targets, 8)
@@ -1236,8 +1307,9 @@ function onRootDragEnd(block: VisualEditorBlockData, pos: { left: number; top: n
       if (slotChildren) {
         const slotEl = findSlotElementAtPoint(cx, cy)
         const slotLayout = slotEl ? calcSlotDropLayout(slotEl, cx, cy, moved) : null
-        moved.x = slotLayout?.x ?? snapped.x
-        moved.y = slotLayout?.y ?? snapped.y
+        // slotLayout already clamps; fallback to origin of the target slot (snapped is in root coords)
+        moved.x = Math.max(0, slotLayout?.x ?? 0)
+        moved.y = Math.max(0, slotLayout?.y ?? 0)
         moved.w = slotLayout?.w ?? moved.w
         moved.h = slotLayout?.h ?? moved.h
         slotChildren.push(moved)
@@ -1250,8 +1322,10 @@ function onRootDragEnd(block: VisualEditorBlockData, pos: { left: number; top: n
       }
     }
     else {
-      block.x = snapped.x
-      block.y = snapped.y
+      // Final safety clamp for root canvas bounds (x limited by item width)
+      const maxX = Math.max(0, m.cols - (block.w || DEFAULT_BLOCK_WIDTH))
+      block.x = Math.max(0, Math.min(snapped.x, maxX))
+      block.y = Math.max(0, snapped.y)
     }
 
     // Multi-select: apply offset to siblings (post-commit, since root is self-managed)
@@ -1285,7 +1359,8 @@ function onRootResizeUpdate(block: VisualEditorBlockData, size: { width: number;
 function onRootResizeEnd(block: VisualEditorBlockData, size: { width: number; height: number }) {
   activeResizeRect.value = null
   const m = getGridMetrics()
-  block.w = Math.max(1, Math.round(size.width / m.colWidth))
+  const maxW = Math.max(1, m.cols - (block.x || 0))
+  block.w = Math.max(1, Math.min(maxW, Math.round(size.width / m.colWidth)))
   block.h = Math.max(1, Math.round(size.height / m.rowHeight))
 
   recordHistory()
@@ -1398,6 +1473,8 @@ function getCompRenderPointerEvents(item: VisualEditorBlockData) {
  * When a container is being edited, its representation on the parent canvas should be locked (no drag/resize on the frame).
  */
 function isRootItemDisabled(item: VisualEditorBlockData) {
+  if (isPaletteGhostBlock(item))
+    return true
   if (item.static || item._containerEditLocked)
     return true
   if (editingContainerId.value && item._vid === editingContainerId.value)
@@ -2072,19 +2149,26 @@ defineExpose({
 <template>
   <div :class="$style['edit-control-container']">
     <div ref="wrapper" :class="$style['wrap-container']">
-      <div
-        ref="canvasRef"
-        v-loading="visualLoading"
-        class="edit-canvas"
-        :style="editCanvasStyle"
-        @dragover="onDragover"
-        @mousedown="onCanvasMousedown"
-      >
-        <div
-          ref="rootGridRef"
-          class="edit-canvas-inner main-grid-canvas"
-          :style="{ position: 'relative', minHeight: rootContentMinHeight + 'px' }"
-        >
+      <el-auto-resizer class="wrap-auto-resizer">
+        <template #default="{ height, width }">
+          <el-scrollbar
+            ref="canvasScrollbarRef"
+            :height="height"
+            class="canvas-scrollbar"
+          >
+            <div
+              ref="canvasRef"
+              v-loading="visualLoading"
+              class="edit-canvas"
+              :style="editCanvasStyle"
+              @dragover="onDragover"
+              @mousedown="onCanvasMousedown"
+            >
+              <div
+                ref="rootGridRef"
+                class="edit-canvas-inner main-grid-canvas"
+                :style="{ position: 'relative', minHeight: rootCanvasMinHeightStyle }"
+              >
           <!-- Reference guides for main canvas (drag or resize) -->
           <ReferenceGuides
             v-if="activeDragRect || activeResizeRect"
@@ -2108,12 +2192,13 @@ defineExpose({
             :is-editing="true"
             :is-selected="selectedBlockIds.includes(item._vid)"
             :is-focused="item.focus"
-            item-class="root-grid-item"
+            :item-class="['root-grid-item', { 'palette-ghost-item': isPaletteGhostBlock(item) }]"
             :disabled="isRootItemDisabled(item)"
             :show-selection-outline="false"
             :snap-x-lines="mainSnapTargets.xs"
             :snap-y-lines="mainSnapTargets.ys"
             :snap-threshold="8"
+            :container-width="rootContainerWidth"
             @mousedown="(e: MouseEvent) => onBlockMousedown(item, e)"
             @pointerdown="(e: any) => onBlockPointerdown(item, e)"
             @dblclick.stop="(e: MouseEvent) => onBlockDblClick(item, e)"
@@ -2140,6 +2225,7 @@ defineExpose({
                 drag,
                 'has-slot': !!Object.keys(item.props?.slots || {}).length,
                 'has-inner-title': item.showTitle === true && isInnerBlockTitle(item.titleStyle),
+                'palette-ghost': isPaletteGhostBlock(item),
                 [`list-group-item-${item._vid}`]: true,
               }"
               @mousedown="onBlockMousedown(item, $event)"
@@ -2197,14 +2283,17 @@ defineExpose({
             </div>
           </CanvasItem>
 
-          <!-- 框选遮罩 -->
-          <div
-            v-if="boxSelectionRect"
-            class="box-selection-overlay"
-            :style="boxSelectionStyle"
-          />
-        </div>
-      </div>
+              <!-- 框选遮罩 -->
+              <div
+                v-if="boxSelectionRect"
+                class="box-selection-overlay"
+                :style="boxSelectionStyle"
+              />
+            </div>
+          </div>
+          </el-scrollbar>
+        </template>
+      </el-auto-resizer>
     </div>
   </div>
 </template>
@@ -2212,26 +2301,46 @@ defineExpose({
 <style lang="scss" module>
 .edit-control-container {
   width: 100%;
-  /* height auto allows tall page content to expand; min-height keeps reasonable size for short pages */
-  height: auto;
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
   padding: 16px;
+  box-sizing: border-box;
 
   .wrap-container {
     width: 100%;
-    /* height auto so the tall page card can expand and cause outer scrollers to activate */
-    height: auto;
-    min-height: 100%;
-    box-shadow: 0 8px 10px #00000012;
-    background-color: #f5f5f5;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--el-box-shadow-light);
+    background-color: var(--el-fill-color-light);
     border-radius: var(--el-border-radius-base);
-    overflow: visible;
+    overflow: hidden;
   }
 }
 </style>
 
 <style lang="scss" scoped>
 @use './func.scss' as *;
+
+.wrap-auto-resizer {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+.canvas-scrollbar {
+  width: 100%;
+
+  :deep(.el-scrollbar__wrap) {
+    overflow-x: hidden;
+  }
+
+  :deep(.el-scrollbar__view) {
+    width: 100%;
+  }
+}
 
 .edit-canvas-scroll {
   display: flex;
@@ -2244,17 +2353,15 @@ defineExpose({
 .edit-canvas {
   position: relative;
   flex-shrink: 0;
-  box-shadow: 0 8px 24px rgb(0 0 0 / 8%);
+  width: 100%;
+  box-shadow: var(--el-box-shadow-light);
   border-radius: var(--el-border-radius-base);
   overflow: visible;
-  /* min-height is set via :style from rootContentMinHeight so the page can grow vertically */
 }
 
 .edit-canvas-inner {
   width: 100%;
-  /* Do not force height:100% which would clip tall content. min-height (inline) drives the size for absolute children. */
   height: auto;
-  min-height: 400px;
   overflow: visible;
   border-radius: inherit;
 }
@@ -2276,6 +2383,12 @@ defineExpose({
   // background-color: #fff;
   overflow: hidden;
   outline: none;
+
+  /* 组件库拖入时的临时 ghost：不参与 hit-test，避免容器 ghost 自带 slot 导致反复创建/销毁闪烁 */
+  &.palette-ghost {
+    pointer-events: none;
+    opacity: 0.72;
+  }
 
   &.is-editing-group,
   &.is-editing-container,
@@ -2404,6 +2517,11 @@ defineExpose({
 
 :deep(.vgl-item:has(.list-group-item.focus)) {
   z-index: 12;
+}
+
+:deep(.palette-ghost-item) {
+  pointer-events: none;
+  cursor: default;
 }
 
 /*

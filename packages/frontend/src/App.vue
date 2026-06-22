@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { provide, toValue } from 'vue'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { useThemeStore } from '@/stores/themeStore'
 import { initVisualData, injectKey, localKey } from '@/visual-editor/hooks/useVisualData'
 
 const visualData = initVisualData()
@@ -9,6 +10,8 @@ provide(injectKey, visualData)
 
 const { jsonData } = visualData
 const workspaceStore = useWorkspaceStore()
+// 初始化主题（会自动读取 localStorage / 系统偏好并应用 dark class）
+useThemeStore()
 
 window.addEventListener('beforeunload', () => {
   const id = workspaceStore.currentApp?.id

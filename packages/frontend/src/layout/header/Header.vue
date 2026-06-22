@@ -2,8 +2,10 @@
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { Moon, Sunny } from '@element-plus/icons-vue'
 import SvgIcon from '@/components/svg-icon/SvgIcon.vue'
 import { useControlStore } from '@/stores/controlStore'
+import { useThemeStore } from '@/stores/themeStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 
 const workspaceStore = useWorkspaceStore()
@@ -14,6 +16,8 @@ const { layoutCollapse, settingCollapse, asideCollapse } = storeToRefs(controlSt
 
 const { currentMenu, currentApp, currentDataset } = storeToRefs(workspaceStore)
 
+const themeStore = useThemeStore()
+
 const route = useRoute()
 
 const isAppEdit = computed(() => route?.path?.includes('/application/edit'))
@@ -21,12 +25,6 @@ const isAppEdit = computed(() => route?.path?.includes('/application/edit'))
 const childTitle = computed(() => {
   return currentApp.value?.title || currentDataset.value?.name || ''
 })
-
-// watch(currentMenu, () => {
-//   console.log(currentMenu.value)
-
-//   debugger
-// }, { immediate: true })
 </script>
 
 <template>
@@ -53,26 +51,14 @@ const childTitle = computed(() => {
     </div>
 
     <el-space>
-      <!-- <el-tooltip
-        content="菜单"
-        placement="top"
-      >
-        <el-button :type="asideCollapse ? '' : 'primary'" :icon="Menu" @click="asideCollapse = !asideCollapse" />
-      </el-tooltip> -->
-      <!-- <el-tooltip v-if="isAppEdit" content="页面" placement="top">
+      <!-- 暗黑模式切换 -->
+      <el-tooltip :content="themeStore.isDark ? '切换浅色模式' : '切换暗黑模式'" placement="top">
         <el-button
-          :type="layoutCollapse ? '' : 'primary'"
-          :icon="ScaleToOriginal"
-          @click="layoutCollapse = !layoutCollapse"
+          :icon="themeStore.isDark ? Sunny : Moon"
+          circle
+          @click="themeStore.toggleTheme()"
         />
-      </el-tooltip> -->
-      <!-- <el-tooltip v-if="isAppEdit" content="组件设置" placement="top">
-        <el-button
-          :type="settingCollapse ? '' : 'primary'"
-          :icon="Setting"
-          @click="settingCollapse = !settingCollapse"
-        />
-      </el-tooltip> -->
+      </el-tooltip>
     </el-space>
   </div>
 </template>

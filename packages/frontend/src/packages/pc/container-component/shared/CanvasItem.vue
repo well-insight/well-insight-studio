@@ -70,6 +70,23 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  /**
+   * Optional logical container width in px.
+   * When > 0, live drag will clamp so the item's right edge does not exceed this.
+   */
+  containerWidth: {
+    type: Number,
+    default: 0,
+  },
+  /**
+   * Optional logical container height in px.
+   * When > 0, live drag will clamp so the item's bottom edge does not exceed this.
+   * Pass 0 (default) to allow vertical extension (canvas growth).
+   */
+  containerHeight: {
+    type: Number,
+    default: 0,
+  },
 })
 
 const emit = defineEmits([
@@ -201,9 +218,18 @@ function onMouseMove(e: MouseEvent) {
     newTop += snap.dy
   }
 
-  // Light clamp to avoid negative during live drag (parent grid will further constrain on commit)
+  // Clamp to keep the item fully inside the canvas bounds (if provided).
+  // Vertical growth is allowed by default (containerHeight=0 means no bottom clamp).
   newLeft = Math.max(0, newLeft)
   newTop = Math.max(0, newTop)
+  if (props.containerWidth > 0) {
+    const maxL = Math.max(0, props.containerWidth - props.width)
+    newLeft = Math.min(newLeft, maxL)
+  }
+  if (props.containerHeight > 0) {
+    const maxT = Math.max(0, props.containerHeight - props.height)
+    newTop = Math.min(newTop, maxT)
+  }
 
   dragVisual.value = { left: newLeft, top: newTop }
 
@@ -287,6 +313,16 @@ function onResizeMove(e: MouseEvent) {
     )
     newW = snap.width
     newH = snap.height
+  }
+
+  // Clamp resize so item does not overflow the provided container bounds (right/bottom)
+  if (props.containerWidth > 0) {
+    const maxW = Math.max(20, props.containerWidth - props.left)
+    newW = Math.min(newW, maxW)
+  }
+  if (props.containerHeight > 0) {
+    const maxH = Math.max(20, props.containerHeight - props.top)
+    newH = Math.min(newH, maxH)
   }
 
   resizeVisual.value = { width: newW, height: newH }

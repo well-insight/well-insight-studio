@@ -3,14 +3,17 @@
   z-index: 99;
   padding: 8px 0;
   pointer-events: none;
-  background-color: white;
+  background-color: var(--el-bg-color-overlay);
   opacity: 0;
-  box-shadow: 0 2px 5px 1px #ddd;
+  box-shadow: var(--el-box-shadow-light);
+  border: 1px solid var(--el-border-color-light);
+  border-radius: var(--el-border-radius-base);
   transition: opacity 200ms linear;
 
   .dropdown-option {
     padding: 5px 12px;
     font-size: 14px;
+    color: var(--el-text-color-primary);
 
     & > i {
       margin-right: 4px;
@@ -18,7 +21,7 @@
 
     &:hover {
       cursor: pointer;
-      background-color: #efefef;
+      background-color: var(--el-fill-color-light);
     }
   }
 

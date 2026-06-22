@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { PropType } from 'vue'
 import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
+import { useResizeObserver } from '@vueuse/core'
 import { computed, inject, ref } from 'vue'
 import { ContainerEditorContextKey, EditingContainerIdKey } from '@/packages/pc/container-component/container'
 import CanvasItem from './CanvasItem.vue'
@@ -33,6 +34,16 @@ const isEditingMode = computed(() =>
 )
 
 const selectedIds = computed(() => editorCtx?.selectedBlockIds.value ?? [])
+
+const canvasRef = ref<HTMLElement>()
+const groupCanvasWidth = ref(0)
+const groupCanvasHeight = ref(0)
+
+useResizeObserver(canvasRef, (entries) => {
+  const rect = entries[0]?.contentRect
+  groupCanvasWidth.value = rect?.width ?? 0
+  groupCanvasHeight.value = rect?.height ?? 0
+})
 
 function isBlockSelected(vid: string) {
   return selectedIds.value.includes(vid)
@@ -91,15 +102,33 @@ function handleItemMouseDown(e: MouseEvent) {
   }
 }
 
-// 拖拽结束：直接提交像素位置（组使用绝对定位）
+// 拖拽结束：直接提交像素位置（组使用绝对定位），并夹在组边界内
 function onItemDragEnd(child: VisualEditorBlockData, pos: { left: number, top: number }) {
-  editorCtx?.updateGroupInnerBlockPosition?.(child._vid, pos.left, pos.top)
+  const rect = getChildPixelRect(child)
+  let l = Math.max(0, pos.left)
+  let t = Math.max(0, pos.top)
+  if (groupCanvasWidth.value > 0) {
+    l = Math.min(l, Math.max(0, groupCanvasWidth.value - rect.width))
+  }
+  if (groupCanvasHeight.value > 0) {
+    t = Math.min(t, Math.max(0, groupCanvasHeight.value - rect.height))
+  }
+  editorCtx?.updateGroupInnerBlockPosition?.(child._vid, l, t)
   editorCtx?.onGroupInnerDragEnd?.()
 }
 
 // 缩放结束：直接提交像素尺寸
 function onItemResizeEnd(child: VisualEditorBlockData, size: { width: number, height: number }) {
-  editorCtx?.updateGroupInnerBlockSize?.(child._vid, size.width, size.height)
+  const base = getChildPixelRect(child)
+  let w = Math.max(20, size.width)
+  let h = Math.max(20, size.height)
+  if (groupCanvasWidth.value > 0) {
+    w = Math.min(w, Math.max(20, groupCanvasWidth.value - base.left))
+  }
+  if (groupCanvasHeight.value > 0) {
+    h = Math.min(h, Math.max(20, groupCanvasHeight.value - base.top))
+  }
+  editorCtx?.updateGroupInnerBlockSize?.(child._vid, w, h)
   editorCtx?.onGroupInnerDragEnd?.()
 }
 
@@ -124,6 +153,7 @@ function onInnerContextmenu(e: MouseEvent, block: VisualEditorBlockData) {
 
 <template>
   <div
+    ref="canvasRef"
     class="group-absolute-canvas"
     :class="{
       'is-editing': isEditingMode,
@@ -146,6 +176,8 @@ function onInnerContextmenu(e: MouseEvent, block: VisualEditorBlockData) {
       :is-focused="child.focus"
       :disabled="child.static || child._containerEditLocked"
       item-class="group-absolute-item"
+      :container-width="groupCanvasWidth"
+      :container-height="groupCanvasHeight"
       @mousedown="handleItemMouseDown"
       @select="editorCtx?.selectComp(child, $event)"
       @contextmenu="onInnerContextmenu($event, child)"

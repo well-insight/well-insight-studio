@@ -312,7 +312,7 @@ export function defaultTextStyleConfig(): TextStyleConfig {
   return {
     fontSize: '14px',
     fontWeight: '600',
-    color: '#303133',
+    color: 'var(--el-text-color-primary)',
     backgroundColor: 'transparent',
     borderRadius: '0',
     padding: '12px 12px 8px',
@@ -386,7 +386,7 @@ export function getBlockTitleInlineStyle(titleStyle?: TextStyleConfig): CSSPrope
   const style: CSSProperties = {
     fontSize: ts.fontSize,
     fontWeight: ts.fontWeight,
-    color: ts.color || (inner ? '#303133' : '#ffffff'),
+    color: ts.color || (inner ? 'var(--el-text-color-primary)' : '#ffffff'),
     padding: ts.padding,
   }
 

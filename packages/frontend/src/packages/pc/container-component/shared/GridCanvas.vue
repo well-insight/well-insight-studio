@@ -450,7 +450,7 @@ function onItemResizeEnd(child: VisualEditorBlockData, size: { width: number, he
     return
   const m = slotMetrics.value
   const x = child.x ?? 0
-  const maxW = m.cols - x
+  const maxW = Math.max(1, m.cols - x)
 
   const newW = Math.max(1, Math.min(maxW, Math.round(size.width / m.colWidth)))
   const newH = Math.max(1, Math.round(size.height / m.rowHeight))
@@ -555,6 +555,7 @@ function handleItemMouseDown(e: MouseEvent, _child?: VisualEditorBlockData) {
         :snap-x-lines="snapTargets.xs"
         :snap-y-lines="snapTargets.ys"
         :snap-threshold="6"
+        :container-width="slotWidth"
         @mousedown="(e: MouseEvent) => handleItemMouseDown(e, child)"
         @select="handleSelect(child, $event)"
         @contextmenu="handleContextmenu(child, $event)"
@@ -584,7 +585,6 @@ function handleItemMouseDown(e: MouseEvent, _child?: VisualEditorBlockData) {
       v-else
       ref="emptyRef"
       class="grid-empty slot-grid-empty"
-      :style="isEditingMode ? { minHeight: localContentMinHeight + 'px' } : undefined"
       @dragenter.prevent="handleDragEnter"
       @dragleave.prevent="handleDragLeave"
       @dragover.prevent="handleDragOver"
@@ -660,7 +660,7 @@ function handleItemMouseDown(e: MouseEvent, _child?: VisualEditorBlockData) {
 .grid-empty,
 .slot-grid-empty {
   width: 100%;
-  min-height: 160px;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
