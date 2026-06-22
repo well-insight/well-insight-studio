@@ -4,6 +4,7 @@ import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
 import { cloneDeep } from 'lodash-es'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useAnimate } from '@/hooks/useAnimate'
+import { useCanvasThemeStore } from '@/stores/canvasThemeStore'
 import { resolveBlockBorderCss } from '@/utils/blockBorder'
 import {
   getBlockAnimationElement,
@@ -104,6 +105,10 @@ watch(
   { deep: true },
 )
 
+/** 预览模式也应用主题 */
+const themeStore = useCanvasThemeStore()
+const themeStyle = computed(() => themeStore.themeCSSVars)
+
 onMounted(() => {
   if (props.active) {
     buildPreviewLayout()
@@ -113,7 +118,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div :class="$style.previewRoot">
+  <div :style="themeStyle" :class="$style.previewRoot">
     <el-scrollbar class="h-full w-full">
       <div :class="$style.canvas" :style="editCanvasStyle">
         <div :class="$style.canvasInner" :style="{ position: 'relative', minHeight: '400px' }">

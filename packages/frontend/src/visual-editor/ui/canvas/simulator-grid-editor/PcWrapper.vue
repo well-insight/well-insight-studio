@@ -15,6 +15,7 @@ import { useGlobalProperties } from '@/hooks/useGlobalProperties'
 import { ContainerEditorContextKey, EditingContainerIdKey } from '@/packages/pc/container-component/container'
 import { calcSlotDropLayout } from '@/packages/pc/container-component/shared/slot-grid.utils'
 import { useControlStore } from '@/stores/controlStore'
+import { useCanvasThemeStore } from '@/stores/canvasThemeStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { resolveBlockBorderCss } from '@/utils/blockBorder'
 import {
@@ -575,19 +576,9 @@ function onGroupInnerDragEnd() {
   recordHistory()
 }
 
-onMounted(() => {
-  document.addEventListener('dragover', syncMousePosition)
-  document.addEventListener('mousemove', syncMousePosition, true)
-  controlStore.registerCanvasSelectHandler(selectComp)
-
-  // Initial measurement for root grid (like GridCanvas slotWidth)
-  nextTick(() => {
-    if (rootGridRef.value) {
-      rootWidth.value = rootGridRef.value.clientWidth
-      rootHeight.value = rootGridRef.value.clientHeight
-    }
-  })
-})
+/** 主题 CSS 变量（直接在模板中通过 :style 绑定，保证实时响应） */
+const themeStore = useCanvasThemeStore()
+const themeStyle = computed(() => themeStore.themeCSSVars)
 
 onBeforeUnmount(() => {
   document.removeEventListener('dragover', syncMousePosition)
@@ -2147,7 +2138,7 @@ defineExpose({
 </script>
 
 <template>
-  <div :class="$style['edit-control-container']">
+  <div :style="themeStyle" :class="$style['edit-control-container']">
     <div ref="wrapper" :class="$style['wrap-container']">
       <el-auto-resizer class="wrap-auto-resizer">
         <template #default="{ height, width }">

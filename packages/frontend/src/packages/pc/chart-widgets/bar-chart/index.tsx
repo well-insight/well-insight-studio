@@ -1,7 +1,6 @@
 import type { VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
 import { ElAutoResizer } from 'element-plus'
 import {
-  createEditorColorProp,
   createEditorInputProp,
   createEditorSwitchProp,
 } from '@/visual-editor/visual-editor.props'
@@ -26,7 +25,6 @@ export default {
             default: (size: { width: number, height: number }) => (
               <BarChartView
                 bindings={block.datasetBindings}
-                barColor={props.barColor}
                 useSampleData={props.useSampleData}
                 showRefresh={props.showRefresh}
                 width={Math.max(size.width, 200)}
@@ -50,7 +48,6 @@ export default {
       defaultValue: '',
       tips: '由数据配置中的指标字段自动同步',
     }),
-    barColor: createEditorColorProp({ label: '柱条颜色', defaultValue: '#409EFF' }),
     useSampleData: createEditorSwitchProp({
       label: '未绑定时显示示例',
       defaultValue: true,

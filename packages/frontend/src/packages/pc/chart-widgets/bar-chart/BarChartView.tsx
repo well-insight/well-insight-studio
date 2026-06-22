@@ -4,6 +4,7 @@ import { Refresh } from '@element-plus/icons-vue'
 import { ElButton, ElEmpty, ElIcon } from 'element-plus'
 import { computed, defineComponent } from 'vue'
 import { buildBarChartOption, EChartsView } from '@/components/echarts'
+import { useChartThemeColors } from '@/hooks/useChartThemeColors'
 import { useDatasetChartData } from '@/hooks/useDatasetChartData'
 
 export default defineComponent({
@@ -13,7 +14,6 @@ export default defineComponent({
       type: Object as PropType<BlockDatasetBindings | undefined>,
       default: undefined,
     },
-    barColor: { type: String, default: '#409EFF' },
     useSampleData: { type: Boolean, default: true },
     showRefresh: { type: Boolean, default: true },
     compact: { type: Boolean, default: false },
@@ -26,10 +26,13 @@ export default defineComponent({
       useSampleData: () => props.useSampleData,
     })
 
+    // 直接从画布主题获取图表颜色
+    const { chartColors } = useChartThemeColors()
+
     const chartOption = computed(() =>
       buildBarChartOption({
         data: data.value,
-        barColor: props.barColor,
+        colors: chartColors.value,
         compact: props.compact,
       }),
     )

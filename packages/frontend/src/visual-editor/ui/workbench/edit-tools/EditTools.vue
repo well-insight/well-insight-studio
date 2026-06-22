@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import {
   DocumentChecked,
+  MagicStick,
   RefreshLeft,
   RefreshRight,
   VideoPlay,
@@ -15,6 +16,7 @@ import { localKey, useVisualData } from '@/visual-editor/hooks/useVisualData'
 import CanvasLayerDropdown from './components/CanvasLayerDropdown.vue'
 import PageSettingButton from './components/PageSetting.vue'
 import Preview from './components/Preview.vue'
+import { ThemePanel } from '@/visual-editor/ui/workbench/theme-panel'
 
 const workspaceStore = useWorkspaceStore()
 const { currentApp } = storeToRefs(workspaceStore)
@@ -117,6 +119,21 @@ function previewPage() {
         <el-button text :icon="RefreshRight" :disabled="!canRedo" @click="handleRedo" />
       </el-tooltip>
       <el-divider direction="vertical" />
+
+      <el-popover
+        placement="bottom"
+        trigger="click"
+        :width="280"
+        transition="el-zoom-in-top"
+        :popper-class="$style['theme-popover']"
+      >
+        <template #reference>
+          <el-button text :icon="MagicStick" title="主题设置" />
+        </template>
+        <ThemePanel />
+      </el-popover>
+
+      <el-divider direction="vertical" />
       <!-- <el-button v-if="currentApp?.clientType === 2" text :icon="Iphone" @click="triggerClient" />
       <el-button v-if="currentApp?.clientType === 1" text :icon="Monitor" @click="triggerClient" />
       <el-button text :icon="Orange" /> -->
@@ -190,5 +207,13 @@ function previewPage() {
   &.disable {
     background-color: red;
   }
+}
+
+.theme-popover {
+  --el-popover-padding: 0;
+  --el-popover-border-radius: 12px;
+
+  padding: 0 !important;
+  overflow: hidden;
 }
 </style>

@@ -76,7 +76,7 @@ function onDblClick(w: VisualEditorComponent) {
 <template>
   <div
     :class="$style['component-list-container']"
-    class="flex flex-col items-center justify-center gap-[24px] rounded-[24px] bg-[var(--el-bg-color)] px-2 py-3"
+    class="flex flex-col items-center justify-center rounded-[16px] bg-[var(--el-bg-color)]"
   >
     <el-popover
       v-for="(e, i) in widgets"
@@ -84,20 +84,30 @@ function onDblClick(w: VisualEditorComponent) {
       trigger="hover"
       placement="right"
       transition="el-zoom-in-left"
-      :width="260"
+      :width="280"
       :popper-class="$style['component-popover']"
       :teleported="true"
     >
       <template #reference>
-        <el-button text class="h-[40px] w-[40px] p-[6px]">
-          <SvgIcon :size="18" :name="e.icon" />
+        <el-button
+          text
+          :class="[
+            $style['nav-btn'],
+            { [$style['nav-btn--active']]: activeComp === e.title },
+          ]"
+          @click="activeComp = e.title"
+        >
+          <SvgIcon :size="20" :name="e.icon" />
         </el-button>
       </template>
 
-      <el-scrollbar class="w-full select-none" view-style="padding: 8px" max-height="500px">
+      <el-scrollbar class="w-full select-none" view-style="padding: 6px" max-height="520px">
+        <div :class="$style['popover-header']">
+          <SvgIcon :size="16" :name="e.icon" />
+          <span>{{ e.title }}</span>
+        </div>
         <template v-for="(w, i) in e.widgets" :key="i">
           <div
-            class="flex w-full cursor-pointer items-center gap-2 rounded-[4px] px-2 py-2"
             :class="$style['component-item']"
             draggable="true"
             @dragstart="(e) => dragStart(e, w, i)"
@@ -105,16 +115,16 @@ function onDblClick(w: VisualEditorComponent) {
             @dragend="dragEnd"
             @dblclick="onDblClick(w)"
           >
-            <el-button class="h-[45px] w-[45px]" text bg>
-              <SvgIcon v-if="isString(w?.icon)" :size="35" :name="w?.icon" />
-            </el-button>
-            <div class="flex h-full w-0 flex-auto flex-col items-start self-start">
-              <el-text class="self-start text-[16px]">
+            <div :class="$style['component-item__icon']">
+              <SvgIcon v-if="isString(w?.icon)" :size="28" :name="w?.icon" />
+            </div>
+            <div :class="$style['component-item__info']">
+              <span :class="$style['component-item__label']">
                 {{ w.label }}
-              </el-text>
-              <el-text class="self-start text-[12px]">
+              </span>
+              <span :class="$style['component-item__desc']">
                 {{ w.description }}
-              </el-text>
+              </span>
             </div>
           </div>
         </template>
@@ -126,22 +136,140 @@ function onDblClick(w: VisualEditorComponent) {
 <style lang="scss" module>
 .component-list-container {
   box-shadow: var(--el-box-shadow-light);
+  gap: 16px;
+  padding: 8px 4px;
+  transition: box-shadow 0.25s ease;
+
+  &:hover {
+    box-shadow: var(--el-box-shadow);
+  }
+
   :global {
     .el-button + .el-button {
       margin-left: 0;
     }
   }
 }
-.component-popover {
-  padding: 0 !important;
-}
-.component-item {
+
+.nav-btn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+  border-radius: 10px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--el-text-color-secondary);
+
   &:hover {
     background-color: var(--el-color-primary-light-9);
+    color: var(--el-color-primary);
+    transform: scale(1.08);
+  }
+
+  &--active {
+    background-color: var(--el-color-primary-light-9);
+    color: var(--el-color-primary);
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 18px;
+      border-radius: 0 3px 3px 0;
+      background-color: var(--el-color-primary);
+    }
+  }
+}
+
+.popover-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--el-text-color-regular);
+  border-bottom: 1px solid var(--el-border-color-light);
+  margin-bottom: 4px;
+}
+
+.component-popover {
+  padding: 0 !important;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.component-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  margin: 2px 0;
+  border-radius: 8px;
+  cursor: grab;
+  user-select: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    background-color: var(--el-color-primary-light-9);
+    transform: translateX(4px);
 
     :global(.svg-icon) {
       color: var(--el-color-primary);
     }
+  }
+
+  &:active {
+    cursor: grabbing;
+    transform: scale(0.97);
+    background-color: var(--el-color-primary-light-8);
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background-color: var(--el-fill-color-light);
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    color: var(--el-text-color-secondary);
+
+    .component-item:hover & {
+      background-color: var(--el-color-primary-light-8);
+      color: var(--el-color-primary);
+    }
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--el-text-color-primary);
+    line-height: 1.4;
+  }
+
+  &__desc {
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+    line-height: 1.4;
+    margin-top: 1px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
   }
 }
 </style>
