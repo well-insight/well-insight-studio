@@ -1,162 +1,172 @@
 /**
  * 画布主题 Store
- * 仿照 echarts-theme-builder 的 useThemeStore 模式设计
- * 管理主题切换、自定义主题、主题持久化
+ * 管理主题切换、多自定义主题的增删改、主题持久化
  */
 import { defineStore } from 'pinia'
-import { reactive, ref, computed } from 'vue'
+import { ref, computed } from 'vue'
 import type { CanvasTheme } from '@/common/types/canvasTheme'
 import { themeToCSSVars } from '@/common/types/canvasTheme'
-import { PREDEFINED_THEMES, getPredefinedTheme } from '@/common/types/predefinedThemes'
-import { cloneDeep, merge } from 'lodash-es'
+import {
+  PREDEFINED_THEMES,
+  getPredefinedTheme,
+  PREDEFINED_THEME_METAS,
+} from '@/common/types/predefinedThemes'
+import { cloneDeep } from 'lodash-es'
+import { getPresetEchartsJsonName } from '@/common/types/predefinedThemes'
 
-/** 默认主题 ID */
-const DEFAULT_THEME_ID = 'default'
-
-/** localStorage 存储 key */
+const DEFAULT_THEME_ID = 'v5'
 const STORAGE_KEY = 'canvas-theme-config'
 
-/** 保存到 localStorage 的主题配置结构 */
 interface StoredThemeConfig {
-  /** 当前选中的主题 ID（自定义主题时为 'custom'） */
   activeThemeId: string
-  /** 自定义主题数据（当 activeThemeId === 'custom' 时使用） */
-  customTheme?: CanvasTheme | null
+  userThemes: UserThemeItem[]
 }
 
-/**
- * 创建默认自定义主题（以默认主题为基础）
- */
-function createDefaultCustomTheme(): CanvasTheme {
-  const base = getPredefinedTheme(DEFAULT_THEME_ID)
-  return cloneDeep(base ?? PREDEFINED_THEMES.default)
+export interface UserThemeItem {
+  id: string
+  name: string
+  theme: CanvasTheme
 }
 
-/**
- * 从 localStorage 读取主题配置
- */
+export interface ThemeMeta {
+  id: string
+  name: string
+  isPreset: boolean
+  previewColors: string[]
+  previewBg: string
+  isDark: boolean
+}
+
 function loadStoredConfig(): StoredThemeConfig {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
-      return JSON.parse(raw)
+      const parsed = JSON.parse(raw)
+      return {
+        activeThemeId: parsed.activeThemeId ?? DEFAULT_THEME_ID,
+        userThemes: parsed.userThemes ?? [],
+      }
     }
   }
-  catch {
-    // ignore
-  }
-  return { activeThemeId: DEFAULT_THEME_ID, customTheme: null }
+  catch { /* ignore */ }
+  return { activeThemeId: DEFAULT_THEME_ID, userThemes: [] }
 }
 
-/**
- * 保存主题配置到 localStorage
- */
 function saveStoredConfig(config: StoredThemeConfig) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
-  }
-  catch {
-    // ignore
-  }
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(config)) }
+  catch { /* ignore */ }
 }
 
 export const useCanvasThemeStore = defineStore('canvasTheme', () => {
-  // 从 localStorage 恢复配置
   const stored = loadStoredConfig()
 
-  /** 当前选中的主题 ID */
   const activeThemeId = ref<string>(stored.activeThemeId ?? DEFAULT_THEME_ID)
+  const userThemes = ref<UserThemeItem[]>(stored.userThemes)
 
-  /** 自定义主题数据 */
-  const customTheme = ref<CanvasTheme>(
-    stored.customTheme ?? createDefaultCustomTheme(),
-  )
-
-  /** 当前生效的主题（计算属性） */
   const currentTheme = computed<CanvasTheme>(() => {
-    if (activeThemeId.value === 'custom') {
-      return customTheme.value
+    const override = userThemes.value.find(t => t.id === activeThemeId.value)
+    if (override)
+      return override.theme
+
+    if (activeThemeId.value.startsWith('user_')) {
+      const found = userThemes.value.find(t => t.id === activeThemeId.value)
+      if (found)
+        return found.theme
     }
-    return getPredefinedTheme(activeThemeId.value) ?? PREDEFINED_THEMES.default
+    return getPredefinedTheme(activeThemeId.value) ?? getPredefinedTheme('v5')!
   })
 
-  /** 主题对应的 CSS 变量 */
   const themeCSSVars = computed(() => themeToCSSVars(currentTheme.value))
-
-  /** 是否为自定义主题模式 */
-  const isCustomMode = computed(() => activeThemeId.value === 'custom')
-
-  /** 是否为暗色主题 */
   const isDark = computed(() => currentTheme.value.isDark)
+  const chartColors = computed(() => currentTheme.value.chartColors ?? [])
+  const isPresetActive = computed(() => !activeThemeId.value.startsWith('user_'))
 
-  /** 图表调色板 */
-  const chartColors = computed(() => currentTheme.value.chartColors)
+  /** 当前预设主题对应的 ECharts JSON 文件名（用于加载完整配置） */
+  const currentPresetEchartsName = computed(() => getPresetEchartsJsonName(activeThemeId.value))
 
-  /**
-   * 切换到预定义主题
-   */
-  function selectPredefinedTheme(themeId: string) {
-    if (PREDEFINED_THEMES[themeId]) {
-      activeThemeId.value = themeId
-      persistConfig()
-    }
+  const allThemeMetas = computed<ThemeMeta[]>(() => {
+    const presetIds = new Set(PREDEFINED_THEME_METAS.map(m => m.id))
+    const presetMetas: ThemeMeta[] = PREDEFINED_THEME_METAS.map((m) => {
+      const override = userThemes.value.find(t => t.id === m.id)
+      if (override) {
+        return {
+          id: m.id,
+          name: override.name,
+          isPreset: true,
+          previewColors: (override.theme.chartColors ?? []).slice(0, 5),
+          previewBg: override.theme.bg?.page ?? m.previewBg,
+          isDark: override.theme.isDark,
+        }
+      }
+      return {
+        id: m.id,
+        name: m.name,
+        isPreset: true,
+        previewColors: m.previewColors,
+        previewBg: m.previewBg,
+        isDark: m.isDark,
+      }
+    })
+    const userMetas: ThemeMeta[] = userThemes.value
+      .filter(t => !presetIds.has(t.id))
+      .map(t => ({
+        id: t.id,
+        name: t.name,
+        isPreset: false,
+        previewColors: (t.theme.chartColors ?? []).slice(0, 5),
+        previewBg: t.theme.bg?.page ?? '#f5f7fa',
+        isDark: t.theme.isDark,
+      }))
+    return [...presetMetas, ...userMetas]
+  })
+
+  function getThemeById(id: string): CanvasTheme | undefined {
+    const override = userThemes.value.find(t => t.id === id)
+    if (override)
+      return cloneDeep(override.theme)
+
+    if (id.startsWith('user_'))
+      return undefined
+
+    const preset = getPredefinedTheme(id)
+    return preset ? cloneDeep(preset) : undefined
   }
 
-  /**
-   * 切换到自定义主题模式
-   */
-  function switchToCustom() {
-    activeThemeId.value = 'custom'
+  function selectTheme(id: string) {
+    activeThemeId.value = id
     persistConfig()
   }
 
-  /**
-   * 更新自定义主题的某个颜色值
-   */
-  function updateCustomThemeColor(path: string, value: string) {
-    const keys = path.split('.')
-    let target: any = customTheme.value
-    for (let i = 0; i < keys.length - 1; i++) {
-      target = target?.[keys[i]]
+  function saveUserTheme(id: string | null, name: string, theme: CanvasTheme): string {
+    const themeId = id ?? `user_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+    theme.id = themeId
+    theme.name = name
+    const idx = userThemes.value.findIndex(t => t.id === themeId)
+    if (idx >= 0) {
+      userThemes.value[idx] = { id: themeId, name, theme }
     }
-    if (target && keys[keys.length - 1] in target) {
-      target[keys[keys.length - 1]] = value
+    else {
+      userThemes.value.push({ id: themeId, name, theme })
+    }
+    activeThemeId.value = themeId
+    persistConfig()
+    return themeId
+  }
+
+  function deleteUserTheme(id: string) {
+    const idx = userThemes.value.findIndex(t => t.id === id)
+    if (idx < 0) return
+    userThemes.value.splice(idx, 1)
+    if (activeThemeId.value === id) {
+      activeThemeId.value = DEFAULT_THEME_ID
     }
     persistConfig()
   }
 
-  /**
-   * 更新自定义主题的图表调色板
-   */
-  function updateChartColors(colors: string[]) {
-    customTheme.value.chartColors = colors
-    persistConfig()
+  function getDefaultTheme(): CanvasTheme {
+    return cloneDeep(getPredefinedTheme('v5')!)
   }
 
-  /**
-   * 基于当前主题创建自定义主题并进入编辑模式
-   */
-  function forkCurrentTheme() {
-    customTheme.value = cloneDeep(currentTheme.value)
-    customTheme.value.id = 'custom'
-    customTheme.value.name = `${currentTheme.value.name} (自定义)`
-    activeThemeId.value = 'custom'
-    persistConfig()
-  }
-
-  /**
-   * 重置自定义主题到默认
-   */
-  function resetCustomTheme() {
-    customTheme.value = createDefaultCustomTheme()
-    if (activeThemeId.value === 'custom') {
-      persistConfig()
-    }
-  }
-
-  /**
-   * 应用主题到目标元素
-   */
   function applyThemeToElement(el: HTMLElement | null) {
     if (!el) return
     const vars = themeCSSVars.value
@@ -165,30 +175,28 @@ export const useCanvasThemeStore = defineStore('canvasTheme', () => {
     })
   }
 
-  /**
-   * 持久化到 localStorage
-   */
   function persistConfig() {
     saveStoredConfig({
       activeThemeId: activeThemeId.value,
-      customTheme: activeThemeId.value === 'custom' ? customTheme.value : null,
+      userThemes: userThemes.value,
     })
   }
 
   return {
     activeThemeId,
-    customTheme,
+    userThemes,
     currentTheme,
     themeCSSVars,
-    isCustomMode,
     isDark,
     chartColors,
-    selectPredefinedTheme,
-    switchToCustom,
-    updateCustomThemeColor,
-    updateChartColors,
-    forkCurrentTheme,
-    resetCustomTheme,
+    isPresetActive,
+    currentPresetEchartsName,
+    allThemeMetas,
+    getThemeById,
+    selectTheme,
+    saveUserTheme,
+    deleteUserTheme,
+    getDefaultTheme,
     applyThemeToElement,
   }
 })

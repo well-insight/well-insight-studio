@@ -23,7 +23,6 @@ export function createFormOptionsProp(config?: {
 }) {
   return createEditorCrossSortableProp({
     label: config?.label ?? '选项列表',
-    labelPosition: 'top',
     multiple: true,
     showItemPropsConfig: config?.showItemPropsConfig ?? true,
     defaultValue: config?.defaultValue ?? DEFAULT_FORM_OPTIONS,
@@ -37,7 +36,6 @@ export function createFormTextOptionsProp(config?: {
 }) {
   return createEditorCrossSortableProp({
     label: config?.label ?? '选项列表',
-    labelPosition: 'top',
     multiple: false,
     defaultValue: config?.defaultValue ?? [],
   })

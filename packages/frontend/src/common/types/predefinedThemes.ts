@@ -1,206 +1,103 @@
 /**
  * 预定义画布主题
- * 仿照 echarts-theme-builder 的预定义主题体系设计
+ * 基于 echarts-theme-builder 的 15 种配色方案
  */
 import type { CanvasTheme, PredefinedThemeMeta } from './canvasTheme'
+import { createDefaultBrandColorMap } from './canvasTheme'
 
-export const PREDEFINED_THEME_METAS: PredefinedThemeMeta[] = [
-  {
-    id: 'default',
-    name: '默认浅色',
-    previewBg: '#ffffff',
-    previewColors: ['#409eff', '#67c23a', '#e6a23c', '#f56c6c', '#909399'],
-    isDark: false,
-  },
-  {
-    id: 'dark',
-    name: '暗色经典',
-    previewBg: '#1d1e1f',
-    previewColors: ['#409eff', '#67c23a', '#e6a23c', '#f56c6c', '#a6a7ad'],
-    isDark: true,
-  },
-  {
-    id: 'ocean',
-    name: '海洋蓝',
-    previewBg: '#f0f8ff',
-    previewColors: ['#1e90ff', '#00ced1', '#ffa07a', '#ff6347', '#7b68ee'],
-    isDark: false,
-  },
-  {
-    id: 'sunset',
-    name: '日落橙',
-    previewBg: '#fdf6ec',
-    previewColors: ['#e67e22', '#f39c12', '#e74c3c', '#9b59b6', '#3498db'],
-    isDark: false,
-  },
-  {
-    id: 'forest',
-    name: '森林绿',
-    previewBg: '#f5faf5',
-    previewColors: ['#2ecc71', '#27ae60', '#1abc9c', '#3498db', '#e67e22'],
-    isDark: false,
-  },
-  {
-    id: 'purple',
-    name: '优雅紫',
-    previewBg: '#f5f0ff',
-    previewColors: ['#7c3aed', '#a78bfa', '#ec4899', '#f59e0b', '#10b981'],
-    isDark: false,
-  },
-  {
-    id: 'midnight',
-    name: '暗夜蓝',
-    previewBg: '#0f1729',
-    previewColors: ['#3b82f6', '#60a5fa', '#f59e0b', '#ef4444', '#10b981'],
-    isDark: true,
-  },
-  {
-    id: 'coffee',
-    name: '咖啡棕',
-    previewBg: '#faf8f5',
-    previewColors: ['#8b6914', '#6b4c1e', '#c0392b', '#2c3e50', '#16a085'],
-    isDark: false,
-  },
+// ── 15 个 ECharts 预设主题的数据 ──
+interface PresetDef {
+  id: string
+  name: string
+  bg: string
+  isDark: boolean
+  /** 品牌色（取色板前 5 个映射） */
+  palette: { primary: string; success: string; warning: string; danger: string; info: string }
+  /** 完整图表色板 */
+  colors: string[]
+}
+
+const PRESETS: PresetDef[] = [
+  { id: 'v5',         name: 'V5 默认',     bg: '#ffffff', isDark: false, palette: { primary:'#5470c6', success:'#91cc75', warning:'#fac858', danger:'#ee6666', info:'#73c0de' }, colors: ['#5470c6','#91cc75','#fac858','#ee6666','#73c0de','#3ba272','#fc8452','#9a60b4','#ea7ccc'] },
+  { id: 'vintage',    name: '复古',         bg: '#fef8ef', isDark: false, palette: { primary:'#d87c7c', success:'#919e8b', warning:'#d7ab82', danger:'#6e7074', info:'#61a0a8' }, colors: ['#d87c7c','#919e8b','#d7ab82','#6e7074','#61a0a8','#efa18d','#787464','#cc7e63','#724e58'] },
+  { id: 'dark',       name: '暗色',         bg: '#333333', isDark: true,  palette: { primary:'#dd6b66', success:'#759aa0', warning:'#e69d87', danger:'#ea7e53', info:'#8dc1a9' }, colors: ['#dd6b66','#759aa0','#e69d87','#8dc1a9','#ea7e53','#eedd78','#73a373','#73b9bc','#7289ab'] },
+  { id: 'westeros',   name: '维斯特洛',     bg: '#ffffff', isDark: false, palette: { primary:'#516b91', success:'#59c4e6', warning:'#edafda', danger:'#93b7e3', info:'#a5e7f0' }, colors: ['#516b91','#59c4e6','#edafda','#93b7e3','#a5e7f0','#cbb0e3'] },
+  { id: 'essos',      name: '厄斯索斯',     bg: '#fcf4e6', isDark: false, palette: { primary:'#893448', success:'#d95850', warning:'#eb8146', danger:'#ffb248', info:'#f2d643' }, colors: ['#893448','#d95850','#eb8146','#ffb248','#f2d643','#ebdba4'] },
+  { id: 'wonderland', name: '仙境',         bg: '#ffffff', isDark: false, palette: { primary:'#4ea397', success:'#22c3aa', warning:'#7bd9a5', danger:'#d0648a', info:'#f58db2' }, colors: ['#4ea397','#22c3aa','#7bd9a5','#d0648a','#f58db2','#f2b3c9'] },
+  { id: 'walden',     name: '瓦尔登湖',     bg: '#fcfcfc', isDark: false, palette: { primary:'#3fb1e3', success:'#6be6c1', warning:'#626c91', danger:'#a0a7e6', info:'#c4ebad' }, colors: ['#3fb1e3','#6be6c1','#626c91','#a0a7e6','#c4ebad','#96dee8'] },
+  { id: 'chalk',      name: '粉笔',         bg: '#293441', isDark: true,  palette: { primary:'#fc97af', success:'#87f7cf', warning:'#f7f494', danger:'#72ccff', info:'#f7c5a0' }, colors: ['#fc97af','#87f7cf','#f7f494','#72ccff','#f7c5a0','#d4a4eb','#d2f5a6','#76f2f2'] },
+  { id: 'infographic',name: '信息图',       bg: '#ffffff', isDark: false, palette: { primary:'#C1232B', success:'#27727B', warning:'#FCCE10', danger:'#E87C25', info:'#B5C334' }, colors: ['#C1232B','#27727B','#FCCE10','#E87C25','#B5C334','#FE8463','#9BCA63','#FAD860','#F3A43B'] },
+  { id: 'macarons',   name: '马卡龙',       bg: '#ffffff', isDark: false, palette: { primary:'#2ec7c9', success:'#b6a2de', warning:'#5ab1ef', danger:'#ffb980', info:'#d87a80' }, colors: ['#2ec7c9','#b6a2de','#5ab1ef','#ffb980','#d87a80','#8d98b3','#e5cf0d','#97b552','#95706d'] },
+  { id: 'roma',       name: '罗马',         bg: '#ffffff', isDark: false, palette: { primary:'#E01F54', success:'#001852', warning:'#f5e8c8', danger:'#b8d2c7', info:'#c6b38e' }, colors: ['#E01F54','#001852','#f5e8c8','#b8d2c7','#c6b38e','#a4d8c2','#f3d999','#d3758f','#dcc392'] },
+  { id: 'shine',      name: '闪耀',         bg: '#ffffff', isDark: false, palette: { primary:'#c12e34', success:'#e6b600', warning:'#0098d9', danger:'#2b821d', info:'#005eaa' }, colors: ['#c12e34','#e6b600','#0098d9','#2b821d','#005eaa','#339ca8','#cda819','#32a487'] },
+  { id: 'purple-passion', name: '紫色激情', bg: '#5b5c6e', isDark: true,  palette: { primary:'#8a7ca8', success:'#e098c7', warning:'#8fd3e8', danger:'#71669e', info:'#cc70af' }, colors: ['#8a7ca8','#e098c7','#8fd3e8','#71669e','#cc70af','#7cb4cc'] },
+  { id: 'halloween',  name: '万圣节',       bg: '#1a1a2e', isDark: true,  palette: { primary:'#ff6f61', success:'#ffb347', warning:'#4ecdc4', danger:'#95e1d3', info:'#f38181' }, colors: ['#ff6f61','#ffb347','#4ecdc4','#95e1d3','#f38181','#a8e6cf','#dcedc1','#ffd3b6','#ffaaa5'] },
 ]
 
-/** 构建完整的画布主题对象 */
-function createTheme(
-  id: string,
-  name: string,
-  palette: { primary: string, success: string, warning: string, danger: string, info: string },
-  textOverrides: Partial<{ primary: string, regular: string, secondary: string, placeholder: string, disabled: string }>,
-  bgOverrides: Partial<{ page: string, component: string, overlay: string, hover: string, selected: string }>,
-  borderOverrides: Partial<{ base: string, light: string, dark: string }>,
-  fillOverrides: Partial<{ default: string, light: string, dark: string, page: string }>,
-  shadowOverrides: Partial<{ light: string, medium: string, dark: string }>,
-  chartColors: string[],
-  isDark: boolean,
-): CanvasTheme {
-  const isDarkMode = isDark
+export const PREDEFINED_THEME_METAS: PredefinedThemeMeta[] = PRESETS.map(p => ({
+  id: p.id,
+  name: p.name,
+  previewBg: p.bg,
+  previewColors: p.colors.slice(0, 5),
+  isDark: p.isDark,
+}))
 
+function createTheme(def: PresetDef): CanvasTheme {
+  const isDarkMode = def.isDark
   return {
-    id,
-    name,
-    palette: {
-      primary: palette.primary,
-      success: palette.success,
-      warning: palette.warning,
-      danger: palette.danger,
-      info: palette.info,
-    },
+    id: def.id,
+    name: def.name,
+    palette: { ...def.palette },
     text: {
-      primary: textOverrides.primary ?? (isDarkMode ? '#e5e6e8' : '#303133'),
-      regular: textOverrides.regular ?? (isDarkMode ? '#c0c4cc' : '#606266'),
-      secondary: textOverrides.secondary ?? (isDarkMode ? '#909399' : '#909399'),
-      placeholder: textOverrides.placeholder ?? (isDarkMode ? '#636466' : '#c0c4cc'),
-      disabled: textOverrides.disabled ?? (isDarkMode ? '#4a4b4d' : '#c0c4cc'),
+      primary: isDarkMode ? '#e5e6e8' : '#303133',
+      regular: isDarkMode ? '#c0c4cc' : '#606266',
+      secondary: isDarkMode ? '#909399' : '#909399',
+      placeholder: isDarkMode ? '#636466' : '#c0c4cc',
+      disabled: isDarkMode ? '#4a4b4d' : '#c0c4cc',
     },
     bg: {
-      page: bgOverrides.page ?? (isDarkMode ? '#1d1e1f' : '#f5f7fa'),
-      component: bgOverrides.component ?? (isDarkMode ? '#2a2b2d' : '#ffffff'),
-      overlay: bgOverrides.overlay ?? (isDarkMode ? '#37383a' : '#ffffff'),
-      hover: bgOverrides.hover ?? (isDarkMode ? '#3a3b3d' : '#f0f2f5'),
-      selected: bgOverrides.selected ?? (isDarkMode ? '#2c3e5a' : '#ecf5ff'),
+      page: isDarkMode ? '#1d1e1f' : '#f5f7fa',
+      component: isDarkMode ? '#2a2b2d' : '#ffffff',
+      overlay: isDarkMode ? '#37383a' : '#ffffff',
+      hover: isDarkMode ? '#3a3b3d' : '#f0f2f5',
+      selected: isDarkMode ? '#2c3e5a' : '#ecf5ff',
     },
     border: {
-      base: borderOverrides.base ?? (isDarkMode ? '#4a4b4d' : '#dcdfe6'),
-      light: borderOverrides.light ?? (isDarkMode ? '#3a3b3d' : '#ebeef5'),
-      dark: borderOverrides.dark ?? (isDarkMode ? '#5a5b5d' : '#c0c4cc'),
+      base: isDarkMode ? '#4a4b4d' : '#dcdfe6',
+      light: isDarkMode ? '#3a3b3d' : '#ebeef5',
+      dark: isDarkMode ? '#5a5b5d' : '#c0c4cc',
     },
     fill: {
-      default: fillOverrides.default ?? (isDarkMode ? '#3a3b3d' : '#f0f2f5'),
-      light: fillOverrides.light ?? (isDarkMode ? '#333436' : '#f5f7fa'),
-      dark: fillOverrides.dark ?? (isDarkMode ? '#2a2b2d' : '#e8eaed'),
-      page: fillOverrides.page ?? (isDarkMode ? '#141516' : '#ebedf0'),
+      default: isDarkMode ? '#3a3b3d' : '#f0f2f5',
+      light: isDarkMode ? '#333436' : '#f5f7fa',
+      dark: isDarkMode ? '#2a2b2d' : '#e8eaed',
+      page: isDarkMode ? '#141516' : '#ebedf0',
     },
     shadow: {
-      light: shadowOverrides.light ?? (isDarkMode ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.06)'),
-      medium: shadowOverrides.medium ?? (isDarkMode ? '0 4px 16px rgba(0,0,0,0.4)' : '0 4px 16px rgba(0,0,0,0.1)'),
-      dark: shadowOverrides.dark ?? (isDarkMode ? '0 8px 32px rgba(0,0,0,0.5)' : '0 8px 32px rgba(0,0,0,0.16)'),
+      light: isDarkMode ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.06)',
+      medium: isDarkMode ? '0 4px 16px rgba(0,0,0,0.4)' : '0 4px 16px rgba(0,0,0,0.1)',
+      dark: isDarkMode ? '0 8px 32px rgba(0,0,0,0.5)' : '0 8px 32px rgba(0,0,0,0.16)',
     },
-    chartColors,
+    chartColors: [...def.colors],
+    brandColorMap: createDefaultBrandColorMap(),
     isDark: isDarkMode,
   }
 }
 
-/** 预定义主题全集 */
-export const PREDEFINED_THEMES: Record<string, CanvasTheme> = {
-  default: createTheme(
-    'default', '默认浅色',
-    { primary: '#409eff', success: '#67c23a', warning: '#e6a23c', danger: '#f56c6c', info: '#909399' },
-    {}, {}, {}, {}, {},
-    ['#409eff', '#67c23a', '#e6a23c', '#f56c6c', '#909399', '#5470c6', '#91cc75', '#fac858', '#ee6666'],
-    false,
-  ),
-  dark: createTheme(
-    'dark', '暗色经典',
-    { primary: '#409eff', success: '#67c23a', warning: '#e6a23c', danger: '#f56c6c', info: '#a6a7ad' },
-    {}, {}, {}, {}, {},
-    ['#409eff', '#67c23a', '#e6a23c', '#f56c6c', '#a6a7ad', '#5470c6', '#91cc75', '#fac858', '#ee6666'],
-    true,
-  ),
-  ocean: createTheme(
-    'ocean', '海洋蓝',
-    { primary: '#1e90ff', success: '#00ced1', warning: '#ffa07a', danger: '#ff6347', info: '#7b68ee' },
-    {}, {}, {}, {}, {},
-    ['#1e90ff', '#00ced1', '#ffa07a', '#ff6347', '#7b68ee', '#87ceeb', '#48d1cc', '#ffb07c', '#8a7cee'],
-    false,
-  ),
-  sunset: createTheme(
-    'sunset', '日落橙',
-    { primary: '#e67e22', success: '#27ae60', warning: '#f39c12', danger: '#e74c3c', info: '#3498db' },
-    {}, {}, {}, {}, {},
-    ['#e67e22', '#f39c12', '#e74c3c', '#9b59b6', '#3498db', '#d35400', '#2ecc71', '#f1c40f', '#1abc9c'],
-    false,
-  ),
-  forest: createTheme(
-    'forest', '森林绿',
-    { primary: '#2ecc71', success: '#27ae60', warning: '#f39c12', danger: '#e74c3c', info: '#3498db' },
-    {},
-    { page: '#f5faf5' },
-    {}, {}, {},
-    ['#2ecc71', '#27ae60', '#1abc9c', '#3498db', '#e67e22', '#16a085', '#2980b9', '#8e44ad', '#d35400'],
-    false,
-  ),
-  purple: createTheme(
-    'purple', '优雅紫',
-    { primary: '#7c3aed', success: '#10b981', warning: '#f59e0b', danger: '#ef4444', info: '#a78bfa' },
-    {},
-    { page: '#f5f0ff' },
-    {}, {}, {},
-    ['#7c3aed', '#a78bfa', '#ec4899', '#f59e0b', '#10b981', '#8b5cf6', '#d946ef', '#f97316', '#14b8a6'],
-    false,
-  ),
-  midnight: createTheme(
-    'midnight', '暗夜蓝',
-    { primary: '#3b82f6', success: '#10b981', warning: '#f59e0b', danger: '#ef4444', info: '#60a5fa' },
-    {},
-    { page: '#0f1729', component: '#1a2438', overlay: '#1e293b', hover: '#253248', selected: '#1e3a5f' },
-    { base: '#334155', light: '#1e293b', dark: '#475569' },
-    {},
-    {},
-    ['#3b82f6', '#60a5fa', '#f59e0b', '#ef4444', '#10b981', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'],
-    true,
-  ),
-  coffee: createTheme(
-    'coffee', '咖啡棕',
-    { primary: '#8b6914', success: '#6b4c1e', warning: '#c0392b', danger: '#c0392b', info: '#2c3e50' },
-    {},
-    { page: '#faf8f5', component: '#ffffff' },
-    { base: '#d4c5b0', light: '#e8ddd0', dark: '#b8a590' },
-    { default: '#f0ebe3', light: '#f5f1ea', dark: '#e8ddd0', page: '#e0d5c8' },
-    {},
-    ['#8b6914', '#6b4c1e', '#c0392b', '#2c3e50', '#16a085', '#d4a017', '#8e44ad', '#d35400', '#7f8c8d'],
-    false,
-  ),
-}
+const themeMap = Object.fromEntries(PRESETS.map(p => [p.id, createTheme(p)]))
 
-/** 获取预定义主题 */
+export const PREDEFINED_THEMES: Record<string, CanvasTheme> = themeMap
+
 export function getPredefinedTheme(id: string): CanvasTheme | undefined {
   return PREDEFINED_THEMES[id]
 }
 
-/** 获取所有预定义主题元信息 */
 export function getPredefinedThemeMetas(): PredefinedThemeMeta[] {
   return PREDEFINED_THEME_METAS
+}
+
+/** 获取预设主题对应的 ECharts JSON 文件名 */
+export function getPresetEchartsJsonName(id: string): string | null {
+  const p = PRESETS.find(p => p.id === id)
+  return p ? p.id : null
 }

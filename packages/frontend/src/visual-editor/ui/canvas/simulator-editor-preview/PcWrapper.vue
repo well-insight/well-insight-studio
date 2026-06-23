@@ -57,7 +57,7 @@ function buildPreviewLayout() {
 
 const editCanvasStyle = computed(() => {
   const config = currentPage.value?.config
-  const bgColor = config?.bgColor || '#ffffff'
+  const bgColor = config?.bgColor || 'var(--el-bg-color)'
   const bgImage = config?.bgImage ? `url(${config.bgImage})` : 'none'
   return {
     width: '100%',
@@ -222,7 +222,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  background-color: #fff;
+  background-color: var(--el-bg-color);
   overflow: hidden;
 }
 

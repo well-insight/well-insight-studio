@@ -170,8 +170,6 @@ export const AttrEditor = defineComponent({
                 </AttrEditorCard>
               </>,
             )
-
-
           }
         }
       }

@@ -744,6 +744,34 @@ function ungroupByVid(vid: string) {
 }
 
 .drag-tree {
+  // 树节点样式
+  :global(.el-tree-node__content) {
+    height: auto;
+    min-height: 36px;
+    padding: 2px 0;
+    border-radius: 6px;
+    transition: background-color 0.15s;
+
+    &:hover {
+      background-color: var(--el-color-primary-light-9);
+    }
+  }
+
+  :global(.el-tree-node.is-current > .el-tree-node__content) {
+    background-color: var(--el-color-primary-light-8);
+  }
+
+  // 深层嵌套节点额外缩进（较默认更紧凑）
+  :global(.el-tree-node__children) .el-tree-node__children .el-tree-node__content {
+    padding-left: 24px !important;
+  }
+
+  /* 拖拽中的样式 */
+  :global(.el-tree-dragging) {
+    :global(.el-tree-node__content) {
+      opacity: 0.5;
+    }
+  }
   :global(.el-tree-node.is-dragging) {
     > .el-tree-node__content {
       background-color: var(--el-color-primary-light-7);

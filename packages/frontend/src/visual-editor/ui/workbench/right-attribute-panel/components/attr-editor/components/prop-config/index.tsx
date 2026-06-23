@@ -113,8 +113,6 @@ export const PropConfig = defineComponent({
       )
 
       return propEntries.map(([propName, propConfig]) => {
-        const isOptions = propConfig.type === VisualEditorPropsType.crossSortable
-
         return (
           <>
             <ElFormItem
@@ -145,28 +143,26 @@ export const PropConfig = defineComponent({
                           </ElTooltip>
                         )}
                       </ElSpace>
-                      {isOptions && (
+                      {/* {isOptions && (
                         <PropDatasetBindTrigger
                           block={props.block}
                           propName={propName}
                           propLabel={propConfig.label}
                           propConfig={propConfig}
                         />
-                      )}
+                      )} */}
                     </div>
                   </>
                 ),
                 default: () => (
-                  <div class="flex w-full items-start gap-8px">
-                    <div class="min-w-0 flex-1">{renderPropItem(propName, propConfig)}</div>
-                    {!isOptions && (
-                      <PropDatasetBindTrigger
-                        block={props.block}
-                        propName={propName}
-                        propLabel={propConfig.label}
-                        propConfig={propConfig}
-                      />
-                    )}
+                  <div class="flex w-full items-center gap-8px">
+                    <div class="min-w-0 flex-1 flex items-center justify-end">{renderPropItem(propName, propConfig)}</div>
+                    <PropDatasetBindTrigger
+                      block={props.block}
+                      propName={propName}
+                      propLabel={propConfig.label}
+                      propConfig={propConfig}
+                    />
                   </div>
                 ),
               }}

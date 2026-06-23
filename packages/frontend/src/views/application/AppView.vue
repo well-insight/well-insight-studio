@@ -147,6 +147,20 @@ function onBeforeUnload(e: BeforeUnloadEvent) {
 }
 
 onMounted(() => {
+  // 从 sessionStorage 恢复主题 CSS 变量（预览入口写入）
+  try {
+    const themeVars = sessionStorage.getItem('canvas-theme-vars')
+    if (themeVars) {
+      const vars = JSON.parse(themeVars) as Record<string, string>
+      Object.entries(vars).forEach(([key, value]) => {
+        document.documentElement.style.setProperty(key, value)
+      })
+    }
+  }
+  catch {
+    // ignore
+  }
+
   window.addEventListener('beforeunload', onBeforeUnload)
 })
 

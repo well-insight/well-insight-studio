@@ -94,7 +94,6 @@ export default {
     }),
     tabs: createEditorCrossSortableProp({
       label: '默认选项',
-      labelPosition: 'top',
       multiple: false,
       showItemPropsConfig: true,
       defaultValue: defaultTabbarItems.map((item) => {

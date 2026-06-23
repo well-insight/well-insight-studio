@@ -8,7 +8,6 @@ export function createFieldProps() {
   return {
     images: createEditorCrossSortableProp({
       label: '图片列表',
-      labelPosition: 'top',
       defaultValue: ['https://img.yzcdn.cn/vant/apple-1.jpg', 'https://img.yzcdn.cn/vant/apple-2.jpg'],
     }),
     // width: createEditorInputProp({ label: '滑块宽度，单位为 px', defaultValue: 'auto' }),

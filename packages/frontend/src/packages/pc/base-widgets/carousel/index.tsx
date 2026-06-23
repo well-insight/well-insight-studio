@@ -91,7 +91,6 @@ export default {
     // 基础配置
     slides: createEditorCrossSortableProp({
       label: '图片列表',
-      labelPosition: 'top',
       multiple: true,
       showItemPropsConfig: false, // 允许配置每个图片的额外属性
       defaultValue: [

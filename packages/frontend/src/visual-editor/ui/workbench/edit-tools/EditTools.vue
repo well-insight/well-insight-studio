@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import {
   DocumentChecked,
-  MagicStick,
   RefreshLeft,
   RefreshRight,
   VideoPlay,
@@ -14,6 +13,7 @@ import { updateApplication } from '@/api/application'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { localKey, useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { ThemePanel } from '@/visual-editor/ui/workbench/theme-panel'
+import { useCanvasThemeStore } from '@/stores/canvasThemeStore'
 import CanvasLayerDropdown from './components/CanvasLayerDropdown.vue'
 import PageSettingButton from './components/PageSetting.vue'
 import Preview from './components/Preview.vue'
@@ -24,6 +24,8 @@ const route = useRoute()
 
 const { jsonData, saveStatus, saveError, isDirty, canUndo, canRedo, saveProject, undo, redo }
   = useVisualData()
+
+const canvasThemeStore = useCanvasThemeStore()
 
 const previewVisible = ref(false)
 
@@ -96,7 +98,8 @@ function handleRedo() {
 
 function previewPage() {
   sessionStorage.setItem(localKey, JSON.stringify(toRaw(toValue(jsonData))))
-  // previewVisible.value = true
+  // 保存当前主题配置到 sessionStorage，确保预览页能读到最新的主题
+  sessionStorage.setItem('canvas-theme-vars', JSON.stringify(canvasThemeStore.themeCSSVars))
   window.open(`${location.origin + location.pathname}#/project/application/view/${route?.params?.id?.[0]}`, '_blank')
 }
 </script>
@@ -123,12 +126,24 @@ function previewPage() {
       <el-popover
         placement="bottom"
         trigger="click"
-        :width="300"
+        :width="340"
         transition="el-zoom-in-top"
         :popper-class="$style['theme-popover']"
       >
         <template #reference>
-          <el-button text :icon="MagicStick" title="主题设置" />
+          <el-button text title="主题设置" :class="$style['theme-trigger']">
+            <span
+              :class="$style['theme-swatch']"
+              :style="{ backgroundColor: canvasThemeStore.currentTheme.bg.page }"
+            >
+              <span
+                v-for="(color, i) in canvasThemeStore.chartColors.slice(0, 5)"
+                :key="i"
+                :class="$style['theme-dot']"
+                :style="{ backgroundColor: color }"
+              />
+            </span>
+          </el-button>
         </template>
         <ThemePanel />
       </el-popover>
@@ -215,5 +230,28 @@ function previewPage() {
 
   padding: 0 !important;
   overflow: hidden;
+  width: 340px !important;
+}
+
+.theme-trigger {
+  padding: 0 6px !important;
+  height: 28px !important;
+}
+
+.theme-swatch {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: 1px solid var(--el-border-color-light);
+}
+
+.theme-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
 }
 </style>

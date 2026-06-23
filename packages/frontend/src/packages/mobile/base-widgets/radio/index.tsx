@@ -49,7 +49,6 @@ export default {
     label: createEditorInputProp({ label: '输入框左侧文本', defaultValue: '单选框' }),
     options: createEditorCrossSortableProp({
       label: '默认选项',
-      labelPosition: 'top',
       multiple: false,
       defaultValue: [
         { label: '胡萝卜', value: 'carrot' },

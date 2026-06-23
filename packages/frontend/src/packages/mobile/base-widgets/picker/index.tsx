@@ -78,7 +78,6 @@ export default {
     label: createEditorInputProp({ label: '输入框左侧文本', defaultValue: '选择器' }),
     columns: createEditorCrossSortableProp({
       label: '默认选项',
-      labelPosition: 'top',
       multiple: false,
       defaultValue: [
         { label: '杭州', value: 'hangzhou' },

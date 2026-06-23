@@ -3,6 +3,9 @@
  * 从画布主题 store 获取图表调色板，支持自定义覆盖
  * 仿照 echarts-theme-builder 的主题色体系设计
  */
+import type { CanvasTheme } from '@/common/types/canvasTheme'
+import { ensureEchartsTheme } from '@/common/utils/themeBridge'
+import { generateEChartsTheme } from '@/common/utils/themeGenerator'
 import { computed } from 'vue'
 import { useCanvasThemeStore } from '@/stores/canvasThemeStore'
 
@@ -62,11 +65,19 @@ export function useChartThemeColors(customColorsStr?: () => string | undefined) 
     return themeChartColors.value
   })
 
+  /** 当前主题的 ECharts registerTheme 配置 */
+  const echartsThemeConfig = computed(() => {
+    const data = ensureEchartsTheme(themeStore.currentTheme)
+    return generateEChartsTheme(data)
+  })
+
   return {
     /** 图表颜色数组 */
     chartColors,
     /** 主题颜色数组（无自定义覆盖） */
     themeChartColors,
+    /** ECharts 完整主题配置 */
+    echartsThemeConfig,
     /** 格式化颜色为 ECharts option 中的 color 字段 */
     toEChartsColor: computed(() => {
       return chartColors.value.map((color, index) => {

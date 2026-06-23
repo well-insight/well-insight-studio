@@ -17,7 +17,7 @@ export const OptionsEditorDialog = defineComponent({
   props: {
     modelValue: {
       type: Array as PropType<(string | Record<string, any>)[]>,
-      default: () => [],
+      default: () => [] as Record<string, any>[],
     },
     multiple: Boolean,
     showItemPropsConfig: Boolean,
@@ -59,7 +59,7 @@ export const OptionsEditorDialog = defineComponent({
 
     return () => (
       <>
-        <ElButton size="small" plain onClick={openDialog}>
+        <ElButton size="default" plain onClick={openDialog}>
           <ElIcon class="mr-4px">
             <Edit />
           </ElIcon>

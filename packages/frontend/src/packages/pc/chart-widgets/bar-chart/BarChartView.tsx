@@ -24,8 +24,8 @@ export default defineComponent({
       useSampleData: () => props.useSampleData,
     })
 
-    // 直接从画布主题获取图表颜色
-    const { chartColors } = useChartThemeColors()
+    // 直接从画布主题获取图表颜色与 ECharts 主题
+    const { chartColors, echartsThemeConfig } = useChartThemeColors()
 
     const chartOption = computed(() =>
       buildBarChartOption({
@@ -52,6 +52,7 @@ export default defineComponent({
               : (
                   <EChartsView
                     option={chartOption.value}
+                    theme-config={echartsThemeConfig.value}
                     loading={loading.value && data.value.length === 0}
                   />
                 )}

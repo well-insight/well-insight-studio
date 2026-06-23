@@ -201,7 +201,7 @@ export function createEditorTableProp({ label, option, defaultValue }: EditorTab
 
 interface EditorCrossSortableProp {
   label: string
-  labelPosition: 'top' | ''
+  labelPosition?: 'top' | ''
   multiple?: boolean
   showItemPropsConfig?: boolean
   defaultValue?: string[] | VisualEditorSelectOptions

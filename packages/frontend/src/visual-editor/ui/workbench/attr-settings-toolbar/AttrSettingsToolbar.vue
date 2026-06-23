@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { Connection, DataLine, Grid, MoreFilled, VideoPlay } from '@element-plus/icons-vue'
+import { CaretBottom, Connection, DataLine, Grid, MoreFilled, VideoPlay } from '@element-plus/icons-vue'
 import { computed, ref } from 'vue'
 import { useControlStore } from '@/stores/controlStore'
 import { isChartComponent } from '@/utils/datasetBinding'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import ChartDatasetBindDialog from '@/visual-editor/ui/shared/dataset-bind/ChartDatasetBindDialog.vue'
-import { PropConfig } from '@/visual-editor/ui/workbench/right-attribute-panel/components/attr-editor/components/prop-config/prop-config-dropdown'
+import { CollapsibleCard, PopoverPanel } from '@/visual-editor/ui/shared/popover-panel'
+import { PropConfig } from '@/visual-editor/ui/workbench/right-attribute-panel/components/attr-editor/components/prop-config'
 import BasicConfigDropdown from './components/BasicConfigDropdown.vue'
 
 const props = withDefaults(
@@ -55,26 +56,17 @@ function openEventPanel() {
 
     <el-divider direction="vertical" />
 
-    <el-dropdown
-      trigger="click"
-      placement="bottom"
-      :show-arrow="false"
-      transition="el-zoom-in-top"
-      :hide-on-click="false"
-      popper-class="toolbar-dropdown"
-    >
-      <el-button text :icon="Grid">
-        <span>组件配置</span>
-        <el-icon><CaretBottom /></el-icon>
-      </el-button>
-      <template #dropdown>
-        <el-scrollbar class="toolbar-dropdown-scroll" max-height="420px">
-          <el-dropdown-menu>
-            <PropConfig :component="componentItem" :block="currentBlock" common-only />
-          </el-dropdown-menu>
-        </el-scrollbar>
+    <PopoverPanel title="组件配置">
+      <template #trigger>
+        <el-button text :icon="Grid">
+          <span>组件配置</span>
+          <el-icon><CaretBottom /></el-icon>
+        </el-button>
       </template>
-    </el-dropdown>
+      <CollapsibleCard title="组件配置" :default-open="true">
+        <PropConfig :component="componentItem" :block="currentBlock" />
+      </CollapsibleCard>
+    </PopoverPanel>
 
     <el-divider direction="vertical" />
 
@@ -139,36 +131,5 @@ function openEventPanel() {
   white-space: nowrap;
   align-items: center;
   height: 32px;
-}
-
-.toolbar-dropdown-scroll {
-  width: 300px;
-
-  :deep(.el-dropdown-menu__item) {
-    width: 100%;
-
-    .toolbar-item-row {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 24px;
-
-      .toolbar-item-content {
-        flex: 1;
-        width: 0;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-      }
-    }
-  }
-}
-</style>
-
-<style lang="scss">
-.toolbar-dropdown {
-  max-height: 420px;
-  height: fit-content;
 }
 </style>

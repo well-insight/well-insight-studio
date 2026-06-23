@@ -1,3 +1,5 @@
+import type { EChartsThemeData } from './echartsTheme'
+
 /**
  * 画布主题定义
  * 仿照 echarts-theme-builder 的主题体系，为画布上的组件提供统一的主题色管理
@@ -15,6 +17,15 @@ export interface CanvasThemePalette {
   danger: string
   /** 信息色 */
   info: string
+}
+
+/** 品牌色在主题色板中的索引映射 */
+export interface CanvasThemeBrandColorMap {
+  primary: number
+  success: number
+  warning: number
+  danger: number
+  info: number
 }
 
 /** 文字颜色 */
@@ -97,6 +108,10 @@ export interface CanvasTheme {
   shadow: CanvasThemeShadow
   /** 图表调色板（用于 ECharts 等图表组件） */
   chartColors: string[]
+  /** 品牌色对应色板索引（主色/成功/警告/危险/信息） */
+  brandColorMap?: CanvasThemeBrandColorMap
+  /** ECharts 完整主题配置（源自 echarts-theme-builder） */
+  echarts?: EChartsThemeData
   /** 是否暗色主题 */
   isDark: boolean
 }
@@ -111,6 +126,11 @@ export interface PredefinedThemeMeta {
   previewColors: string[]
   /** 是否为暗色 */
   isDark: boolean
+}
+
+/** 默认品牌色在色板中的索引映射 */
+export function createDefaultBrandColorMap(): CanvasThemeBrandColorMap {
+  return { primary: 0, success: 1, warning: 2, danger: 3, info: 4 }
 }
 
 /** CSS 变量映射表（theme -> CSS variable name） */
@@ -206,7 +226,7 @@ export function themeToCSSVars(theme: CanvasTheme): Record<string, string> {
   })
 
   // 3. 生成 Element Plus 颜色的浅色变体（用于 hover/active 态）
-  const primaryColor = theme.palette.primary
+  const primaryColor = theme.palette?.primary
   if (primaryColor) {
     vars['--el-color-primary-light-3'] = addAlpha(primaryColor, 0.3)
     vars['--el-color-primary-light-5'] = addAlpha(primaryColor, 0.5)
