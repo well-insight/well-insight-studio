@@ -154,7 +154,7 @@ importers:
         specifier: ^6.1.0
         version: 6.1.0
       element-plus:
-        specifier: 2.14.0
+        specifier: ^2.14.0
         version: 2.14.0(vue@3.5.33(typescript@6.0.3))
       grid-layout-plus:
         specifier: ^1.1.1
@@ -190,10 +190,10 @@ importers:
         specifier: ^6.15.1
         version: 6.15.1
       vant:
-        specifier: 4.9.24
+        specifier: ^4.9.24
         version: 4.9.24(vue@3.5.33(typescript@6.0.3))
       vue:
-        specifier: 3.5.33
+        specifier: ^3.5.33
         version: 3.5.33(typescript@6.0.3)
       vue-router:
         specifier: ^5.0.6
@@ -214,6 +214,9 @@ importers:
       '@commitlint/config-conventional':
         specifier: ^20.5.0
         version: 20.5.0
+      '@interactjs/types':
+        specifier: ^1.10.27
+        version: 1.10.27
       '@types/lodash-es':
         specifier: ^4.17.12
         version: 4.17.12

@@ -49,7 +49,7 @@ const props = withDefaults(defineProps<GridItemProps>(), {
   zIndex: undefined,
 })
 
-const emit = defineEmits(['container-resized', 'resize', 'resized', 'move', 'moved'])
+const emit = defineEmits(['containerResized', 'resize', 'resized', 'move', 'moved'])
 
 const layout = inject(LAYOUT_KEY)
 const emitter = inject(EMITTER_KEY)!
@@ -419,7 +419,7 @@ function emitContainerResized() {
     }
     styleProps[prop] = matches[1]
   }
-  emit('container-resized', props.i, props.h, props.w, styleProps.height, styleProps.width)
+  emit('containerResized', props.i, props.h, props.w, styleProps.height, styleProps.width)
 }
 
 function handleResize(event: MouseEvent & { edges: any }) {

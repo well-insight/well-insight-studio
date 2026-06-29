@@ -1,13 +1,15 @@
+import type { EChartsOption } from 'echarts'
 import type { PropType } from 'vue'
 import type { BlockDatasetBindings } from '@/utils/datasetBinding'
+import type { BaseChartOptionParams } from '@/components/echarts'
 import { ElEmpty } from 'element-plus'
 import { computed, defineComponent } from 'vue'
-import { buildBarChartOption, EChartsView } from '@/components/echarts'
+import { EChartsView } from '@/components/echarts'
 import { useChartThemeColors } from '@/hooks/useChartThemeColors'
 import { useDatasetChartData } from '@/hooks/useDatasetChartData'
 
 export default defineComponent({
-  name: 'BarChartView',
+  name: 'DatasetChartView',
   props: {
     bindings: {
       type: Object as PropType<BlockDatasetBindings | undefined>,
@@ -15,23 +17,26 @@ export default defineComponent({
     },
     useSampleData: { type: Boolean, default: true },
     compact: { type: Boolean, default: false },
-    width: { type: Number as PropType<number>, default: 320 },
-    height: { type: Number as PropType<number>, default: 200 },
+    chartVariant: { type: String, default: 'basic' },
+    buildOption: {
+      type: Function as PropType<(params: BaseChartOptionParams) => EChartsOption>,
+      required: true,
+    },
   },
   setup(props) {
-    const { data, loading, error, refresh } = useDatasetChartData({
+    const { data, loading, error } = useDatasetChartData({
       bindings: () => props.bindings,
       useSampleData: () => props.useSampleData,
     })
 
-    // 直接从画布主题获取图表颜色与 ECharts 主题
     const { chartColors, echartsThemeConfig } = useChartThemeColors()
 
     const chartOption = computed(() =>
-      buildBarChartOption({
+      props.buildOption({
         data: data.value,
         colors: chartColors.value,
         compact: props.compact,
+        chartVariant: props.chartVariant,
       }),
     )
 

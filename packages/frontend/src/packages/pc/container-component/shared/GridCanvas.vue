@@ -240,6 +240,8 @@ function isBlockSelected(vid: string) {
 function isChildGridLocked(block: VisualEditorBlockData | undefined) {
   if (!block)
     return false
+  if (block._layerLocked)
+    return true
   if (block.static || block._containerEditLocked)
     return true
   if (editingContainerId.value && block._vid === editingContainerId.value)

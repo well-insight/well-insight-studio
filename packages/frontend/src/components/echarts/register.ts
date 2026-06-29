@@ -1,4 +1,4 @@
-import { BarChart, LineChart, PieChart } from 'echarts/charts'
+import { BarChart, FunnelChart, GaugeChart, LineChart, PieChart, RadarChart, ScatterChart } from 'echarts/charts'
 import {
   DatasetComponent,
   GridComponent,
@@ -13,7 +13,7 @@ import { CanvasRenderer } from 'echarts/renderers'
 
 let registered = false
 
-/** 按需注册 ECharts 组件，后续新增图表类型在此扩展 */
+/** 按需注册 ECharts 组件 */
 export function ensureEChartsRegistered() {
   if (registered) {
     return
@@ -22,6 +22,10 @@ export function ensureEChartsRegistered() {
     BarChart,
     LineChart,
     PieChart,
+    ScatterChart,
+    RadarChart,
+    GaugeChart,
+    FunnelChart,
     GridComponent,
     TooltipComponent,
     LegendComponent,

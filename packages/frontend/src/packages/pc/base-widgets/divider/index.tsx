@@ -5,6 +5,7 @@ import {
   createEditorSelectProp,
   createEditorSwitchProp,
 } from '@/visual-editor/visual-editor.props'
+import dividerStyles from './index.module.scss'
 
 // 方向选项
 const directionOptions = [
@@ -35,7 +36,7 @@ export default {
   preview: () => <ElDivider>分割线</ElDivider>,
   render: ({ styles, block, props }) => {
     return () => (
-      <div style={{ width: '100%', height: '100%', ...styles }}>
+      <div class={[dividerStyles['w-divider'], 'w-divider']} style={{ width: '100%', height: '100%', ...styles }}>
         <ElDivider {...props}>{props.content}</ElDivider>
       </div>
     )
@@ -44,7 +45,7 @@ export default {
     // 基础配置
     content: createEditorInputProp({
       label: '显示文字',
-      defaultValue: '分割线',
+      defaultValue: '',
     }),
     direction: createEditorSelectProp({
       label: '方向',

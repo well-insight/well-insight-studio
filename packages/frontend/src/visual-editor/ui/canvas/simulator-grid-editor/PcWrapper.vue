@@ -275,6 +275,18 @@ onMounted(() => {
     }
   })
 
+  controlStore.registerCanvasSelectHandler((block, options) => {
+    if (options?.multiSelect) {
+      selectComp(block, { ctrlKey: true, metaKey: false } as MouseEvent)
+    }
+    else {
+      selectComp(block)
+    }
+  })
+  controlStore.registerCanvasClearSelectionHandler(() => {
+    deSelectComp()
+  })
+
   keyEvent()
 
   nextTick(() => {
@@ -286,6 +298,10 @@ onMounted(() => {
     }, 1000)
   })
 })
+
+watch(selectedBlockIds, (ids) => {
+  controlStore.setCanvasSelectedBlockIds([...ids])
+}, { deep: true, immediate: true })
 
 /**
  * @description 操作当前页面样式表
@@ -585,6 +601,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('dragover', syncMousePosition)
   document.removeEventListener('mousemove', syncMousePosition, true)
   controlStore.unregisterCanvasSelectHandler()
+  controlStore.unregisterCanvasClearSelectionHandler()
 })
 
 const mouseAt = { x: -1, y: -1 }
@@ -1481,6 +1498,8 @@ function getCompRenderPointerEvents(item: VisualEditorBlockData) {
 function isRootItemDisabled(item: VisualEditorBlockData) {
   if (isPaletteGhostBlock(item))
     return true
+  if (item._layerLocked)
+    return true
   if (item.static || item._containerEditLocked)
     return true
   if (editingContainerId.value && item._vid === editingContainerId.value)
@@ -2084,7 +2103,15 @@ function onContextmenuBlock(e: MouseEvent, block: VisualEditorBlockData, parentB
     {
       label: '删除节点',
       icon: 'el-icon-delete',
-      onClick: () => deleteComp(block, parentBlocks),
+      onClick: () => {
+        // 多选（含框选）时删除全部选中组件，与键盘 Delete 行为一致
+        if (selectedBlockIds.value.length > 1 && selectedBlockIds.value.includes(block._vid)) {
+          deleteComp()
+        }
+        else {
+          deleteComp(block, parentBlocks)
+        }
+      },
     },
   ]
 

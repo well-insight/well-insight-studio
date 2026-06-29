@@ -1,112 +1,106 @@
 <script lang="ts" setup>
-import { ArrowDownBold, ArrowUpBold } from '@element-plus/icons-vue'
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { SvgIcon } from '@/components/svg-icon'
-import { PopoverPanel } from '@/visual-editor/ui/shared/popover-panel'
-import { PageSetting } from '../../right-attribute-panel/components/page-setting/pageSetting'
+import { useEditToolsFloatingPanel, useFloatingPanelPosition } from '../useEditToolsFloatingPanel'
+import PageSettingPanel from './PageSettingPanel.vue'
 
-const pageSettingRef = ref<any>(null)
-const allExpanded = ref(false)
+const PANEL_WIDTH = 340
+const PANEL_MAX_HEIGHT = 520
+const PANEL_GAP = 8
 
-function toggleExpand() {
-  allExpanded.value = !allExpanded.value
-  if (allExpanded.value) {
-    pageSettingRef.value?.expandAll()
-  }
-  else {
-    pageSettingRef.value?.collapseAll()
-  }
+const triggerRef = ref<HTMLElement | null>(null)
+
+function setTriggerRef(el: any) {
+  triggerRef.value = el?.$el ?? el ?? null
 }
 
-const toggleIcon = computed(() => (allExpanded.value ? ArrowUpBold : ArrowDownBold))
-const toggleTooltip = computed(() => (allExpanded.value ? '收起全部卡片' : '展开全部卡片'))
+const {
+  isVisible,
+  isPinned,
+  onTriggerMouseEnter,
+  onTriggerMouseLeave,
+  onPanelMouseEnter,
+  onPanelMouseLeave,
+  onTriggerClick,
+  closePanel,
+} = useEditToolsFloatingPanel('page-setting')
+
+const { panelStyle, updatePanelPosition } = useFloatingPanelPosition({
+  panelWidth: PANEL_WIDTH,
+  panelMaxHeight: PANEL_MAX_HEIGHT,
+  panelGap: PANEL_GAP,
+  triggerRef,
+  isVisible,
+})
+
+async function handleTriggerMouseEnter() {
+  await onTriggerMouseEnter()
+  updatePanelPosition()
+}
+
+async function handleTriggerClick() {
+  await onTriggerClick()
+  updatePanelPosition()
+}
 </script>
 
 <template>
-  <PopoverPanel title="页面配置">
-    <template #trigger>
-      <el-button text bg type="primary">
-        <SvgIcon name="page-setting" />
-        <span class="ml-1">页面配置</span>
-      </el-button>
-    </template>
-    <template #header-actions>
-      <el-tooltip :content="toggleTooltip" placement="bottom">
-        <el-button text size="small" :icon="toggleIcon" @click="toggleExpand" />
-      </el-tooltip>
-    </template>
-    <PageSetting ref="pageSettingRef" />
-  </PopoverPanel>
+  <div :class="$style.wrapper">
+    <el-button
+      :ref="setTriggerRef"
+      text
+      bg
+      type="primary"
+      :class="{ [$style.triggerBtnPinned]: isPinned }"
+      @mouseenter="handleTriggerMouseEnter"
+      @mouseleave="onTriggerMouseLeave"
+      @click="handleTriggerClick"
+    >
+      <SvgIcon name="page-setting" />
+      <span class="ml-1">页面配置</span>
+    </el-button>
+
+    <Teleport to="body">
+      <Transition name="page-setting-panel-fade">
+        <div
+          v-if="isVisible"
+          :style="panelStyle"
+          :class="$style.floatingPanel"
+          @mouseenter="onPanelMouseEnter"
+          @mouseleave="onPanelMouseLeave"
+        >
+          <PageSettingPanel @close="closePanel" />
+        </div>
+      </Transition>
+    </Teleport>
+  </div>
 </template>
 
-<style lang="scss">
-.page-setting-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding-bottom: 12px;
+<style lang="scss" module>
+.wrapper {
+  display: inline-flex;
 }
 
-.page-setting-card {
-  background: var(--el-fill-color-lighter);
-  border-radius: 10px;
-  overflow: hidden;
-  border: 1px solid var(--el-border-color-light);
-  transition: border-color 0.2s ease;
-
-  &:hover {
-    border-color: var(--el-border-color);
-  }
-
-  &__header {
-    width: 100%;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start !important;
-    padding: 0 12px;
-    border: none !important;
-    outline: none !important;
-
-    &:hover {
-      background-color: var(--el-color-primary-light-9);
-    }
-  }
-
-  &__arrow {
-    font-size: 14px;
-    color: var(--el-text-color-secondary);
-    flex-shrink: 0;
-  }
-
-  &__title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--el-text-color-primary);
-    user-select: none;
-  }
-
-  &__body {
-    padding: 4px 12px 12px;
-  }
-
-  &__border {
-    padding: 0 4px 8px;
-  }
+.triggerBtnPinned {
+  box-shadow: inset 0 0 0 1px var(--el-color-primary-light-5);
 }
 
-.page-setting-form {
-  .el-form-item {
-    margin-bottom: 12px;
+.floatingPanel {
+  pointer-events: auto;
+}
+</style>
 
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
+<style scoped>
+.page-setting-panel-fade-enter-active,
+.page-setting-panel-fade-leave-active {
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
 
-  .el-form-item__label {
-    font-size: 12px;
-    color: var(--el-text-color-secondary);
-  }
+.page-setting-panel-fade-enter-from,
+.page-setting-panel-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 </style>

@@ -6,9 +6,11 @@ import { computed, ref, toValue, watch } from 'vue'
 import { fetchDatasetDetail, fetchDatasetRowsPage } from '@/api/dataset'
 import {
   buildFieldNameToIdMap,
+  CHART_DIMENSION_PROP,
+  CHART_METRIC_PROP,
   collectDatasetIdsFromBindings,
   isBlockDatasetBound,
-
+  isChartComponent,
   syncChartPropsFromBindings,
 } from '@/utils/datasetBinding'
 import { resolveBindingToPropValue } from '@/utils/datasetBindingResolve'
@@ -124,7 +126,7 @@ export function useDatasetResolvedProps(
       if (!bind?.datasetId?.trim() || !bind?.field?.trim()) {
         continue
       }
-      if (compKey === 'bar-chart' && (propName === 'categoryField' || propName === 'valueField')) {
+      if (isChartComponent(compKey) && (propName === CHART_DIMENSION_PROP || propName === CHART_METRIC_PROP)) {
         continue
       }
       const rows = map[bind.datasetId] ?? []
@@ -132,7 +134,7 @@ export function useDatasetResolvedProps(
       applyBindingToProps(p, propName, bind, rows, compKey, nameToId)
     }
 
-    if (compKey === 'bar-chart') {
+    if (isChartComponent(compKey)) {
       syncChartPropsFromBindings(p, b)
     }
 

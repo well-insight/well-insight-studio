@@ -133,7 +133,7 @@ const bgImageUrl = computed({
         <el-form-item label="展示标题">
           <el-switch v-model="showTitle" />
         </el-form-item>
-        <TextStyleConfig v-if="showTitle" v-model="titleStyle" layout="dropdown" show-position show-background show-border-radius size="default" :teleported="false" />
+        <TextStyleConfig v-if="showTitle" v-model="titleStyle" layout="form" show-position show-background show-border-radius size="default" :teleported="false" label-width="80" />
       </el-form>
     </CollapsibleCard>
 

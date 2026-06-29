@@ -1,26 +1,39 @@
 <script lang="ts" setup>
-import type { VisualEditorBlockData, VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
-import { cloneDeep, isString } from 'lodash-es'
-import { computed, ref } from 'vue'
+import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { SvgIcon } from '@/components/svg-icon'
 import { useControlStore } from '@/stores'
-import { createNewBlock } from '@/visual-editor/visual-editor.utils'
-import { visualConfig } from '@/visual.config'
+import CascadeCatalogPanel from './CascadeCatalogPanel.vue'
+import { WIDGET_CATALOGS } from './widget-catalog'
 
 const emits = defineEmits<{
-  dragStart: [value: VisualEditorComponent, index: number]
+  dragStart: [value: VisualEditorBlockData, index: number]
   drag: [k: string]
   dragEnd: []
   dblclickAdd: [value: VisualEditorBlockData]
 }>()
 
-const activeComp = ref('基础组件')
-
+const activeComp = ref(WIDGET_CATALOGS[0]?.title ?? '')
 const controlStore = useControlStore()
 
-/** 当前 hover 打开的 popover 标题 */
 const hoveredPopover = ref<string | null>(null)
+/** 点击菜单图标后固定浮窗，避免拖拽或移开鼠标时自动关闭 */
+const pinnedPopover = ref<string | null>(null)
+const panelStyle = ref<Record<string, string>>({})
+const navBtnRefs = ref<Record<string, HTMLElement | null>>({})
+
 let closeTimer: ReturnType<typeof setTimeout> | null = null
+
+const catalogs = computed(() => WIDGET_CATALOGS)
+
+const activeCatalog = computed(() =>
+  catalogs.value.find(c => c.title === hoveredPopover.value),
+)
+
+function setNavBtnRef(title: string, el: HTMLElement | null) {
+  if (el)
+    navBtnRefs.value[title] = el
+}
 
 function cancelCloseTimer() {
   if (closeTimer !== null) {
@@ -29,18 +42,68 @@ function cancelCloseTimer() {
   }
 }
 
-function onBtnMouseEnter(title: string) {
+function updatePanelPosition(title: string) {
+  const el = navBtnRefs.value[title]
+  if (!el)
+    return
+
+  const rect = el.getBoundingClientRect()
+  const panelWidth = 532
+  const panelMaxHeight = 520
+  const gap = 10
+
+  let left = rect.right + gap
+  let top = rect.top
+
+  if (left + panelWidth > window.innerWidth - 8) {
+    left = Math.max(8, rect.left - panelWidth - gap)
+  }
+
+  if (top + panelMaxHeight > window.innerHeight - 8) {
+    top = Math.max(8, window.innerHeight - panelMaxHeight - 8)
+  }
+
+  panelStyle.value = {
+    position: 'fixed',
+    left: `${left}px`,
+    top: `${top}px`,
+    zIndex: '2050',
+  }
+}
+
+async function onBtnMouseEnter(title: string) {
   cancelCloseTimer()
+  activeComp.value = title
   hoveredPopover.value = title
+  await nextTick()
+  updatePanelPosition(title)
+}
+
+async function onBtnClick(title: string) {
+  cancelCloseTimer()
+  if (pinnedPopover.value === title) {
+    pinnedPopover.value = null
+    hoveredPopover.value = null
+    return
+  }
+  pinnedPopover.value = title
+  activeComp.value = title
+  hoveredPopover.value = title
+  await nextTick()
+  updatePanelPosition(title)
+}
+
+function shouldKeepPanelOpen() {
+  return Boolean(pinnedPopover.value || controlStore.isDragging)
 }
 
 function onBtnMouseLeave() {
+  if (shouldKeepPanelOpen())
+    return
   cancelCloseTimer()
-  // 延迟关闭，给鼠标移动到面板内容的时间
   closeTimer = setTimeout(() => {
-    if (!controlStore.isDragging) {
+    if (!controlStore.isDragging)
       hoveredPopover.value = null
-    }
     closeTimer = null
   }, 150)
 }
@@ -50,51 +113,37 @@ function onContentMouseEnter() {
 }
 
 function onContentMouseLeave() {
+  if (shouldKeepPanelOpen())
+    return
   cancelCloseTimer()
   closeTimer = setTimeout(() => {
-    hoveredPopover.value = null
+    if (!controlStore.isDragging)
+      hoveredPopover.value = null
     closeTimer = null
   }, 200)
 }
 
-const widgets = computed(() => {
-  const { baseWidgets, containerComponents, formWidgets, chartWidgets } = visualConfig.componentModules
+function onWindowChange() {
+  if (hoveredPopover.value)
+    updatePanelPosition(hoveredPopover.value)
+}
 
-  // 过滤掉不在列表中显示的组件（如组组件）
-  const filterVisible = (widgets: Record<string, any>) =>
-    Object.values(widgets).filter((w: any) => !w.hiddenInList)
-
-  return [
-    {
-      title: '基础组件',
-      icon: 'component-base',
-      widgets: filterVisible(baseWidgets),
-    },
-    {
-      title: '表单组件',
-      icon: 'component-form',
-      widgets: filterVisible(formWidgets),
-    },
-    {
-      title: '图表组件',
-      icon: 'component-chart',
-      widgets: filterVisible(chartWidgets),
-    },
-    {
-      title: '容器组件',
-      icon: 'component-content',
-      widgets: filterVisible(containerComponents),
-    },
-  ]
+watch(hoveredPopover, (title) => {
+  if (title) {
+    window.addEventListener('scroll', onWindowChange, true)
+    window.addEventListener('resize', onWindowChange)
+  }
+  else {
+    window.removeEventListener('scroll', onWindowChange, true)
+    window.removeEventListener('resize', onWindowChange)
+  }
 })
 
-function dragStart(e: DragEvent, visual: VisualEditorComponent, index: number) {
-  e.dataTransfer?.setData('text/plain', visual.key)
-  e.dataTransfer!.effectAllowed = 'move'
-  controlStore.setIsDragging(true)
-  controlStore.setMoveVisualData(createNewBlock(cloneDeep(visual)))
-  emits('dragStart', visual, index)
-}
+onBeforeUnmount(() => {
+  cancelCloseTimer()
+  window.removeEventListener('scroll', onWindowChange, true)
+  window.removeEventListener('resize', onWindowChange)
+})
 
 function dragging() {
   controlStore.setDraggingVisualKey(Date.now().toString())
@@ -103,14 +152,25 @@ function dragging() {
 
 function dragEnd() {
   controlStore.setIsDragging(false)
-  hoveredPopover.value = null
   emits('dragEnd')
 }
 
-function onDblClick(w: VisualEditorComponent) {
-  const newBlock = createNewBlock(cloneDeep(w))
+function onCatalogDragStart(block: VisualEditorBlockData, index: number) {
+  cancelCloseTimer()
+  if (hoveredPopover.value)
+    pinnedPopover.value = hoveredPopover.value
+  emits('dragStart', block, index)
+}
+
+function closePanel() {
+  cancelCloseTimer()
+  pinnedPopover.value = null
   hoveredPopover.value = null
-  emits('dblclickAdd', newBlock)
+}
+
+function onCatalogDblclickAdd(block: VisualEditorBlockData) {
+  closePanel()
+  emits('dblclickAdd', block)
 }
 </script>
 
@@ -119,61 +179,45 @@ function onDblClick(w: VisualEditorComponent) {
     :class="$style['component-list-container']"
     class="flex flex-col items-center justify-center rounded-[16px] bg-[var(--el-bg-color)]"
   >
-    <el-popover
-      v-for="(e, i) in widgets"
-      :key="i"
-      placement="right"
-      transition="el-zoom-in-left"
-      :width="280"
-      :popper-class="$style['component-popover']"
-      :teleported="true"
-      :visible="hoveredPopover === e.title"
+    <el-button
+      v-for="catalog in catalogs"
+      :key="catalog.title"
+      :ref="(el) => setNavBtnRef(catalog.title, (el as any)?.$el ?? el)"
+      text
+      :class="[
+        $style['nav-btn'],
+        {
+          [$style['nav-btn--active']]: activeComp === catalog.title,
+          [$style['nav-btn--pinned']]: pinnedPopover === catalog.title,
+        },
+      ]"
+      @mouseenter="onBtnMouseEnter(catalog.title)"
+      @mouseleave="onBtnMouseLeave()"
+      @click="onBtnClick(catalog.title)"
     >
-      <template #reference>
-        <el-button
-          text
-          :class="[
-            $style['nav-btn'],
-            { [$style['nav-btn--active']]: activeComp === e.title },
-          ]"
-          @mouseenter="onBtnMouseEnter(e.title)"
-          @mouseleave="onBtnMouseLeave()"
-        >
-          <SvgIcon :size="20" :name="e.icon" />
-        </el-button>
-      </template>
+      <SvgIcon :size="20" :name="catalog.icon" />
+    </el-button>
 
-      <div @mouseenter="onContentMouseEnter" @mouseleave="onContentMouseLeave">
-        <el-scrollbar class="w-full select-none" view-style="padding: 6px" max-height="520px">
-          <div :class="$style['popover-header']">
-            <SvgIcon :size="16" :name="e.icon" />
-            <span>{{ e.title }}</span>
-          </div>
-          <template v-for="(w, idx) in e.widgets" :key="idx">
-            <div
-              :class="$style['component-item']"
-              draggable="true"
-              @dragstart="(ev) => dragStart(ev, w, idx)"
-              @drag="dragging"
-              @dragend="dragEnd"
-              @dblclick="onDblClick(w)"
-            >
-              <div :class="$style['component-item__icon']">
-                <SvgIcon v-if="isString(w?.icon)" :size="28" :name="w?.icon" />
-              </div>
-              <div :class="$style['component-item__info']">
-                <span :class="$style['component-item__label']">
-                  {{ w.label }}
-                </span>
-                <span :class="$style['component-item__desc']">
-                  {{ w.description }}
-                </span>
-              </div>
-            </div>
-          </template>
-        </el-scrollbar>
-      </div>
-    </el-popover>
+    <Teleport to="body">
+      <Transition name="component-panel-fade">
+        <div
+          v-if="hoveredPopover && activeCatalog"
+          :style="panelStyle"
+          :class="$style['floating-panel']"
+          @mouseenter="onContentMouseEnter"
+          @mouseleave="onContentMouseLeave"
+        >
+          <CascadeCatalogPanel
+            :config="activeCatalog"
+            @drag-start="onCatalogDragStart"
+            @drag="dragging"
+            @drag-end="dragEnd"
+            @dblclick-add="onCatalogDblclickAdd"
+            @close="closePanel"
+          />
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -226,94 +270,26 @@ function onDblClick(w: VisualEditorComponent) {
       background-color: var(--el-color-primary);
     }
   }
+
+  &--pinned {
+    box-shadow: inset 0 0 0 1px var(--el-color-primary-light-5);
+  }
 }
 
-.popover-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 10px 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--el-text-color-regular);
-  border-bottom: 1px solid var(--el-border-color-light);
-  margin-bottom: 4px;
+.floating-panel {
+  pointer-events: auto;
+}
+</style>
+
+<style scoped>
+.component-panel-fade-enter-active,
+.component-panel-fade-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
-.component-popover {
-  padding: 0 !important;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.component-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  margin: 2px 0;
-  border-radius: 8px;
-  cursor: grab;
-  user-select: none;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-
-  &:hover {
-    background-color: var(--el-color-primary-light-9);
-    transform: translateX(4px);
-
-    :global(.svg-icon) {
-      color: var(--el-color-primary);
-    }
-  }
-
-  &:active {
-    cursor: grabbing;
-    transform: scale(0.97);
-    background-color: var(--el-color-primary-light-8);
-  }
-
-  &__icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    background-color: var(--el-fill-color-light);
-    flex-shrink: 0;
-    transition: all 0.2s ease;
-    color: var(--el-text-color-secondary);
-
-    .component-item:hover & {
-      background-color: var(--el-color-primary-light-8);
-      color: var(--el-color-primary);
-    }
-  }
-
-  &__info {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    min-width: 0;
-    flex: 1;
-  }
-
-  &__label {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--el-text-color-primary);
-    line-height: 1.4;
-  }
-
-  &__desc {
-    font-size: 12px;
-    color: var(--el-text-color-secondary);
-    line-height: 1.4;
-    margin-top: 1px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 100%;
-  }
+.component-panel-fade-enter-from,
+.component-panel-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-6px);
 }
 </style>

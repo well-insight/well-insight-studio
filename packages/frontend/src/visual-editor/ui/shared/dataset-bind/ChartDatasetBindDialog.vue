@@ -12,7 +12,8 @@ import { ElAutoResizer, ElMessage } from 'element-plus'
 import { computed, ref, watch } from 'vue'
 import { fetchAllDatasets, fetchDatasetDetail } from '@/api/dataset'
 import { AdaptiveDialog } from '@/components/adaptive-dialog'
-import BarChartView from '@/packages/pc/chart-widgets/bar-chart/BarChartView'
+import { getChartOptionBuilder } from '@/packages/pc/chart-widgets/shared/chartOptionBuilders'
+import DatasetChartView from '@/packages/pc/chart-widgets/shared/DatasetChartView'
 import {
   CHART_DIMENSION_PROP,
   CHART_METRIC_PROP,
@@ -86,6 +87,9 @@ const canConfirm = computed(
   () =>
     Boolean(datasetId.value.trim() && dimensionField.value && metricField.value),
 )
+
+const chartBuildOption = computed(() => getChartOptionBuilder(props.block.componentKey ?? 'bar-chart'))
+const chartVariant = computed(() => String(props.block.props?.chartVariant ?? 'basic'))
 
 function findFieldByName(name: string): ApiDatasetField | null {
   return fields.value.find(f => f.name === name) ?? null
@@ -238,10 +242,6 @@ watch(datasetId, (id) => {
     metricField.value = null
   }
 })
-
-function chartSize(value: number, min: number) {
-  return Math.max(value, min)
-}
 </script>
 
 <template>
@@ -398,14 +398,12 @@ function chartSize(value: number, min: number) {
           <div class="chart-preview__viewport">
             <div class="chart-preview__canvas">
               <ElAutoResizer>
-                <template #default="{ width, height }">
-                  <BarChartView
+                <template #default>
+                  <DatasetChartView
                     :bindings="draftBindings"
-                    :bar-color="(block.props?.barColor as string) || '#409EFF'"
                     :use-sample-data="false"
-                    :show-refresh="false"
-                    :width="chartSize(width, 200)"
-                    :height="chartSize(height, 120)"
+                    :chart-variant="chartVariant"
+                    :build-option="chartBuildOption"
                   />
                 </template>
               </ElAutoResizer>

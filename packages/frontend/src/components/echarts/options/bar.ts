@@ -1,84 +1,60 @@
 import type { EChartsOption } from 'echarts'
-import type { ChartDatum } from '@/utils/datasetChart'
+import type { BaseChartOptionParams } from './common'
+import { categoryAxis, defaultGrid, getColor, valueAxis } from './common'
 import { getEChartsThemeColors } from '../theme'
 
-export interface BarChartOptionParams {
-  data: ChartDatum[]
-  /** 颜色调色板，按类目索引分配 */
-  colors?: string[]
-  compact?: boolean
-}
-
-/**
- * 根据调色板获取指定索引的颜色
- */
-function getColor(colors: string[] | undefined, index: number): string {
-  if (!colors || colors.length === 0) {
-    return '#409EFF'
-  }
-  return colors[index % colors.length]
-}
+export type BarChartOptionParams = BaseChartOptionParams
 
 export function buildBarChartOption(params: BarChartOptionParams): EChartsOption {
-  const { data, colors, compact = false } = params
+  const { data, colors, compact = false, chartVariant = 'basic' } = params
   const theme = getEChartsThemeColors()
+  const isHorizontal = chartVariant === 'horizontal'
+
+  const gradientColor = {
+    type: 'linear' as const,
+    x: 0,
+    y: 0,
+    x2: isHorizontal ? 1 : 0,
+    y2: isHorizontal ? 0 : 1,
+    colorStops: [
+      { offset: 0, color: getColor(colors, 0) },
+      { offset: 1, color: `${getColor(colors, 0)}66` },
+    ],
+  }
+
+  const barColor = chartVariant === 'gradient' ? gradientColor : getColor(colors, 0)
 
   return {
     animation: !compact,
     color: colors,
-    grid: {
-      left: compact ? 36 : 44,
-      right: 12,
-      top: compact ? 8 : 12,
-      bottom: compact ? 24 : 32,
-      containLabel: false,
-    },
+    grid: defaultGrid(compact),
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'shadow' },
       confine: true,
     },
-    xAxis: {
-      type: 'category',
-      data: data.map(d => d.category),
-      axisLine: { lineStyle: { color: theme.border } },
-      axisTick: { show: false },
-      axisLabel: {
-        color: theme.textRegular,
-        fontSize: compact ? 10 : 11,
-        interval: 0,
-        formatter: (value: string) => (value.length > 6 ? `${value.slice(0, 5)}…` : value),
-      },
-    },
-    yAxis: {
-      type: 'value',
-      splitLine: {
-        lineStyle: { color: theme.border, type: 'dashed' },
-      },
-      axisLabel: {
-        color: theme.textSecondary,
-        fontSize: compact ? 10 : 11,
-      },
-    },
+    xAxis: isHorizontal ? valueAxis(compact, theme) : categoryAxis(data, compact, theme),
+    yAxis: isHorizontal ? categoryAxis(data, compact, theme) : valueAxis(compact, theme),
     series: [
       {
         type: 'bar',
         data: data.map(d => d.value),
         barMaxWidth: compact ? 28 : 48,
         itemStyle: {
-          color: getColor(colors, 0),
-          borderRadius: [3, 3, 0, 0],
+          color: barColor,
+          borderRadius: isHorizontal ? [0, 3, 3, 0] : [3, 3, 0, 0],
         },
         label: compact
           ? { show: false }
           : {
               show: true,
-              position: 'top',
+              position: isHorizontal ? 'right' : 'top',
               color: theme.text,
               fontSize: 10,
-              formatter: (p: { value: number }) => p.value,
             },
       },
     ],
   }
 }
+
+export type { BaseChartOptionParams } from './common'

@@ -174,7 +174,7 @@ function onInnerContextmenu(e: MouseEvent, block: VisualEditorBlockData) {
       :is-editing="isEditingMode"
       :is-selected="isBlockSelected(child._vid)"
       :is-focused="child.focus"
-      :disabled="child.static || child._containerEditLocked"
+      :disabled="child.static || child._containerEditLocked || child._layerLocked"
       item-class="group-absolute-item"
       :container-width="groupCanvasWidth"
       :container-height="groupCanvasHeight"

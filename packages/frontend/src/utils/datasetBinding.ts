@@ -62,7 +62,15 @@ export const CHART_DIMENSION_PROP = 'categoryField'
 export const CHART_METRIC_PROP = 'valueField'
 export const CHART_BIND_PROPS = [CHART_DIMENSION_PROP, CHART_METRIC_PROP] as const
 
-const CHART_COMPONENT_KEYS = new Set<string>(['bar-chart'])
+const CHART_COMPONENT_KEYS = new Set<string>([
+  'bar-chart',
+  'line-chart',
+  'pie-chart',
+  'scatter-chart',
+  'radar-chart',
+  'gauge-chart',
+  'funnel-chart',
+])
 
 export function isChartComponent(componentKey: string): boolean {
   return CHART_COMPONENT_KEYS.has(componentKey)

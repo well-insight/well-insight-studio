@@ -1,7 +1,13 @@
 import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
 import { defineStore } from 'pinia'
 
-export type CanvasSelectHandler = (block: VisualEditorBlockData) => void
+export interface CanvasSelectOptions {
+  /** Ctrl/Cmd 多选：切换当前块选中状态 */
+  multiSelect?: boolean
+}
+
+export type CanvasSelectHandler = (block: VisualEditorBlockData, options?: CanvasSelectOptions) => void
+export type CanvasClearSelectionHandler = () => void
 
 /**
  * 临时变量存储
@@ -23,6 +29,9 @@ export const useControlStore = defineStore('useControlStore', {
     floatingSettingActiveTab: 'attr',
     /** 画布选中回调（由 PcWrapper 注册，供层级树等调用） */
     canvasSelectHandler: null,
+    canvasClearSelectionHandler: null,
+    /** 画布多选 id 列表（由 PcWrapper 同步，供层级树展示） */
+    canvasSelectedBlockIds: [] as string[],
   }),
   actions: {
     registerCanvasSelectHandler(handler: CanvasSelectHandler) {
@@ -31,8 +40,21 @@ export const useControlStore = defineStore('useControlStore', {
     unregisterCanvasSelectHandler() {
       this.canvasSelectHandler = null
     },
-    selectCanvasBlock(block: VisualEditorBlockData) {
-      this.canvasSelectHandler?.(block)
+    registerCanvasClearSelectionHandler(handler: CanvasClearSelectionHandler) {
+      this.canvasClearSelectionHandler = handler
+    },
+    unregisterCanvasClearSelectionHandler() {
+      this.canvasClearSelectionHandler = null
+    },
+    selectCanvasBlock(block: VisualEditorBlockData, options?: CanvasSelectOptions) {
+      this.canvasSelectHandler?.(block, options)
+    },
+    clearCanvasSelection() {
+      this.canvasClearSelectionHandler?.()
+      this.canvasSelectedBlockIds = []
+    },
+    setCanvasSelectedBlockIds(ids: string[]) {
+      this.canvasSelectedBlockIds = ids
     },
     setMoveVisualData(v: VisualEditorBlockData | null) {
       this.moveVisualData = v || null
@@ -58,4 +80,6 @@ export interface ControlStoreState {
   floatingSettingActiveTab: string
   draggingVisualKey?: string
   canvasSelectHandler: CanvasSelectHandler | null
+  canvasClearSelectionHandler: CanvasClearSelectionHandler | null
+  canvasSelectedBlockIds: string[]
 }
