@@ -99,83 +99,6 @@ const axisTypeLabels: Record<string, string> = {
   log: '对数轴',
   time: '时间轴',
 }
-
-interface CanvasColorItem {
-  label: string
-  path: string
-  isText?: boolean
-}
-
-interface CanvasColorGroup {
-  label: string
-  items: CanvasColorItem[]
-}
-
-const canvasColorGroups: CanvasColorGroup[] = [
-  {
-    label: '文字色',
-    items: [
-      { label: '主要文字', path: 'text.primary' },
-      { label: '常规文字', path: 'text.regular' },
-      { label: '次要文字', path: 'text.secondary' },
-      { label: '占位文字', path: 'text.placeholder' },
-      { label: '禁用文字', path: 'text.disabled' },
-    ],
-  },
-  {
-    label: '背景色',
-    items: [
-      { label: '页面背景', path: 'bg.page' },
-      { label: '组件背景', path: 'bg.component' },
-      { label: '叠加背景', path: 'bg.overlay' },
-      { label: '悬停背景', path: 'bg.hover' },
-      { label: '选中背景', path: 'bg.selected' },
-    ],
-  },
-  {
-    label: '边框色',
-    items: [
-      { label: '基础边框', path: 'border.base' },
-      { label: '浅色边框', path: 'border.light' },
-      { label: '深色边框', path: 'border.dark' },
-    ],
-  },
-  {
-    label: '填充色',
-    items: [
-      { label: '默认填充', path: 'fill.default' },
-      { label: '浅填充', path: 'fill.light' },
-      { label: '深填充', path: 'fill.dark' },
-      { label: '页面填充', path: 'fill.page' },
-    ],
-  },
-  {
-    label: '阴影',
-    items: [
-      { label: '浅阴影', path: 'shadow.light', isText: true },
-      { label: '中等阴影', path: 'shadow.medium', isText: true },
-      { label: '深阴影', path: 'shadow.dark', isText: true },
-    ],
-  },
-]
-
-function getCanvasVal(path: string): string {
-  const keys = path.split('.')
-  let val: unknown = canvasTheme.value
-  for (const k of keys) val = (val as Record<string, unknown>)?.[k]
-  return typeof val === 'string' ? val : ''
-}
-
-function setCanvasVal(path: string, value: string) {
-  const keys = path.split('.')
-  let target: Record<string, unknown> = canvasTheme.value as unknown as Record<string, unknown>
-  for (let i = 0; i < keys.length - 1; i++) {
-    if (!target[keys[i]!])
-      target[keys[i]!] = {}
-    target = target[keys[i]!] as Record<string, unknown>
-  }
-  target[keys[keys.length - 1]!] = value
-}
 </script>
 
 <template>
@@ -214,33 +137,6 @@ function setCanvasVal(path: string, value: string) {
           <el-form-item label="边框颜色">
             <ThemeColorField v-model="echartsTheme.borderColor" />
           </el-form-item>
-
-          <div
-            v-for="group in canvasColorGroups"
-            :key="group.label"
-            class="canvas-color-group"
-          >
-            <div class="config-subtitle">
-              {{ group.label }}
-            </div>
-            <el-form-item
-              v-for="item in group.items"
-              :key="item.path"
-              :label="item.label"
-            >
-              <el-input
-                v-if="item.isText"
-                :model-value="getCanvasVal(item.path)"
-                size="small"
-                @update:model-value="(v) => setCanvasVal(item.path, v as string)"
-              />
-              <ThemeColorField
-                v-else
-                :model-value="getCanvasVal(item.path)"
-                @update:model-value="setCanvasVal(item.path, $event)"
-              />
-            </el-form-item>
-          </div>
         </el-form>
       </div>
     </el-collapse-item>
@@ -578,12 +474,6 @@ function setCanvasVal(path: string, value: string) {
 
 .config-section :deep(.el-form-item__content) {
   flex-wrap: nowrap;
-}
-
-.canvas-color-group {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px dashed var(--el-border-color-lighter);
 }
 
 .config-subtitle {

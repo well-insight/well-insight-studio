@@ -268,16 +268,116 @@ export function ensureEchartsTheme(theme: CanvasTheme): EChartsThemeData {
 }
 
 /** 将 ECharts 主题关键字段同步回 CanvasTheme */
-export function syncEchartsToCanvas(theme: CanvasTheme, echarts: EChartsThemeData) {
-  theme.echarts = cloneDeep(echarts)
-  applyBrandColorsFromMap(theme, echarts.color)
+export function applyEchartsThemeToCanvas(
+  theme: CanvasTheme,
+  echarts: EChartsThemeData,
+  options?: { isDark?: boolean, presetBg?: string },
+) {
+  const isDark = options?.isDark ?? theme.isDark
+  const presetBg = options?.presetBg ?? ''
+  const data = cloneDeep(echarts)
 
-  if (echarts.backgroundColor && echarts.backgroundColor !== 'rgba(0, 0, 0, 0)') {
-    theme.bg.page = echarts.backgroundColor
+  if (typeof data.color === 'string')
+    data.color = [data.color]
+  data.color = resolveThemeColors(theme, data.color ?? [])
+  updateAxisSetting(data)
+
+  theme.echarts = data
+  applyBrandColorsFromMap(theme, data.color)
+
+  const defaultAxis = data.axis?.[0] ?? data.axes?.[0]
+  const axisLabelColor = defaultAxis?.axisLabelColor
+  const axisLineColor = defaultAxis?.axisLineColor
+  const splitLineColor = defaultAxis?.splitLineColor?.[0]
+
+  theme.bg.page = resolveThemePageBackground(data.backgroundColor, presetBg, isDark)
+  theme.text.primary = data.titleColor || data.legendTextColor || theme.text.primary
+  theme.text.regular = axisLabelColor || data.legendTextColor || theme.text.regular
+  theme.text.secondary = data.subtitleColor || theme.text.secondary
+  theme.border.base = data.borderColor || theme.border.base
+  theme.border.light = splitLineColor || theme.border.light
+  theme.border.dark = axisLineColor || theme.border.dark
+
+  if (isDark) {
+    theme.bg.component = theme.bg.page
+    theme.bg.overlay = lightenOrSelf(theme.bg.page, 0.08)
+    theme.bg.hover = lightenOrSelf(theme.bg.page, 0.12)
+    theme.fill.default = lightenOrSelf(theme.bg.page, 0.15)
+    theme.fill.light = lightenOrSelf(theme.bg.page, 0.1)
+    theme.fill.dark = theme.bg.page
+    theme.fill.page = darkenOrSelf(theme.bg.page, 0.06)
   }
-  theme.text.primary = echarts.titleColor || theme.text.primary
-  theme.text.secondary = echarts.subtitleColor || theme.text.secondary
-  theme.border.base = echarts.borderColor || theme.border.base
+  else {
+    theme.bg.component = '#ffffff'
+    theme.bg.overlay = '#ffffff'
+    theme.bg.hover = '#f0f2f5'
+    theme.fill.default = '#f0f2f5'
+    theme.fill.light = '#f5f7fa'
+    theme.fill.dark = '#e8eaed'
+    theme.fill.page = '#ebedf0'
+  }
+}
+
+function isTransparentBackground(color?: string): boolean {
+  if (!color?.trim())
+    return true
+  const normalized = color.trim().toLowerCase().replace(/\s/g, '')
+  return normalized === 'transparent'
+    || normalized === 'rgba(0,0,0,0)'
+    || normalized === 'rgba(0,0,0,0.0)'
+}
+
+function resolveThemePageBackground(
+  echartsBg: string | undefined,
+  presetBg: string,
+  isDark: boolean,
+): string {
+  if (echartsBg && !isTransparentBackground(echartsBg))
+    return echartsBg
+  if (presetBg && !isTransparentBackground(presetBg))
+    return presetBg
+  return isDark ? '#1d1e1f' : '#f5f7fa'
+}
+
+function parseRgb(color: string): { r: number, g: number, b: number } | null {
+  const hex = color.trim()
+  if (hex.startsWith('#')) {
+    const clean = hex.slice(1)
+    const full = clean.length === 3
+      ? clean.split('').map(c => c + c).join('')
+      : clean
+    if (full.length !== 6)
+      return null
+    const num = Number.parseInt(full, 16)
+    if (Number.isNaN(num))
+      return null
+    return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 }
+  }
+  const rgba = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i)
+  if (rgba)
+    return { r: Number(rgba[1]), g: Number(rgba[2]), b: Number(rgba[3]) }
+  return null
+}
+
+function lightenOrSelf(color: string, ratio: number): string {
+  const rgb = parseRgb(color)
+  if (!rgb)
+    return color
+  const mix = (channel: number) => Math.min(255, Math.round(channel + (255 - channel) * ratio))
+  return `rgb(${mix(rgb.r)}, ${mix(rgb.g)}, ${mix(rgb.b)})`
+}
+
+function darkenOrSelf(color: string, ratio: number): string {
+  const rgb = parseRgb(color)
+  if (!rgb)
+    return color
+  const mix = (channel: number) => Math.max(0, Math.round(channel * (1 - ratio)))
+  return `rgb(${mix(rgb.r)}, ${mix(rgb.g)}, ${mix(rgb.b)})`
+}
+
+/** @deprecated 使用 applyEchartsThemeToCanvas */
+export function syncEchartsToCanvas(theme: CanvasTheme, echarts: EChartsThemeData) {
+  applyEchartsThemeToCanvas(theme, echarts)
 }
 
 /** 将 Element Plus 主题字段同步到 ECharts 主题（保存前调用） */

@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 
 import { setupStore } from '@/stores/pinia'
+import { hydratePredefinedThemes } from '@/common/types/predefinedThemeHydrate'
 import App from './App.vue'
 
 import { setupElementPlus } from './plugins/element-plus'
@@ -32,5 +33,8 @@ app.config.globalProperties.$$refs = {}
 window.$$refs = app.config.globalProperties.$$refs
 // }
 app.use(router)
+
+void hydratePredefinedThemes()
+
 // 路由准备完毕再挂载
 app.mount('#app')

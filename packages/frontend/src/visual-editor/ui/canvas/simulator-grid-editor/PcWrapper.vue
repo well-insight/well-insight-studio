@@ -14,6 +14,7 @@ import { useGlobalProperties } from '@/hooks/useGlobalProperties'
 import { ContainerEditorContextKey, EditingContainerIdKey } from '@/packages/pc/container-component/container'
 import CanvasItem from '@/packages/pc/container-component/shared/CanvasItem.vue'
 import { calcSlotDropLayout } from '@/packages/pc/container-component/shared/slot-grid.utils'
+import { resolvePageBackgroundColor } from '@/common/types/canvasTheme'
 import { useCanvasThemeStore } from '@/stores/canvasThemeStore'
 import { useControlStore } from '@/stores/controlStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
@@ -308,8 +309,7 @@ watch(selectedBlockIds, (ids) => {
  */
 const editCanvasStyle = computed(() => {
   const { bgImage, bgColor, pageSize, bgRepeat, bgSize } = currentPage.value.config
-  // 当未设置背景色时，使用 CSS 变量自适应暗黑/明亮模式
-  const normalizedBgColor = bgColor || 'var(--el-bg-color)'
+  const normalizedBgColor = resolvePageBackgroundColor(bgColor)
   const normalizedBgImage = bgImage ? `url(${bgImage})` : 'none'
   const normalizedBgRepeat = bgRepeat || 'no-repeat'
   const normalizedBgSize = bgSize || 'cover'

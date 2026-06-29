@@ -206,6 +206,29 @@ function resolveThemeValue(theme: CanvasTheme, dotPath: string): string | undefi
   return typeof value === 'string' ? value : undefined
 }
 
+/** 历史默认页面背景（未自定义时应跟随主题） */
+const LEGACY_DEFAULT_PAGE_BACKGROUNDS = new Set([
+  '#ffffff',
+  '#fff',
+  'rgb(255,255,255)',
+  'rgba(255,255,255,1)',
+])
+
+/**
+ * 解析页面背景色：未设置或仍为历史默认白底时，跟随主题 `--canvas-bg-page`
+ */
+export function resolvePageBackgroundColor(bgColor?: string): string {
+  const trimmed = bgColor?.trim()
+  if (!trimmed)
+    return 'var(--canvas-bg-page)'
+
+  const normalized = trimmed.replace(/\s/g, '').toLowerCase()
+  if (LEGACY_DEFAULT_PAGE_BACKGROUNDS.has(normalized))
+    return 'var(--canvas-bg-page)'
+
+  return trimmed
+}
+
 /** 将主题转换为 CSS 变量键值对（包含 Element Plus 兼容变量） */
 export function themeToCSSVars(theme: CanvasTheme): Record<string, string> {
   const vars: Record<string, string> = {}

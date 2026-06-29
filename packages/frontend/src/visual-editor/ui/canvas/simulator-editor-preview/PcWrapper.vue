@@ -3,6 +3,7 @@ import type { CSSProperties } from 'vue'
 import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
 import { cloneDeep } from 'lodash-es'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { resolvePageBackgroundColor } from '@/common/types/canvasTheme'
 import { useAnimate } from '@/hooks/useAnimate'
 import { useCanvasThemeStore } from '@/stores/canvasThemeStore'
 import { resolveBlockBorderCss } from '@/utils/blockBorder'
@@ -57,7 +58,7 @@ function buildPreviewLayout() {
 
 const editCanvasStyle = computed(() => {
   const config = currentPage.value?.config
-  const bgColor = config?.bgColor || 'var(--el-bg-color)'
+  const bgColor = resolvePageBackgroundColor(config?.bgColor)
   const bgImage = config?.bgImage ? `url(${config.bgImage})` : 'none'
   return {
     width: '100%',

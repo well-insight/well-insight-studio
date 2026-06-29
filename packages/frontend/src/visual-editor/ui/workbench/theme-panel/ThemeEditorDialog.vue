@@ -162,21 +162,6 @@ watch(echartsTheme, () => {
   renderChart()
 }, { deep: true })
 
-// 当画布主题的背景/文字/边框/填充/阴影变化时同步到 echartsTheme
-watch(
-  () => [
-    editingTheme.value.bg,
-    editingTheme.value.text,
-    editingTheme.value.border,
-    editingTheme.value.fill,
-    editingTheme.value.shadow,
-  ],
-  () => {
-    echartsTheme.value = ensureEchartsTheme(editingTheme.value)
-  },
-  { deep: true, flush: 'post' },
-)
-
 watch(
   () => [props.visible, props.editThemeId] as const,
   ([visible]) => {

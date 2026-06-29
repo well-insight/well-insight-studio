@@ -6,13 +6,13 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { CanvasTheme } from '@/common/types/canvasTheme'
 import { themeToCSSVars } from '@/common/types/canvasTheme'
+import { hydratePredefinedThemes } from '@/common/types/predefinedThemeHydrate'
 import {
-  PREDEFINED_THEMES,
   getPredefinedTheme,
+  getPresetEchartsJsonName,
   PREDEFINED_THEME_METAS,
 } from '@/common/types/predefinedThemes'
 import { cloneDeep } from 'lodash-es'
-import { getPresetEchartsJsonName } from '@/common/types/predefinedThemes'
 
 const DEFAULT_THEME_ID = 'v5'
 const STORAGE_KEY = 'canvas-theme-config'
@@ -62,8 +62,15 @@ export const useCanvasThemeStore = defineStore('canvasTheme', () => {
 
   const activeThemeId = ref<string>(stored.activeThemeId ?? DEFAULT_THEME_ID)
   const userThemes = ref<UserThemeItem[]>(stored.userThemes)
+  /** 预设主题 JSON 加载完成后递增，触发 currentTheme 重算 */
+  const presetRevision = ref(0)
+
+  void hydratePredefinedThemes().then(() => {
+    presetRevision.value++
+  })
 
   const currentTheme = computed<CanvasTheme>(() => {
+    void presetRevision.value
     const override = userThemes.value.find(t => t.id === activeThemeId.value)
     if (override)
       return override.theme
