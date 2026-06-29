@@ -9,10 +9,10 @@ import { merge } from 'lodash-es'
 import {
   computed,
   getCurrentInstance,
+  nextTick,
   onBeforeUnmount,
   onMounted,
   ref,
-
   shallowRef,
   watch,
   watchEffect,
@@ -25,7 +25,7 @@ import { buildElementPlusVTableThemePartial } from '@/utils/elVTableTheme'
 // ────────────────────────────────────────────────────────────────────────
 interface ElListTableProps {
   /** VTable 配置选项 */
-  options: ListTableConstructorOptions
+  options?: ListTableConstructorOptions
   /** 表格宽度 */
   width?: number | string
   /** 表格高度 */
@@ -54,12 +54,6 @@ interface ElListTableExpose {
   /** 获取 VTable 实例 */
   vTableInstance: InstanceType<typeof ListTable> | null
 }
-
-defineExpose<ElListTableExpose>({
-  get vTableInstance() {
-    return listTableRef.value
-  },
-})
 
 // ────────────────────────────────────────────────────────────────────────
 // 响应式引用
@@ -196,24 +190,30 @@ function syncTable() {
 // 生命周期钩子
 // ────────────────────────────────────────────────────────────────────────
 onMounted(() => {
-  // 初始化表格
-  syncTable()
+  nextTick(() => {
+    setTimeout(() => {
+      // 初始化表格
+      syncTable()
 
-  // 创建 ResizeObserver 监听容器尺寸变化
-  const el = containerRef.value
-  if (el) {
-    resizeObserverRef.value = new ResizeObserver(() => {
-      const table = listTableRef.value
-      if (!table)
-        return
+      // 创建 ResizeObserver 监听容器尺寸变化
+      const el = containerRef.value
+      if (el) {
+        resizeObserverRef.value = new ResizeObserver(() => {
+          const table = listTableRef.value
+          if (!table) {
+            return
+          }
 
-      // 通知 VTable 重新计算尺寸并重绘
-      table.setCanvasSize(el.offsetWidth, el.offsetHeight)
-    })
+          // 通知 VTable 重新计算尺寸并重绘
+          // table.setCanvasSize(el.offsetWidth, el.offsetHeight)
+          table.resize()
+        })
 
-    // 开始观察容器元素
-    resizeObserverRef.value.observe(el)
-  }
+        // 开始观察容器元素
+        resizeObserverRef.value.observe(el)
+      }
+    }, 0)
+  })
 })
 
 // 监听配置变化，自动同步表格
@@ -227,6 +227,12 @@ onBeforeUnmount(() => {
   // 释放 VTable 实例
   listTableRef.value?.release()
   listTableRef.value = null
+})
+
+defineExpose<ElListTableExpose>({
+  get vTableInstance() {
+    return listTableRef.value
+  },
 })
 </script>
 

@@ -429,38 +429,40 @@ defineExpose({ openCreateRow })
         <el-dialog
           v-model="rowDialogVisible"
           :title="rowDialogMode === 'create' ? '新增行' : '编辑行'"
-          width="480px"
           destroy-on-close
           append-to-body
           @closed="editingRowId = null"
         >
-          <el-form label-position="top">
-            <el-form-item v-for="f in fields" :key="f.id">
-              <template #label>
-                <ColumnField :field="f" />
-              </template>
-              <el-input
-                v-if="f.field_type === 'text'"
-                v-model="rowForm[String(f.id)]"
-                type="textarea"
-                :rows="2"
-                placeholder="请输入文本"
-              />
-              <el-input
-                v-else-if="f.field_type === 'number'"
-                v-model="rowForm[String(f.id)]"
-                placeholder="请输入数字"
-              />
-              <el-date-picker
-                v-else
-                v-model="rowForm[String(f.id)]"
-                type="datetime"
-                placeholder="请选择日期时间"
-                style="width: 100%"
-                value-format="YYYY-MM-DD HH:mm:ss"
-              />
-            </el-form-item>
-          </el-form>
+          <el-scrollbar max-height="60vh">
+            <el-form label-position="top">
+              <el-form-item v-for="f in fields" :key="f.id">
+                <template #label>
+                  <ColumnField :field="f" />
+                </template>
+                <el-input
+                  v-if="f.field_type === 'text'"
+                  v-model="rowForm[String(f.id)]"
+                  type="textarea"
+                  :rows="2"
+                  placeholder="请输入文本"
+                />
+                <el-input
+                  v-else-if="f.field_type === 'number'"
+                  v-model="rowForm[String(f.id)]"
+                  placeholder="请输入数字"
+                />
+                <el-date-picker
+                  v-else
+                  v-model="rowForm[String(f.id)]"
+                  type="datetime"
+                  placeholder="请选择日期时间"
+                  style="width: 100%"
+                  value-format="YYYY-MM-DD HH:mm:ss"
+                />
+              </el-form-item>
+            </el-form>
+          </el-scrollbar>
+
           <template #footer>
             <ElButton @click="rowDialogVisible = false">
               取消
@@ -472,8 +474,13 @@ defineExpose({ openCreateRow })
         </el-dialog>
       </template>
       <div v-else v-loading="loading" :class="$style.tableArea">
-        <div class="w-full flex-auto h-0" />
-        <ElListTable :options="tableOptions" width="100%" :height="420" />
+        <div class="w-full flex-auto h-0">
+          <el-auto-resizer>
+            <template #default="{ height, width }">
+              <ElListTable :options="tableOptions" :width="width" :height="height" />
+            </template>
+          </el-auto-resizer>
+        </div>
         <div v-if="fields.length > 0" :class="$style.pager">
           <el-pagination
             background
