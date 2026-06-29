@@ -1,13 +1,21 @@
 <script lang="ts" setup>
 import type { CSSProperties } from 'vue'
 import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
+import { useResizeObserver } from '@vueuse/core'
 import { cloneDeep } from 'lodash-es'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { resolvePageBackgroundColor } from '@/common/types/canvasTheme'
 import { useAnimate } from '@/hooks/useAnimate'
+import {
+  calcGridItemPixelRect,
+  calcRootContentMinHeight,
+  getRootCanvasGridMetrics,
+} from '@/packages/pc/container-component/shared/slot-grid.utils'
 import { useCanvasThemeStore } from '@/stores/canvasThemeStore'
 import { resolveBlockBorderCss } from '@/utils/blockBorder'
 import {
+  DEFAULT_BLOCK_HEIGHT,
+  DEFAULT_BLOCK_WIDTH,
   getBlockAnimationElement,
   getBlockTitleInlineStyle,
   getBlockTitleText,
@@ -15,7 +23,6 @@ import {
 } from '@/visual-editor/core/visual-editor.utils'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import CompRender from './comp-render'
-import PreviewSlotItem from './PreviewSlotItem.vue'
 
 defineOptions({
   name: 'PcPreviewWrapper',
@@ -33,10 +40,32 @@ const props = withDefaults(
 
 const { currentPage } = useVisualData()
 
-const gridColNum = computed(() => {
-  const designWidth = currentPage.value?.config?.pageSize?.width || 1920
-  return Math.max(1, Math.floor(designWidth)) // 1px 步长：列数 = 设计宽度
+const canvasInnerRef = ref<HTMLElement>()
+const canvasWidth = ref(0)
+
+useResizeObserver(canvasInnerRef, (entries) => {
+  const entry = entries[0]
+  canvasWidth.value = entry?.contentRect.width ?? 0
 })
+
+const designWidth = computed(() => currentPage.value?.config?.pageSize?.width || 1920)
+
+function getGridMetrics() {
+  const containerWidth = canvasWidth.value > 0
+    ? canvasWidth.value
+    : designWidth.value
+  return getRootCanvasGridMetrics(containerWidth, designWidth.value)
+}
+
+function getRootItemPixelRect(block: VisualEditorBlockData) {
+  return calcGridItemPixelRect(
+    block.x || 0,
+    block.y || 0,
+    block.w || DEFAULT_BLOCK_WIDTH,
+    block.h || DEFAULT_BLOCK_HEIGHT,
+    getGridMetrics(),
+  )
+}
 
 function getBlockBorderStyle(item: VisualEditorBlockData): CSSProperties {
   return resolveBlockBorderCss(item, currentPage.value?.config)
@@ -62,7 +91,7 @@ const editCanvasStyle = computed(() => {
   const bgImage = config?.bgImage ? `url(${config.bgImage})` : 'none'
   return {
     width: '100%',
-    minHeight: `${config?.pageSize?.height || 720}px`,
+    minHeight: canvasMinHeight.value,
     backgroundColor: bgColor,
     backgroundImage: bgImage,
     backgroundRepeat: config?.bgRepeat || 'no-repeat',
@@ -71,9 +100,19 @@ const editCanvasStyle = computed(() => {
   } as CSSProperties
 })
 
+const canvasMinHeight = computed(() => {
+  void canvasWidth.value
+  const pageH = Number(currentPage.value?.config?.pageSize?.height) || 720
+  const contentH = calcRootContentMinHeight(
+    previewLayout.value,
+    getGridMetrics(),
+    DEFAULT_BLOCK_HEIGHT,
+  )
+  return `${Math.max(pageH, contentH)}px`
+})
+
 function initAnimations() {
-  const blocks = previewLayout.value
-  blocks
+  previewLayout.value
     .filter(block => block.animations?.length)
     .forEach((block) => {
       const el = getBlockAnimationElement(block._vid)
@@ -122,9 +161,12 @@ onMounted(() => {
   <div :style="themeStyle" :class="$style.previewRoot">
     <el-scrollbar class="h-full w-full">
       <div :class="$style.canvas" :style="editCanvasStyle">
-        <div :class="$style.canvasInner" :style="{ position: 'relative', minHeight: '400px' }">
+        <div
+          ref="canvasInnerRef"
+          :class="$style.canvasInner"
+          :style="{ position: 'relative', minHeight: canvasMinHeight }"
+        >
           <template v-if="previewLayout.length > 0">
-            <!-- 预览使用自研绝对定位（不再依赖 grid-layout-plus） -->
             <div
               v-for="item in previewLayout"
               :key="item._vid"
@@ -132,10 +174,10 @@ onMounted(() => {
               :style="{
                 ...getBlockBorderStyle(item),
                 position: 'absolute',
-                left: `${(item.x || 0)}px`,
-                top: `${(item.y || 0)}px`,
-                width: `${(item.w || 120)}px`,
-                height: `${(item.h || 40)}px`,
+                left: `${getRootItemPixelRect(item).left}px`,
+                top: `${getRootItemPixelRect(item).top}px`,
+                width: `${getRootItemPixelRect(item).width}px`,
+                height: `${getRootItemPixelRect(item).height}px`,
               }"
               :class="{
                 'preview-block--inner-title':
@@ -158,15 +200,7 @@ onMounted(() => {
                 >
                   {{ getBlockTitleText(item) }}
                 </span>
-                <CompRender :element="item">
-                  <template
-                    v-for="(slotValue, slotKey) in item.props?.slots"
-                    :key="slotKey"
-                    #[slotKey]
-                  >
-                    <PreviewSlotItem :children="slotValue.children ?? []" />
-                  </template>
-                </CompRender>
+                <CompRender :element="item" />
               </div>
             </div>
           </template>
@@ -211,17 +245,8 @@ onMounted(() => {
 </style>
 
 <style lang="scss" scoped>
-.grid-layout-preview {
-  width: 100%;
-  min-height: 100%;
-}
-
 .preview-block {
   position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
   box-sizing: border-box;
   background-color: var(--el-bg-color);
   overflow: hidden;
@@ -229,11 +254,20 @@ onMounted(() => {
 
 .preview-block__body {
   position: relative;
-  flex: 1;
-  min-height: 0;
   width: 100%;
+  height: 100%;
   display: flex;
   overflow: hidden;
+}
+
+.preview-block--inner-title {
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-block--inner-title .preview-block__body {
+  flex: 1;
+  min-height: 0;
 }
 
 .preview-block__title-inner {
@@ -271,13 +305,5 @@ onMounted(() => {
   top: 2px;
   left: 0;
   transform: translate(0, -100%);
-}
-
-:deep(.vgl-item) {
-  transition: none;
-}
-
-:deep(.vgl-item__resizer) {
-  display: none !important;
 }
 </style>

@@ -93,3 +93,47 @@ export function calcSlotDropLayout(
 
   return { x, y, w, h }
 }
+
+export interface GridItemPixelRect {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
+/** 根画布网格度量（列数 = 页面设计宽度） */
+export function getRootCanvasGridMetrics(containerWidthPx: number, designWidth: number): SlotGridMetrics {
+  const cols = Math.max(1, Math.floor(designWidth || 1920))
+  return getSlotGridMetrics(containerWidthPx, cols)
+}
+
+/** 计算网格项在画布中的像素矩形（根画布 / GridCanvas 共用） */
+export function calcGridItemPixelRect(
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  metrics: SlotGridMetrics,
+): GridItemPixelRect {
+  const left = calcSlotColLeft(x, metrics)
+  const top = calcSlotRowTop(y, metrics)
+  const width = calcSlotColLeft(x + w, metrics) - left - metrics.margin[0]
+  const height = calcSlotRowTop(y + h, metrics) - top - metrics.margin[1]
+  return { left, top, width, height }
+}
+
+/** 由块位置推算画布内容最小高度 */
+export function calcRootContentMinHeight(
+  blocks: Array<{ y?: number, h?: number }>,
+  metrics: SlotGridMetrics,
+  defaultBlockHeight: number,
+  padding = 400,
+): number {
+  let maxBottom = 0
+  for (const b of blocks) {
+    const bottom = calcSlotRowTop((b.y || 0) + (b.h || defaultBlockHeight), metrics) + padding
+    if (bottom > maxBottom)
+      maxBottom = bottom
+  }
+  return Math.ceil(maxBottom)
+}
