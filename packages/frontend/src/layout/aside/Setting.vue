@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ArrowDown, Expand, Fold, SwitchButton } from '@element-plus/icons-vue'
+import { ArrowDown, Expand, Fold, Moon, Sunny, SwitchButton } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
@@ -7,11 +7,17 @@ import { useRouter } from 'vue-router'
 import { userDisplayLabel } from '@/api/auth'
 import { useAuthStore } from '@/stores/auth'
 import { useControlStore } from '@/stores/controlStore'
+import { useThemeStore } from '@/stores/themeStore'
 
 defineProps<{ collapse?: boolean }>()
 
 const controlStore = useControlStore()
 const { asideCollapse } = storeToRefs(controlStore)
+
+const themeStore = useThemeStore()
+const { isDark } = storeToRefs(themeStore)
+
+const themeLabel = computed(() => (isDark.value ? '暗黑模式' : '浅色模式'))
 
 function toggleAsideCollapse() {
   asideCollapse.value = !asideCollapse.value
@@ -90,6 +96,36 @@ async function confirmLogout() {
       </template>
     </el-dropdown>
 
+    <div class="user-footer__theme-wrap">
+      <el-tooltip v-if="collapse" :content="themeLabel" placement="right">
+        <el-button
+          type="default"
+          circle
+          size="small"
+          class="user-footer__theme-btn"
+          @click="themeStore.toggleTheme()"
+        >
+          <el-icon>
+            <Moon v-if="isDark" />
+            <Sunny v-else />
+          </el-icon>
+        </el-button>
+      </el-tooltip>
+      <el-button
+        v-else
+        text
+        bg
+        class="user-footer__theme-btn user-footer__theme-btn--wide"
+        @click="themeStore.toggleTheme()"
+      >
+        <el-icon>
+          <Moon v-if="isDark" />
+          <Sunny v-else />
+        </el-icon>
+        <span>{{ themeLabel }}</span>
+      </el-button>
+    </div>
+
     <div class="user-footer__toggle-wrap">
       <el-tooltip v-if="collapse" content="展开侧栏" placement="right">
         <el-button type="default" circle size="small" class="user-footer__toggle-btn" @click="toggleAsideCollapse">
@@ -123,11 +159,22 @@ async function confirmLogout() {
   padding-right: 8px;
 }
 
-.user-footer__toggle-wrap {
+.user-footer__theme-wrap {
   display: flex;
   justify-content: center;
   padding-top: 4px;
   border-top: 1px solid var(--el-border-color-lighter);
+}
+
+.user-footer__theme-btn--wide {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.user-footer__toggle-wrap {
+  display: flex;
+  justify-content: center;
 }
 
 .user-footer__toggle-btn--wide {

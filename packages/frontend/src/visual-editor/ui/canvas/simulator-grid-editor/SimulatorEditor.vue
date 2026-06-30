@@ -53,7 +53,7 @@ onUnmounted(() => {
     </div>
 
     <div class="simulator-editor">
-      <div class="mr-4 flex h-full w-[100px] shrink-0 items-center justify-center">
+      <div class="flex h-full w-[100px] shrink-0 items-center justify-center">
         <ComponentList
           @drag-start="() => wrapperRef?.drag()"
           @drag="() => wrapperRef?.drag()"

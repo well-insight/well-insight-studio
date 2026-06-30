@@ -1,7 +1,7 @@
 import { createApp } from 'vue'
 
-import { setupStore } from '@/stores/pinia'
 import { hydratePredefinedThemes } from '@/common/types/predefinedThemeHydrate'
+import { setupStore } from '@/stores/pinia'
 import App from './App.vue'
 
 import { setupElementPlus } from './plugins/element-plus'

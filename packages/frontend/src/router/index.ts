@@ -48,7 +48,10 @@ const routes2: RouteRecordRaw[] = [
           {
             path: 'application/edit/:id(.*)*',
             name: 'ApplicationEdit',
-            component: () => import('@/views/application/AppEdit.vue'),
+            components: {
+              default: () => import('@/views/application/AppEdit.vue'),
+              headerActions: () => import('@/visual-editor/ui/workbench/edit-tools/EditToolsAppActions.vue'),
+            },
             meta: {
               title: '应用编辑',
             },

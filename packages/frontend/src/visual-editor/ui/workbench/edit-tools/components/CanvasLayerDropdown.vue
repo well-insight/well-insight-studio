@@ -14,16 +14,7 @@ function setTriggerRef(el: any) {
   triggerRef.value = el?.$el ?? el ?? null
 }
 
-const {
-  isVisible,
-  isPinned,
-  onTriggerMouseEnter,
-  onTriggerMouseLeave,
-  onPanelMouseEnter,
-  onPanelMouseLeave,
-  onTriggerClick,
-  closePanel,
-} = useEditToolsFloatingPanel('canvas-layer')
+const { isVisible, toggle, close: closePanel } = useEditToolsFloatingPanel('canvas-layer')
 
 const { panelStyle, updatePanelPosition } = useFloatingPanelPosition({
   panelWidth: PANEL_WIDTH,
@@ -33,13 +24,8 @@ const { panelStyle, updatePanelPosition } = useFloatingPanelPosition({
   isVisible,
 })
 
-async function handleTriggerMouseEnter() {
-  await onTriggerMouseEnter()
-  updatePanelPosition()
-}
-
 async function handleTriggerClick() {
-  await onTriggerClick()
+  await toggle()
   updatePanelPosition()
 }
 </script>
@@ -52,9 +38,7 @@ async function handleTriggerClick() {
       bg
       type="primary"
       :icon="List"
-      :class="{ [$style.triggerBtnPinned]: isPinned }"
-      @mouseenter="handleTriggerMouseEnter"
-      @mouseleave="onTriggerMouseLeave"
+      :class="{ [$style.triggerBtnActive]: isVisible }"
       @click="handleTriggerClick"
     >
       <span>画布层级</span>
@@ -66,8 +50,6 @@ async function handleTriggerClick() {
           v-if="isVisible"
           :style="panelStyle"
           :class="$style.floatingPanel"
-          @mouseenter="onPanelMouseEnter"
-          @mouseleave="onPanelMouseLeave"
         >
           <CanvasLayerPanel @close="closePanel" />
         </div>
@@ -81,7 +63,7 @@ async function handleTriggerClick() {
   display: inline-flex;
 }
 
-.triggerBtnPinned {
+.triggerBtnActive {
   box-shadow: inset 0 0 0 1px var(--el-color-primary-light-5);
 }
 

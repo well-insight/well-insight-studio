@@ -229,6 +229,8 @@ export interface VisualEditorActions {
 export interface VisualEditorModelValue {
   /** 页面 */
   pages: VisualEditorPages
+  /** 页面路由排序（path 列表，首项为进入应用时的默认页） */
+  pageOrder?: string[]
   /** 实体 */
   models: VisualEditorModel[]
   /** 动作 */

@@ -1,12 +1,14 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
-import { SvgIcon } from '@/components/svg-icon'
+import { computed, ref } from 'vue'
+import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { useEditToolsFloatingPanel, useFloatingPanelPosition } from '../useEditToolsFloatingPanel'
-import PageSettingPanel from './PageSettingPanel.vue'
+import PageRouterPanel from './PageRouterPanel.vue'
 
 const PANEL_WIDTH = 340
 const PANEL_MAX_HEIGHT = 520
 const PANEL_GAP = 8
+
+const { currentPage } = useVisualData()
 
 const triggerRef = ref<HTMLElement | null>(null)
 
@@ -14,7 +16,7 @@ function setTriggerRef(el: any) {
   triggerRef.value = el?.$el ?? el ?? null
 }
 
-const { isVisible, toggle, close: closePanel } = useEditToolsFloatingPanel('page-setting')
+const { isVisible, toggle, close: closePanel } = useEditToolsFloatingPanel('page-router')
 
 const { panelStyle, updatePanelPosition } = useFloatingPanelPosition({
   panelWidth: PANEL_WIDTH,
@@ -22,6 +24,14 @@ const { panelStyle, updatePanelPosition } = useFloatingPanelPosition({
   panelGap: PANEL_GAP,
   triggerRef,
   isVisible,
+})
+
+const routeButtonLabel = computed(() => {
+  const page = currentPage.value
+  if (page?.title && page?.path) {
+    return `${page.title}「${page.path}」`
+  }
+  return '首页「/index」'
 })
 
 async function handleTriggerClick() {
@@ -40,18 +50,17 @@ async function handleTriggerClick() {
       :class="{ [$style.triggerBtnActive]: isVisible }"
       @click="handleTriggerClick"
     >
-      <SvgIcon name="page-setting" />
-      <span class="ml-1">页面配置</span>
+      <span :class="$style.triggerLabel">{{ routeButtonLabel }}</span>
     </el-button>
 
     <Teleport to="body">
-      <Transition name="page-setting-panel-fade">
+      <Transition name="page-router-panel-fade">
         <div
           v-if="isVisible"
           :style="panelStyle"
           :class="$style.floatingPanel"
         >
-          <PageSettingPanel @close="closePanel" />
+          <PageRouterPanel @close="closePanel" />
         </div>
       </Transition>
     </Teleport>
@@ -61,6 +70,14 @@ async function handleTriggerClick() {
 <style lang="scss" module>
 .wrapper {
   display: inline-flex;
+  max-width: 220px;
+}
+
+.triggerLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px;
 }
 
 .triggerBtnActive {
@@ -73,15 +90,15 @@ async function handleTriggerClick() {
 </style>
 
 <style scoped>
-.page-setting-panel-fade-enter-active,
-.page-setting-panel-fade-leave-active {
+.page-router-panel-fade-enter-active,
+.page-router-panel-fade-leave-active {
   transition:
     opacity 0.15s ease,
     transform 0.15s ease;
 }
 
-.page-setting-panel-fade-enter-from,
-.page-setting-panel-fade-leave-to {
+.page-router-panel-fade-enter-from,
+.page-router-panel-fade-leave-to {
   opacity: 0;
   transform: translateY(-6px);
 }

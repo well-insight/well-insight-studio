@@ -1,94 +1,36 @@
 import type { Ref } from 'vue'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
-export type EditToolsFloatingPanelId = 'canvas-layer' | 'page-setting'
+export type EditToolsFloatingPanelId = 'page-router' | 'canvas-layer' | 'page-setting'
 
-const visiblePanelId = ref<EditToolsFloatingPanelId | null>(null)
-const pinnedPanelId = ref<EditToolsFloatingPanelId | null>(null)
-
-let closeTimer: ReturnType<typeof setTimeout> | null = null
-
-function cancelCloseTimer() {
-  if (closeTimer !== null) {
-    clearTimeout(closeTimer)
-    closeTimer = null
-  }
-}
-
-function shouldKeepPanelOpen() {
-  return Boolean(pinnedPanelId.value)
-}
-
-function scheduleHide(delay: number) {
-  if (shouldKeepPanelOpen())
-    return
-  cancelCloseTimer()
-  closeTimer = setTimeout(() => {
-    if (!shouldKeepPanelOpen())
-      visiblePanelId.value = null
-    closeTimer = null
-  }, delay)
-}
+const activePanelId = ref<EditToolsFloatingPanelId | null>(null)
 
 export function useEditToolsFloatingPanel(panelId: EditToolsFloatingPanelId) {
-  const isVisible = computed(() => visiblePanelId.value === panelId)
-  const isPinned = computed(() => pinnedPanelId.value === panelId)
+  const isVisible = computed(() => activePanelId.value === panelId)
 
-  function show() {
-    visiblePanelId.value = panelId
+  function open() {
+    activePanelId.value = panelId
   }
 
-  async function onTriggerMouseEnter() {
-    cancelCloseTimer()
-    show()
-    await nextTick()
+  function close() {
+    if (activePanelId.value === panelId)
+      activePanelId.value = null
   }
 
-  function onTriggerMouseLeave() {
-    scheduleHide(150)
-  }
-
-  function onPanelMouseEnter() {
-    cancelCloseTimer()
-  }
-
-  function onPanelMouseLeave() {
-    scheduleHide(200)
-  }
-
-  async function onTriggerClick() {
-    cancelCloseTimer()
-    if (pinnedPanelId.value === panelId) {
-      pinnedPanelId.value = null
-      visiblePanelId.value = null
+  async function toggle() {
+    if (activePanelId.value === panelId) {
+      close()
       return
     }
-    pinnedPanelId.value = panelId
-    show()
+    open()
     await nextTick()
   }
-
-  function closePanel() {
-    cancelCloseTimer()
-    if (pinnedPanelId.value === panelId)
-      pinnedPanelId.value = null
-    if (visiblePanelId.value === panelId)
-      visiblePanelId.value = null
-  }
-
-  onBeforeUnmount(() => {
-    cancelCloseTimer()
-  })
 
   return {
     isVisible,
-    isPinned,
-    onTriggerMouseEnter,
-    onTriggerMouseLeave,
-    onPanelMouseEnter,
-    onPanelMouseLeave,
-    onTriggerClick,
-    closePanel,
+    open,
+    close,
+    toggle,
   }
 }
 

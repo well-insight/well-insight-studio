@@ -71,7 +71,7 @@ function defaultPageSize() {
 /**
  * @description 创建空的新页面
  */
-export function createNewPage({ title = '新页面', path = '/' }) {
+export function createNewPage({ title = '新页面', path = '/index' }) {
   return {
     title,
     path,
@@ -86,12 +86,37 @@ export function createNewPage({ title = '新页面', path = '/' }) {
   }
 }
 
+export function ensurePageOrder(data: VisualEditorModelValue): string[] {
+  const keys = Object.keys(data.pages)
+  if (!keys.length) {
+    data.pageOrder = ['/index']
+    return data.pageOrder
+  }
+  if (!data.pageOrder?.length) {
+    data.pageOrder = [...keys]
+    return data.pageOrder
+  }
+  const order = data.pageOrder.filter(p => keys.includes(p))
+  for (const key of keys) {
+    if (!order.includes(key)) {
+      order.push(key)
+    }
+  }
+  data.pageOrder = order
+  return order
+}
+
+function getFirstPagePath(data: VisualEditorModelValue): string {
+  const order = ensurePageOrder(data)
+  return order[0] ?? Object.keys(data.pages)[0] ?? '/index'
+}
+
 function defaultValue(): VisualEditorModelValue {
   return {
     pages: {
-      // 页面
-      '/': createNewPage({ title: '首页' }),
+      '/index': createNewPage({ title: '首页', path: '/index' }),
     },
+    pageOrder: ['/index'],
     models: [], // 模型实体集合
     actions: {
       // 动作集合
@@ -117,28 +142,19 @@ export function initVisualData() {
   const route = useRoute()
   const getPrefixPath = normalizeEditorPagePath
 
-  const currentPage = jsonData.pages[route.path]
-
-  /**
-   * 获取visualData时可能会在组件内被多次调用，使用ref包裹loading状态避免重复请求数据
-   * 例如：在Animate组件中，点击添加动画集时会调用useVisualData获取currentBlock的值，此时如果loading状态没有被ref包裹，则会重复请求数据，导致性能问题
-   * 目前的解决方案是在useVisualData中使用ref包裹loading状态，确保在数据加载完成之前不会重复请求数据
-   */
-  const visualLoading = ref(false)
+  const firstPagePath = getFirstPagePath(jsonData)
+  const initialPage = jsonData.pages[firstPagePath] ?? Object.values(jsonData.pages)[0]
 
   const state: IState = reactive({
     jsonData,
-    currentPage,
-    currentBlock: currentPage?.blocks?.find(item => item.focus) ?? ({} as VisualEditorBlockData),
+    currentPage: initialPage,
+    currentBlock: initialPage?.blocks?.find(item => item.focus) ?? ({} as VisualEditorBlockData),
   })
-  const paths = Object.keys(jsonData.pages)
 
-  const isExistPath = paths.some(path => route.path == path)
-  // 当前页面是否存在
-  if (!isExistPath) {
-    // router.replace(paths[0] || '/')
-    state.currentPage = jsonData.pages[paths[0]] ?? defaultValue()?.pages['/']
-  }
+  /**
+   * 获取visualData时可能会在组件内被多次调用，使用ref包裹loading状态避免重复请求数据
+   */
+  const visualLoading = ref(false)
 
   // 路由变化时更新当前操作的页面
   watch(
@@ -158,6 +174,11 @@ export function initVisualData() {
       const merged = { ...existing, ...page, path: n } as VisualEditorPage
       state.jsonData.pages[n] = merged
       delete state.jsonData.pages[o]
+      const order = ensurePageOrder(state.jsonData)
+      const orderIdx = order.indexOf(o)
+      if (orderIdx >= 0) {
+        order[orderIdx] = n
+      }
       setCurrentPage(n)
     }
     else {
@@ -173,6 +194,10 @@ export function initVisualData() {
       return false
     }
     state.jsonData.pages[key] = { ...page, path: key }
+    const order = ensurePageOrder(state.jsonData)
+    if (!order.includes(key)) {
+      order.push(key)
+    }
     setCurrentPage(key)
     return true
   }
@@ -188,19 +213,49 @@ export function initVisualData() {
       return false
     }
     delete state.jsonData.pages[p]
-    const rest = Object.keys(state.jsonData.pages)
+    const order = ensurePageOrder(state.jsonData)
+    const orderIdx = order.indexOf(p)
+    if (orderIdx >= 0) {
+      order.splice(orderIdx, 1)
+    }
     const prefer = redirectPath ? getPrefixPath(redirectPath) : ''
     const next
-      = (prefer && state.jsonData.pages[prefer] ? prefer : null) || rest[0] || '/'
+      = (prefer && state.jsonData.pages[prefer] ? prefer : null)
+        || order[0]
+        || Object.keys(state.jsonData.pages)[0]
+        || '/index'
     setCurrentPage(next)
     return true
   }
+
+  function reorderPage(path: string, direction: 'up' | 'down') {
+    const key = getPrefixPath(path)
+    const order = ensurePageOrder(state.jsonData)
+    const idx = order.indexOf(key)
+    if (idx < 0) {
+      return false
+    }
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (targetIdx < 0 || targetIdx >= order.length) {
+      return false
+    }
+    ;[order[idx], order[targetIdx]] = [order[targetIdx], order[idx]]
+    return true
+  }
+
+  const orderedPagePaths = computed(() => {
+    const keys = Object.keys(state.jsonData.pages)
+    const stored = state.jsonData.pageOrder?.filter(p => keys.includes(p)) ?? []
+    const extras = keys.filter(key => !stored.includes(key))
+    return [...stored, ...extras]
+  })
   // 设置当前页面（必须读 state.jsonData：overrideProject 会替换整棵项目树）
-  function setCurrentPage(path = '/') {
+  function setCurrentPage(path = '/index') {
     const pages = state.jsonData.pages
-    state.currentPage = pages[path]
+    const normalized = getPrefixPath(path)
+    state.currentPage = pages[normalized]
     if (!state.currentPage) {
-      state.currentPage = pages['/'] ?? Object.values(pages)[0]
+      state.currentPage = pages[getFirstPagePath(state.jsonData)] ?? Object.values(pages)[0]
     }
     if (!state.currentPage) {
       return
@@ -303,9 +358,7 @@ export function initVisualData() {
   const overrideProject = (incoming: VisualEditorModelValue | string) => {
     state.jsonData
       = typeof incoming === 'string' ? (JSON.parse(incoming) as VisualEditorModelValue) : incoming
-    const paths = Object.keys(state.jsonData.pages)
-    const path = state.jsonData.pages['/'] ? '/' : paths[0] || '/'
-    setCurrentPage(path)
+    setCurrentPage(getFirstPagePath(state.jsonData))
     resetEditorSession()
   }
 
@@ -552,6 +605,9 @@ export function initVisualData() {
     updatePage,
     incrementPage,
     deletePage,
+    reorderPage,
+    orderedPagePaths,
+    ensurePageOrder: () => ensurePageOrder(state.jsonData),
     updatePageBlock,
     updateCurrentBlock,
     visualLoading,
