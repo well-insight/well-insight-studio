@@ -19,15 +19,22 @@ export const useWorkspaceStore = defineStore('useWorkspaceStore', {
     currentApp: undefined,
     menuList: [
       {
-        path: '/project/application',
-        title: '应用集',
+        path: '/project/visual-design',
+        title: '页面设计',
         meta: {
-          icon: 'application',
+          icon: 'page-setting',
+        },
+      },
+      {
+        path: '/project/app-assembly',
+        title: '应用组装',
+        meta: {
+          icon: 'component-base',
         },
       },
       {
         path: '/project/dataset',
-        title: '数据集',
+        title: '数据中枢',
         meta: {
           icon: 'dataset',
         },
@@ -37,13 +44,6 @@ export const useWorkspaceStore = defineStore('useWorkspaceStore', {
         title: '数据连接',
         meta: {
           icon: 'api',
-        },
-      },
-      {
-        path: '/project/automation',
-        title: '自动化',
-        meta: {
-          icon: 'automation',
         },
       },
     ],

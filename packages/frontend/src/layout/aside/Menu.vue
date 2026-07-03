@@ -16,9 +16,21 @@ const { menuList } = storeToRefs(workspaceStore)
 
 const currentMenuPath = ref(route?.path)
 
+/** 从菜单树中查找当前路径匹配的菜单项 */
+function findMenuByPath(path: string): string | undefined {
+  for (const item of menuList.value ?? []) {
+    if (item.children?.length) {
+      const child = item.children.find(c => path.includes(c.path))
+      if (child) return child.path
+    }
+    if (path.includes(item.path)) return item.path
+  }
+  return undefined
+}
+
 onMounted(() => {
   nextTick(() => {
-    currentMenuPath.value = menuList.value?.find(e => route?.path?.includes(e?.path))?.path
+    currentMenuPath.value = findMenuByPath(route?.path)
   })
 })
 
@@ -27,9 +39,22 @@ function changeMenu(index: string) {
 }
 
 function updateCurrentMenu() {
-  const currentMenu = menuList.value?.find(e => route?.path?.includes(e?.path))
-  if (currentMenu) {
-    workspaceStore.setCurrentMenu(currentMenu)
+  const found = findMenuByPath(route?.path)
+  if (found) {
+    // 扁平查找匹配菜单项
+    for (const item of menuList.value ?? []) {
+      if (item.path === found) {
+        workspaceStore.setCurrentMenu(item)
+        return
+      }
+      if (item.children?.length) {
+        const child = item.children.find(c => c.path === found)
+        if (child) {
+          workspaceStore.setCurrentMenu(child)
+          return
+        }
+      }
+    }
   }
 }
 
@@ -37,6 +62,7 @@ watch(
   () => route?.path,
   () => {
     updateCurrentMenu()
+    currentMenuPath.value = findMenuByPath(route?.path)
   },
   { immediate: true },
 )
@@ -50,14 +76,31 @@ watch(
       :default-active="currentMenuPath"
       @select="changeMenu"
     >
-      <el-menu-item v-for="e in menuList" :key="e?.path" :index="e?.path">
-        <!-- <div class="h-full flex items-center" :class="collapse ? 'flex w-full justify-center' : 'mr-2'">
-        </div> -->
-        <SvgIcon :name="e?.meta?.icon" size="22px" class="flex-shrink-0" :class="collapse ? '' : 'mr-2'" />
-        <template #title>
-          <span>{{ e?.title }}</span>
-        </template>
-      </el-menu-item>
+      <template v-for="item in menuList" :key="item?.path">
+        <!-- 有子菜单：渲染为分组 -->
+        <el-sub-menu v-if="item?.children?.length" :index="item.path">
+          <template #title>
+            <SvgIcon :name="item?.meta?.icon" size="22px" class="flex-shrink-0" :class="collapse ? '' : 'mr-2'" />
+            <span>{{ item?.title }}</span>
+          </template>
+          <el-menu-item
+            v-for="child in item.children"
+            :key="child.path"
+            :index="child.path"
+          >
+            <SvgIcon :name="child?.meta?.icon" size="20px" class="flex-shrink-0" :class="collapse ? '' : 'mr-2'" />
+            <span>{{ child?.title }}</span>
+          </el-menu-item>
+        </el-sub-menu>
+
+        <!-- 无子菜单：渲染为普通菜单项 -->
+        <el-menu-item v-else :index="item?.path">
+          <SvgIcon :name="item?.meta?.icon" size="22px" class="flex-shrink-0" :class="collapse ? '' : 'mr-2'" />
+          <template #title>
+            <span>{{ item?.title }}</span>
+          </template>
+        </el-menu-item>
+      </template>
     </el-menu>
   </div>
 </template>

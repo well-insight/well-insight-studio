@@ -8,6 +8,8 @@ const TABLES_IN_DROP_ORDER = [
   "dataset_fields",
   "datasets",
   "dataset_folders",
+  "app_page_menus",
+  "pages",
   "applications",
   "permission_rules",
   "roles",
@@ -202,6 +204,39 @@ function createTables() {
     )
   `);
 
+  // ========== pages 独立页面表 ==========
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS pages (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL CHECK(type IN ('visualization', 'form', 'report')),
+      dsl TEXT,
+      dataset_bindings TEXT,
+      preview_url TEXT,
+      status TEXT DEFAULT 'draft' CHECK(status IN ('draft', 'published')),
+      created_by TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (created_by) REFERENCES users(id)
+    )
+  `);
+
+  // ========== app_page_menus 应用菜单挂载表 ==========
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS app_page_menus (
+      id TEXT PRIMARY KEY,
+      application_id TEXT NOT NULL,
+      page_id TEXT NOT NULL,
+      parent_id TEXT,
+      menu_title TEXT NOT NULL,
+      menu_icon TEXT,
+      sort_order INTEGER DEFAULT 0,
+      route_path TEXT,
+      FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE CASCADE,
+      FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
+    )
+  `);
+
   db.exec("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON user_roles(user_id)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_user_roles_project_id ON user_roles(project_id)");
@@ -217,6 +252,12 @@ function createTables() {
   db.exec("CREATE INDEX IF NOT EXISTS idx_dataset_folders_project ON dataset_folders(project_id)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_dataset_fields_dataset ON dataset_fields(dataset_id)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset ON dataset_rows(dataset_id)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_pages_type ON pages(type)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_pages_status ON pages(status)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_pages_created_by ON pages(created_by)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_app_page_menus_app ON app_page_menus(application_id)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_app_page_menus_page ON app_page_menus(page_id)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_app_page_menus_parent ON app_page_menus(parent_id)");
 }
 
 export function initializeDatabaseSchema() {
