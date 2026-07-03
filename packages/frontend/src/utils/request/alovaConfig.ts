@@ -29,7 +29,7 @@ export interface PaginatedResponse<T> extends ApiResponse {
 const BASE_URL
   = import.meta.env.VITE_APP_API_URL
     || import.meta.env.VITE_API_BASE_URL
-    || 'http://localhost:3001/api/v1'
+    || 'http://localhost:8100/api/v1'
 
 /**
  * 创建 Alova 实例（Alova 3.x：createAlova + fetch 适配器）

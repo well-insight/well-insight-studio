@@ -123,13 +123,13 @@ export default ({ mode }: ConfigEnv): UserConfig => {
       proxy: {
         // 代理所有 API 请求到 Express 服务器
         '/api': {
-          target: 'http://localhost:3001',
+          target: 'http://localhost:8100',
           changeOrigin: true,
           rewrite: path => path.replace(/^\/api\/v1/, '/api/v1'),
         },
         // 代理健康检查
         '/health': {
-          target: 'http://localhost:3001',
+          target: 'http://localhost:8100',
           changeOrigin: true,
         },
       },

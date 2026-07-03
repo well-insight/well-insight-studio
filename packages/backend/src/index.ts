@@ -13,7 +13,7 @@ import { setupSwagger } from "./swagger/setupSwagger";
 dotenv.config();
 
 const app: Express = express();
-const PORT = parseInt(process.env.PORT || "3001", 10);
+const PORT = parseInt(process.env.PORT || "8100", 10);
 
 // 初始化数据库
 initializeDatabaseSchema();
@@ -49,9 +49,10 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(
   cors({
     origin:
-      process.env.NODE_ENV === "production"
-        ? ["https://yourdomain.com"]
-        : ["http://localhost:5173", "http://localhost:10086", "http://localhost:5188"],
+      // process.env.NODE_ENV === "production"
+      //   ? ["https://yourdomain.com"]
+      //   : ["http://localhost:5173", "http://localhost:10086", "http://localhost:5188", "http://localhost:8199"],
+      '*',
     credentials: true,
   }),
 );
