@@ -8,162 +8,197 @@ export interface Page {
   id: string;
   name: string;
   type: PageType;
-  dsl: string | null;
-  dataset_bindings: string | null;
-  preview_url: string | null;
+  dsl: string;
+  dataset_bindings?: string | null;
+  preview_url?: string | null;
   status: PageStatus;
   created_by: string;
   created_at: string;
   updated_at: string;
 }
 
-export interface CreatePageInput {
+export interface PagePublic {
+  id: string;
   name: string;
   type: PageType;
-  dsl?: Record<string, unknown>;
-  dataset_bindings?: Record<string, unknown>;
+  dsl: Record<string, unknown>;
+  dataset_bindings?: Record<string, unknown> | null;
+  preview_url?: string | null;
+  status: PageStatus;
   created_by: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface UpdatePageInput {
-  name?: string;
-  dsl?: Record<string, unknown>;
-  dataset_bindings?: Record<string, unknown>;
-  status?: PageStatus;
-}
+export const PAGE_TYPES = ["visualization", "form", "report"] as const;
+export const PAGE_STATUSES = ["draft", "published"] as const;
+export const PAGE_TYPE_LABELS: Record<PageType, string> = {
+  visualization: "可视化",
+  form: "表单",
+  report: "报表",
+};
 
-export interface PageListQuery {
-  type?: PageType;
-  status?: PageStatus;
-  keyword?: string;
-  page?: number;
-  pageSize?: number;
-}
-
-function rowToPage(row: Record<string, unknown>): Page {
+function parseRow(row: Record<string, unknown>): PagePublic {
   return {
-    id: row.id as string,
-    name: row.name as string,
+    id: String(row.id),
+    name: String(row.name),
     type: row.type as PageType,
-    dsl: row.dsl as string | null,
-    dataset_bindings: row.dataset_bindings as string | null,
-    preview_url: row.preview_url as string | null,
+    dsl: parseJsonField(String(row.dsl || "{}")),
+    dataset_bindings: row.dataset_bindings
+      ? parseJsonField(String(row.dataset_bindings))
+      : null,
+    preview_url: row.preview_url ? String(row.preview_url) : null,
     status: row.status as PageStatus,
-    created_by: row.created_by as string,
-    created_at: row.created_at as string,
-    updated_at: row.updated_at as string,
+    created_by: String(row.created_by),
+    created_at: String(row.created_at),
+    updated_at: String(row.updated_at),
   };
 }
 
+function parseJsonField(raw: string): Record<string, unknown> {
+  try {
+    return JSON.parse(raw) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
 export class PageModel {
-  static findById(id: string): Page | undefined {
-    const row = db.prepare("SELECT * FROM pages WHERE id = ?").get(id) as Record<string, unknown> | undefined;
-    return row ? rowToPage(row) : undefined;
-  }
-
-  static list(query: PageListQuery & { created_by?: string }): { items: Page[]; total: number } {
-    const conditions: string[] = [];
-    const params: unknown[] = [];
-
-    if (query.type) {
-      conditions.push("type = ?");
-      params.push(query.type);
-    }
-    if (query.status) {
-      conditions.push("status = ?");
-      params.push(query.status);
-    }
-    if (query.keyword) {
-      conditions.push("name LIKE ?");
-      params.push(`%${query.keyword}%`);
-    }
-    if (query.created_by) {
-      conditions.push("created_by = ?");
-      params.push(query.created_by);
-    }
-
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-
-    const countRow = db
-      .prepare(`SELECT COUNT(*) as cnt FROM pages ${whereClause}`)
-      .get(...params) as { cnt: number };
-    const total = countRow.cnt;
-
-    const page = query.page ?? 1;
-    const pageSize = query.pageSize ?? 20;
-    const offset = (page - 1) * pageSize;
-
-    const rows = db
-      .prepare(
-        `SELECT * FROM pages ${whereClause} ORDER BY updated_at DESC LIMIT ? OFFSET ?`
-      )
-      .all(...params, pageSize, offset) as Record<string, unknown>[];
-
-    return {
-      items: rows.map(rowToPage),
-      total,
-    };
-  }
-
-  static create(data: CreatePageInput): string {
+  /** 创建页面 */
+  static create(data: {
+    name: string;
+    type: PageType;
+    dsl?: Record<string, unknown>;
+    dataset_bindings?: Record<string, unknown>;
+    preview_url?: string;
+    status?: PageStatus;
+    created_by: string;
+  }): PagePublic {
     const id = generateSnowflakeId();
+    const now = new Date().toISOString();
+
     db.prepare(
-      `INSERT INTO pages (id, name, type, dsl, dataset_bindings, status, created_by)
-       VALUES (?, ?, ?, ?, ?, 'draft', ?)`
+      `INSERT INTO pages (id, name, type, dsl, dataset_bindings, preview_url, status, created_by, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       id,
       data.name,
       data.type,
-      data.dsl ? JSON.stringify(data.dsl) : null,
+      JSON.stringify(data.dsl ?? {}),
       data.dataset_bindings ? JSON.stringify(data.dataset_bindings) : null,
+      data.preview_url ?? null,
+      data.status ?? "draft",
       data.created_by,
+      now,
+      now,
     );
-    return id;
+
+    const row = db.prepare("SELECT * FROM pages WHERE id = ?").get(id) as Record<string, unknown>;
+    return parseRow(row);
   }
 
-  static update(id: string, data: UpdatePageInput): boolean {
-    const sets: string[] = [];
+  /** 按 ID 查询 */
+  static findById(id: string): PagePublic | undefined {
+    const row = db.prepare("SELECT * FROM pages WHERE id = ?").get(id) as
+      | Record<string, unknown>
+      | undefined;
+    if (!row) return undefined;
+    return parseRow(row);
+  }
+
+  /** 查询页面列表 */
+  static findAll(options?: {
+    type?: PageType;
+    status?: PageStatus;
+    keyword?: string;
+    created_by?: string;
+    page?: number;
+    pageSize?: number;
+  }): { items: PagePublic[]; total: number } {
+    const conditions: string[] = [];
     const params: unknown[] = [];
 
-    if (data.name !== undefined) {
-      sets.push("name = ?");
-      params.push(data.name);
+    if (options?.type) {
+      conditions.push("type = ?");
+      params.push(options.type);
     }
-    if (data.dsl !== undefined) {
-      sets.push("dsl = ?");
-      params.push(JSON.stringify(data.dsl));
+    if (options?.status) {
+      conditions.push("status = ?");
+      params.push(options.status);
     }
-    if (data.dataset_bindings !== undefined) {
-      sets.push("dataset_bindings = ?");
-      params.push(JSON.stringify(data.dataset_bindings));
+    if (options?.keyword) {
+      conditions.push("name LIKE ?");
+      params.push(`%${options.keyword}%`);
     }
-    if (data.status !== undefined) {
-      sets.push("status = ?");
-      params.push(data.status);
+    if (options?.created_by) {
+      conditions.push("created_by = ?");
+      params.push(options.created_by);
     }
 
-    if (sets.length === 0) return false;
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
-    sets.push("updated_at = CURRENT_TIMESTAMP");
-    params.push(id);
+    const total = (
+      db.prepare(`SELECT COUNT(*) as count FROM pages ${where}`).get(...params) as { count: number }
+    ).count;
 
-    const result = db
-      .prepare(`UPDATE pages SET ${sets.join(", ")} WHERE id = ?`)
-      .run(...params);
-    return result.changes > 0;
+    const page = options?.page ?? 1;
+    const pageSize = options?.pageSize ?? 20;
+    const offset = (page - 1) * pageSize;
+
+    const rows = db
+      .prepare(`SELECT * FROM pages ${where} ORDER BY updated_at DESC LIMIT ? OFFSET ?`)
+      .all(...params, pageSize, offset) as Record<string, unknown>[];
+
+    return {
+      items: rows.map(parseRow),
+      total,
+    };
   }
 
+  /** 更新页面 */
+  static update(
+    id: string,
+    data: {
+      name?: string;
+      type?: PageType;
+      dsl?: Record<string, unknown>;
+      dataset_bindings?: Record<string, unknown>;
+      preview_url?: string | null;
+      status?: PageStatus;
+    },
+  ): PagePublic | undefined {
+    const existing = db.prepare("SELECT * FROM pages WHERE id = ?").get(id) as
+      | Record<string, unknown>
+      | undefined;
+    if (!existing) return undefined;
+
+    const now = new Date().toISOString();
+    const name = data.name ?? String(existing.name);
+    const type = data.type ?? (existing.type as PageType);
+    const dsl = data.dsl !== undefined ? JSON.stringify(data.dsl) : String(existing.dsl);
+    const datasetBindings =
+      data.dataset_bindings !== undefined
+        ? JSON.stringify(data.dataset_bindings)
+        : existing.dataset_bindings
+          ? String(existing.dataset_bindings)
+          : null;
+    const previewUrl =
+      data.preview_url !== undefined ? data.preview_url : existing.preview_url ?? null;
+    const status = data.status ?? (existing.status as PageStatus);
+
+    db.prepare(
+      `UPDATE pages SET name = ?, type = ?, dsl = ?, dataset_bindings = ?, preview_url = ?, status = ?, updated_at = ? WHERE id = ?`,
+    ).run(name, type, dsl, datasetBindings, previewUrl, status, now, id);
+
+    const row = db.prepare("SELECT * FROM pages WHERE id = ?").get(id) as Record<string, unknown>;
+    return parseRow(row);
+  }
+
+  /** 删除页面 */
   static delete(id: string): boolean {
     const result = db.prepare("DELETE FROM pages WHERE id = ?").run(id);
     return result.changes > 0;
   }
-
-  static countByType(type?: PageType): number {
-    if (type) {
-      const row = db.prepare("SELECT COUNT(*) as cnt FROM pages WHERE type = ?").get(type) as { cnt: number };
-      return row.cnt;
-    }
-    const row = db.prepare("SELECT COUNT(*) as cnt FROM pages").get() as { cnt: number };
-    return row.cnt;
-  }
 }
+
+export default PageModel;

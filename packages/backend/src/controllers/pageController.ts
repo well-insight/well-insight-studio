@@ -7,12 +7,16 @@ const CreatePageSchema = z.object({
   type: z.enum(["visualization", "form", "report"]),
   dsl: z.any().optional(),
   dataset_bindings: z.any().optional(),
+  preview_url: z.string().optional(),
+  status: z.enum(["draft", "published"]).optional(),
 });
 
 const UpdatePageSchema = z.object({
   name: z.string().min(1).max(200).optional(),
+  type: z.enum(["visualization", "form", "report"]).optional(),
   dsl: z.any().optional(),
   dataset_bindings: z.any().optional(),
+  preview_url: z.string().nullable().optional(),
   status: z.enum(["draft", "published"]).optional(),
 });
 
@@ -32,15 +36,16 @@ const ListQuerySchema = z.object({
 export async function createPage(req: Request, res: Response): Promise<void> {
   try {
     const body = CreatePageSchema.parse(req.body);
-    const id = PageModel.create({
+    const page = PageModel.create({
       name: body.name,
       type: body.type,
-      dsl: body.dsl ?? {},
-      dataset_bindings: body.dataset_bindings ?? {},
+      dsl: body.dsl,
+      dataset_bindings: body.dataset_bindings,
+      preview_url: body.preview_url,
+      status: body.status,
       created_by: req.userId!,
     });
 
-    const page = PageModel.findById(id);
     res.status(201).json({ success: true, data: page });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -58,7 +63,7 @@ export async function createPage(req: Request, res: Response): Promise<void> {
 export async function listPages(req: Request, res: Response): Promise<void> {
   try {
     const query = ListQuerySchema.parse(req.query);
-    const result = PageModel.list({
+    const result = PageModel.findAll({
       type: query.type,
       status: query.status,
       keyword: query.keyword,
@@ -71,11 +76,7 @@ export async function listPages(req: Request, res: Response): Promise<void> {
       success: true,
       data: {
         items: result.items,
-        pagination: {
-          page: query.page,
-          pageSize: query.pageSize,
-          total: result.total,
-        },
+        total: result.total,
       },
     });
   } catch (error) {
@@ -101,15 +102,7 @@ export async function getPage(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // 解析 JSON 字段
-    res.json({
-      success: true,
-      data: {
-        ...page,
-        dsl: page.dsl ? JSON.parse(page.dsl) : {},
-        dataset_bindings: page.dataset_bindings ? JSON.parse(page.dataset_bindings) : {},
-      },
-    });
+    res.json({ success: true, data: page });
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({ success: false, error: "参数校验失败", details: error.errors });
@@ -126,25 +119,16 @@ export async function getPage(req: Request, res: Response): Promise<void> {
 export async function updatePage(req: Request, res: Response): Promise<void> {
   try {
     const id = IdParamSchema.parse(req.params.id);
+    console.log("[pageController] updatePage id:", id, "body:", JSON.stringify(req.body));
     const body = UpdatePageSchema.parse(req.body);
 
-    const page = PageModel.findById(id);
-    if (!page) {
+    const updated = PageModel.update(id, body);
+    if (!updated) {
       res.status(404).json({ success: false, error: "页面不存在" });
       return;
     }
 
-    PageModel.update(id, body);
-    const updated = PageModel.findById(id);
-
-    res.json({
-      success: true,
-      data: {
-        ...updated,
-        dsl: updated?.dsl ? JSON.parse(updated.dsl) : {},
-        dataset_bindings: updated?.dataset_bindings ? JSON.parse(updated.dataset_bindings) : {},
-      },
-    });
+    res.json({ success: true, data: updated });
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({ success: false, error: "参数校验失败", details: error.errors });
@@ -161,14 +145,13 @@ export async function updatePage(req: Request, res: Response): Promise<void> {
 export async function deletePage(req: Request, res: Response): Promise<void> {
   try {
     const id = IdParamSchema.parse(req.params.id);
+    const deleted = PageModel.delete(id);
 
-    const page = PageModel.findById(id);
-    if (!page) {
+    if (!deleted) {
       res.status(404).json({ success: false, error: "页面不存在" });
       return;
     }
 
-    PageModel.delete(id);
     res.json({ success: true, message: "页面已删除" });
   } catch (error) {
     if (error instanceof z.ZodError) {

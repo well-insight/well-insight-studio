@@ -1,82 +1,74 @@
-import type { ApiMenuNode, ApiMenuCreateParams, ApiMenuUpdateParams, ApiSortMenusParams } from '@/api/assembly'
-import { fetchAppMenus, addAppMenu, updateAppMenu, sortAppMenus, removeAppMenu, publishApp } from '@/api/assembly'
+import type { MenuTreeNode } from '@/api/assembly'
 import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import { getAppMenus, addAppMenu, updateAppMenu, removeAppMenu, sortAppMenus, publishApp } from '@/api/assembly'
 
-export const useAssemblyStore = defineStore('assembly', {
-  state: () => ({
-    /** 当前应用ID */
-    currentAppId: '' as string,
-    /** 菜单树 */
-    menuTree: [] as ApiMenuNode[],
-    /** 可用页面列表（已发布） */
-    availablePages: [] as Array<{ id: string; name: string; type: string; status: string }>,
-    /** 加载状态 */
-    loading: false,
-    /** 当前选中的菜单节点 */
-    selectedNode: null as ApiMenuNode | null,
-  }),
+export const useAssemblyStore = defineStore('assembly', () => {
+  const menuTree = ref<MenuTreeNode[]>([])
+  const currentAppId = ref('')
 
-  actions: {
-    /** 加载菜单树 */
-    async loadMenus(appId: string) {
-      this.loading = true
-      this.currentAppId = appId
-      try {
-        this.menuTree = await fetchAppMenus(appId)
-      } finally {
-        this.loading = false
-      }
+  async function loadMenus(appId: string): Promise<MenuTreeNode[]> {
+    const data = await getAppMenus(appId)
+    menuTree.value = data
+    currentAppId.value = appId
+    return data
+  }
+
+  async function addMenu(params: {
+    application_id: string
+    page_id?: string | null
+    parent_id?: string | null
+    menu_title: string
+    menu_icon?: string
+    route_path?: string
+    permission?: string
+    sort_order?: number
+  }) {
+    const data = await addAppMenu(params.application_id, params)
+    await loadMenus(params.application_id)
+    return data
+  }
+
+  async function editMenu(
+    appId: string,
+    menuId: string,
+    params: {
+      menu_title?: string
+      menu_icon?: string | null
+      route_path?: string | null
+      permission?: string | null
+      parent_id?: string | null
+      sort_order?: number
     },
+  ) {
+    const data = await updateAppMenu(appId, menuId, params)
+    await loadMenus(appId)
+    return data
+  }
 
-    /** 挂载页面到应用 */
-    async addMenu(params: ApiMenuCreateParams & { application_id?: string }) {
-      const appId = params.application_id ?? this.currentAppId
-      await addAppMenu(appId, {
-        page_id: params.page_id,
-        parent_id: params.parent_id,
-        menu_title: params.menu_title,
-        menu_icon: params.menu_icon,
-        route_path: params.route_path,
-      })
-      await this.loadMenus(appId)
-    },
+  async function deleteMenu(appId: string, menuId: string) {
+    await removeAppMenu(appId, menuId)
+    await loadMenus(appId)
+  }
 
-    /** 更新菜单项 */
-    async updateMenu(menuId: string, params: ApiMenuUpdateParams) {
-      await updateAppMenu(this.currentAppId, menuId, params)
-      await this.loadMenus(this.currentAppId)
-    },
+  async function batchSort(appId: string, items: Array<{ id: string; parent_id?: string | null; sort_order: number }>) {
+    await sortAppMenus(appId, items)
+    await loadMenus(appId)
+  }
 
-    /** 移除菜单项 */
-    async removeMenu(menuId: string) {
-      await removeAppMenu(this.currentAppId, menuId)
-      await this.loadMenus(this.currentAppId)
-      if (this.selectedNode?.id === menuId) {
-        this.selectedNode = null
-      }
-    },
+  async function publish(appId: string) {
+    const data = await publishApp(appId)
+    return data
+  }
 
-    /** 保存排序 */
-    async saveSort(menus: ApiSortMenusParams['menus']) {
-      this.menuTree = await sortAppMenus(this.currentAppId, { menus })
-    },
-
-    /** 发布应用 */
-    async publish() {
-      return await publishApp(this.currentAppId)
-    },
-
-    /** 选中菜单节点 */
-    selectNode(node: ApiMenuNode | null) {
-      this.selectedNode = node
-    },
-
-    /** 重置状态 */
-    reset() {
-      this.currentAppId = ''
-      this.menuTree = []
-      this.availablePages = []
-      this.selectedNode = null
-    },
-  },
+  return {
+    menuTree,
+    currentAppId,
+    loadMenus,
+    addMenu,
+    editMenu,
+    deleteMenu,
+    batchSort,
+    publish,
+  }
 })

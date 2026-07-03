@@ -19,7 +19,7 @@ export const useWorkspaceStore = defineStore('useWorkspaceStore', {
     currentApp: undefined,
     menuList: [
       {
-        path: '/project/visual-design',
+        path: '/project/pages',
         title: '页面设计',
         meta: {
           icon: 'page-setting',

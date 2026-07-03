@@ -1,17 +1,12 @@
 <script lang="ts" setup>
 import type { ApiApplicationListItem } from '@/api/application'
 import type { WorkspaceApp } from '@/stores/workspaceStore'
-import { Delete, EditPen, Grid, MoreFilled, Plus, Star, StarFilled } from '@element-plus/icons-vue'
+import { Delete, EditPen, MoreFilled, Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { onActivated, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  createApplication,
-  deleteApplication,
-  fetchApplicationList,
-  updateApplication,
-} from '@/api/application'
+import { createApplication, deleteApplication, fetchApplicationList, updateApplication } from '@/api/application'
 import { ButtonTabs } from '@/components/button-tabs'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 
@@ -19,37 +14,15 @@ const router = useRouter()
 const workspaceStore = useWorkspaceStore()
 const { appList } = storeToRefs(workspaceStore)
 
-const appStatus = ref<'all' | 'enable' | 'disable'>('all')
 const loading = ref(false)
 const createVisible = ref(false)
 const createTitle = ref('')
 const createClientType = ref<1 | 2>(1)
-const renameVisible = ref(false)
-const renameTitle = ref('')
-const renameTargetId = ref<string | null>(null)
-
-const statusOptions = [
-  { label: '全部应用', value: 'all' },
-  { label: '已激活', value: 'enable' },
-  { label: '已关闭', value: 'disable' },
-]
-
-function toWorkspaceApp(row: ApiApplicationListItem): WorkspaceApp {
-  const iso = row.lastUpdated || row.updated_at
-  return {
-    id: row.id,
-    title: row.title,
-    status: row.status,
-    clientType: row.client_type,
-    starred: row.starred,
-    lastUpdated: iso ? iso.slice(0, 10) : undefined,
-  }
-}
 
 async function loadList() {
   loading.value = true
   try {
-    const data = await fetchApplicationList(appStatus.value)
+    const data = await fetchApplicationList('all')
     workspaceStore.setAppList((data.items || []).map(toWorkspaceApp))
   }
   catch (e) {
@@ -60,15 +33,19 @@ async function loadList() {
   }
 }
 
-watch(appStatus, () => loadList())
-onMounted(() => loadList())
-onActivated(() => loadList())
-
-/** 点击应用卡片 → 进入组装编辑器 */
-function rowClick(row: WorkspaceApp) {
-  workspaceStore.setCurrentApp(row)
-  router.push({ name: 'AppAssembly', params: { id: String(row.id) } })
+function toWorkspaceApp(row: ApiApplicationListItem): WorkspaceApp {
+  return {
+    id: row.id,
+    title: row.title,
+    status: row.status,
+    clientType: row.client_type,
+    starred: row.starred,
+    lastUpdated: row.updated_at ? row.updated_at.slice(0, 10) : undefined,
+  }
 }
+
+onMounted(() => { loadList() })
+onActivated(() => { loadList() })
 
 function openCreate() {
   createTitle.value = ''
@@ -86,46 +63,17 @@ async function submitCreate() {
     const created = await createApplication({ title, client_type: createClientType.value, status: 1 })
     createVisible.value = false
     ElMessage.success('创建成功')
-    await loadList()
-    const row = toWorkspaceApp(created)
-    workspaceStore.setCurrentApp(row)
-    router.push({ name: 'AppAssembly', params: { id: String(created.id) } })
+    router.push({ name: 'AppAssemblyEditor', params: { id: created.id } })
   }
   catch (e) {
     ElMessage.error((e as Error).message || '创建失败')
   }
 }
 
-function openRename(row: WorkspaceApp) {
-  renameTargetId.value = String(row.id)
-  renameTitle.value = row.title
-  renameVisible.value = true
-}
-
-async function submitRename() {
-  const id = renameTargetId.value
-  const title = renameTitle.value.trim()
-  if (!id || !title) {
-    ElMessage.warning('请输入应用名称')
-    return
-  }
-  try {
-    await updateApplication(id, { title })
-    renameVisible.value = false
-    ElMessage.success('已更新名称')
-    await loadList()
-  }
-  catch (e) {
-    ElMessage.error((e as Error).message || '更新失败')
-  }
-}
-
 async function removeApp(row: WorkspaceApp) {
   try {
     await ElMessageBox.confirm(`确定删除应用「${row.title}」吗？`, '删除应用', {
-      type: 'warning',
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
+      type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消',
     })
   }
   catch { return }
@@ -138,98 +86,50 @@ async function removeApp(row: WorkspaceApp) {
     ElMessage.error((e as Error).message || '删除失败')
   }
 }
-
-async function toggleStar(row: WorkspaceApp, ev: Event) {
-  ev.stopPropagation()
-  try {
-    await updateApplication(String(row.id), { starred: !row.starred })
-    await loadList()
-  }
-  catch (e) {
-    ElMessage.error((e as Error).message || '操作失败')
-  }
-}
-
-const starIcon = (row: WorkspaceApp) => (row.starred ? StarFilled : Star)
 </script>
 
 <template>
-  <div class="h-full w-full">
-    <div class="border-bottom-1 flex h-[54px] items-center justify-between px-3">
+  <div class="h-full w-full flex flex-col">
+    <div class="border-bottom-1 flex h-[54px] items-center justify-between px-3 shrink-0">
       <div>
-        <ButtonTabs v-model="appStatus" :options="statusOptions" />
+        <h3 class="text-base font-medium">应用组装</h3>
+        <p class="text-xs text-gray-400">将独立页面拖拽组装成完整应用</p>
       </div>
-      <div>
-        <el-button round type="primary" :icon="Plus" @click="openCreate">
-          新建应用
-        </el-button>
-      </div>
+      <el-button round type="primary" :icon="Plus" @click="openCreate">
+        新建应用
+      </el-button>
     </div>
     <el-table
       v-loading="loading"
       :data="appList"
       style="width: 100%"
       :cell-style="{ cursor: 'pointer' }"
-      @row-click="rowClick"
+      class="flex-1"
+      @row-click="(row) => router.push({ name: 'AppAssemblyEditor', params: { id: row.id } })"
     >
-      <el-table-column prop="title" label="应用名称" min-width="160" />
-      <el-table-column prop="status" label="状态" width="180" align="center">
+      <el-table-column prop="title" label="应用名称" min-width="200" />
+      <el-table-column prop="updated_at" label="最后更新" width="180" align="center" />
+      <el-table-column label="操作" width="120" align="center">
         <template #default="{ row }">
-          <el-button bg text size="small">
-            <el-space>
-              <span :class="[$style.status, row?.status === 1 ? $style.enable : $style.disable]" />
-              {{ row?.status === 1 ? '激活' : '关闭' }}
-            </el-space>
+          <el-button size="small" :icon="EditPen" @click.stop="router.push({ name: 'AppAssemblyEditor', params: { id: row.id } })">
+            组装
           </el-button>
-        </template>
-      </el-table-column>
-      <el-table-column label="端类型" width="120" align="center">
-        <template #default="{ row }">
-          <el-tag size="small" :type="row?.clientType === 1 ? '' : 'success'">
-            {{ row?.clientType === 1 ? 'PC端' : '移动端' }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="lastUpdated" label="最后更新时间" align="center" width="180" />
-      <el-table-column prop="handle" label="操作" width="120" align="center">
-        <template #default="{ row }">
-          <div class="flex items-center justify-center" @click.stop>
-            <el-button type="primary" link :icon="Grid" @click="rowClick(row)">
-              组装
-            </el-button>
-            <el-dropdown trigger="click">
-              <el-button link :icon="MoreFilled" />
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item :icon="EditPen" @click="openRename(row)">
-                    重命名
-                  </el-dropdown-item>
-                  <el-dropdown-item :icon="Delete" type="danger" @click="removeApp(row)">
-                    删除
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-            <el-button link @click="toggleStar(row, $event)">
-              <el-icon :size="18">
-                <component :is="starIcon(row)" />
-              </el-icon>
-            </el-button>
-          </div>
+          <el-button size="small" type="danger" :icon="Delete" @click.stop="removeApp(row)">
+            删除
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <!-- 创建对话框 -->
-    <el-dialog v-model="createVisible" title="新建应用" width="400px" destroy-on-close>
-      <el-form label-width="88px">
-        <el-form-item label="应用名称" required>
-          <el-input v-model="createTitle" placeholder="请输入名称" maxlength="200" show-word-limit />
+    <el-dialog v-model="createVisible" title="新建应用" width="400px">
+      <el-form label-width="80px">
+        <el-form-item label="应用名称">
+          <el-input v-model="createTitle" placeholder="请输入应用名称" />
         </el-form-item>
-        <el-form-item label="端类型">
+        <el-form-item label="客户端类型">
           <el-radio-group v-model="createClientType">
-            <el-radio label="PC 端" :value="1" />
-            <el-radio label="移动端" :value="2" />
+            <el-radio :value="1">PC 端</el-radio>
+            <el-radio :value="2">移动端</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
@@ -238,31 +138,5 @@ const starIcon = (row: WorkspaceApp) => (row.starred ? StarFilled : Star)
         <el-button type="primary" @click="submitCreate">创建</el-button>
       </template>
     </el-dialog>
-
-    <!-- 重命名对话框 -->
-    <el-dialog v-model="renameVisible" title="重命名应用" width="400px" destroy-on-close>
-      <el-input v-model="renameTitle" maxlength="200" show-word-limit />
-      <template #footer>
-        <el-button @click="renameVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitRename">保存</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
-
-<style lang="scss" module>
-.status {
-  height: 8px;
-  width: 8px;
-  border-radius: 50%;
-  display: inline-block;
-
-  &.enable {
-    background-color: green;
-  }
-
-  &.disable {
-    background-color: red;
-  }
-}
-</style>

@@ -3,121 +3,24 @@ import {
   RefreshLeft,
   RefreshRight,
 } from '@element-plus/icons-vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { useCanvasThemeStore } from '@/stores/canvasThemeStore'
-import { usePageStore } from '@/stores/pageStore'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { ThemePanel } from '@/visual-editor/ui/workbench/theme-panel'
+import { markVisualDirty } from '../visualEditorState'
+import PageEditorBasicActions from './PageEditorBasicActions.vue'
 
-const route = useRoute()
-const router = useRouter()
-const pageStore = usePageStore()
 const canvasThemeStore = useCanvasThemeStore()
-const { canUndo, canRedo, undo, redo, jsonData } = useVisualData()
-
-const saving = ref(false)
-const lastSavedDSL = ref('')
-
-const pageId = computed(() => {
-  const raw = route.params.id
-  if (!raw) return undefined
-  return Array.isArray(raw) ? raw[0] : String(raw)
-})
-const isNew = computed(() => !pageId.value || pageId.value === 'new')
-
-/** 保存后写入的缓存键 */
-const dslCacheKey = computed(() => `page-dsl-snapshot-${pageId.value || 'new'}`)
-
-/** 当前是否真的有未保存改动 */
-const hasUnsavedChanges = computed(() => {
-  const current = JSON.stringify(jsonData.value)
-  return current !== lastSavedDSL.value
-})
-
-async function handleSave() {
-  saving.value = true
-  try {
-    const dsl = jsonData.value as Record<string, unknown>
-    await pageStore.savePage({
-      id: isNew.value ? undefined : pageId.value,
-      name: pageStore.currentPage?.name || '未命名页面',
-      type: 'visualization',
-      dsl,
-    })
-    // 记录已保存的 DSL 快照
-    const snap = JSON.stringify(dsl)
-    lastSavedDSL.value = snap
-    sessionStorage.setItem(dslCacheKey.value, snap)
-    ElMessage.success('保存成功')
-  }
-  catch (e) {
-    ElMessage.error((e as Error).message || '保存失败')
-  }
-  finally {
-    saving.value = false
-  }
-}
-
-async function handlePublish() {
-  saving.value = true
-  try {
-    const dsl = jsonData.value as Record<string, unknown>
-    await pageStore.savePage({
-      id: isNew.value ? undefined : pageId.value,
-      name: pageStore.currentPage?.name || '未命名页面',
-      type: 'visualization',
-      dsl,
-      status: 'published',
-    })
-    const snap = JSON.stringify(dsl)
-    lastSavedDSL.value = snap
-    sessionStorage.setItem(dslCacheKey.value, snap)
-    ElMessage.success('已发布')
-  }
-  catch (e) {
-    ElMessage.error((e as Error).message || '发布失败')
-  }
-  finally {
-    saving.value = false
-  }
-}
-
-// 初始化时从缓存读取上次保存的快照
-const initSnapshot = () => {
-  const cached = sessionStorage.getItem(dslCacheKey.value)
-  if (cached) {
-    lastSavedDSL.value = cached
-  }
-  else {
-    lastSavedDSL.value = JSON.stringify(jsonData.value)
-  }
-}
-initSnapshot()
+const { canUndo, canRedo, undo, redo } = useVisualData()
 
 function handleUndo() {
-  if (!undo()) ElMessage.info('没有可撤回的操作')
+  if (!undo()) { ElMessage.info('没有可撤回的操作'); return }
+  markVisualDirty()
 }
 
 function handleRedo() {
-  if (!redo()) ElMessage.info('没有可重做的操作')
-}
-
-async function goBack() {
-  if (hasUnsavedChanges.value) {
-    try {
-      await ElMessageBox.confirm('当前有未保存的更改，确定要离开吗？', '提示', {
-        confirmButtonText: '离开',
-        cancelButtonText: '取消',
-        type: 'warning',
-      })
-    }
-    catch { return }
-  }
-  // 清理该页面的缓存
-  sessionStorage.removeItem(dslCacheKey.value)
-  router.push({ name: 'VisualDesign' })
+  if (!redo()) { ElMessage.info('没有可重做的操作'); return }
+  markVisualDirty()
 }
 </script>
 
@@ -155,11 +58,8 @@ async function goBack() {
 
     <el-divider direction="vertical" />
 
-    <!-- 保存/发布/返回 -->
-    <el-button :loading="saving" size="small" @click="handleSave">保存</el-button>
-    <el-button size="small" type="primary" @click="handlePublish">发布</el-button>
-    <el-divider direction="vertical" />
-    <el-button size="small" @click="goBack">返回</el-button>
+    <!-- 基础操作：保存/发布/预览/返回 -->
+    <PageEditorBasicActions />
   </div>
 </template>
 

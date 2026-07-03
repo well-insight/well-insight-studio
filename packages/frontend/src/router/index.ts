@@ -16,148 +16,80 @@ const routes2: RouteRecordRaw[] = [
       public: true,
     },
   },
+  // 独立页面公开预览
+  {
+    path: '/page-preview/:id',
+    name: 'PagePreview',
+    component: () => import('@/views/page-factory/PagePreview.vue'),
+    meta: { title: '页面预览' },
+  },
+  // 带 Layout 的主应用
   {
     path: '/',
-    redirect: '/project/visual-design',
+    redirect: '/project/pages',
+    component: () => import('@/layout/index.vue'),
+    meta: { title: '项目' },
     children: [
-      // ========== 独立页面公开预览（无需登录） ==========
+      // 页面设计
       {
-        path: '/page-preview/:id',
-        name: 'PagePreview',
-        component: () => import('@/views/page-factory/PagePreview.vue'),
-        meta: {
-          title: '页面预览',
-        },
+        path: 'project/pages',
+        name: 'VisualDesign',
+        component: () => import('@/views/page-factory/PageList.vue'),
+        meta: { title: '页面设计' },
       },
-      // ========== 应用预览（运行时） ==========
+      // 页面编辑 - 新建
       {
-        path: '/project/application/view/:id(.*)*',
-        name: 'ApplicationView',
-        component: () => import('@/views/application/AppView.vue'),
-        meta: {
-          title: '应用预览',
+        path: 'project/pages/edit/new/:type',
+        name: 'PageEditorNew',
+        components: {
+          default: () => import('@/views/page-factory/PageEditor.vue'),
+          headerActions: () => import('@/views/page-factory/components/PageEditorActions.vue'),
         },
+        meta: { title: '新建页面' },
+      },
+      // 页面编辑 - 编辑已有
+      {
+        path: 'project/pages/edit/:id',
+        name: 'PageEditor',
+        components: {
+          default: () => import('@/views/page-factory/PageEditor.vue'),
+          headerCenter: () => import('@/views/page-factory/components/PageTitle.vue'),
+          headerActions: () => import('@/views/page-factory/components/PageEditorActions.vue'),
+        },
+        meta: { title: '页面编辑' },
+      },
+      // 应用组装
+      {
+        path: 'project/app-assembly',
+        name: 'AppAssemblyList',
+        component: () => import('@/views/app-assembly/AppList.vue'),
+        meta: { title: '应用组装' },
       },
       {
-        path: 'project',
-        name: 'Project',
-        redirect: '/project/visual-design',
-        component: () => import('@/layout/index.vue'),
-        meta: {
-          title: '项目',
-        },
-        children: [
-          // ========== 页面设计（可视化/表单/报表三合一列表） ==========
-          {
-            path: 'visual-design',
-            name: 'VisualDesign',
-            component: () => import('@/views/page-factory/PageList.vue'),
-            meta: {
-              title: '页面设计',
-            },
-          },
-
-          // ========== 可视化编辑器（现有应用编辑器，URL直接访问） ==========
-          {
-            path: 'application/edit/:id(.*)*',
-            name: 'ApplicationEdit',
-            components: {
-              default: () => import('@/views/application/AppEdit.vue'),
-              headerActions: () => import('@/visual-editor/ui/workbench/edit-tools/EditToolsAppActions.vue'),
-            },
-            meta: {
-              title: '可视化编辑',
-            },
-          },
-
-          // ========== 页面生产车间（表单/报表列表） ==========
-          {
-            path: 'form-design',
-            name: 'FormDesign',
-            component: () => import('@/views/page-factory/PageList.vue'),
-            meta: {
-              title: '表单设计',
-            },
-          },
-          {
-            path: 'report-design',
-            name: 'ReportDesign',
-            component: () => import('@/views/page-factory/PageList.vue'),
-            meta: {
-              title: '报表设计',
-            },
-          },
-
-          // ========== 独立编辑器 ==========
-          {
-            path: 'page-editor/new/:type',
-            name: 'PageEditorNew',
-            components: {
-              default: () => import('@/views/page-factory/PageEditor.vue'),
-              headerActions: () => import('@/views/page-factory/components/PageEditorActions.vue'),
-            },
-            meta: {
-              title: '新建页面',
-            },
-          },
-          {
-            path: 'page-editor/:id',
-            name: 'PageEditor',
-            components: {
-              default: () => import('@/views/page-factory/PageEditor.vue'),
-              headerActions: () => import('@/views/page-factory/components/PageEditorActions.vue'),
-            },
-            meta: {
-              title: '页面编辑',
-            },
-          },
-
-          // ========== 应用组装车间 ==========
-          {
-            path: 'app-assembly',
-            name: 'AppAssemblyList',
-            component: () => import('@/views/app-assembly/AppList.vue'),
-            meta: {
-              title: '应用组装',
-            },
-          },
-          {
-            path: 'app-assembly/:id',
-            name: 'AppAssembly',
-            component: () => import('@/views/app-assembly/AppAssemblyEditor.vue'),
-            meta: {
-              title: '组装编辑',
-            },
-          },
-
-          // ========== 数据集（保留） ==========
-          {
-            path: 'dataset',
-            name: 'Dataset',
-            component: () => import('@/views/dataset/Dataset.vue'),
-            meta: {
-              title: '数据中枢',
-            },
-          },
-          {
-            path: 'dataset/edit/:id(.*)*',
-            name: 'DatasetEdit',
-            component: () => import('@/views/dataset/DatasetEdit.vue'),
-            meta: {
-              title: '数据集编辑',
-            },
-          },
-
-          // ========== 数据连接（保留） ==========
-          {
-            path: 'api',
-            name: 'Api',
-            component: () => import('@/views/connector/Connector.vue'),
-            meta: {
-              title: '数据连接',
-            },
-          },
-        ],
+        path: 'project/app-assembly/:id',
+        name: 'AppAssembly',
+        component: () => import('@/views/app-assembly/AppAssemblyEditor.vue'),
+        meta: { title: '组装编辑' },
+      },
+      // 数据中枢
+      {
+        path: 'project/dataset',
+        name: 'Dataset',
+        component: () => import('@/views/dataset/Dataset.vue'),
+        meta: { title: '数据中枢' },
+      },
+      {
+        path: 'project/dataset/edit/:id(.*)*',
+        name: 'DatasetEdit',
+        component: () => import('@/views/dataset/DatasetEdit.vue'),
+        meta: { title: '数据集编辑' },
+      },
+      // 数据连接
+      {
+        path: 'project/api',
+        name: 'Api',
+        component: () => import('@/views/connector/Connector.vue'),
+        meta: { title: '数据连接' },
       },
     ],
   },

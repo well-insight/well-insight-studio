@@ -3,76 +3,36 @@ import { ElMessage } from 'element-plus'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { fetchPage } from '@/api/pages'
-import type { ApiPageItem } from '@/api/pages'
+import { useVisualData } from '@/visual-editor/hooks/useVisualData'
+import SimulatorEditorPreview from '@/visual-editor/ui/canvas/simulator-editor-preview/SimulatorEditorPreview.vue'
 
 const route = useRoute()
-const page = ref<ApiPageItem | null>(null)
+const { overrideProject, updateVisualLoading } = useVisualData()
 const loading = ref(true)
+const error = ref(false)
 
 onMounted(async () => {
+  updateVisualLoading(true)
   try {
     const id = route.params.id as string
-    page.value = await fetchPage(id)
+    const detail = await fetchPage(id)
+    overrideProject(detail.dsl as any)
+    document.title = `${detail.name} - 页面预览`
   }
-  catch (error) {
-    ElMessage.error('加载页面失败')
+  catch (e) {
+    ElMessage.error((e as Error).message || '加载页面失败')
+    error.value = true
   }
   finally {
     loading.value = false
+    updateVisualLoading(false)
   }
 })
 </script>
 
 <template>
-  <div v-loading="loading" class="page-preview-container">
-    <template v-if="page">
-      <div class="preview-header">
-        <h2>{{ page.name }}</h2>
-        <el-tag :type="page.type === 'visualization' ? '' : page.type === 'form' ? 'success' : 'warning'">
-          {{ page.type === 'visualization' ? '可视化大屏' : page.type === 'form' ? '表单管理' : '复杂报表' }}
-        </el-tag>
-      </div>
-      <div class="preview-body">
-        <div class="preview-placeholder">
-          <p>页面预览功能开发中...</p>
-        </div>
-      </div>
-    </template>
-    <el-empty v-else description="页面不存在" />
+  <div v-loading="loading" class="page-preview h-full w-full">
+    <SimulatorEditorPreview v-if="!error" :key="String(route.params.id)" />
+    <el-empty v-else description="页面不存在或加载失败" />
   </div>
 </template>
-
-<style lang="scss" scoped>
-.page-preview-container {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.preview-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 20px;
-  background: var(--el-bg-color);
-  border-bottom: 1px solid var(--el-border-color-light);
-
-  h2 {
-    margin: 0;
-    font-size: 18px;
-  }
-}
-
-.preview-body {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--el-bg-color-page, #f5f7fa);
-}
-
-.preview-placeholder {
-  color: var(--el-text-color-secondary);
-  font-size: 16px;
-}
-</style>

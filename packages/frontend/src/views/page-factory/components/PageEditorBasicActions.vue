@@ -3,6 +3,7 @@ import { ElMessage } from 'element-plus'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePageStore } from '@/stores/pageStore'
+import { markVisualClean, visualDSL } from '../visualEditorState'
 
 const route = useRoute()
 const router = useRouter()
@@ -18,15 +19,30 @@ const pageId = computed(() => {
 const isNew = computed(() => !pageId.value || pageId.value === 'new')
 const pageType = computed(() => (route.params.type as string) || pageStore.currentPage?.type || 'form')
 
-async function handleSave() {
+async function handleSave(status?: 'draft' | 'published') {
   saving.value = true
   try {
-    await pageStore.savePage({
-      id: isNew.value ? undefined : pageId.value,
+    const body: Record<string, unknown> = {
       name: pageStore.currentPage?.name || '未命名页面',
-      type: pageType.value as any,
-    })
-    ElMessage.success('保存成功')
+      type: pageType.value,
+    }
+    if (visualDSL.value) {
+      body.dsl = JSON.parse(JSON.stringify(visualDSL.value))
+    }
+    // 仅当 status 为有效字符串时才包含
+    if (status === 'draft' || status === 'published') {
+      body.status = status
+    }
+
+    const saved = await pageStore.savePage({
+      id: isNew.value ? undefined : pageId.value,
+      ...body,
+    } as any)
+    markVisualClean()
+    ElMessage.success(status === 'published' ? '已发布' : '保存成功')
+    if (isNew.value && saved.id) {
+      router.replace({ name: 'PageEditor', params: { id: saved.id } })
+    }
   }
   catch (e) {
     ElMessage.error((e as Error).message || '保存失败')
@@ -36,22 +52,23 @@ async function handleSave() {
   }
 }
 
+async function handlePreview() {
+  if (!pageId.value) return
+  const url = router.resolve({ name: 'PagePreview', params: { id: pageId.value } }).href
+  window.open(url, '_blank')
+}
+
 function goBack() {
   router.push({ name: 'VisualDesign' })
 }
 </script>
 
 <template>
-  <div class="flex items-center gap-2">
-    <el-button :loading="saving" size="small" @click="handleSave">
-      保存
-    </el-button>
-    <el-button size="small" type="primary" @click="handleSave">
-      发布
-    </el-button>
+  <div class="flex items-center gap-0">
+    <el-button :loading="saving" size="small" @click="() => handleSave()">保存</el-button>
+    <el-button size="small" type="primary" @click="() => handleSave('published')">发布</el-button>
+    <el-button size="small" @click="handlePreview">预览</el-button>
     <el-divider direction="vertical" />
-    <el-button size="small" @click="goBack">
-      返回
-    </el-button>
+    <el-button size="small" @click="goBack">返回</el-button>
   </div>
 </template>

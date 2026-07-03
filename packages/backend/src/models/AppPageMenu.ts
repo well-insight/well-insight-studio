@@ -1,198 +1,225 @@
 import { db } from "../config/database";
 import { generateSnowflakeId } from "../utils/snowflake";
+import type { PagePublic, PageType } from "./Page";
 
 export interface AppPageMenu {
   id: string;
   application_id: string;
   page_id: string;
-  parent_id: string | null;
+  parent_id?: string | null;
   menu_title: string;
-  menu_icon: string | null;
+  menu_icon?: string | null;
+  route_path?: string | null;
+  permission?: string | null;
   sort_order: number;
-  route_path: string | null;
+  created_at: string;
 }
 
-export interface CreateMenuInput {
-  application_id: string;
-  page_id: string;
-  parent_id?: string | null;
-  menu_title: string;
-  menu_icon?: string | null;
-  route_path?: string | null;
-}
-
-export interface UpdateMenuInput {
-  menu_title?: string;
-  menu_icon?: string | null;
-  route_path?: string | null;
-  parent_id?: string | null;
-  sort_order?: number;
-}
-
-export interface SortMenuItem {
+/** 菜单树节点（含关联的页面信息） */
+export interface MenuTreeNode {
   id: string;
-  parent_id: string | null;
+  application_id: string;
+  page_id?: string | null;
+  parent_id?: string | null;
+  menu_title: string;
+  menu_icon?: string | null;
+  route_path?: string | null;
+  permission?: string | null;
   sort_order: number;
-}
-
-function rowToMenu(row: Record<string, unknown>): AppPageMenu {
-  return {
-    id: row.id as string,
-    application_id: row.application_id as string,
-    page_id: row.page_id as string,
-    parent_id: row.parent_id as string | null,
-    menu_title: row.menu_title as string,
-    menu_icon: row.menu_icon as string | null,
-    sort_order: row.sort_order as number,
-    route_path: row.route_path as string | null,
-  };
+  isFolder: boolean;
+  page?: Pick<PagePublic, "id" | "name" | "type" | "status"> | null;
+  children: MenuTreeNode[];
 }
 
 export class AppPageMenuModel {
-  static findById(id: string): AppPageMenu | undefined {
-    const row = db.prepare("SELECT * FROM app_page_menus WHERE id = ?").get(id) as Record<string, unknown> | undefined;
-    return row ? rowToMenu(row) : undefined;
-  }
-
-  /** 获取应用下的所有菜单项（平铺） */
-  static listByApp(applicationId: string): AppPageMenu[] {
-    const rows = db
-      .prepare("SELECT * FROM app_page_menus WHERE application_id = ? ORDER BY sort_order ASC, id ASC")
-      .all(applicationId) as Record<string, unknown>[];
-    return rows.map(rowToMenu);
-  }
-
-  /** 获取应用下的菜单树（含关联页面信息） */
-  static getMenuTree(applicationId: string): Array<Record<string, unknown>> {
+  /** 获取应用的完整菜单树 */
+  static getMenuTree(applicationId: string): MenuTreeNode[] {
     const rows = db
       .prepare(
-        `SELECT
-           m.id, m.application_id, m.page_id, m.parent_id,
-           m.menu_title, m.menu_icon, m.sort_order, m.route_path,
-           p.id AS page__id, p.name AS page__name, p.type AS page__type, p.status AS page__status
+        `SELECT m.*, p.name as page_name, p.type as page_type, p.status as page_status
          FROM app_page_menus m
-         LEFT JOIN pages p ON p.id = m.page_id
+         LEFT JOIN pages p ON m.page_id = p.id
          WHERE m.application_id = ?
-         ORDER BY m.sort_order ASC, m.id ASC`
+         ORDER BY m.sort_order ASC, m.created_at ASC`,
       )
-      .all(applicationId) as Record<string, unknown>[];
+      .all(applicationId) as Array<Record<string, unknown>>;
 
-    const flat = rows.map((r) => ({
-      id: r.id,
-      menu_title: r.menu_title,
-      route_path: r.route_path,
-      menu_icon: r.menu_icon,
-      sort_order: r.sort_order,
-      parent_id: r.parent_id,
-      isFolder: r.page_id === null || r.page_id === "",
-      page: r.page__id
-        ? {
-            id: r.page__id,
-            name: r.page__name,
-            type: r.page__type,
-            status: r.page__status,
-          }
-        : null,
-    }));
+    const map = new Map<string, MenuTreeNode>();
+    const roots: MenuTreeNode[] = [];
 
-    return AppPageMenuModel.buildTree(flat, null);
+    for (const row of rows) {
+      const id = String(row.id);
+      const pageId = row.page_id ? String(row.page_id) : null;
+
+      const node: MenuTreeNode = {
+        id,
+        application_id: String(row.application_id),
+        page_id: pageId,
+        parent_id: row.parent_id ? String(row.parent_id) : null,
+        menu_title: String(row.menu_title),
+        menu_icon: row.menu_icon ? String(row.menu_icon) : null,
+        route_path: row.route_path ? String(row.route_path) : null,
+        permission: row.permission ? String(row.permission) : null,
+        sort_order: Number(row.sort_order),
+        isFolder: !pageId,
+        page: pageId
+          ? {
+              id: pageId,
+              name: String(row.page_name || ""),
+              type: (row.page_type || "visualization") as PageType,
+              status: (row.page_status || "draft") as "draft" | "published",
+            }
+          : null,
+        children: [],
+      };
+      map.set(id, node);
+    }
+
+    for (const node of map.values()) {
+      if (node.parent_id && map.has(node.parent_id)) {
+        map.get(node.parent_id)!.children.push(node);
+      } else {
+        roots.push(node);
+      }
+    }
+
+    return roots;
   }
 
-  private static buildTree(
-    items: Array<Record<string, unknown>>,
-    parentId: string | null,
-  ): Array<Record<string, unknown>> {
-    return items
-      .filter((item) => (item.parent_id ?? null) === parentId)
-      .map((item) => ({
-        ...item,
-        children: AppPageMenuModel.buildTree(items, item.id as string),
-      }));
-  }
-
-  static create(data: CreateMenuInput): string {
+  /** 添加菜单项 */
+  static create(data: {
+    application_id: string;
+    page_id?: string | null;
+    parent_id?: string | null;
+    menu_title: string;
+    menu_icon?: string;
+    route_path?: string;
+    permission?: string;
+    sort_order?: number;
+  }): AppPageMenu {
     const id = generateSnowflakeId();
-    // 计算 sort_order：取同级最大 + 1
-    const maxSort = db
-      .prepare(
-        `SELECT COALESCE(MAX(sort_order), -1) AS mx FROM app_page_menus
-         WHERE application_id = ? AND parent_id IS ?`
-      )
-      .get(data.application_id, data.parent_id ?? null) as { mx: number };
-    const sortOrder = maxSort.mx + 1;
+
+    // 如果没有指定 sort_order，取当前应用的最大值 + 1
+    let sortOrder = data.sort_order;
+    if (sortOrder === undefined) {
+      const maxResult = db
+        .prepare(
+          "SELECT COALESCE(MAX(sort_order), -1) + 1 as next FROM app_page_menus WHERE application_id = ?",
+        )
+        .get(data.application_id) as { next: number };
+      sortOrder = maxResult.next;
+    }
 
     db.prepare(
-      `INSERT INTO app_page_menus (id, application_id, page_id, parent_id, menu_title, menu_icon, sort_order, route_path)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO app_page_menus (id, application_id, page_id, parent_id, menu_title, menu_icon, route_path, permission, sort_order, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       id,
       data.application_id,
-      data.page_id,
+      data.page_id ?? null,
       data.parent_id ?? null,
       data.menu_title,
       data.menu_icon ?? null,
-      sortOrder,
       data.route_path ?? null,
+      data.permission ?? null,
+      sortOrder,
+      new Date().toISOString(),
     );
-    return id;
+
+    const row = db.prepare("SELECT * FROM app_page_menus WHERE id = ?").get(id) as Record<string, unknown>;
+    return rowToMenu(row);
   }
 
-  static update(id: string, data: UpdateMenuInput): boolean {
-    const sets: string[] = [];
-    const params: unknown[] = [];
+  /** 更新菜单项 */
+  static update(
+    id: string,
+    data: {
+      menu_title?: string;
+      menu_icon?: string | null;
+      route_path?: string | null;
+      permission?: string | null;
+      parent_id?: string | null;
+      sort_order?: number;
+    },
+  ): AppPageMenu | undefined {
+    const existing = db.prepare("SELECT * FROM app_page_menus WHERE id = ?").get(id) as
+      | Record<string, unknown>
+      | undefined;
+    if (!existing) return undefined;
 
-    if (data.menu_title !== undefined) {
-      sets.push("menu_title = ?");
-      params.push(data.menu_title);
-    }
-    if (data.menu_icon !== undefined) {
-      sets.push("menu_icon = ?");
-      params.push(data.menu_icon);
-    }
-    if (data.route_path !== undefined) {
-      sets.push("route_path = ?");
-      params.push(data.route_path);
-    }
-    if (data.parent_id !== undefined) {
-      sets.push("parent_id = ?");
-      params.push(data.parent_id);
-    }
-    if (data.sort_order !== undefined) {
-      sets.push("sort_order = ?");
-      params.push(data.sort_order);
-    }
+    const menuTitle = data.menu_title ?? String(existing.menu_title);
+    const menuIcon = data.menu_icon !== undefined ? data.menu_icon : existing.menu_icon ?? null;
+    const routePath =
+      data.route_path !== undefined ? data.route_path : existing.route_path ?? null;
+    const permission =
+      data.permission !== undefined ? data.permission : existing.permission ?? null;
+    const parentId = data.parent_id !== undefined ? data.parent_id : existing.parent_id ?? null;
+    const sortOrder = data.sort_order !== undefined ? data.sort_order : existing.sort_order;
 
-    if (sets.length === 0) return false;
+    db.prepare(
+      `UPDATE app_page_menus SET menu_title = ?, menu_icon = ?, route_path = ?, permission = ?, parent_id = ?, sort_order = ? WHERE id = ?`,
+    ).run(menuTitle, menuIcon, routePath, permission, parentId, sortOrder, id);
 
-    params.push(id);
-    const result = db
-      .prepare(`UPDATE app_page_menus SET ${sets.join(", ")} WHERE id = ?`)
-      .run(...params);
-    return result.changes > 0;
+    const row = db.prepare("SELECT * FROM app_page_menus WHERE id = ?").get(id) as Record<string, unknown>;
+    return rowToMenu(row);
   }
 
+  /** 批量更新排序（拖拽后） */
+  static batchUpdateSort(items: Array<{ id: string; parent_id?: string | null; sort_order: number }>): void {
+    const stmt = db.prepare(
+      "UPDATE app_page_menus SET parent_id = ?, sort_order = ? WHERE id = ?",
+    );
+
+    const trans = db.transaction(() => {
+      for (const item of items) {
+        stmt.run(item.parent_id ?? null, item.sort_order, item.id);
+      }
+    });
+    trans();
+  }
+
+  /** 删除菜单项（及其子项） */
   static delete(id: string): boolean {
-    // 将子菜单移到根级
-    db.prepare("UPDATE app_page_menus SET parent_id = NULL WHERE parent_id = ?").run(id);
+    // 先递归删除子项
+    const children = db
+      .prepare("SELECT id FROM app_page_menus WHERE parent_id = ?")
+      .all(id) as Array<{ id: string }>;
+    for (const child of children) {
+      AppPageMenuModel.delete(child.id);
+    }
+
     const result = db.prepare("DELETE FROM app_page_menus WHERE id = ?").run(id);
     return result.changes > 0;
   }
 
-  /** 批量更新排序/层级 */
-  static batchSort(applicationId: string, menus: SortMenuItem[]): void {
-    const updateStmt = db.prepare(
-      "UPDATE app_page_menus SET parent_id = ?, sort_order = ? WHERE id = ? AND application_id = ?"
-    );
-    const transaction = db.transaction(() => {
-      for (const item of menus) {
-        updateStmt.run(item.parent_id, item.sort_order, item.id, applicationId);
-      }
-    });
-    transaction();
+  /** 检查页面是否已被某个应用挂载 */
+  static isPageMounted(pageId: string): boolean {
+    const result = db.prepare("SELECT 1 FROM app_page_menus WHERE page_id = ? LIMIT 1").get(pageId);
+    return !!result;
   }
 
-  /** 删除应用下所有菜单 */
-  static deleteByApp(applicationId: string): void {
-    db.prepare("DELETE FROM app_page_menus WHERE application_id = ?").run(applicationId);
+  /** 获取某个应用挂载的页面 ID 列表 */
+  static getMountedPageIds(applicationId: string): string[] {
+    const rows = db
+      .prepare("SELECT DISTINCT page_id FROM app_page_menus WHERE application_id = ? AND page_id IS NOT NULL")
+      .all(applicationId) as Array<{ page_id: string }>;
+    return rows.map((r) => r.page_id);
   }
 }
+
+function rowToMenu(row: Record<string, unknown>): AppPageMenu {
+  return {
+    id: String(row.id),
+    application_id: String(row.application_id),
+    page_id: String(row.page_id),
+    parent_id: row.parent_id ? String(row.parent_id) : null,
+    menu_title: String(row.menu_title),
+    menu_icon: row.menu_icon ? String(row.menu_icon) : null,
+    route_path: row.route_path ? String(row.route_path) : null,
+    permission: row.permission ? String(row.permission) : null,
+    sort_order: Number(row.sort_order),
+    created_at: String(row.created_at),
+  };
+}
+
+export default AppPageMenuModel;

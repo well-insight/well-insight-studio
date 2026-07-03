@@ -16,8 +16,20 @@ const { menuList } = storeToRefs(workspaceStore)
 
 const currentMenuPath = ref(route?.path)
 
+/** 编辑器子路由 → 所属菜单路径映射 */
+const editorMenuMap: Record<string, string> = {
+  '/project/pages/edit': '/project/pages',
+  '/project/app-assembly/': '/project/app-assembly',
+  '/project/dataset/edit': '/project/dataset',
+}
+
 /** 从菜单树中查找当前路径匹配的菜单项 */
 function findMenuByPath(path: string): string | undefined {
+  // 先检查是否匹配编辑器子路由
+  for (const [editorPrefix, menuPath] of Object.entries(editorMenuMap)) {
+    if (path.startsWith(editorPrefix)) return menuPath
+  }
+
   for (const item of menuList.value ?? []) {
     if (item.children?.length) {
       const child = item.children.find(c => path.includes(c.path))

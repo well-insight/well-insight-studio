@@ -31,6 +31,9 @@ const { asideCollapse } = storeToRefs(controlStore)
       <ELayout direction="column">
         <ELayoutHeader class="h-[50px] border-bottom-1 p-0">
           <Header>
+            <template #center>
+              <router-view name="headerCenter" />
+            </template>
             <template #actions>
               <router-view name="headerActions" />
             </template>

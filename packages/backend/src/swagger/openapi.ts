@@ -18,6 +18,8 @@ export function getOpenApiSpec(port: number) {
       { name: "Auth", description: "注册与登录" },
       { name: "Users", description: "用户管理（管理员）" },
       { name: "Lowcode", description: "低代码页面（内存存储）" },
+      { name: "Pages", description: "独立页面 CRUD（可视化/表单/报表）" },
+      { name: "Assembly", description: "应用组装：菜单树、页面挂载、发布" },
       {
         name: "Datasets",
         description:
@@ -184,6 +186,125 @@ export function getOpenApiSpec(port: number) {
             success: { type: "boolean", example: false },
             error: { type: "string", example: "数据验证失败" },
             details: { type: "array", items: { type: "object" } },
+          },
+        },
+        NewPage: {
+          type: "object",
+          properties: {
+            id: { type: "string", description: "页面 ID" },
+            name: { type: "string", description: "页面名称" },
+            type: {
+              type: "string",
+              enum: ["visualization", "form", "report"],
+              description: "页面类型：可视化/表单/报表",
+            },
+            dsl: { type: "object", description: "页面 DSL 内容" },
+            dataset_bindings: {
+              type: "object",
+              nullable: true,
+              description: "数据集绑定配置",
+            },
+            preview_url: { type: "string", nullable: true },
+            status: {
+              type: "string",
+              enum: ["draft", "published"],
+              description: "页面状态",
+            },
+            created_by: { type: "string" },
+            created_at: { type: "string" },
+            updated_at: { type: "string" },
+          },
+        },
+        PageListItem: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            name: { type: "string" },
+            type: { type: "string", enum: ["visualization", "form", "report"] },
+            status: { type: "string", enum: ["draft", "published"] },
+            created_at: { type: "string" },
+            updated_at: { type: "string" },
+          },
+        },
+        CreatePageRequest: {
+          type: "object",
+          required: ["name", "type"],
+          properties: {
+            name: { type: "string", example: "销售大屏" },
+            type: {
+              type: "string",
+              enum: ["visualization", "form", "report"],
+              example: "visualization",
+            },
+            dsl: { type: "object", description: "页面 DSL" },
+            dataset_bindings: { type: "object" },
+            preview_url: { type: "string" },
+            status: {
+              type: "string",
+              enum: ["draft", "published"],
+              default: "draft",
+            },
+          },
+        },
+        UpdatePageRequest: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            type: { type: "string", enum: ["visualization", "form", "report"] },
+            dsl: { type: "object" },
+            dataset_bindings: { type: "object" },
+            preview_url: { type: "string", nullable: true },
+            status: { type: "string", enum: ["draft", "published"] },
+          },
+        },
+        NewPageListResponse: {
+          type: "object",
+          properties: {
+            success: { type: "boolean" },
+            data: { type: "array", items: { $ref: "#/components/schemas/NewPage" } },
+            total: { type: "integer" },
+            message: { type: "string" },
+          },
+        },
+        MenuTreeNode: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            application_id: { type: "string" },
+            page_id: { type: "string", nullable: true },
+            parent_id: { type: "string", nullable: true },
+            menu_title: { type: "string" },
+            menu_icon: { type: "string", nullable: true },
+            route_path: { type: "string", nullable: true },
+            sort_order: { type: "integer" },
+            isFolder: { type: "boolean" },
+            page: {
+              type: "object",
+              nullable: true,
+              properties: {
+                id: { type: "string" },
+                name: { type: "string" },
+                type: { type: "string" },
+                status: { type: "string" },
+              },
+            },
+            children: {
+              type: "array",
+              items: { $ref: "#/components/schemas/MenuTreeNode" },
+            },
+          },
+        },
+        CreateMenuRequest: {
+          type: "object",
+          required: ["page_id", "menu_title"],
+          properties: {
+            page_id: { type: "string" },
+            parent_id: { type: "string", nullable: true },
+            menu_title: { type: "string", example: "销售大屏" },
+            menu_icon: { type: "string" },
+            route_path: { type: "string", example: "/dashboard" },
+            permission: { type: "string" },
+            sort_order: { type: "integer" },
           },
         },
         DatasetFieldType: {
@@ -988,6 +1109,190 @@ export function getOpenApiSpec(port: number) {
           responses: {
             "200": { description: "已删除" },
             "404": { description: "不存在" },
+            "401": { description: "未登录", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorBody" } } } },
+          },
+        },
+      },
+      // ==================== Pages API ====================
+      "/api/v1/pages": {
+        get: {
+          tags: ["Pages"],
+          summary: "页面列表",
+          description: "支持按类型、状态、关键词筛选。",
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: "type", in: "query", schema: { type: "string", enum: ["visualization", "form", "report"] } },
+            { name: "status", in: "query", schema: { type: "string", enum: ["draft", "published"] } },
+            { name: "keyword", in: "query", schema: { type: "string" } },
+            { name: "page", in: "query", schema: { type: "integer", default: 1 } },
+            { name: "pageSize", in: "query", schema: { type: "integer", default: 20 } },
+          ],
+          responses: {
+            "200": { description: "成功", content: { "application/json": { schema: { $ref: "#/components/schemas/NewPageListResponse" } } } },
+            "401": { description: "未登录", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorBody" } } } },
+          },
+        },
+        post: {
+          tags: ["Pages"],
+          summary: "创建页面",
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: { "application/json": { schema: { $ref: "#/components/schemas/CreatePageRequest" } } },
+          },
+          responses: {
+            "201": { description: "已创建", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, data: { $ref: "#/components/schemas/NewPage" }, message: { type: "string" } } } } } },
+            "400": { description: "校验失败", content: { "application/json": { schema: { $ref: "#/components/schemas/ZodErrorDetail" } } } },
+            "401": { description: "未登录", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorBody" } } } },
+          },
+        },
+      },
+      "/api/v1/pages/{id}": {
+        get: {
+          tags: ["Pages"],
+          summary: "页面详情",
+          security: [{ bearerAuth: [] }],
+          parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+          responses: {
+            "200": { description: "成功", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, data: { $ref: "#/components/schemas/NewPage" }, message: { type: "string" } } } } } },
+            "404": { description: "不存在" },
+            "401": { description: "未登录", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorBody" } } } },
+          },
+        },
+        put: {
+          tags: ["Pages"],
+          summary: "更新页面",
+          security: [{ bearerAuth: [] }],
+          parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+          requestBody: {
+            content: { "application/json": { schema: { $ref: "#/components/schemas/UpdatePageRequest" } } },
+          },
+          responses: {
+            "200": { description: "成功" },
+            "400": { description: "校验失败" },
+            "404": { description: "不存在" },
+            "401": { description: "未登录", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorBody" } } } },
+          },
+        },
+        delete: {
+          tags: ["Pages"],
+          summary: "删除页面",
+          security: [{ bearerAuth: [] }],
+          parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+          responses: {
+            "200": { description: "已删除" },
+            "404": { description: "不存在" },
+            "401": { description: "未登录", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorBody" } } } },
+          },
+        },
+      },
+      // ==================== Assembly API ====================
+      "/api/v1/applications/{id}/menus": {
+        get: {
+          tags: ["Assembly"],
+          summary: "获取应用菜单树",
+          security: [{ bearerAuth: [] }],
+          parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+          responses: {
+            "200": { description: "菜单树", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, data: { type: "array", items: { $ref: "#/components/schemas/MenuTreeNode" } }, message: { type: "string" } } } } } },
+            "404": { description: "应用不存在" },
+            "401": { description: "未登录", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorBody" } } } },
+          },
+        },
+        post: {
+          tags: ["Assembly"],
+          summary: "挂载页面到应用菜单",
+          security: [{ bearerAuth: [] }],
+          parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+          requestBody: {
+            required: true,
+            content: { "application/json": { schema: { $ref: "#/components/schemas/CreateMenuRequest" } } },
+          },
+          responses: {
+            "201": { description: "已挂载" },
+            "400": { description: "校验失败" },
+            "404": { description: "应用或页面不存在" },
+            "401": { description: "未登录", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorBody" } } } },
+          },
+        },
+      },
+      "/api/v1/applications/{id}/menus/{menuId}": {
+        put: {
+          tags: ["Assembly"],
+          summary: "更新菜单项",
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: "id", in: "path", required: true, schema: { type: "string" } },
+            { name: "menuId", in: "path", required: true, schema: { type: "string" } },
+          ],
+          responses: {
+            "200": { description: "更新成功" },
+            "400": { description: "校验失败" },
+            "404": { description: "菜单项不存在" },
+            "401": { description: "未登录", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorBody" } } } },
+          },
+        },
+        delete: {
+          tags: ["Assembly"],
+          summary: "移除菜单项",
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: "id", in: "path", required: true, schema: { type: "string" } },
+            { name: "menuId", in: "path", required: true, schema: { type: "string" } },
+          ],
+          responses: {
+            "200": { description: "已移除" },
+            "404": { description: "菜单项不存在" },
+            "401": { description: "未登录", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorBody" } } } },
+          },
+        },
+      },
+      "/api/v1/applications/{id}/menus/sort": {
+        patch: {
+          tags: ["Assembly"],
+          summary: "批量排序菜单",
+          security: [{ bearerAuth: [] }],
+          parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    menus: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string" },
+                          parent_id: { type: "string", nullable: true },
+                          sort_order: { type: "integer" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "200": { description: "排序成功" },
+            "400": { description: "校验失败" },
+            "401": { description: "未登录", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorBody" } } } },
+          },
+        },
+      },
+      "/api/v1/applications/{id}/publish": {
+        post: {
+          tags: ["Assembly"],
+          summary: "发布应用",
+          description: "生成路由配置和访问链接。",
+          security: [{ bearerAuth: [] }],
+          parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+          responses: {
+            "200": { description: "发布成功" },
+            "404": { description: "应用不存在" },
             "401": { description: "未登录", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorBody" } } } },
           },
         },

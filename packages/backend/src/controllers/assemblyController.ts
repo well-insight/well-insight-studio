@@ -56,16 +56,15 @@ export async function addMenu(req: Request, res: Response): Promise<void> {
     const appId = IdParamSchema.parse(req.params.id);
     const body = CreateMenuSchema.parse(req.body);
 
-    const id = AppPageMenuModel.create({
+    const menu = AppPageMenuModel.create({
       application_id: appId,
       page_id: body.page_id,
       parent_id: body.parent_id ?? null,
       menu_title: body.menu_title,
-      menu_icon: body.menu_icon ?? null,
-      route_path: body.route_path ?? null,
+      menu_icon: body.menu_icon ?? undefined,
+      route_path: body.route_path ?? undefined,
     });
 
-    const menu = AppPageMenuModel.findById(id);
     res.status(201).json({ success: true, data: menu });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -82,18 +81,15 @@ export async function addMenu(req: Request, res: Response): Promise<void> {
  */
 export async function updateMenu(req: Request, res: Response): Promise<void> {
   try {
-    const appId = IdParamSchema.parse(req.params.id);
     const menuId = IdParamSchema.parse(req.params.menuId);
     const body = UpdateMenuSchema.parse(req.body);
 
-    const menu = AppPageMenuModel.findById(menuId);
-    if (!menu || menu.application_id !== appId) {
+    const updated = AppPageMenuModel.update(menuId, body);
+    if (!updated) {
       res.status(404).json({ success: false, error: "菜单项不存在" });
       return;
     }
 
-    AppPageMenuModel.update(menuId, body);
-    const updated = AppPageMenuModel.findById(menuId);
     res.json({ success: true, data: updated });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -113,7 +109,7 @@ export async function sortMenus(req: Request, res: Response): Promise<void> {
     const appId = IdParamSchema.parse(req.params.id);
     const body = SortMenusSchema.parse(req.body);
 
-    AppPageMenuModel.batchSort(appId, body.menus);
+    AppPageMenuModel.batchUpdateSort(body.menus);
 
     const tree = AppPageMenuModel.getMenuTree(appId);
     res.json({ success: true, data: tree });
@@ -132,16 +128,14 @@ export async function sortMenus(req: Request, res: Response): Promise<void> {
  */
 export async function removeMenu(req: Request, res: Response): Promise<void> {
   try {
-    const appId = IdParamSchema.parse(req.params.id);
     const menuId = IdParamSchema.parse(req.params.menuId);
+    const deleted = AppPageMenuModel.delete(menuId);
 
-    const menu = AppPageMenuModel.findById(menuId);
-    if (!menu || menu.application_id !== appId) {
+    if (!deleted) {
       res.status(404).json({ success: false, error: "菜单项不存在" });
       return;
     }
 
-    AppPageMenuModel.delete(menuId);
     res.json({ success: true, message: "菜单项已移除" });
   } catch (error) {
     if (error instanceof z.ZodError) {

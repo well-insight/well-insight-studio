@@ -1,16 +1,18 @@
 <script lang="ts" setup>
 import type { PageType } from '@/api/pages'
-import { DataLine, EditPen, Monitor } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { DataLine, EditPen, Monitor } from '@element-plus/icons-vue'
 import { storeToRefs } from 'pinia'
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onActivated, onBeforeUnmount, onMounted, onUnmounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
+import { fetchPage } from '@/api/pages'
 import { ELayout, ELayoutContent, ELayoutSider } from '@/components/e-layout'
 import { useControlStore } from '@/stores/controlStore'
 import { usePageStore } from '@/stores/pageStore'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import SimulatorEditor from '@/visual-editor/ui/canvas/simulator-grid-editor/SimulatorEditor.vue'
 import LeftAside from '@/visual-editor/ui/workbench/left-aside/LeftAside.vue'
+import { visualSaved, updateVisualDSL } from './visualEditorState'
 
 const route = useRoute()
 const router = useRouter()
@@ -18,102 +20,100 @@ const pageStore = usePageStore()
 
 const controlStore = useControlStore()
 const { layoutCollapse } = storeToRefs(controlStore)
-const { overrideProject, updateVisualLoading, isDirty } = useVisualData()
 
-const pageId = computed(() => {
-  const raw = route.params.id
-  if (!raw)
-    return undefined
-  return Array.isArray(raw) ? raw[0] : String(raw)
-})
-const isNew = computed(() => !pageId.value || pageId.value === 'new')
-const pageType = computed<PageType>(() => {
-  if (isNew.value) {
-    return (route.params.type as PageType) || 'visualization'
-  }
-  return pageStore.currentPage?.type || 'visualization'
-})
+const { overrideProject, updateVisualLoading, isDirty, jsonData } = useVisualData()
 
-const isVisualization = computed(() => pageType.value === 'visualization')
-
-const pageName = ref('')
-const loading = ref(false)
+/** 并发/重复进入时只应用最后一次请求结果 */
 let loadSeq = 0
 
-const placeholderConfig: Record<PageType, { icon: typeof Monitor, title: string, desc: string }> = {
-  visualization: {
-    icon: Monitor,
-    title: '可视化编辑器',
-    desc: '拖拽图表组件，构建数据大屏',
-  },
-  form: {
-    icon: EditPen,
-    title: '表单设计器',
-    desc: '表单设计器正在开发中，敬请期待...',
-  },
-  report: {
-    icon: DataLine,
-    title: '报表设计器',
-    desc: '报表设计器正在开发中，敬请期待...',
-  },
-}
+const loading = ref(false)
+const pageName = ref('')
+const pageType = ref<PageType>('visualization')
 
-const currentPlaceholder = computed(() => placeholderConfig[pageType.value])
+/** 确定当前是编辑已有页面还是新建页面 */
+const isNew = computed(() => route.params.type != null && route.path.includes('/new/'))
+const pageId = computed(() => isNew.value ? null : (route.params.id as string))
 
-/** 默认可视化 DSL 模板 */
-function defaultVisualDSL(): Record<string, unknown> {
-  return {
-    pages: {
-      '/': {
-        title: '首页',
-        path: '/',
-        config: {
-          bgColor: '',
-          bgImage: '',
-          keepAlive: false,
-          pageSize: { name: '', width: 1920, height: 1080 },
+/** 根据类型获取默认 schema */
+function getDefaultSchema(type: PageType): Record<string, unknown> {
+  switch (type) {
+    case 'visualization':
+      return {
+        pages: {
+          '/': {
+            title: '首页',
+            path: '/',
+            config: {
+              bgColor: '',
+              bgImage: '',
+              keepAlive: false,
+              pageSize: { name: '', width: 1920, height: 1080 },
+            },
+            blocks: [],
+          },
         },
-        blocks: [],
-      },
-    },
-    models: [],
-    actions: {
-      fetch: { name: '接口请求', apis: [] },
-      dialog: { name: '对话框', handlers: [] },
-    },
+        models: [],
+        actions: { fetch: { name: '接口请求', apis: [] }, dialog: { name: '对话框', handlers: [] } },
+      }
+    case 'form':
+      return {
+        pages: {
+          '/': {
+            title: '表单页',
+            path: '/',
+            config: {
+              bgColor: '',
+              bgImage: '',
+              keepAlive: false,
+              pageSize: { name: '', width: 1280, height: 800 },
+            },
+            blocks: [],
+          },
+        },
+        models: [],
+        actions: { fetch: { name: '接口请求', apis: [] }, dialog: { name: '对话框', handlers: [] } },
+      }
+    case 'report':
+      return {
+        pages: {
+          '/': {
+            title: '报表页',
+            path: '/',
+            config: {
+              bgColor: '',
+              bgImage: '',
+              keepAlive: false,
+              pageSize: { name: '', width: 1920, height: 1080 },
+            },
+            blocks: [],
+          },
+        },
+        models: [],
+        actions: { fetch: { name: '接口请求', apis: [] }, dialog: { name: '对话框', handlers: [] } },
+      }
   }
 }
 
-/** 校验 DSL 是否为有效的可视化模型（必须含 pages 对象） */
-function isValidVisualDSL(dsl: unknown): dsl is Record<string, unknown> {
+/** 校验 DSL 是否包含有效的 pages 对象 */
+function isValidDSL(dsl: unknown): dsl is Record<string, unknown> {
   return !!dsl && typeof dsl === 'object' && 'pages' in (dsl as Record<string, unknown>)
 }
 
-async function loadPage() {
-  if (isNew.value) {
-    pageName.value = '未命名页面'
-    if (isVisualization.value) {
-      updateVisualLoading(true)
-      overrideProject(defaultVisualDSL())
-      updateVisualLoading(false)
-    }
-    return
-  }
-
-  loading.value = true
+async function loadPageById(id: string) {
+  updateVisualLoading(true)
   const seq = ++loadSeq
+  loading.value = true
   try {
-    const page = await pageStore.loadPage(pageId.value!)
-    if (seq !== loadSeq) return
-    pageName.value = page.name
-
-    // 可视化：注入 DSL 到编辑器
-    if (page.type === 'visualization') {
-      updateVisualLoading(true)
-      const dsl = isValidVisualDSL(page.dsl) ? page.dsl : defaultVisualDSL()
-      overrideProject(dsl)
-      updateVisualLoading(false)
-    }
+    const detail = await fetchPage(id)
+    if (seq !== loadSeq)
+      return
+    pageName.value = detail.name
+    pageType.value = detail.type
+    // 同步到 store，供 header 操作栏读取
+    await pageStore.loadPage(id)
+    const dsl = isValidDSL(detail.dsl) ? detail.dsl : getDefaultSchema(detail.type)
+    overrideProject(dsl as any)
+    updateVisualDSL(dsl as Record<string, unknown>)
   }
   catch (error) {
     if (seq !== loadSeq)
@@ -123,38 +123,101 @@ async function loadPage() {
   finally {
     if (seq === loadSeq) {
       loading.value = false
+      updateVisualLoading(false)
     }
   }
 }
 
-async function handleSave() {
-  if (!isVisualization.value) {
-    ElMessage.info('该类型编辑器尚未开放，仅可保存页面基本信息')
+function initNewPage(type: PageType) {
+  pageType.value = type
+  pageName.value = ''
+  const defaultSchema = getDefaultSchema(type)
+  overrideProject(defaultSchema as any)
+  updateVisualDSL(defaultSchema)
+  updateVisualLoading(false)
+}
+
+watch(
+  () => route.params,
+  () => {
+    if (isNew.value) {
+      initNewPage(route.params.type as PageType)
+    }
+    else if (pageId.value) {
+      loadPageById(pageId.value)
+    }
+  },
+  { immediate: true },
+)
+
+/** keep-alive 支持 */
+let skipNextActivateLoad = true
+onActivated(() => {
+  if (skipNextActivateLoad) {
+    skipNextActivateLoad = false
     return
   }
+  if (pageId.value) {
+    loadPageById(pageId.value)
+  }
+})
 
+/** 保存页面 */
+async function savePageDraft() {
+  updateVisualLoading(true)
   try {
-    await pageStore.savePage({
-      id: isNew.value ? undefined : pageId.value,
-      name: pageName.value || '未命名页面',
+    const name = pageName.value.trim() || `未命名${pageType.value === 'visualization' ? '可视化' : pageType.value === 'form' ? '表单' : '报表'}`
+    const dsl = JSON.parse(JSON.stringify(jsonData))
+    const saved = await pageStore.savePage({
+      id: pageId.value || undefined,
+      name,
       type: pageType.value,
-      dsl: {},
+      dsl,
+      status: 'draft',
     })
     ElMessage.success('保存成功')
+    // 如果是新建页面，保存后跳转到编辑模式
+    if (isNew.value && saved.id) {
+      router.replace({ name: 'PageEditor', params: { id: saved.id } })
+    }
   }
-  catch (error) {
-    ElMessage.error((error as Error).message || '保存失败')
+  catch (e) {
+    ElMessage.error((e as Error).message || '保存失败')
+  }
+  finally {
+    updateVisualLoading(false)
   }
 }
 
-function goBack() {
-  router.push({ name: 'VisualDesign' })
+/** 发布页面 */
+async function publishPage() {
+  updateVisualLoading(true)
+  try {
+    const name = pageName.value.trim() || `未命名${pageType.value === 'visualization' ? '可视化' : pageType.value === 'form' ? '表单' : '报表'}`
+    const dsl = JSON.parse(JSON.stringify(jsonData))
+    const saved = await pageStore.savePage({
+      id: pageId.value || undefined,
+      name,
+      type: pageType.value,
+      dsl,
+      status: 'published',
+    })
+    ElMessage.success('发布成功')
+    if (isNew.value && saved.id) {
+      router.replace({ name: 'PageEditor', params: { id: saved.id } })
+    }
+  }
+  catch (e) {
+    ElMessage.error((e as Error).message || '发布失败')
+  }
+  finally {
+    updateVisualLoading(false)
+  }
 }
 
-// 离开确认
+/** 离开确认 */
 async function confirmLeaveIfDirty(): Promise<boolean> {
-  if (!isDirty.value)
-    return true
+  if (visualSaved.value) return true
   try {
     await ElMessageBox.confirm('当前有未保存的更改，确定要离开吗？', '提示', {
       confirmButtonText: '离开',
@@ -167,167 +230,66 @@ async function confirmLeaveIfDirty(): Promise<boolean> {
 }
 
 onBeforeRouteLeave(async (_to, _from, next) => {
-  const ok = isVisualization.value ? await confirmLeaveIfDirty() : true
+  const ok = await confirmLeaveIfDirty()
   next(ok)
 })
 
-watch(() => pageId.value, () => { loadPage() }, { immediate: true })
+function onBeforeUnload(e: BeforeUnloadEvent) {
+  if (isDirty.value) {
+    e.preventDefault()
+    e.returnValue = ''
+  }
+}
 
 onMounted(() => {
-  if (isNew.value)
-    pageName.value = '未命名页面'
+  window.addEventListener('beforeunload', onBeforeUnload)
 })
 
 onBeforeUnmount(() => {
-  pageStore.resetCurrentPage()
+  window.removeEventListener('beforeunload', onBeforeUnload)
+})
+
+onUnmounted(() => {
   controlStore.floatingSettingVisible = false
 })
 </script>
 
 <template>
-  <div v-loading="loading" class="page-editor-container" element-loading-text="加载页面数据…">
-    <!-- 可视化编辑器：完整编辑器布局 -->
-    <template v-if="isVisualization">
-      <ELayout class="visual-layout">
-        <ELayoutSider
-          v-model:collapsed="layoutCollapse"
-          show-trigger="button"
-          :width="280"
-          :collapsed-width="0"
-        >
-          <LeftAside />
-        </ELayoutSider>
-        <ELayoutContent>
-          <SimulatorEditor />
-        </ELayoutContent>
-      </ELayout>
-    </template>
+  <div
+    id="page-editor-wrapper"
+    v-loading="loading"
+    class="relative flex h-full w-full flex-col overflow-hidden"
+    element-loading-text="加载页面配置…"
+  >
+    <!-- 可视化编辑器 -->
+    <ELayout v-if="pageType === 'visualization'" class="relative flex flex-1 overflow-hidden">
+      <ELayoutSider
+        v-model:collapsed="layoutCollapse"
+        show-trigger="button"
+        :width="280"
+        :collapsed-width="0"
+      >
+        <LeftAside />
+      </ELayoutSider>
+      <ELayoutContent>
+        <SimulatorEditor />
+      </ELayoutContent>
+    </ELayout>
 
     <!-- 表单/报表占位 -->
-    <template v-else>
-      <div class="editor-toolbar">
-        <div class="toolbar-left">
-          <el-button text @click="goBack">
-            <el-icon><el-icon-arrow-left /></el-icon>
-            返回
-          </el-button>
-          <el-divider direction="vertical" />
-          <el-input
-            v-model="pageName"
-            class="page-name-input"
-            placeholder="输入页面名称"
-            :maxlength="50"
-          />
-          <el-tag type="warning" size="small" style="margin-left: 8px">
-            开发中
-          </el-tag>
-        </div>
-        <div class="toolbar-right">
-          <el-button @click="handleSave">
-            保存
-          </el-button>
-        </div>
+    <div v-else class="flex flex-1 items-center justify-center bg-[var(--el-bg-color-page)]">
+      <div class="text-center">
+        <el-icon :size="72" :color="pageType === 'form' ? '#67c23a' : '#e6a23c'">
+          <EditPen v-if="pageType === 'form'" />
+          <DataLine v-else />
+        </el-icon>
+        <h2 class="mt-4 mb-2 text-xl font-semibold">
+          {{ pageType === 'form' ? '表单设计器' : '报表设计器' }}
+        </h2>
+        <p class="text-[var(--el-text-color-secondary)]">
+          {{ pageType === 'form' ? '表单设计器正在开发中，敬请期待...' : '报表设计器正在开发中，敬请期待...' }}
+        </p>
       </div>
-      <div class="editor-body placeholder-mode">
-        <div class="placeholder-content">
-          <el-icon :size="64">
-            <component :is="currentPlaceholder.icon" />
-          </el-icon>
-          <h2>{{ currentPlaceholder.title }}</h2>
-          <p>{{ currentPlaceholder.desc }}</p>
-          <div class="placeholder-actions">
-            <el-button @click="goBack">
-              返回列表
-            </el-button>
-            <el-button type="primary" @click="handleSave">
-              保存页面信息
-            </el-button>
-          </div>
-        </div>
-      </div>
-    </template>
+    </div>
   </div>
 </template>
-
-<style lang="scss" scoped>
-.page-editor-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
-
-.visual-layout {
-  flex: 1;
-  overflow: hidden;
-}
-
-.editor-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 48px;
-  padding: 0 16px;
-  background: var(--el-bg-color);
-  border-bottom: 1px solid var(--el-border-color-light);
-  flex-shrink: 0;
-}
-
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.page-name-input {
-  width: 240px;
-
-  :deep(.el-input__wrapper) {
-    background: transparent;
-    box-shadow: none;
-    font-size: 16px;
-    font-weight: 600;
-
-    &:hover,
-    &.is-focus {
-      box-shadow: 0 1px 0 var(--el-color-primary) !important;
-    }
-  }
-}
-
-.toolbar-right {
-  display: flex;
-  gap: 8px;
-}
-
-.editor-body {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--el-bg-color-page, #f5f7fa);
-}
-
-.placeholder-content {
-  text-align: center;
-  color: var(--el-text-color-secondary);
-
-  h2 {
-    margin: 16px 0 8px;
-    font-size: 24px;
-    color: var(--el-text-color-primary);
-  }
-
-  p {
-    margin: 0 0 16px;
-    font-size: 14px;
-  }
-}
-
-.placeholder-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  margin-top: 24px;
-}
-</style>
