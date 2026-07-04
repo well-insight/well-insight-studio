@@ -13,6 +13,7 @@ import {
   updateApplication,
 } from '@/api/application'
 import { ButtonTabs } from '@/components/button-tabs'
+import { AdaptiveDialog } from '@/components/adaptive-dialog'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 
 const router = useRouter()
@@ -223,7 +224,7 @@ const starIcon = (row: WorkspaceApp) => (row.starred ? StarFilled : Star)
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="createVisible" title="添加应用" width="400px" destroy-on-close>
+    <AdaptiveDialog v-model="createVisible" title="添加应用" width="400px" destroy-on-close>
       <el-form label-width="88px">
         <el-form-item label="应用名称" required>
           <el-input
@@ -248,9 +249,9 @@ const starIcon = (row: WorkspaceApp) => (row.starred ? StarFilled : Star)
           创建
         </el-button>
       </template>
-    </el-dialog>
+    </AdaptiveDialog>
 
-    <el-dialog v-model="renameVisible" title="重命名应用" width="400px" destroy-on-close>
+    <AdaptiveDialog v-model="renameVisible" title="重命名应用" width="400px" destroy-on-close>
       <el-input v-model="renameTitle" maxlength="200" show-word-limit />
       <template #footer>
         <el-button @click="renameVisible = false">
@@ -260,7 +261,7 @@ const starIcon = (row: WorkspaceApp) => (row.starred ? StarFilled : Star)
           保存
         </el-button>
       </template>
-    </el-dialog>
+    </AdaptiveDialog>
   </div>
 </template>
 

@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { useVModel } from '@vueuse/core'
+import { AdaptiveDialog } from '@/components/adaptive-dialog'
 import { BASE_URL } from '@/visual-editor/lib'
 
 defineOptions({
@@ -19,7 +20,12 @@ const previewUrl = `${BASE_URL}preview/${location.hash}`
 </script>
 
 <template>
-  <el-dialog v-model="dialogVisible" custom-class="h5-preview" :show-close="false" width="360px">
+  <AdaptiveDialog
+    v-model="dialogVisible"
+    title="H5 预览"
+    width="360px"
+    shell-class="h5-preview"
+  >
     <iframe
       v-if="dialogVisible"
       :style="{ width: '100%', height: '100%' }"
@@ -27,21 +33,15 @@ const previewUrl = `${BASE_URL}preview/${location.hash}`
       frameborder="0"
       scrolling="auto"
     />
-  </el-dialog>
+  </AdaptiveDialog>
 </template>
 
 <style lang="scss">
 .h5-preview {
-  overflow: hidden;
-
   .el-dialog__body {
     width: 360px;
     height: 640px;
     padding: 0;
-  }
-
-  .el-dialog__header {
-    display: none;
   }
 
   .simulator {

@@ -3,6 +3,7 @@ import { Search } from '@element-plus/icons-vue'
 import { storeToRefs } from 'pinia'
 import { nextTick, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { useControlStore } from '@/stores/controlStore'
+import { AdaptiveDialog } from '@/components/adaptive-dialog'
 import ComponentList from './ComponentList.vue'
 
 const controlStore = useControlStore()
@@ -30,15 +31,15 @@ watch(customComponentsVisible, () => {
 </script>
 
 <template>
-  <el-drawer
+  <AdaptiveDialog
     v-model="customComponentsVisible"
-    :modal="false"
-    modal-penetrable
-    :lock-scroll="false"
-    :append-to="appendToElement"
-    size="350px"
-    :modal-class="$style.modal"
     title="添加组件"
+    default-mode="drawer"
+    drawer-size="350px"
+    :drawer-modal="false"
+    :drawer-lock-scroll="false"
+    :append-to="appendToElement"
+    shell-class="custom-components-drawer"
   >
     <div class="flex flex-col w-full h-full">
       <el-input
@@ -53,7 +54,7 @@ watch(customComponentsVisible, () => {
         <ComponentList />
       </div>
     </div>
-  </el-drawer>
+  </AdaptiveDialog>
 </template>
 
 <style lang="scss" module>

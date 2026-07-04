@@ -1,27 +1,23 @@
 <script setup lang="ts">
-import type { DrawerProps } from 'element-plus'
 import type { CSSProperties } from 'vue'
 import { computed, toRaw, toValue, watch } from 'vue'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { localKey, useVisualData } from '@/visual-editor/hooks/useVisualData'
+import { AdaptiveDialog } from '@/components/adaptive-dialog'
 import SimulatorEditorPreview from '@/visual-editor/ui/canvas/simulator-editor-preview/SimulatorEditorPreview.vue'
 
 interface Props {
   device?: 'pc' | 'mobile'
 }
 
-const props = withDefaults(defineProps<Props & Partial<DrawerProps>>(), {
+const props = withDefaults(defineProps<Props>(), {
   device: 'pc',
-  direction: 'btt',
 })
 
 const modelValue = defineModel<boolean>({ required: true })
 
 const { overrideProject, jsonData } = useVisualData()
 const workspaceStore = useWorkspaceStore()
-
-const drawerDirection = 'btt' as DrawerProps['direction']
-const drawerSize = '95%'
 
 const deviceStyle = computed<CSSProperties>(() => ({
   width: props.device === 'pc' ? '100%' : '374px',
@@ -52,12 +48,13 @@ watch(modelValue, (open) => {
 </script>
 
 <template>
-  <el-drawer
+  <AdaptiveDialog
     v-model="modelValue"
-    :direction="drawerDirection"
     title="预览"
-    :size="drawerSize"
-    class="preview-drawer"
+    default-mode="drawer"
+    drawer-direction="btt"
+    drawer-size="95%"
+    shell-class="preview-drawer"
     destroy-on-close
   >
     <div class="flex h-full w-full items-center justify-center">
@@ -65,7 +62,7 @@ watch(modelValue, (open) => {
         <SimulatorEditorPreview v-if="modelValue" :active="modelValue" />
       </el-card>
     </div>
-  </el-drawer>
+  </AdaptiveDialog>
 </template>
 
 <style lang="scss" module>

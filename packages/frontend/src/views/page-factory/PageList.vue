@@ -4,7 +4,8 @@ import { DataLine, Delete, EditPen, EditPen as EditPenIcon, Monitor, Plus, Searc
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { onActivated, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { createPage, deletePage, fetchPageList } from '@/api/pages'
+import { createPage, deletePage, fetchPageList, updatePage } from '@/api/pages'
+import { AdaptiveDialog } from '@/components/adaptive-dialog'
 import { ButtonTabs } from '@/components/button-tabs'
 
 const router = useRouter()
@@ -22,6 +23,10 @@ const pageItems = ref<ApiPageListItem[]>([])
 const total = ref(0)
 const createDialogVisible = ref(false)
 const searchKeyword = ref('')
+const editDialogVisible = ref(false)
+const editingPage = ref<ApiPageListItem | null>(null)
+const editForm = ref({ name: '', type: '' as PageType })
+const editSaving = ref(false)
 
 const tabOptions = [
   { label: '全部', value: 'all' },
@@ -90,8 +95,33 @@ onActivated(() => {
   loadList()
 })
 
-function editPage(id: string) {
+function designPage(id: string) {
   router.push({ name: 'PageEditor', params: { id } })
+}
+
+function openEditDialog(row: ApiPageListItem) {
+  editingPage.value = row
+  editForm.value = { name: row.name, type: row.type }
+  editDialogVisible.value = true
+}
+
+async function savePageInfo() {
+  if (!editingPage.value) return
+  editSaving.value = true
+  try {
+    await updatePage(editingPage.value.id, {
+      name: editForm.value.name,
+    })
+    ElMessage.success('页面信息已更新')
+    editDialogVisible.value = false
+    await loadList()
+  }
+  catch (e) {
+    ElMessage.error((e as Error).message || '更新失败')
+  }
+  finally {
+    editSaving.value = false
+  }
 }
 
 async function createNewPage(type: PageType) {
@@ -167,7 +197,9 @@ async function removePage(row: ApiPageListItem) {
             <el-icon :size="18">
               <component :is="typeIcons[row.type]" />
             </el-icon>
-            <span>{{ row.name }}</span>
+            <el-link type="primary" :underline="false" @click="designPage(row.id)">
+              {{ row.name }}
+            </el-link>
           </el-space>
         </template>
       </el-table-column>
@@ -190,9 +222,12 @@ async function removePage(row: ApiPageListItem) {
           {{ formatTime(row.updated_at) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="260" align="center" fixed="right">
+      <el-table-column label="操作" width="300" align="center" fixed="right">
         <template #default="{ row }">
-          <el-button size="small" text @click="editPage(row.id)">
+          <el-button size="small" text type="primary" @click="designPage(row.id)">
+            设计
+          </el-button>
+          <el-button size="small" text @click="openEditDialog(row)">
             编辑
           </el-button>
           <el-button size="small" text type="success" @click="previewPage(row.id)">
@@ -206,7 +241,7 @@ async function removePage(row: ApiPageListItem) {
     </el-table>
 
     <!-- 新建页面对话框 -->
-    <el-dialog v-model="createDialogVisible" title="选择页面类型" width="640px">
+    <AdaptiveDialog v-model="createDialogVisible" title="选择页面类型" width="640px">
       <div class="type-cards grid grid-cols-3 gap-4">
         <el-card
           shadow="hover"
@@ -254,6 +289,24 @@ async function removePage(row: ApiPageListItem) {
           </p>
         </el-card>
       </div>
-    </el-dialog>
+    </AdaptiveDialog>
+
+    <!-- 编辑页面基础信息对话框 -->
+    <AdaptiveDialog v-model="editDialogVisible" title="编辑页面信息" width="480px" @close="editingPage = null">
+      <el-form v-if="editingPage" :model="editForm" label-width="80px">
+        <el-form-item label="页面名称">
+          <el-input v-model="editForm.name" placeholder="请输入页面名称" />
+        </el-form-item>
+        <el-form-item label="页面类型">
+          <el-tag :type="typeColors[editForm.type] as any" size="default">
+            {{ typeLabels[editForm.type] }}
+          </el-tag>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="editSaving" @click="savePageInfo">保存</el-button>
+      </template>
+    </AdaptiveDialog>
   </div>
 </template>

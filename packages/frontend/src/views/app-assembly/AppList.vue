@@ -7,6 +7,7 @@ import { storeToRefs } from 'pinia'
 import { onActivated, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { createApplication, deleteApplication, fetchApplicationList, updateApplication } from '@/api/application'
+import { AdaptiveDialog } from '@/components/adaptive-dialog'
 import { ButtonTabs } from '@/components/button-tabs'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 
@@ -73,7 +74,9 @@ async function submitCreate() {
 async function removeApp(row: WorkspaceApp) {
   try {
     await ElMessageBox.confirm(`确定删除应用「${row.title}」吗？`, '删除应用', {
-      type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消',
+      type: 'warning',
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
     })
   }
   catch { return }
@@ -92,8 +95,12 @@ async function removeApp(row: WorkspaceApp) {
   <div class="h-full w-full flex flex-col">
     <div class="border-bottom-1 flex h-[54px] items-center justify-between px-3 shrink-0">
       <div>
-        <h3 class="text-base font-medium">应用组装</h3>
-        <p class="text-xs text-gray-400">将独立页面拖拽组装成完整应用</p>
+        <h3 class="text-base font-medium">
+          应用组装
+        </h3>
+        <p class="text-xs text-gray-400">
+          将独立页面拖拽组装成完整应用
+        </p>
       </div>
       <el-button round type="primary" :icon="Plus" @click="openCreate">
         新建应用
@@ -121,22 +128,30 @@ async function removeApp(row: WorkspaceApp) {
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="createVisible" title="新建应用" width="400px">
+    <AdaptiveDialog v-model="createVisible" title="新建应用" width="600px">
       <el-form label-width="80px">
         <el-form-item label="应用名称">
           <el-input v-model="createTitle" placeholder="请输入应用名称" />
         </el-form-item>
         <el-form-item label="客户端类型">
           <el-radio-group v-model="createClientType">
-            <el-radio :value="1">PC 端</el-radio>
-            <el-radio :value="2">移动端</el-radio>
+            <el-radio :value="1">
+              PC 端
+            </el-radio>
+            <el-radio :value="2">
+              移动端
+            </el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="createVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitCreate">创建</el-button>
+        <el-button @click="createVisible = false">
+          取消
+        </el-button>
+        <el-button type="primary" @click="submitCreate">
+          创建
+        </el-button>
       </template>
-    </el-dialog>
+    </AdaptiveDialog>
   </div>
 </template>

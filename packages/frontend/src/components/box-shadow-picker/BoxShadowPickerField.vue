@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { ArrowRight } from '@element-plus/icons-vue'
 import { computed, ref, watch } from 'vue'
+import { AdaptiveDialog } from '@/components/adaptive-dialog'
 import { DEFAULT_CARD_SHADOW } from '@/utils/blockBorder'
 import BoxShadowPicker from './BoxShadowPicker.vue'
 
@@ -109,14 +110,13 @@ function clearShadow() {
       沿用页面
     </el-button>
 
-    <el-dialog
+    <AdaptiveDialog
       v-model="dialogVisible"
       title="阴影设置"
       width="440px"
       append-to-body
-      align-center
       destroy-on-close
-      class="box-shadow-field-dialog"
+      shell-class="box-shadow-field-dialog"
       :z-index="4100"
     >
       <el-scrollbar class="box-shadow-field-dialog__scroll" max-height="560px">
@@ -149,7 +149,7 @@ function clearShadow() {
           </div>
         </div>
       </template>
-    </el-dialog>
+    </AdaptiveDialog>
   </div>
 </template>
 

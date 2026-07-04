@@ -251,7 +251,6 @@ watch(datasetId, (id) => {
     width="min(1280px, 96vw)"
     drawer-size="min(720px, 92vw)"
     shell-class="chart-dataset-bind-dialog"
-    dialog-body-height="66vh"
     :close-on-click-modal="false"
   >
     <DatasetBindSplitterLayout>

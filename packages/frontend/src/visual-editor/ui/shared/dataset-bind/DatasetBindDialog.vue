@@ -269,7 +269,6 @@ function onClear() {
     width="min(1280px, 96vw)"
     drawer-size="min(720px, 92vw)"
     shell-class="dataset-bind-dialog"
-    dialog-body-height="66vh"
     :close-on-click-modal="false"
   >
     <DatasetBindSplitterLayout>

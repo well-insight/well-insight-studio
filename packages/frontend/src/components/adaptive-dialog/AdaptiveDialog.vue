@@ -1,120 +1,121 @@
 <script setup lang="ts">
 import type { AdaptiveDialogMode } from './types'
-import { Close, CopyDocument, FullScreen, Menu } from '@element-plus/icons-vue'
-import { computed, nextTick, watch } from 'vue'
+import { Close, CopyDocument, FullScreen, DArrowRight } from '@element-plus/icons-vue'
+import { computed, watch } from 'vue'
 
+// ==================== 类型导出 ====================
+export type { AdaptiveDialogMode }
+
+// ==================== Props ====================
 const props = withDefaults(
   defineProps<{
     title?: string
     width?: string | number
+    /** 自定义距顶部距离，不传则使用 el-dialog 默认值 */
     top?: string
     drawerSize?: string | number
     drawerDirection?: 'rtl' | 'ltr' | 'ttb' | 'btt'
     defaultMode?: AdaptiveDialogMode
+    /** 关闭后是否记住当前模式，若为 false 则重置为 defaultMode */
+    rememberMode?: boolean
     appendToBody?: boolean
     destroyOnClose?: boolean
     closeOnClickModal?: boolean
     showModeSwitch?: boolean
-    /** 附加到 dialog / drawer 根节点的 class */
     shellClass?: string
-    /** 窗口模式下 dialog body 固定高度，如 66vh */
-    dialogBodyHeight?: string
+    drawerModal?: boolean
+    drawerLockScroll?: boolean
+    appendTo?: string | HTMLElement
   }>(),
   {
     title: '',
     width: '50%',
-    top: '4vh',
+    top: '',
     drawerSize: 'min(720px, 92vw)',
     drawerDirection: 'rtl',
     defaultMode: 'dialog',
+    rememberMode: true,
     appendToBody: true,
     destroyOnClose: true,
     closeOnClickModal: false,
     showModeSwitch: true,
     shellClass: '',
-    dialogBodyHeight: '',
+    drawerModal: true,
+    drawerLockScroll: true,
+    appendTo: undefined,
   },
 )
+
+// ==================== Model ====================
 const visible = defineModel<boolean>({ required: true })
 const mode = defineModel<AdaptiveDialogMode>('mode', { default: 'dialog' })
 
+// ==================== Computed ====================
 const shellClassList = computed(() => {
   const list = [
     'adaptive-dialog',
     `adaptive-dialog--${mode.value}`,
     props.shellClass,
   ]
-  if (props.dialogBodyHeight && mode.value === 'dialog') {
-    list.push('adaptive-dialog--fixed-body')
-  }
-  return list
-})
-
-const dialogShellStyle = computed(() => {
-  if (mode.value !== 'dialog' || !props.dialogBodyHeight) {
-    return undefined
-  }
-  return {
-    '--adaptive-dialog-shell-body-height': props.dialogBodyHeight,
-  }
+  return list.filter(Boolean)
 })
 
 const dialogFullscreen = computed(() => mode.value === 'fullscreen')
 
-const bodyStyle = computed(() => {
-  if (mode.value === 'fullscreen' || mode.value === 'drawer') {
-    return {
-      '--adaptive-body-height': '100%',
-      '--adaptive-body-min-height': '0',
-      '--adaptive-layout-overflow': 'hidden',
-      '--chart-config-max-height': 'none',
-    } as Record<string, string>
-  }
-  return {
-    '--adaptive-body-height': '100%',
-    '--adaptive-body-min-height': '0',
-    '--adaptive-layout-overflow': 'hidden',
-    '--chart-config-max-height': 'none',
-  } as Record<string, string>
-})
+// 统一的 body 样式（所有模式相同）
+const bodyStyle = {
+  '--adaptive-body-height': '100%',
+  '--adaptive-body-min-height': '0',
+  '--adaptive-layout-overflow': 'auto',
+  '--chart-config-max-height': 'none',
+} as Record<string, string>
 
+// 单位转换
+const normalizedWidth = computed(() =>
+  typeof props.width === 'number' ? `${props.width}px` : props.width,
+)
+const normalizedDrawerSize = computed(() =>
+  typeof props.drawerSize === 'number' ? `${props.drawerSize}px` : props.drawerSize,
+)
+
+// 模式切换按钮配置
+const modeButtons = [
+  { mode: 'dialog' as const, icon: CopyDocument, label: '窗口模式' },
+  { mode: 'fullscreen' as const, icon: FullScreen, label: '全屏' },
+  { mode: 'drawer' as const, icon: DArrowRight, label: '侧边栏' },
+]
+
+// ==================== Methods ====================
 function setMode(next: AdaptiveDialogMode) {
-  if (mode.value === next) {
-    return
-  }
-  const wasOpen = visible.value
+  if (mode.value === next) return
   mode.value = next
-  if (wasOpen) {
-    void nextTick(() => {
-      visible.value = true
-    })
-  }
 }
 
 function close() {
   visible.value = false
 }
 
+// 关闭后是否重置模式
 watch(visible, (open) => {
-  if (!open) {
+  if (!open && !props.rememberMode) {
     mode.value = props.defaultMode
   }
 })
 </script>
 
 <template>
+  <!-- ==================== Dialog 模式 ==================== -->
   <el-dialog
     v-if="mode !== 'drawer'"
     v-model="visible"
-    :width="width"
-    :top="top"
+    :width="normalizedWidth"
     :fullscreen="dialogFullscreen"
+    :top="top"
     :append-to-body="appendToBody"
     :destroy-on-close="destroyOnClose"
     :close-on-click-modal="closeOnClickModal"
     :show-close="false"
     :class="shellClassList"
-    :style="dialogShellStyle"
     modal-class="adaptive-dialog-modal"
   >
     <template #header>
@@ -126,47 +127,33 @@ watch(visible, (open) => {
         </div>
         <div class="adaptive-dialog__actions">
           <template v-if="showModeSwitch">
-            <el-tooltip content="窗口模式" placement="bottom">
+            <el-tooltip
+              v-for="btn in modeButtons"
+              :key="btn.mode"
+              :content="btn.label"
+              placement="bottom"
+            >
               <el-button
                 text
                 class="adaptive-dialog__action"
-                :class="{ 'is-active': mode === 'dialog' }"
-                @click="setMode('dialog')"
+                :class="{ 'is-active': mode === btn.mode }"
+                :aria-label="btn.label"
+                :aria-pressed="mode === btn.mode"
+                @click="setMode(btn.mode)"
               >
                 <el-icon :size="16">
-                  <CopyDocument />
-                </el-icon>
-              </el-button>
-            </el-tooltip>
-            <el-tooltip content="全屏" placement="bottom">
-              <el-button
-                text
-                class="adaptive-dialog__action"
-                :class="{ 'is-active': mode === 'fullscreen' }"
-                @click="setMode('fullscreen')"
-              >
-                <el-icon :size="16">
-                  <FullScreen />
-                </el-icon>
-              </el-button>
-            </el-tooltip>
-            <el-tooltip content="侧边栏" placement="bottom">
-              <el-button
-                text
-                class="adaptive-dialog__action"
-                :class="{ 'is-active': mode === 'drawer' }"
-                @click="setMode('drawer')"
-              >
-                <el-icon :size="16">
-                  <Menu />
+                  <component :is="btn.icon" />
                 </el-icon>
               </el-button>
             </el-tooltip>
           </template>
-          <el-button text class="adaptive-dialog__action adaptive-dialog__close" @click="close">
-            <el-icon :size="16">
-              <Close />
-            </el-icon>
+          <el-button
+            text
+            class="adaptive-dialog__action adaptive-dialog__close"
+            aria-label="关闭"
+            @click="close"
+          >
+            <el-icon :size="16"><Close /></el-icon>
           </el-button>
         </div>
       </div>
@@ -183,12 +170,16 @@ watch(visible, (open) => {
     </template>
   </el-dialog>
 
+  <!-- ==================== Drawer 模式 ==================== -->
   <el-drawer
     v-else
     v-model="visible"
-    :size="drawerSize"
+    :size="normalizedDrawerSize"
     :direction="drawerDirection"
-    :append-to-body="appendToBody"
+    :modal="drawerModal"
+    :lock-scroll="drawerLockScroll"
+    :append-to="appendTo"
+    :append-to-body="appendTo ? false : appendToBody"
     :destroy-on-close="destroyOnClose"
     :close-on-click-modal="closeOnClickModal"
     :show-close="false"
@@ -204,44 +195,33 @@ watch(visible, (open) => {
         </div>
         <div class="adaptive-dialog__actions">
           <template v-if="showModeSwitch">
-            <el-tooltip content="窗口模式" placement="bottom">
+            <el-tooltip
+              v-for="btn in modeButtons"
+              :key="btn.mode"
+              :content="btn.label"
+              placement="bottom"
+            >
               <el-button
                 text
                 class="adaptive-dialog__action"
-                @click="setMode('dialog')"
+                :class="{ 'is-active': mode === btn.mode }"
+                :aria-label="btn.label"
+                :aria-pressed="mode === btn.mode"
+                @click="setMode(btn.mode)"
               >
                 <el-icon :size="16">
-                  <CopyDocument />
-                </el-icon>
-              </el-button>
-            </el-tooltip>
-            <el-tooltip content="全屏" placement="bottom">
-              <el-button
-                text
-                class="adaptive-dialog__action"
-                @click="setMode('fullscreen')"
-              >
-                <el-icon :size="16">
-                  <FullScreen />
-                </el-icon>
-              </el-button>
-            </el-tooltip>
-            <el-tooltip content="侧边栏" placement="bottom">
-              <el-button
-                text
-                class="adaptive-dialog__action is-active"
-                @click="setMode('drawer')"
-              >
-                <el-icon :size="16">
-                  <Menu />
+                  <component :is="btn.icon" />
                 </el-icon>
               </el-button>
             </el-tooltip>
           </template>
-          <el-button text class="adaptive-dialog__action adaptive-dialog__close" @click="close">
-            <el-icon :size="16">
-              <Close />
-            </el-icon>
+          <el-button
+            text
+            class="adaptive-dialog__action adaptive-dialog__close"
+            aria-label="关闭"
+            @click="close"
+          >
+            <el-icon :size="16"><Close /></el-icon>
           </el-button>
         </div>
       </div>
@@ -258,6 +238,7 @@ watch(visible, (open) => {
   </el-drawer>
 </template>
 
+<!-- ==================== Scoped Styles ==================== -->
 <style scoped>
 .adaptive-dialog__header {
   display: flex;
@@ -316,7 +297,6 @@ watch(visible, (open) => {
 .adaptive-dialog__body {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -330,109 +310,72 @@ watch(visible, (open) => {
 }
 </style>
 
+<!-- ==================== Global Styles (覆盖 Element Plus) ==================== -->
 <style>
+/* ----- Dialog 基础样式 ----- */
 .adaptive-dialog.el-dialog {
   max-width: 96vw;
   margin-bottom: 0;
   border-radius: 12px;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
+/* 全屏时：header靠顶、footer靠底、body填满剩余空间 */
 .adaptive-dialog.el-dialog.is-fullscreen {
-  border-radius: 0;
   max-width: none;
+  border-radius: 0;
   display: flex !important;
   flex-direction: column;
-  height: 100%;
-  max-height: 100%;
-  margin: 0;
+  height: 100% !important;
 }
-
 .adaptive-dialog.el-dialog.is-fullscreen .el-dialog__header {
   flex-shrink: 0;
 }
-
 .adaptive-dialog.el-dialog.is-fullscreen .el-dialog__body {
   flex: 1 1 0;
-  height: 0;
   min-height: 0;
-  max-height: none;
-  overflow: hidden;
+  overflow: auto;
   display: flex;
   flex-direction: column;
 }
-
+.adaptive-dialog.el-dialog.is-fullscreen .adaptive-dialog__body {
+  overflow: auto;
+}
 .adaptive-dialog.el-dialog.is-fullscreen .el-dialog__footer {
   flex-shrink: 0;
   margin-top: 0;
 }
 
-.adaptive-dialog.is-fullscreen .adaptive-dialog__body {
-  flex: 1 1 0;
-  height: 0;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
+/* Dialog 头部/身体/底部 */
 .adaptive-dialog .el-dialog__header {
-  padding: 18px 24px 14px;
+  padding: 14px 24px;
   margin-right: 0;
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 .adaptive-dialog .el-dialog__body {
-  flex: 1;
-  min-height: 0;
   padding: 16px 20px;
-  overflow: hidden;
 }
-
-.adaptive-dialog.adaptive-dialog--fixed-body:not(.is-fullscreen) .el-dialog__body {
-  height: var(--adaptive-dialog-shell-body-height);
-  min-height: var(--adaptive-dialog-shell-body-height);
-  max-height: var(--adaptive-dialog-shell-body-height);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.adaptive-dialog.adaptive-dialog--fixed-body:not(.is-fullscreen) .adaptive-dialog__body {
-  flex: 1;
-  min-height: 0;
-  height: 100%;
-}
-
-.adaptive-dialog.is-fullscreen .el-dialog__body {
-  padding: 16px 20px 20px;
-  max-height: none;
-}
-
 .adaptive-dialog .el-dialog__footer {
-  padding: 12px 24px 16px;
+  padding: 12px 24px;
   border-top: 1px solid var(--el-border-color-lighter);
-  background: #fafbfc;
+  background: var(--el-fill-color-light, #fafbfc);
 }
 
+/* ----- Drawer 样式 ----- */
 .adaptive-dialog.el-drawer {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
-
 .adaptive-dialog.el-drawer .el-drawer__header {
   flex-shrink: 0;
 }
-
 .adaptive-dialog .el-drawer__header {
   padding: 18px 20px 14px;
   margin-bottom: 0;
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
-
 .adaptive-dialog .el-drawer__body {
   flex: 1 1 0;
   height: 0;
@@ -442,14 +385,12 @@ watch(visible, (open) => {
   display: flex;
   flex-direction: column;
 }
-
 .adaptive-dialog--drawer .adaptive-dialog__container {
   flex: 1 1 0;
   height: 0;
   min-height: 0;
   overflow: hidden;
 }
-
 .adaptive-dialog--drawer .adaptive-dialog__body {
   flex: 1 1 0;
   height: 0;
@@ -458,11 +399,10 @@ watch(visible, (open) => {
   display: flex;
   flex-direction: column;
 }
-
 .adaptive-dialog--drawer .adaptive-dialog__footer {
   margin-top: auto;
   padding-top: 12px;
   border-top: 1px solid var(--el-border-color-lighter);
-  background: #fafbfc;
+  background: var(--el-fill-color-light, #fafbfc);
 }
 </style>

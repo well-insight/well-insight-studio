@@ -12,6 +12,7 @@ import {
   updateDatasetRow,
 } from '@/api/dataset'
 import ColumnField from '@/components/column-field/ColumnField.vue'
+import { AdaptiveDialog } from '@/components/adaptive-dialog'
 import ElListTable from '@/components/el-vtable/ElListTable.vue'
 
 import { vueGroupCustomLayout } from '@/utils/vtableVueCustomLayout'
@@ -426,7 +427,7 @@ defineExpose({ openCreateRow })
             />
           </div>
         </div>
-        <el-dialog
+        <AdaptiveDialog
           v-model="rowDialogVisible"
           :title="rowDialogMode === 'create' ? '新增行' : '编辑行'"
           destroy-on-close
@@ -471,7 +472,7 @@ defineExpose({ openCreateRow })
               保存
             </ElButton>
           </template>
-        </el-dialog>
+        </AdaptiveDialog>
       </template>
       <div v-else v-loading="loading" :class="$style.tableArea">
         <div class="w-full flex-auto h-0">

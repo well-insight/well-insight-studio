@@ -29,6 +29,7 @@ import {
   updateDatasetFolder,
 } from '@/api/dataset'
 import SvgIcon from '@/components/svg-icon/SvgIcon.vue'
+import { AdaptiveDialog } from '@/components/adaptive-dialog'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 
 const router = useRouter()
@@ -668,7 +669,7 @@ onMounted(async () => {
       </div>
     </div>
 
-    <el-dialog
+    <AdaptiveDialog
       v-model="folderDialogVisible"
       title="新建目录"
       width="420px"
@@ -702,9 +703,9 @@ onMounted(async () => {
           创建
         </el-button>
       </template>
-    </el-dialog>
+    </AdaptiveDialog>
 
-    <el-dialog
+    <AdaptiveDialog
       v-model="folderEditVisible"
       title="编辑目录"
       width="480px"
@@ -755,9 +756,9 @@ onMounted(async () => {
           保存
         </el-button>
       </template>
-    </el-dialog>
+    </AdaptiveDialog>
 
-    <el-dialog
+    <AdaptiveDialog
       v-model="datasetDialogVisible"
       title="新建数据集"
       width="520px"
@@ -843,9 +844,9 @@ onMounted(async () => {
           创建
         </el-button>
       </template>
-    </el-dialog>
+    </AdaptiveDialog>
 
-    <el-dialog
+    <AdaptiveDialog
       v-model="editVisible"
       title="编辑数据集信息"
       width="480px"
@@ -891,7 +892,7 @@ onMounted(async () => {
           保存
         </el-button>
       </template>
-    </el-dialog>
+    </AdaptiveDialog>
   </div>
 </template>
 

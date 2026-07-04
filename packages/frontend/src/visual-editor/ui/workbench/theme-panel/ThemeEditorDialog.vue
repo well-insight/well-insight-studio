@@ -8,6 +8,7 @@ import { themeToCSSVars } from '@/common/types/canvasTheme'
 import { applyBrandColorsFromMap, ensureEchartsTheme, syncCanvasToEcharts, syncEchartsToCanvas } from '@/common/utils/themeBridge'
 import { generateEChartsTheme } from '@/common/utils/themeGenerator'
 import { useCanvasThemeStore } from '@/stores/canvasThemeStore'
+import { AdaptiveDialog } from '@/components/adaptive-dialog'
 import EchartsThemeConfigPanel from './components/EchartsThemeConfigPanel.vue'
 
 const props = withDefaults(
@@ -207,14 +208,14 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <el-dialog
+  <AdaptiveDialog
     :model-value="visible"
     :title="editThemeId ? '编辑主题' : '新建主题'"
     width="1100px"
     top="4vh"
     :close-on-click-modal="false"
     destroy-on-close
-    class="theme-editor-dialog"
+    shell-class="theme-editor-dialog"
     @update:model-value="emit('update:visible', $event)"
   >
     <div class="theme-editor-layout">
@@ -289,7 +290,7 @@ onBeforeUnmount(() => {
         确认保存
       </el-button>
     </template>
-  </el-dialog>
+  </AdaptiveDialog>
 </template>
 
 <style scoped>
