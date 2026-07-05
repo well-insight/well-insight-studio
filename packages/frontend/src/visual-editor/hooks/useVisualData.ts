@@ -618,6 +618,7 @@ export function initVisualData() {
     canUndo,
     canRedo,
     saveProject,
+    syncSavedBaseline,
     recordHistory,
     undo,
     redo,

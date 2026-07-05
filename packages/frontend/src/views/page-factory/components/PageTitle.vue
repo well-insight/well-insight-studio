@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus'
 import { nextTick, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePageStore } from '@/stores/pageStore'
-import { markVisualClean } from '../visualEditorState'
+import { isPageDirty, markVisualClean } from '../visualEditorState'
 
 const route = useRoute()
 const pageStore = usePageStore()
@@ -63,12 +63,23 @@ function onKeydown(e: KeyboardEvent) {
 
 <template>
   <div class="page-title-area">
-    <span v-if="!editing" class="page-title-text" @click="startEdit">{{ pageName }}</span>
+    <template v-if="!editing">
+      <el-tooltip
+        :content="isPageDirty ? '有未保存的更改' : '已保存'"
+        placement="bottom"
+      >
+        <span
+          class="page-title-status"
+          :class="{ 'is-dirty': isPageDirty }"
+        />
+      </el-tooltip>
+      <span class="page-title-text" @click="startEdit">{{ pageName }}</span>
+    </template>
     <el-input
       v-else
       ref="inputRef"
       v-model="inputValue"
-      size="small"
+      size="default"
       class="page-title-input"
       :maxlength="50"
       @blur="finishEdit"
@@ -81,6 +92,25 @@ function onKeydown(e: KeyboardEvent) {
 .page-title-area {
   display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+.page-title-text {
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.page-title-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background-color: var(--el-color-success);
+  transition: background-color 0.3s;
+}
+
+.page-title-status.is-dirty {
+  background-color: var(--el-color-warning);
 }
 
 .page-title-text {

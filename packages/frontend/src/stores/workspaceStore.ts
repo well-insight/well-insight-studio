@@ -27,14 +27,14 @@ export const useWorkspaceStore = defineStore('useWorkspaceStore', {
       },
       {
         path: '/project/app-assembly',
-        title: '应用组装',
+        title: '应用集',
         meta: {
           icon: 'component-base',
         },
       },
       {
         path: '/project/dataset',
-        title: '数据中枢',
+        title: '数据集',
         meta: {
           icon: 'dataset',
         },

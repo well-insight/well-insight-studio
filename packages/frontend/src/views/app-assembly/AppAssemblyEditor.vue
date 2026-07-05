@@ -213,7 +213,7 @@ async function handlePublish() {
       <el-button text :icon="ArrowLeft" @click="router.push({ name: 'AppAssembly' })">
         返回
       </el-button>
-      <span class="font-medium">{{ appInfo.title }} - 应用组装</span>
+      <span class="font-medium">{{ appInfo.title }} - 应用集</span>
       <span class="text-xs text-gray-400">将独立页面拖拽到右侧菜单树进行组装</span>
       <div class="ml-auto">
         <el-button type="primary" :icon="Upload" @click="handlePublish">

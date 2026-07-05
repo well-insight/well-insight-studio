@@ -96,7 +96,7 @@ async function removeApp(row: WorkspaceApp) {
     <div class="border-bottom-1 flex h-[54px] items-center justify-between px-3 shrink-0">
       <div>
         <h3 class="text-base font-medium">
-          应用组装
+          应用集
         </h3>
         <p class="text-xs text-gray-400">
           将独立页面拖拽组装成完整应用
@@ -129,7 +129,7 @@ async function removeApp(row: WorkspaceApp) {
     </el-table>
 
     <AdaptiveDialog v-model="createVisible" title="新建应用" width="600px">
-      <el-form label-width="80px">
+      <el-form label-width="100px">
         <el-form-item label="应用名称">
           <el-input v-model="createTitle" placeholder="请输入应用名称" />
         </el-form-item>

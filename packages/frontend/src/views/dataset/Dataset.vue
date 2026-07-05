@@ -28,8 +28,8 @@ import {
   updateDataset,
   updateDatasetFolder,
 } from '@/api/dataset'
-import SvgIcon from '@/components/svg-icon/SvgIcon.vue'
 import { AdaptiveDialog } from '@/components/adaptive-dialog'
+import SvgIcon from '@/components/svg-icon/SvgIcon.vue'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 
 const router = useRouter()
@@ -657,6 +657,19 @@ onMounted(async () => {
                 <p :class="$style.cardDesc">
                   {{ ds.description?.trim() || "暂无描述" }}
                 </p>
+                <div
+                  v-if="ds.fields?.length"
+                  :class="$style.cardFields"
+                >
+                  <span
+                    v-for="f in ds.fields"
+                    :key="f.id"
+                    :class="$style.cardFieldTag"
+                  >
+                    <SvgIcon :name="f.field_type" size="14" />
+                    <span>{{ f.name }}</span>
+                  </span>
+                </div>
                 <div :class="$style.cardMeta">
                   <span>字段 {{ ds.field_count }}</span>
                   <span>行数 {{ ds.row_count }}</span>
@@ -994,12 +1007,40 @@ onMounted(async () => {
   font-size: 13px;
   color: var(--el-text-color-secondary);
   line-height: 1.5;
-  min-height: 40px;
+  /* min-height: 40px; */
   line-clamp: 2;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.cardFields {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.cardFieldTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--el-text-color-regular);
+  background: var(--el-fill-color-light);
+  border-radius: 4px;
+  padding: 2px 8px;
+  max-width: 160px;
+  overflow: hidden;
+}
+
+.cardFieldTag span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cardMeta {

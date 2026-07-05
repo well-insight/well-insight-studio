@@ -58,12 +58,12 @@ const routes2: RouteRecordRaw[] = [
         },
         meta: { title: '页面编辑' },
       },
-      // 应用组装
+      // 应用集
       {
         path: 'project/app-assembly',
         name: 'AppAssemblyList',
         component: () => import('@/views/app-assembly/AppList.vue'),
-        meta: { title: '应用组装' },
+        meta: { title: '应用集' },
       },
       {
         path: 'project/app-assembly/:id',
@@ -71,12 +71,12 @@ const routes2: RouteRecordRaw[] = [
         component: () => import('@/views/app-assembly/AppAssemblyEditor.vue'),
         meta: { title: '组装编辑' },
       },
-      // 数据中枢
+      // 数据集
       {
         path: 'project/dataset',
         name: 'Dataset',
         component: () => import('@/views/dataset/Dataset.vue'),
-        meta: { title: '数据中枢' },
+        meta: { title: '数据集' },
       },
       {
         path: 'project/dataset/edit/:id(.*)*',

@@ -313,11 +313,15 @@ router.get("/", async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: "folderId 无效" });
     }
     const rows = DatasetEntityModel.list(req.userId!, { projectId, folderId });
-    const enriched = rows.map((d) => ({
-      ...d,
-      field_count: DatasetFieldModel.listByDataset(d.id).length,
-      row_count: DatasetEntityModel.rowCount(d.id),
-    }));
+    const enriched = rows.map((d) => {
+      const fields = DatasetFieldModel.listByDataset(d.id);
+      return {
+        ...d,
+        field_count: fields.length,
+        row_count: DatasetEntityModel.rowCount(d.id),
+        fields,
+      };
+    });
     res.json({ success: true, data: enriched, total: enriched.length, message: "数据集列表" });
   } catch (e) {
     console.error(e);

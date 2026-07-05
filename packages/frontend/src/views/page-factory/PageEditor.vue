@@ -12,7 +12,7 @@ import { usePageStore } from '@/stores/pageStore'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import SimulatorEditor from '@/visual-editor/ui/canvas/simulator-grid-editor/SimulatorEditor.vue'
 import LeftAside from '@/visual-editor/ui/workbench/left-aside/LeftAside.vue'
-import { visualSaved, updateVisualDSL } from './visualEditorState'
+import { isPageDirty, saveCounter, updateVisualDSL } from './visualEditorState'
 
 const route = useRoute()
 const router = useRouter()
@@ -21,7 +21,7 @@ const pageStore = usePageStore()
 const controlStore = useControlStore()
 const { layoutCollapse } = storeToRefs(controlStore)
 
-const { overrideProject, updateVisualLoading, isDirty, jsonData } = useVisualData()
+const { overrideProject, updateVisualLoading, isDirty, jsonData, syncSavedBaseline } = useVisualData()
 
 /** 并发/重复进入时只应用最后一次请求结果 */
 let loadSeq = 0
@@ -114,6 +114,7 @@ async function loadPageById(id: string) {
     const dsl = isValidDSL(detail.dsl) ? detail.dsl : getDefaultSchema(detail.type)
     overrideProject(dsl as any)
     updateVisualDSL(dsl as Record<string, unknown>)
+    syncSavedBaseline()
   }
   catch (error) {
     if (seq !== loadSeq)
@@ -134,6 +135,7 @@ function initNewPage(type: PageType) {
   const defaultSchema = getDefaultSchema(type)
   overrideProject(defaultSchema as any)
   updateVisualDSL(defaultSchema)
+  syncSavedBaseline()
   updateVisualLoading(false)
 }
 
@@ -217,12 +219,13 @@ async function publishPage() {
 
 /** 离开确认 */
 async function confirmLeaveIfDirty(): Promise<boolean> {
-  if (visualSaved.value) return true
+  if (!isDirty.value) return true
   try {
-    await ElMessageBox.confirm('当前有未保存的更改，确定要离开吗？', '提示', {
+    await ElMessageBox.confirm('当前有未保存的更改，离开后修改将丢失，确定要离开吗？', '提示', {
       confirmButtonText: '离开',
       cancelButtonText: '取消',
       type: 'warning',
+      distinguishCancelAndClose: true,
     })
     return true
   }
@@ -233,6 +236,23 @@ onBeforeRouteLeave(async (_to, _from, next) => {
   const ok = await confirmLeaveIfDirty()
   next(ok)
 })
+
+// 当 header 操作栏保存/发布后，同步 isDirty 基线
+watch(saveCounter, () => {
+  syncSavedBaseline()
+})
+
+// 同步 dirty 状态到共享状态，供 header 标题栏显示保存标识
+watch(isDirty, (val) => {
+  isPageDirty.value = val
+})
+
+// 编辑过程中实时同步 visualDSL，确保 header 保存时拿到最新数据
+watch(jsonData, (data) => {
+  if (data) {
+    updateVisualDSL(JSON.parse(JSON.stringify(data)) as Record<string, unknown>)
+  }
+}, { deep: true })
 
 function onBeforeUnload(e: BeforeUnloadEvent) {
   if (isDirty.value) {

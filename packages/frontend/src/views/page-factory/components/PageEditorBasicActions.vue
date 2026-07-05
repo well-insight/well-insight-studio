@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePageStore } from '@/stores/pageStore'
-import { markVisualClean, visualDSL } from '../visualEditorState'
+import { notifySaved, visualDSL } from '../visualEditorState'
 
 const route = useRoute()
 const router = useRouter()
@@ -38,7 +38,7 @@ async function handleSave(status?: 'draft' | 'published') {
       id: isNew.value ? undefined : pageId.value,
       ...body,
     } as any)
-    markVisualClean()
+    notifySaved()
     ElMessage.success(status === 'published' ? '已发布' : '保存成功')
     if (isNew.value && saved.id) {
       router.replace({ name: 'PageEditor', params: { id: saved.id } })

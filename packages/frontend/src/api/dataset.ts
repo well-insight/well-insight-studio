@@ -27,6 +27,7 @@ export interface ApiDatasetListItem {
   updated_at: string
   field_count: number
   row_count: number
+  fields?: ApiDatasetField[]
 }
 
 export interface ApiDatasetField {

@@ -106,7 +106,9 @@ function openEditDialog(row: ApiPageListItem) {
 }
 
 async function savePageInfo() {
-  if (!editingPage.value) return
+  if (!editingPage.value) {
+    return
+  }
   editSaving.value = true
   try {
     await updatePage(editingPage.value.id, {
@@ -194,12 +196,9 @@ async function removePage(row: ApiPageListItem) {
       <el-table-column prop="name" label="页面名称" min-width="200">
         <template #default="{ row }">
           <el-space>
-            <el-icon :size="18">
-              <component :is="typeIcons[row.type]" />
-            </el-icon>
-            <el-link type="primary" :underline="false" @click="designPage(row.id)">
+            <el-button link text type="primary" :icon="typeIcons[row.type]" @click="designPage(row.id)">
               {{ row.name }}
-            </el-link>
+            </el-button>
           </el-space>
         </template>
       </el-table-column>
