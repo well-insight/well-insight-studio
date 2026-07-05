@@ -1,12 +1,15 @@
 <script lang="ts" setup>
 import type { PageType } from '@/api/pages'
+import type { FormSchema } from '@/form-designer/types'
+import { DataLine } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { DataLine, EditPen, Monitor } from '@element-plus/icons-vue'
 import { storeToRefs } from 'pinia'
 import { computed, onActivated, onBeforeUnmount, onMounted, onUnmounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import { fetchPage } from '@/api/pages'
 import { ELayout, ELayoutContent, ELayoutSider } from '@/components/e-layout'
+import { FormDesigner } from '@/form-designer'
+import { getEmptyFormSchema, isValidFormSchema } from '@/form-designer/form-designer.utils'
 import { useControlStore } from '@/stores/controlStore'
 import { usePageStore } from '@/stores/pageStore'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
@@ -22,6 +25,11 @@ const controlStore = useControlStore()
 const { layoutCollapse } = storeToRefs(controlStore)
 
 const { overrideProject, updateVisualLoading, isDirty, jsonData, syncSavedBaseline } = useVisualData()
+
+/** 表单设计器相关状态 */
+const formDesignerRef = ref<InstanceType<typeof FormDesigner> | null>(null)
+const formSchemaRef = ref<FormSchema | null>(null)
+const formDirty = ref(false)
 
 /** 并发/重复进入时只应用最后一次请求结果 */
 let loadSeq = 0
@@ -56,23 +64,7 @@ function getDefaultSchema(type: PageType): Record<string, unknown> {
         actions: { fetch: { name: '接口请求', apis: [] }, dialog: { name: '对话框', handlers: [] } },
       }
     case 'form':
-      return {
-        pages: {
-          '/': {
-            title: '表单页',
-            path: '/',
-            config: {
-              bgColor: '',
-              bgImage: '',
-              keepAlive: false,
-              pageSize: { name: '', width: 1280, height: 800 },
-            },
-            blocks: [],
-          },
-        },
-        models: [],
-        actions: { fetch: { name: '接口请求', apis: [] }, dialog: { name: '对话框', handlers: [] } },
-      }
+      return getEmptyFormSchema() as unknown as Record<string, unknown>
     case 'report':
       return {
         pages: {
@@ -94,15 +86,25 @@ function getDefaultSchema(type: PageType): Record<string, unknown> {
   }
 }
 
-/** 校验 DSL 是否包含有效的 pages 对象 */
-function isValidDSL(dsl: unknown): dsl is Record<string, unknown> {
+/** 校验 DSL 是否包含有效的 pages 对象（可视化页面） */
+function isValidVisualDSL(dsl: unknown): dsl is Record<string, unknown> {
   return !!dsl && typeof dsl === 'object' && 'pages' in (dsl as Record<string, unknown>)
 }
 
+/** 校验 DSL 是否为表单页面类型 */
+function isFormTypeDSL(dsl: unknown): boolean {
+  return isValidFormSchema(dsl)
+}
+
 async function loadPageById(id: string) {
-  updateVisualLoading(true)
   const seq = ++loadSeq
   loading.value = true
+
+  // 可视化页面需要 loading 态
+  if (pageType.value === 'visualization') {
+    updateVisualLoading(true)
+  }
+
   try {
     const detail = await fetchPage(id)
     if (seq !== loadSeq)
@@ -111,10 +113,21 @@ async function loadPageById(id: string) {
     pageType.value = detail.type
     // 同步到 store，供 header 操作栏读取
     await pageStore.loadPage(id)
-    const dsl = isValidDSL(detail.dsl) ? detail.dsl : getDefaultSchema(detail.type)
-    overrideProject(dsl as any)
-    updateVisualDSL(dsl as Record<string, unknown>)
-    syncSavedBaseline()
+
+    if (detail.type === 'form') {
+      // 表单页面：使用 FormSchema
+      const dsl = isFormTypeDSL(detail.dsl)
+        ? (detail.dsl as unknown as FormSchema)
+        : getEmptyFormSchema()
+      formSchemaRef.value = dsl
+    }
+    else {
+      // 可视化页面
+      const dsl = isValidVisualDSL(detail.dsl) ? detail.dsl : getDefaultSchema(detail.type)
+      overrideProject(dsl as any)
+      updateVisualDSL(dsl as Record<string, unknown>)
+      syncSavedBaseline()
+    }
   }
   catch (error) {
     if (seq !== loadSeq)
@@ -132,6 +145,14 @@ async function loadPageById(id: string) {
 function initNewPage(type: PageType) {
   pageType.value = type
   pageName.value = ''
+
+  if (type === 'form') {
+    formSchemaRef.value = getEmptyFormSchema()
+    formDirty.value = false
+    updateVisualLoading(false)
+    return
+  }
+
   const defaultSchema = getDefaultSchema(type)
   overrideProject(defaultSchema as any)
   updateVisualDSL(defaultSchema)
@@ -164,12 +185,26 @@ onActivated(() => {
   }
 })
 
+/** 获取当前待保存的 DSL */
+function getCurrentDSL(): Record<string, unknown> {
+  if (pageType.value === 'form') {
+    // 从表单设计器获取最新 Schema
+    if (formDesignerRef.value) {
+      return formDesignerRef.value.getSchema() as unknown as Record<string, unknown>
+    }
+    return (formSchemaRef.value ?? getEmptyFormSchema()) as unknown as Record<string, unknown>
+  }
+  return JSON.parse(JSON.stringify(jsonData)) as Record<string, unknown>
+}
+
 /** 保存页面 */
-async function savePageDraft() {
-  updateVisualLoading(true)
+async function _savePageDraft() {
+  if (pageType.value === 'visualization') {
+    updateVisualLoading(true)
+  }
   try {
     const name = pageName.value.trim() || `未命名${pageType.value === 'visualization' ? '可视化' : pageType.value === 'form' ? '表单' : '报表'}`
-    const dsl = JSON.parse(JSON.stringify(jsonData))
+    const dsl = getCurrentDSL()
     const saved = await pageStore.savePage({
       id: pageId.value || undefined,
       name,
@@ -182,21 +217,30 @@ async function savePageDraft() {
     if (isNew.value && saved.id) {
       router.replace({ name: 'PageEditor', params: { id: saved.id } })
     }
+    // 同步表单保存基线
+    if (pageType.value === 'form' && formDesignerRef.value) {
+      formDesignerRef.value.syncSavedBaseline()
+      formDirty.value = false
+    }
   }
   catch (e) {
     ElMessage.error((e as Error).message || '保存失败')
   }
   finally {
-    updateVisualLoading(false)
+    if (pageType.value === 'visualization') {
+      updateVisualLoading(false)
+    }
   }
 }
 
 /** 发布页面 */
-async function publishPage() {
-  updateVisualLoading(true)
+async function _publishPage() {
+  if (pageType.value === 'visualization') {
+    updateVisualLoading(true)
+  }
   try {
     const name = pageName.value.trim() || `未命名${pageType.value === 'visualization' ? '可视化' : pageType.value === 'form' ? '表单' : '报表'}`
-    const dsl = JSON.parse(JSON.stringify(jsonData))
+    const dsl = getCurrentDSL()
     const saved = await pageStore.savePage({
       id: pageId.value || undefined,
       name,
@@ -208,18 +252,26 @@ async function publishPage() {
     if (isNew.value && saved.id) {
       router.replace({ name: 'PageEditor', params: { id: saved.id } })
     }
+    if (pageType.value === 'form' && formDesignerRef.value) {
+      formDesignerRef.value.syncSavedBaseline()
+      formDirty.value = false
+    }
   }
   catch (e) {
     ElMessage.error((e as Error).message || '发布失败')
   }
   finally {
-    updateVisualLoading(false)
+    if (pageType.value === 'visualization') {
+      updateVisualLoading(false)
+    }
   }
 }
 
 /** 离开确认 */
 async function confirmLeaveIfDirty(): Promise<boolean> {
-  if (!isDirty.value) return true
+  const dirty = pageType.value === 'form' ? formDirty.value : isDirty.value
+  if (!dirty)
+    return true
   try {
     await ElMessageBox.confirm('当前有未保存的更改，离开后修改将丢失，确定要离开吗？', '提示', {
       confirmButtonText: '离开',
@@ -239,26 +291,58 @@ onBeforeRouteLeave(async (_to, _from, next) => {
 
 // 当 header 操作栏保存/发布后，同步 isDirty 基线
 watch(saveCounter, () => {
-  syncSavedBaseline()
+  if (pageType.value === 'visualization') {
+    syncSavedBaseline()
+  }
+  else if (pageType.value === 'form' && formDesignerRef.value) {
+    formDesignerRef.value.syncSavedBaseline()
+    formDirty.value = false
+  }
 })
 
 // 同步 dirty 状态到共享状态，供 header 标题栏显示保存标识
 watch(isDirty, (val) => {
-  isPageDirty.value = val
+  if (pageType.value === 'visualization') {
+    isPageDirty.value = val
+  }
+})
+
+watch(formDirty, (val) => {
+  if (pageType.value === 'form') {
+    isPageDirty.value = val
+  }
 })
 
 // 编辑过程中实时同步 visualDSL，确保 header 保存时拿到最新数据
 watch(jsonData, (data) => {
-  if (data) {
+  if (data && pageType.value === 'visualization') {
     updateVisualDSL(JSON.parse(JSON.stringify(data)) as Record<string, unknown>)
   }
 }, { deep: true })
 
+// 表单 schema 变化时同步到 visualDSL
+watch(formSchemaRef, (schema) => {
+  if (schema && pageType.value === 'form') {
+    updateVisualDSL(schema as unknown as Record<string, unknown>)
+  }
+}, { deep: true })
+
 function onBeforeUnload(e: BeforeUnloadEvent) {
-  if (isDirty.value) {
+  const dirty = pageType.value === 'form' ? formDirty.value : isDirty.value
+  if (dirty) {
     e.preventDefault()
     e.returnValue = ''
   }
+}
+
+/** 表单设计器 Schema 更新回调 */
+function onFormSchemaUpdate(schema: FormSchema) {
+  formSchemaRef.value = schema
+}
+
+/** 表单设计器脏状态回调 */
+function onFormDirtyChange(dirty: boolean) {
+  formDirty.value = dirty
 }
 
 onMounted(() => {
@@ -296,18 +380,26 @@ onUnmounted(() => {
       </ELayoutContent>
     </ELayout>
 
-    <!-- 表单/报表占位 -->
+    <!-- 表单设计器 -->
+    <FormDesigner
+      v-else-if="pageType === 'form'"
+      ref="formDesignerRef"
+      :initial-schema="formSchemaRef"
+      @update:schema="onFormSchemaUpdate"
+      @dirty-change="onFormDirtyChange"
+    />
+
+    <!-- 报表占位 -->
     <div v-else class="flex flex-1 items-center justify-center bg-[var(--el-bg-color-page)]">
       <div class="text-center">
-        <el-icon :size="72" :color="pageType === 'form' ? '#67c23a' : '#e6a23c'">
-          <EditPen v-if="pageType === 'form'" />
-          <DataLine v-else />
+        <el-icon :size="72" color="#e6a23c">
+          <DataLine />
         </el-icon>
         <h2 class="mt-4 mb-2 text-xl font-semibold">
-          {{ pageType === 'form' ? '表单设计器' : '报表设计器' }}
+          报表设计器
         </h2>
         <p class="text-[var(--el-text-color-secondary)]">
-          {{ pageType === 'form' ? '表单设计器正在开发中，敬请期待...' : '报表设计器正在开发中，敬请期待...' }}
+          报表设计器正在开发中，敬请期待...
         </p>
       </div>
     </div>
