@@ -21,8 +21,6 @@ export interface GridLayoutProps {
   cols?: Breakpoints
   preventCollision?: boolean
   useStyleCursor?: boolean
-  /** 允许组件自由重叠堆叠，关闭碰撞检测和自动压缩 */
-  allowOverlap?: boolean
 }
 
 export interface GridItemProps {
@@ -45,6 +43,4 @@ export interface GridItemProps {
   preserveAspectRatio?: boolean
   dragOption?: Record<string, any>
   resizeOption?: Record<string, any>
-  /** z-index 层级，用于重叠布局 */
-  zIndex?: number
 }

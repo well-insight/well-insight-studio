@@ -22,13 +22,21 @@ const emit = defineEmits<{
 /** 本地编辑缓存 */
 const local = ref<FormField | null>(null)
 
-watch(() => props.field, (val) => {
-  if (val) {
-    local.value = JSON.parse(JSON.stringify(val))
+// 选中字段变化时全量更新
+watch(() => props.field?._vid, (vid) => {
+  if (vid && props.field) {
+    local.value = JSON.parse(JSON.stringify(props.field))
   } else {
     local.value = null
   }
 }, { immediate: true })
+
+// 同一字段属性被外部（画布拖拽等）修改时，同步到本地
+watch(() => props.field, (val) => {
+  if (val && local.value?._vid === val._vid) {
+    local.value = JSON.parse(JSON.stringify(val))
+  }
+}, { deep: true })
 
 /** 防抖同步变更到父组件 */
 let syncTimer: ReturnType<typeof setTimeout> | null = null

@@ -337,7 +337,12 @@ function onBeforeUnload(e: BeforeUnloadEvent) {
 
 /** 表单设计器 Schema 更新回调 */
 function onFormSchemaUpdate(schema: FormSchema) {
-  formSchemaRef.value = schema
+  // 防止循环更新：比较新旧 schema 是否真正变化
+  const oldStr = JSON.stringify(formSchemaRef.value)
+  const newStr = JSON.stringify(schema)
+  if (oldStr !== newStr) {
+    formSchemaRef.value = schema
+  }
 }
 
 /** 表单设计器脏状态回调 */

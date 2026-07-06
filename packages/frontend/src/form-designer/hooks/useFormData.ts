@@ -21,6 +21,8 @@ export interface UseFormDataReturn {
   loading: ref<boolean>
   /** 预览模式 */
   isPreview: ref<boolean>
+  /** 是否已初始化（防止循环加载） */
+  initialized: ref<boolean>
 
   /** 设置整个 Schema */
   setFormSchema: (schema: FormSchema) => void
@@ -50,6 +52,7 @@ export function useFormData(): UseFormDataReturn {
   const isDirty = ref(false)
   const loading = ref(false)
   const isPreview = ref(false)
+  const initialized = ref(false)
 
   // 保存基线用于脏检查
   let savedBaseline: string = JSON.stringify(formSchema)
@@ -66,6 +69,7 @@ export function useFormData(): UseFormDataReturn {
     savedBaseline = JSON.stringify(formSchema)
     isDirty.value = false
     activeFieldId.value = null
+    initialized.value = true
   }
 
   function addField(field: FormField, index?: number) {
@@ -144,6 +148,7 @@ export function useFormData(): UseFormDataReturn {
     isDirty,
     loading,
     isPreview,
+    initialized,
     setFormSchema,
     addField,
     removeField,

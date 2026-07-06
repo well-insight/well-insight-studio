@@ -4,8 +4,7 @@
  * 组合顶部工具栏、左侧面板、中间画布/预览、右侧属性/JSON面板
  */
 import type { FormField, FormSchema } from './types'
-import { Edit, View } from '@element-plus/icons-vue'
-import { provide, ref, watch } from 'vue'
+import { provide, watch } from 'vue'
 import { FORM_DATA_KEY, useFormData } from './hooks/useFormData'
 import FormCanvas from './ui/canvas/FormCanvas.vue'
 import FormRenderer from './ui/renderer/FormRenderer.vue'
@@ -32,12 +31,13 @@ const formData = useFormData()
 // 提供数据给子组件
 provide(FORM_DATA_KEY, formData)
 
-/** 如果有初始 Schema，加载它 */
+/** 如果有初始 Schema，仅首次加载 */
 watch(
   () => props.initialSchema,
   (schema) => {
-    if (schema) {
+    if (schema && !formData.initialized.value) {
       formData.setFormSchema(JSON.parse(JSON.stringify(schema)))
+      formData.initialized.value = true
     }
   },
   { immediate: true },
@@ -57,20 +57,6 @@ watch(
   { deep: true },
 )
 
-/** 预览模式 */
-const isPreview = ref(props.preview ?? false)
-
-watch(() => props.preview, (val) => {
-  isPreview.value = val ?? false
-})
-
-function togglePreview() {
-  isPreview.value = !isPreview.value
-  if (isPreview.value) {
-    formData.selectField(null)
-  }
-}
-
 /** 右侧面板当前 Tab */
 const rightTab = ref<'field' | 'form' | 'json'>('field')
 
@@ -83,6 +69,10 @@ function handleAddField(field: FormField, index?: number) {
 /** 移动字段 */
 function handleMoveField(fromIndex: number, toIndex: number) {
   formData.moveField(fromIndex, toIndex)
+}
+
+function handleUpdateColSpan(vid: string, colSpan: number) {
+  formData.updateField(vid, { colSpan } as Partial<FormField>)
 }
 
 /** 删除字段 */
@@ -124,24 +114,7 @@ defineExpose({
   <div class="form-designer h-full w-full flex flex-col overflow-hidden bg-[var(--el-bg-color)]">
     <!-- 顶部工具栏 -->
     <div class="form-designer-toolbar flex shrink-0 items-center justify-between border-b border-[var(--el-border-color)] bg-[var(--el-bg-color)] px-4 py-2">
-      <div class="flex items-center gap-2">
-        <el-button-group size="small">
-          <el-button
-            :type="!isPreview ? 'primary' : 'default'"
-            :icon="Edit"
-            @click="isPreview = false"
-          >
-            编辑
-          </el-button>
-          <el-button
-            :type="isPreview ? 'primary' : 'default'"
-            :icon="View"
-            @click="togglePreview"
-          >
-            预览
-          </el-button>
-        </el-button-group>
-      </div>
+      <div />
       <div class="flex items-center gap-2 text-xs text-[var(--el-text-color-secondary)]">
         <span v-if="formData.fields.value.length > 0">
           {{ formData.fields.value.length }} 个字段
@@ -170,6 +143,7 @@ defineExpose({
           @remove="handleRemoveField"
           @add-field="handleAddField"
           @move-field="handleMoveField"
+          @update-col-span="handleUpdateColSpan"
         />
         <el-scrollbar v-else class="h-full">
           <div class="p-6">

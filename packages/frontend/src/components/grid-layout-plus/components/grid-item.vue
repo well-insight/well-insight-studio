@@ -46,10 +46,9 @@ const props = withDefaults(defineProps<GridItemProps>(), {
   preserveAspectRatio: false,
   dragOption: () => ({}),
   resizeOption: () => ({}),
-  zIndex: undefined,
 })
 
-const emit = defineEmits(['containerResized', 'resize', 'resized', 'move', 'moved'])
+const emit = defineEmits(['container-resized', 'resize', 'resized', 'move', 'moved'])
 
 const layout = inject(LAYOUT_KEY)
 const emitter = inject(EMITTER_KEY)!
@@ -221,9 +220,6 @@ onMounted(() => {
   emitter.on('setMaxRows', setMaxRowsHandler)
   emitter.on('directionchange', directionchangeHandler)
   emitter.on('setColNum', setColNum)
-
-  nextTickOnce(tryMakeDraggable)
-  nextTickOnce(tryMakeResizable)
 })
 
 onBeforeUnmount(() => {
@@ -284,13 +280,6 @@ watch(
 )
 watch(
   () => props.static,
-  () => {
-    nextTickOnce(tryMakeDraggable)
-    nextTickOnce(tryMakeResizable)
-  },
-)
-watch(
-  () => [props.dragIgnoreFrom, props.isDraggable, props.isResizable] as const,
   () => {
     nextTickOnce(tryMakeDraggable)
     nextTickOnce(tryMakeResizable)
@@ -401,10 +390,6 @@ function createStyle() {
   }
 
   state.style = style
-
-  if (props.zIndex !== undefined) {
-    state.style.zIndex = String(props.zIndex)
-  }
 }
 
 function emitContainerResized() {
@@ -419,7 +404,7 @@ function emitContainerResized() {
     }
     styleProps[prop] = matches[1]
   }
-  emit('containerResized', props.i, props.h, props.w, styleProps.height, styleProps.width)
+  emit('container-resized', props.i, props.h, props.w, styleProps.height, styleProps.width)
 }
 
 function handleResize(event: MouseEvent & { edges: any }) {
