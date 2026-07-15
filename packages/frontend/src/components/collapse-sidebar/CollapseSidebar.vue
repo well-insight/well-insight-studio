@@ -30,7 +30,7 @@ const props = withDefaults(
     containerSize: '100%',
     transitionDuration: 0.3,
     triggerSize: 18,
-    bgColor: '#ffffff',
+    bgColor: 'var(--el-bg-color)',
   },
 )
 
@@ -122,10 +122,9 @@ watch(
 
       <!-- 收缩/展开触发按钮 -->
       <div
-        class="absolute z-10 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition-all duration-200 border border-gray-200 hover:bg-gray-200"
+        class="absolute z-10 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 border"
         :class="[
           $style.collapseTrigger,
-          // 按钮位置
           direction === 'left'
             ? 'right-2'
             : direction === 'right'
@@ -133,7 +132,6 @@ watch(
               : direction === 'top'
                 ? 'bottom-2'
                 : 'top-2',
-          // 垂直居中/水平居中
           direction === 'left' || direction === 'right' ? 'bottom-4' : 'right-4',
         ]"
         :title="collapsed ? '展开' : '收起'"
@@ -195,16 +193,24 @@ watch(
     @apply py-2 px-3 rounded-md cursor-pointer whitespace-nowrap transition-colors;
 
     &:hover {
-      @apply bg-gray-200;
+      background-color: var(--el-fill-color-light);
     }
   }
 }
 
 // 触发按钮样式
 .collapseTrigger {
-  // 按钮点击反馈
+  background-color: var(--el-fill-color-light);
+  border-color: var(--el-border-color);
+  color: var(--el-text-color-secondary);
+
+  &:hover {
+    background-color: var(--el-fill-color);
+    color: var(--el-color-primary);
+  }
+
   &:active {
-    @apply scale-95 bg-gray-300;
+    transform: scale(0.95);
   }
 }
 </style>

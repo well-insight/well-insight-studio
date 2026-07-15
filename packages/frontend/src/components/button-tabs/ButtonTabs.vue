@@ -38,6 +38,7 @@ function changeActive(e: Options) {
 
 <style lang="scss" module>
 .active {
-  background-color: var(--el-color-primary-light-9) !important;
+  background-color: var(--wc-active-fill, var(--el-color-primary-light-9)) !important;
+  color: var(--el-color-primary) !important;
 }
 </style>

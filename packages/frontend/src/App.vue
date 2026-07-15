@@ -1,17 +1,24 @@
 <script setup lang="ts">
-import { provide, toValue } from 'vue'
-import { useWorkspaceStore } from '@/stores/workspaceStore'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
+import { storeToRefs } from 'pinia'
+import { computed, provide, toValue } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { initVisualData, injectKey, localKey } from '@/visual-editor/hooks/useVisualData'
 
 const visualData = initVisualData()
-// 注入可视化编辑器所有配置
 provide(injectKey, visualData)
 
 const { jsonData } = visualData
 const workspaceStore = useWorkspaceStore()
-// 初始化主题（会自动读取 localStorage / 系统偏好并应用 dark class）
-useThemeStore()
+
+const themeStore = useThemeStore()
+const { epConfig } = storeToRefs(themeStore)
+
+const configProviderProps = computed(() => ({
+  locale: zhCn,
+  ...epConfig.value,
+}))
 
 window.addEventListener('beforeunload', () => {
   const id = workspaceStore.currentApp?.id
@@ -28,7 +35,7 @@ window.addEventListener('beforeunload', () => {
 </script>
 
 <template>
-  <el-config-provider>
+  <el-config-provider v-bind="configProviderProps">
     <router-view>
       <template #default="{ Component, route }">
         <component :is="Component" v-if="route.meta.noKeepAlive" />

@@ -1,58 +1,147 @@
+import type { ConfigProviderProps } from 'element-plus'
 import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { ThemeEnum } from '@/enums/styleEnum'
+import {
+  applyAppearanceVars,
+  applyPrimaryColor,
+  DEFAULT_THEME_CONFIG,
+  resolveIsDark,
+  type ThemeConfig,
+  type ThemeMode,
+  type ThemeSize,
+  WELLCUBE_PRIMARY,
+} from '@/styles/theme/tokens'
 
-const STORAGE_KEY = 'wellcube-theme'
+const STORAGE_KEY = 'wellcube-theme-config'
+const LEGACY_STORAGE_KEY = 'wellcube-theme'
 
-function loadTheme(): ThemeEnum {
+function loadConfig(): ThemeConfig {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved === ThemeEnum.DARK || saved === ThemeEnum.LIGHT) {
-      return saved
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<ThemeConfig>
+      return {
+        mode: normalizeMode(parsed.mode),
+        primary: typeof parsed.primary === 'string' && parsed.primary ? parsed.primary : WELLCUBE_PRIMARY,
+        size: normalizeSize(parsed.size),
+      }
     }
-  } catch {
+
+    // 兼容旧版仅存 light/dark 的键
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY)
+    if (legacy === ThemeEnum.DARK || legacy === 'dark')
+      return { ...DEFAULT_THEME_CONFIG, mode: 'dark' }
+    if (legacy === ThemeEnum.LIGHT || legacy === 'light')
+      return { ...DEFAULT_THEME_CONFIG, mode: 'light' }
+  }
+  catch {
     /* ignore */
   }
-  // 跟随系统偏好
-  if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
-    return ThemeEnum.DARK
+  return { ...DEFAULT_THEME_CONFIG }
+}
+
+function normalizeMode(mode: unknown): ThemeMode {
+  if (mode === 'light' || mode === 'dark' || mode === 'system')
+    return mode
+  return DEFAULT_THEME_CONFIG.mode
+}
+
+function normalizeSize(size: unknown): ThemeSize {
+  if (size === 'large' || size === 'default' || size === 'small')
+    return size
+  return DEFAULT_THEME_CONFIG.size
+}
+
+function persist(config: ThemeConfig) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
+    // 同步旧键，便于其他读旧字段的代码
+    localStorage.setItem(LEGACY_STORAGE_KEY, resolveIsDark(config.mode) ? ThemeEnum.DARK : ThemeEnum.LIGHT)
   }
-  return ThemeEnum.LIGHT
+  catch {
+    /* ignore */
+  }
 }
 
 export const useThemeStore = defineStore('theme', () => {
-  const theme = ref<ThemeEnum>(loadTheme())
+  const config = ref<ThemeConfig>(loadConfig())
+  const isDark = ref(resolveIsDark(config.value.mode))
 
-  const isDark = ref(theme.value === ThemeEnum.DARK)
+  /** 兼容旧字段：当前实际生效的明暗 */
+  const theme = computed(() => (isDark.value ? ThemeEnum.DARK : ThemeEnum.LIGHT))
 
+  /** 供 el-config-provider 绑定 */
+  const epConfig = computed<Partial<ConfigProviderProps>>(() => ({
+    size: config.value.size,
+    zIndex: 3000,
+    button: {
+      autoInsertSpace: true,
+    },
+  }))
+
+  function syncDom() {
+    isDark.value = resolveIsDark(config.value.mode)
+    applyAppearanceVars(isDark.value)
+    applyPrimaryColor(config.value.primary, isDark.value)
+    persist(config.value)
+  }
+
+  function setMode(mode: ThemeMode) {
+    config.value = { ...config.value, mode }
+    syncDom()
+  }
+
+  function setPrimary(primary: string) {
+    config.value = { ...config.value, primary: primary || WELLCUBE_PRIMARY }
+    syncDom()
+  }
+
+  function setSize(size: ThemeSize) {
+    config.value = { ...config.value, size }
+    persist(config.value)
+  }
+
+  function resetTheme() {
+    config.value = { ...DEFAULT_THEME_CONFIG }
+    syncDom()
+  }
+
+  /** @deprecated 使用 setMode；保留给旧入口快速切换 */
   function applyTheme(val: ThemeEnum) {
-    theme.value = val
-    isDark.value = val === ThemeEnum.DARK
-    document.documentElement.classList.toggle('dark', isDark.value)
-    try {
-      localStorage.setItem(STORAGE_KEY, val)
-    } catch {
-      /* ignore */
-    }
+    setMode(val === ThemeEnum.DARK ? 'dark' : 'light')
   }
 
   function toggleTheme() {
-    applyTheme(isDark.value ? ThemeEnum.LIGHT : ThemeEnum.DARK)
+    setMode(isDark.value ? 'light' : 'dark')
   }
 
-  // 初始化时应用
-  applyTheme(theme.value)
+  syncDom()
 
-  // 监听系统主题变化
   const mediaQuery = window.matchMedia?.('(prefers-color-scheme: dark)')
   if (mediaQuery) {
-    mediaQuery.addEventListener('change', (e) => {
-      // 只在用户没有手动保存过偏好时才跟随系统
-      if (!localStorage.getItem(STORAGE_KEY)) {
-        applyTheme(e.matches ? ThemeEnum.DARK : ThemeEnum.LIGHT)
-      }
-    })
+    const onChange = () => {
+      if (config.value.mode === 'system')
+        syncDom()
+    }
+    mediaQuery.addEventListener('change', onChange)
   }
 
-  return { theme, isDark, toggleTheme, applyTheme }
+  watch(
+    () => [config.value.primary, isDark.value] as const,
+    () => applyPrimaryColor(config.value.primary, isDark.value),
+  )
+
+  return {
+    config,
+    theme,
+    isDark,
+    epConfig,
+    setMode,
+    setPrimary,
+    setSize,
+    resetTheme,
+    applyTheme,
+    toggleTheme,
+  }
 })

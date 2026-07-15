@@ -1,28 +1,27 @@
+import type { ComputedRef, Ref } from 'vue'
 /**
  * 表单设计器数据管理 Hook
  * 负责表单 Schema 的增删改查、脏状态追踪
  */
 import type { FormField, FormSchema } from '../types'
-import { computed, provide, reactive, ref, watch } from 'vue'
-import { cloneFormSchema, getEmptyFormSchema } from '../form-designer.utils'
+import { computed, reactive, ref } from 'vue'
+import { cloneFormSchema, getEmptyFormSchema, normalizeFormSchema } from '../form-designer.utils'
 
 export interface UseFormDataReturn {
   /** 当前表单 Schema（响应式） */
   formSchema: FormSchema
   /** 当前选中的字段 ID */
-  activeFieldId: ref<string | null>
+  activeFieldId: Ref<string | null>
   /** 当前选中的字段 */
-  activeField: computed<FormField | null>
+  activeField: ComputedRef<FormField | null>
   /** 字段列表 */
-  fields: computed<FormField[]>
+  fields: ComputedRef<FormField[]>
   /** 是否有未保存更改 */
-  isDirty: ref<boolean>
+  isDirty: Ref<boolean>
   /** 表单加载状态 */
-  loading: ref<boolean>
-  /** 预览模式 */
-  isPreview: ref<boolean>
+  loading: Ref<boolean>
   /** 是否已初始化（防止循环加载） */
-  initialized: ref<boolean>
+  initialized: Ref<boolean>
 
   /** 设置整个 Schema */
   setFormSchema: (schema: FormSchema) => void
@@ -40,10 +39,6 @@ export interface UseFormDataReturn {
   updateFormConfig: (patch: Partial<FormSchema['config']>) => void
   /** 同步已保存基线 */
   syncSavedBaseline: () => void
-  /** 切换预览模式 */
-  togglePreview: () => void
-  /** 重置为默认 */
-  resetToDefault: () => void
 }
 
 export function useFormData(): UseFormDataReturn {
@@ -51,36 +46,38 @@ export function useFormData(): UseFormDataReturn {
   const activeFieldId = ref<string | null>(null)
   const isDirty = ref(false)
   const loading = ref(false)
-  const isPreview = ref(false)
   const initialized = ref(false)
-
-  // 保存基线用于脏检查
-  let savedBaseline: string = JSON.stringify(formSchema)
 
   const fields = computed(() => formSchema.fields)
 
   const activeField = computed(() => {
-    if (!activeFieldId.value) return null
+    if (!activeFieldId.value)
+      return null
     return formSchema.fields.find(f => f._vid === activeFieldId.value) ?? null
   })
 
   function setFormSchema(schema: FormSchema) {
-    Object.assign(formSchema, schema)
-    savedBaseline = JSON.stringify(formSchema)
+    const normalized = normalizeFormSchema(cloneFormSchema(schema))
+    formSchema.config = normalized.config
+    formSchema.fields = normalized.fields
     isDirty.value = false
     activeFieldId.value = null
     initialized.value = true
   }
 
   function addField(field: FormField, index?: number) {
-    const newField = { ...field }
+    const newField = cloneFormSchema({ config: getEmptyFormSchema().config, fields: [field] })
+      .fields[0]
     if (index !== undefined && index >= 0 && index <= formSchema.fields.length) {
       formSchema.fields.splice(index, 0, newField)
-    } else {
+    }
+    else {
       formSchema.fields.push(newField)
     }
     // 重排序号
-    formSchema.fields.forEach((f, i) => { f.sort = i })
+    formSchema.fields.forEach((f, i) => {
+      f.sort = i
+    })
     activeFieldId.value = newField._vid
     isDirty.value = true
   }
@@ -89,7 +86,9 @@ export function useFormData(): UseFormDataReturn {
     const idx = formSchema.fields.findIndex(f => f._vid === vid)
     if (idx !== -1) {
       formSchema.fields.splice(idx, 1)
-      formSchema.fields.forEach((f, i) => { f.sort = i })
+      formSchema.fields.forEach((f, i) => {
+        f.sort = i
+      })
       if (activeFieldId.value === vid) {
         activeFieldId.value = null
       }
@@ -110,10 +109,23 @@ export function useFormData(): UseFormDataReturn {
   }
 
   function moveField(fromIndex: number, toIndex: number) {
+    const lastIndex = formSchema.fields.length - 1
+    if (
+      fromIndex < 0
+      || fromIndex > lastIndex
+      || toIndex < 0
+      || toIndex > lastIndex
+      || fromIndex === toIndex
+    ) {
+      return
+    }
+
     const item = formSchema.fields.splice(fromIndex, 1)[0]
     if (item) {
       formSchema.fields.splice(toIndex, 0, item)
-      formSchema.fields.forEach((f, i) => { f.sort = i })
+      formSchema.fields.forEach((f, i) => {
+        f.sort = i
+      })
       isDirty.value = true
     }
   }
@@ -124,20 +136,7 @@ export function useFormData(): UseFormDataReturn {
   }
 
   function syncSavedBaseline() {
-    savedBaseline = JSON.stringify(formSchema)
     isDirty.value = false
-  }
-
-  function togglePreview() {
-    isPreview.value = !isPreview.value
-  }
-
-  function resetToDefault() {
-    const empty = getEmptyFormSchema()
-    Object.assign(formSchema, empty)
-    savedBaseline = JSON.stringify(empty)
-    isDirty.value = false
-    activeFieldId.value = null
   }
 
   return {
@@ -147,7 +146,6 @@ export function useFormData(): UseFormDataReturn {
     fields,
     isDirty,
     loading,
-    isPreview,
     initialized,
     setFormSchema,
     addField,
@@ -157,8 +155,6 @@ export function useFormData(): UseFormDataReturn {
     moveField,
     updateFormConfig,
     syncSavedBaseline,
-    togglePreview,
-    resetToDefault,
   }
 }
 

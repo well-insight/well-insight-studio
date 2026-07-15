@@ -92,7 +92,7 @@ async function removeApp(row: WorkspaceApp) {
 </script>
 
 <template>
-  <div class="h-full w-full flex flex-col">
+  <div class="h-full w-full flex flex-col bg-[var(--el-bg-color)]">
     <div class="border-bottom-1 flex h-[54px] items-center justify-between px-3 shrink-0">
       <div>
         <h3 class="text-base font-medium">

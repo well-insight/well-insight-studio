@@ -2,7 +2,9 @@
  * 表单设计器工具函数
  */
 import type { FormConfig, FormField, FormOption, FormSchema } from './types'
+import { cloneDeep } from 'lodash-es'
 import { generateNanoid } from '@/visual-editor/lib'
+import { getFormComponent } from './form-component-registry'
 
 /** 生成唯一 _vid */
 export function createFieldId(): string {
@@ -32,57 +34,12 @@ export function getDefaultFormConfig(): FormConfig {
 
 /** 获取组件的默认选项 */
 export function getDefaultOptions(componentKey: string): FormOption[] {
-  switch (componentKey) {
-    case 'select':
-      return [
-        { label: '选项一', value: '1' },
-        { label: '选项二', value: '2' },
-        { label: '选项三', value: '3' },
-      ]
-    case 'radio':
-      return [
-        { label: '选项一', value: '1' },
-        { label: '选项二', value: '2' },
-        { label: '选项三', value: '3' },
-      ]
-    case 'checkbox':
-      return [
-        { label: '选项一', value: '1' },
-        { label: '选项二', value: '2' },
-        { label: '选项三', value: '3' },
-      ]
-    default:
-      return []
-  }
+  return cloneDeep(getFormComponent(componentKey)?.defaultOptions ?? [])
 }
 
 /** 根据组件 key 获取默认 colSpan */
 export function getDefaultColSpan(componentKey: string): number {
-  switch (componentKey) {
-    case 'input':
-    case 'select':
-    case 'datePicker':
-    case 'timePicker':
-    case 'datetimePicker':
-    case 'cascader':
-    case 'treeSelect':
-      return 12
-    case 'textarea':
-    case 'richText':
-    case 'upload':
-      return 24
-    case 'switch':
-    case 'radio':
-    case 'checkbox':
-    case 'rate':
-    case 'slider':
-    case 'colorPicker':
-      return 12
-    case 'number':
-      return 8
-    default:
-      return 12
-  }
+  return getFormComponent(componentKey)?.defaultColSpan ?? 12
 }
 
 /** 根据组件 key 获取默认 placeholder */
@@ -113,27 +70,7 @@ export function getDefaultPlaceholder(componentKey: string): string {
 
 /** 根据组件 key 获取默认 label */
 export function getDefaultLabel(componentKey: string): string {
-  const map: Record<string, string> = {
-    input: '输入框',
-    textarea: '文本域',
-    number: '数字',
-    select: '下拉框',
-    switch: '开关',
-    radio: '单选框',
-    checkbox: '复选框',
-    datePicker: '日期选择',
-    timePicker: '时间选择',
-    datetimePicker: '日期时间',
-    rate: '评分',
-    slider: '滑块',
-    colorPicker: '颜色选择',
-    cascader: '级联选择',
-    treeSelect: '树形选择',
-    upload: '上传',
-    richText: '富文本',
-    transfer: '穿梭框',
-  }
-  return map[componentKey] ?? componentKey
+  return getFormComponent(componentKey)?.label ?? componentKey
 }
 
 /** 根据组件 key 获取默认字段名 */
@@ -144,10 +81,7 @@ export function getDefaultFieldName(componentKey: string): string {
 /**
  * 根据组件 key 创建默认 FormField
  */
-export function createFormField(
-  componentKey: string,
-  overrides?: Partial<FormField>,
-): FormField {
+export function createFormField(componentKey: string, overrides?: Partial<FormField>): FormField {
   const _vid = createFieldId()
   return {
     _vid,
@@ -161,9 +95,10 @@ export function createFormField(
     hidden: false,
     readonly: false,
     colSpan: getDefaultColSpan(componentKey),
+    layout: undefined,
     rules: [],
     options: getDefaultOptions(componentKey),
-    props: {},
+    props: cloneDeep(getFormComponent(componentKey)?.defaultProps ?? {}),
     sort: Date.now(),
     ...overrides,
   }
@@ -179,14 +114,45 @@ export function getEmptyFormSchema(): FormSchema {
 
 /** 深拷贝 FormSchema */
 export function cloneFormSchema(schema: FormSchema): FormSchema {
-  return JSON.parse(JSON.stringify(schema))
+  return cloneDeep(schema)
+}
+
+/** 归一化 FormSchema，兼容旧 DSL 或手写 JSON 缺省字段 */
+export function normalizeFormSchema(schema: FormSchema): FormSchema {
+  const defaultConfig = getDefaultFormConfig()
+  return {
+    config: {
+      ...defaultConfig,
+      ...(schema.config ?? {}),
+      submitBtn: {
+        ...defaultConfig.submitBtn,
+        ...(schema.config?.submitBtn ?? {}),
+      },
+      resetBtn: {
+        ...defaultConfig.resetBtn,
+        ...(schema.config?.resetBtn ?? {}),
+      },
+    },
+    fields: (schema.fields ?? []).map((field, index) => ({
+      ...createFormField(field.componentKey || 'input'),
+      ...field,
+      props: {
+        ...cloneDeep(getFormComponent(field.componentKey)?.defaultProps ?? {}),
+        ...(field.props ?? {}),
+      },
+      options: field.options ? cloneDeep(field.options) : getDefaultOptions(field.componentKey),
+      rules: field.rules ?? [],
+      sort: typeof field.sort === 'number' ? field.sort : index,
+    })),
+  }
 }
 
 /**
  * 校验 DSL 是否为有效的 FormSchema
  */
 export function isValidFormSchema(dsl: unknown): dsl is FormSchema {
-  if (!dsl || typeof dsl !== 'object') return false
+  if (!dsl || typeof dsl !== 'object')
+    return false
   const obj = dsl as Record<string, unknown>
   return 'config' in obj && 'fields' in obj && Array.isArray(obj.fields)
 }

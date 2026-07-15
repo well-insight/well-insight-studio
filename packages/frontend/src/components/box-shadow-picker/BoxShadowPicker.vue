@@ -672,8 +672,7 @@ $bsp-text-tertiary: #909399;
 $bsp-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
 .#{$bsp-prefix}-container {
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-family: var(--wc-font-sans);
   color: $bsp-text-primary;
   user-select: none;
 
@@ -990,7 +989,8 @@ $bsp-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 140px;
-  font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+  font-family:
+    var(--bsp-font-mono, var(--wc-font-mono, ui-monospace, Consolas, Monaco, monospace));
   font-size: 10px;
 }
 
@@ -1058,7 +1058,8 @@ $bsp-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
 .#{$bsp-prefix}-color-text {
   font-size: 11px;
-  font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+  font-family:
+    var(--bsp-font-mono, var(--wc-font-mono, ui-monospace, Consolas, Monaco, monospace));
   color: $bsp-text-tertiary;
   background: #f5f7fa;
   padding: 3px 8px;
@@ -1085,7 +1086,7 @@ $bsp-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 14px 16px;
   background: #1e1e2e;
   border-radius: $bsp-radius-sm;
-  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  font-family: var(--wc-font-mono);
   font-size: 13px;
   line-height: 1.7;
   position: relative;

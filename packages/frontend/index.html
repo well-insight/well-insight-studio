@@ -12,6 +12,29 @@
     <link rel="icon" href="./logo.svg" />
     <title>WellCube</title>
     <link rel="stylesheet" href="./index.css" />
+    <!-- 尽早应用主题，避免白屏闪烁（与 themeStore 存储键保持一致） -->
+    <script>
+      ;(function () {
+        try {
+          var dark = false
+          var cfgRaw = localStorage.getItem('wellcube-theme-config')
+          if (cfgRaw) {
+            var cfg = JSON.parse(cfgRaw)
+            if (cfg.mode === 'dark') dark = true
+            else if (cfg.mode === 'light') dark = false
+            else dark = window.matchMedia('(prefers-color-scheme: dark)').matches
+            if (cfg.primary) document.documentElement.style.setProperty('--el-color-primary', cfg.primary)
+          } else {
+            var legacy = localStorage.getItem('wellcube-theme')
+            if (legacy === 'dark') dark = true
+            else if (legacy === 'light') dark = false
+            else dark = window.matchMedia('(prefers-color-scheme: dark)').matches
+          }
+          document.documentElement.classList.toggle('dark', dark)
+          document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+        } catch (e) {}
+      })()
+    </script>
   </head>
   <body>
     <!-- 加载动画容器 -->

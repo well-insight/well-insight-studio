@@ -210,6 +210,7 @@ async function connectDatabase() {
   height: 100%;
   display: flex;
   flex-direction: column;
+  background-color: var(--el-bg-color);
 
   .source-title-line {
     background-color: var(--el-color-primary-light-9);

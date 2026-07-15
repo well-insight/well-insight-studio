@@ -166,7 +166,7 @@ async function removePage(row: ApiPageListItem) {
 </script>
 
 <template>
-  <div class="h-full w-full flex flex-col">
+  <div class="h-full w-full flex flex-col bg-[var(--el-bg-color)]">
     <!-- 顶部工具栏 -->
     <div class="border-bottom-1 flex h-[54px] items-center justify-between px-3 shrink-0">
       <ButtonTabs v-model="activeTab" :options="tabOptions" />
@@ -303,8 +303,12 @@ async function removePage(row: ApiPageListItem) {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="editDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="editSaving" @click="savePageInfo">保存</el-button>
+        <el-button @click="editDialogVisible = false">
+          取消
+        </el-button>
+        <el-button type="primary" :loading="editSaving" @click="savePageInfo">
+          保存
+        </el-button>
       </template>
     </AdaptiveDialog>
   </div>

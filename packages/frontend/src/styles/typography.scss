@@ -1,0 +1,115 @@
+/* ===========================================
+   WellCube 全局字体体系
+   中文优先的系统字体栈 + Element Plus 变量对齐
+   =========================================== */
+
+:root {
+  /* 正文：跨 macOS / Windows / Linux 尽量一致的中文无衬线 */
+  --wc-font-sans:
+    'PingFang SC',
+    'Hiragino Sans GB',
+    'Microsoft YaHei UI',
+    'Microsoft YaHei',
+    'Noto Sans SC',
+    'Source Han Sans SC',
+    'Segoe UI',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+
+  /* 代码 / JSON / 验证码等等宽 */
+  --wc-font-mono:
+    ui-monospace,
+    'SFMono-Regular',
+    'Cascadia Mono',
+    'Segoe UI Mono',
+    Consolas,
+    'Liberation Mono',
+    Menlo,
+    Monaco,
+    monospace;
+
+  /* 字号阶梯 */
+  --wc-font-size-xs: 12px;
+  --wc-font-size-sm: 13px;
+  --wc-font-size-md: 14px;
+  --wc-font-size-lg: 16px;
+  --wc-font-size-xl: 18px;
+  --wc-font-size-2xl: 20px;
+  --wc-font-size-3xl: 24px;
+  --wc-font-size-base: var(--wc-font-size-md);
+
+  /* 行高 / 字重 */
+  --wc-line-height-tight: 1.25;
+  --wc-line-height-base: 1.5;
+  --wc-line-height-relaxed: 1.7;
+  --wc-font-weight-regular: 400;
+  --wc-font-weight-medium: 500;
+  --wc-font-weight-semibold: 600;
+  --wc-font-weight-bold: 700;
+
+  /* Element Plus 字体变量对齐 */
+  --el-font-family: var(--wc-font-sans);
+  --el-font-size-base: var(--wc-font-size-base);
+  --el-font-size-extra-large: var(--wc-font-size-xl);
+  --el-font-size-large: var(--wc-font-size-lg);
+  --el-font-size-medium: var(--wc-font-size-md);
+  --el-font-size-small: var(--wc-font-size-sm);
+  --el-font-size-extra-small: var(--wc-font-size-xs);
+  --el-font-weight-primary: var(--wc-font-weight-medium);
+  --el-font-line-height-primary: var(--wc-line-height-base);
+}
+
+html {
+  font-family: var(--wc-font-sans);
+  font-size: var(--wc-font-size-base);
+  line-height: var(--wc-line-height-base);
+  font-weight: var(--wc-font-weight-regular);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-synthesis: none;
+}
+
+body,
+#app {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: var(--el-text-color-primary, var(--wc-text-color));
+}
+
+/* 表单控件跟随同一套字体（避免浏览器 / EP 回退到别的字体） */
+button,
+input,
+textarea,
+select,
+optgroup {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+code,
+kbd,
+pre,
+samp,
+.wc-mono {
+  font-family: var(--wc-font-mono);
+}
+
+/* 标题层次统一字重，避免各页各自粗细不一 */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: inherit;
+  font-weight: var(--wc-font-weight-semibold);
+  line-height: var(--wc-line-height-tight);
+  color: inherit;
+}

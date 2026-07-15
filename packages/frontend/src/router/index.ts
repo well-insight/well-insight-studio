@@ -2,6 +2,7 @@ import type { RouteRecordRaw } from 'vue-router'
 import NProgress from 'nprogress' // progress bar
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { getAuthStore } from '@/stores/auth'
+import { loadLoginPage } from '@/views/auth/loginVariants'
 import 'nprogress/css/nprogress.css' // 进度条样式
 
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
@@ -10,7 +11,7 @@ const routes2: RouteRecordRaw[] = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('@/views/auth/Login.vue'),
+    component: loadLoginPage,
     meta: {
       title: '登录',
       public: true,

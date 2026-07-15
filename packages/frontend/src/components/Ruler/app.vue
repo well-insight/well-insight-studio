@@ -104,7 +104,7 @@ export default Vue.extend({
 body {
   margin: 0;
   padding: 0;
-  font-family: sans-serif;
+  font-family: var(--wc-font-sans, sans-serif);
   overflow: hidden;
 }
 

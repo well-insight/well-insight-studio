@@ -87,7 +87,7 @@ function drawCaptcha() {
     ctx.stroke()
   }
 
-  ctx.font = 'bold 21px ui-sans-serif, system-ui, sans-serif'
+  ctx.font = `bold 21px ${getComputedStyle(document.body).fontFamily || 'sans-serif'}`
   ctx.textBaseline = 'middle'
   for (let i = 0; i < code.length; i++) {
     ctx.fillStyle = `rgb(${20 + Math.floor(Math.random() * 40)}, ${70 + Math.floor(Math.random() * 60)}, ${150 + Math.floor(Math.random() * 50)})`

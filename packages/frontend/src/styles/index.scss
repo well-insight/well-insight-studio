@@ -1,5 +1,17 @@
+@use './typography.scss';
 @use './element/common.scss';
 @use './dark.scss';
+
+:root {
+  --wc-active-fill: var(--el-color-primary-light-9);
+  --wc-bg-color: #ffffff;
+  --wc-bg-color-secondary: #f5f7fa;
+  --wc-bg-color-tertiary: #fafafa;
+  --wc-text-color: #303133;
+  --wc-text-color-secondary: #909399;
+  --wc-border-color: #dcdfe6;
+  --wc-border-color-lighter: #ebeef5;
+}
 
 html,
 body,
@@ -9,6 +21,7 @@ body,
   padding: 0;
   margin: 0;
   overflow: hidden;
+  background-color: var(--el-bg-color-page, #ffffff);
 }
 
 * {

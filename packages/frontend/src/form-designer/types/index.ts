@@ -20,8 +20,11 @@ export interface FormConfig {
   labelWidth: number
   /** 标签位置 */
   labelPosition: FormLabelPosition
-  /** 组件尺寸 */
-  size: FormSize
+  /**
+   * 已废弃：渲染时改用系统主题尺寸（el-config-provider）
+   * 保留字段以兼容已保存的 schema
+   */
+  size?: FormSize
   /** 是否禁用所有表单项 */
   disabled: boolean
   /** 栅格列数，默认 24 */
@@ -53,17 +56,17 @@ export interface FormOption {
 /**
  * 校验规则类型
  */
-export type FormRuleType =
-  | 'required'
-  | 'min'
-  | 'max'
-  | 'minLength'
-  | 'maxLength'
-  | 'pattern'
-  | 'email'
-  | 'url'
-  | 'integer'
-  | 'float'
+export type FormRuleType
+  = | 'required'
+    | 'min'
+    | 'max'
+    | 'minLength'
+    | 'maxLength'
+    | 'pattern'
+    | 'email'
+    | 'url'
+    | 'integer'
+    | 'float'
 
 /**
  * 校验规则
@@ -101,6 +104,11 @@ export interface FormField {
   readonly: boolean
   /** 栅格占宽 (1-24) */
   colSpan: number
+  /** 画布网格位置 */
+  layout?: {
+    x: number
+    y: number
+  }
   /** 校验规则 */
   rules: FormRule[]
   /** 选项列表（select/radio/checkbox 等） */

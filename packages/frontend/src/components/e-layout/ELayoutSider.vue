@@ -135,8 +135,8 @@ const contentWrapperStyle = computed<CSSProperties>(() => {
 /* 基础样式 */
 .e-layout-sider {
   height: 100%;
-  background-color: var(--el-bg-color, #fff);
-  color: var(--el-text-color-primary, #303133);
+  background-color: var(--el-bg-color);
+  color: var(--el-text-color-primary);
   transition:
     width 0.2s ease-in-out,
     background-color 0.3s,
@@ -192,8 +192,8 @@ const contentWrapperStyle = computed<CSSProperties>(() => {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background-color: var(--el-bg-color-page, #fff);
-  border: 1px solid var(--el-border-color, #dcdfe6);
+  background-color: var(--el-bg-color);
+  border: 1px solid var(--el-border-color);
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.06);
   cursor: pointer;
   display: flex;
@@ -209,17 +209,17 @@ const contentWrapperStyle = computed<CSSProperties>(() => {
 
 .e-layout-sider__toggle-button .toggle-icon {
   font-size: 16px;
-  color: var(--el-text-color-secondary, #909399);
+  color: var(--el-text-color-secondary);
   transition: color 0.2s;
 }
 
 .e-layout-sider__toggle-button:hover {
-  background-color: var(--el-fill-color-light, #f5f7fa);
+  background-color: var(--el-fill-color-light);
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
 }
 
 .e-layout-sider__toggle-button:hover .toggle-icon {
-  color: var(--el-color-primary, #409eff);
+  color: var(--el-color-primary);
 }
 
 /* 左侧布局圆形按钮位置 */

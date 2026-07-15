@@ -4,7 +4,10 @@
  * 组合顶部工具栏、左侧面板、中间画布/预览、右侧属性/JSON面板
  */
 import type { FormField, FormSchema } from './types'
-import { provide, watch } from 'vue'
+import { debounce } from 'lodash-es'
+import { onBeforeUnmount, provide, ref, watch } from 'vue'
+import { ButtonTabs } from '@/components/button-tabs'
+import { cloneFormSchema } from './form-designer.utils'
 import { FORM_DATA_KEY, useFormData } from './hooks/useFormData'
 import FormCanvas from './ui/canvas/FormCanvas.vue'
 import FormRenderer from './ui/renderer/FormRenderer.vue'
@@ -28,114 +31,106 @@ const emit = defineEmits<{
 /** 表单数据管理 */
 const formData = useFormData()
 
-// 提供数据给子组件
 provide(FORM_DATA_KEY, formData)
 
-/** 如果有初始 Schema，仅首次加载 */
 watch(
   () => props.initialSchema,
   (schema) => {
     if (schema && !formData.initialized.value) {
-      formData.setFormSchema(JSON.parse(JSON.stringify(schema)))
+      formData.setFormSchema(cloneFormSchema(schema!))
       formData.initialized.value = true
     }
   },
   { immediate: true },
 )
 
-/** 监听 dirty 变化 */
-watch(() => formData.isDirty.value, (val) => {
-  emit('dirtyChange', val)
-})
+watch(
+  () => formData.isDirty.value,
+  (val) => {
+    emit('dirtyChange', val)
+  },
+)
 
-/** 监听 schema 变化，向外同步 */
+const emitSchemaDebounced = debounce((schema: FormSchema) => {
+  emit('update:schema', cloneFormSchema(schema))
+}, 300)
+
 watch(
   () => formData.formSchema,
   (schema) => {
-    emit('update:schema', JSON.parse(JSON.stringify(schema)))
+    emitSchemaDebounced(schema)
   },
   { deep: true },
 )
 
-/** 右侧面板当前 Tab */
-const rightTab = ref<'field' | 'form' | 'json'>('field')
+const rightTab = ref('field')
 
-/** 添加字段（从左侧面板） */
+const rightTabOptions = [
+  { label: '字段属性', value: 'field' },
+  { label: '表单设置', value: 'form' },
+  { label: 'JSON', value: 'json' },
+]
+
 function handleAddField(field: FormField, index?: number) {
   formData.addField(field, index)
   rightTab.value = 'field'
 }
 
-/** 移动字段 */
 function handleMoveField(fromIndex: number, toIndex: number) {
   formData.moveField(fromIndex, toIndex)
 }
 
-function handleUpdateColSpan(vid: string, colSpan: number) {
-  formData.updateField(vid, { colSpan } as Partial<FormField>)
+function handleUpdateFieldLayout(vid: string, patch: Pick<FormField, 'colSpan' | 'layout'>) {
+  formData.updateField(vid, patch)
 }
 
-/** 删除字段 */
 function handleRemoveField(vid: string) {
   formData.removeField(vid)
 }
 
-/** 选中字段 */
 function handleSelectField(vid: string | null) {
   formData.selectField(vid)
-  if (vid) {
+  if (vid)
     rightTab.value = 'field'
-  }
 }
 
-/** 更新字段属性 */
 function handleUpdateField(vid: string, patch: Partial<FormField>) {
   formData.updateField(vid, patch)
 }
 
-/** 更新表单配置 */
 function handleUpdateFormConfig(patch: Partial<FormSchema['config']>) {
   formData.updateFormConfig(patch)
 }
 
-/** JSON 编辑器替换整个 Schema */
 function handleReplaceSchema(schema: FormSchema) {
-  formData.setFormSchema(JSON.parse(JSON.stringify(schema)))
+  formData.setFormSchema(cloneFormSchema(schema))
 }
+
+onBeforeUnmount(() => {
+  emitSchemaDebounced.cancel()
+})
 
 defineExpose({
   getFormData: () => formData,
-  getSchema: () => JSON.parse(JSON.stringify(formData.formSchema)),
+  getSchema: () => cloneFormSchema(formData.formSchema),
   syncSavedBaseline: () => formData.syncSavedBaseline(),
 })
 </script>
 
 <template>
-  <div class="form-designer h-full w-full flex flex-col overflow-hidden bg-[var(--el-bg-color)]">
-    <!-- 顶部工具栏 -->
-    <div class="form-designer-toolbar flex shrink-0 items-center justify-between border-b border-[var(--el-border-color)] bg-[var(--el-bg-color)] px-4 py-2">
-      <div />
-      <div class="flex items-center gap-2 text-xs text-[var(--el-text-color-secondary)]">
-        <span v-if="formData.fields.value.length > 0">
-          {{ formData.fields.value.length }} 个字段
-        </span>
-      </div>
-    </div>
-
-    <!-- 主体三栏 -->
-    <div class="form-designer-body flex flex-1 overflow-hidden min-h-0">
-      <!-- 左侧：组件面板（预览模式隐藏） -->
+  <div class="form-designer h-full w-full flex flex-col overflow-hidden bg-[var(--el-bg-color-page)]">
+    <div class="form-designer-body flex min-h-0 flex-1 overflow-hidden">
       <div
-        v-show="!isPreview"
-        class="form-designer-left w-[240px] shrink-0 border-r border-[var(--el-border-color)] bg-[var(--el-bg-color-overlay)]"
+        v-show="!preview"
+        class="form-designer-left border-end-1 w-[280px] shrink-0 bg-[var(--el-bg-color)]"
       >
         <FormComponentList @add-field="handleAddField" />
       </div>
 
-      <!-- 中间：画布 / 预览 -->
-      <div class="form-designer-center flex-1 overflow-hidden bg-[var(--el-bg-color-page)]">
+      <div class="form-designer-center flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[var(--el-bg-color-page)]">
         <FormCanvas
-          v-if="!isPreview"
+          v-if="!preview"
+          class="min-h-0 flex-1"
           :fields="formData.fields.value"
           :active-field-id="formData.activeFieldId.value"
           :form-config="formData.formSchema.config"
@@ -143,7 +138,7 @@ defineExpose({
           @remove="handleRemoveField"
           @add-field="handleAddField"
           @move-field="handleMoveField"
-          @update-col-span="handleUpdateColSpan"
+          @update-field-layout="handleUpdateFieldLayout"
         />
         <el-scrollbar v-else class="h-full">
           <div class="p-6">
@@ -152,31 +147,30 @@ defineExpose({
         </el-scrollbar>
       </div>
 
-      <!-- 右侧：属性面板（预览模式隐藏） -->
       <div
-        v-show="!isPreview"
-        class="form-designer-right w-[300px] shrink-0 border-l border-[var(--el-border-color)] bg-[var(--el-bg-color-overlay)]"
+        v-show="!preview"
+        class="form-designer-right border-start-1 flex w-[300px] shrink-0 flex-col bg-[var(--el-bg-color)]"
       >
-        <el-tabs v-model="rightTab" class="form-designer-tabs h-full">
-          <el-tab-pane label="字段属性" name="field">
-            <FormFieldSettings
-              :field="formData.activeField.value"
-              @update="handleUpdateField"
-            />
-          </el-tab-pane>
-          <el-tab-pane label="表单设置" name="form">
-            <FormSettings
-              :config="formData.formSchema.config"
-              @update="handleUpdateFormConfig"
-            />
-          </el-tab-pane>
-          <el-tab-pane label="JSON" name="json">
-            <JsonEditor
-              :schema="formData.formSchema"
-              @update="handleReplaceSchema"
-            />
-          </el-tab-pane>
-        </el-tabs>
+        <div class="border-bottom-1 flex h-[50px] shrink-0 items-center px-3">
+          <ButtonTabs v-model="rightTab" :options="rightTabOptions" />
+        </div>
+        <div class="min-h-0 flex-1 overflow-hidden">
+          <FormFieldSettings
+            v-if="rightTab === 'field'"
+            :field="formData.activeField.value"
+            @update="handleUpdateField"
+          />
+          <FormSettings
+            v-else-if="rightTab === 'form'"
+            :config="formData.formSchema.config"
+            @update="handleUpdateFormConfig"
+          />
+          <JsonEditor
+            v-else
+            :schema="formData.formSchema"
+            @update="handleReplaceSchema"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -187,28 +181,9 @@ defineExpose({
   height: 100%;
 }
 
-.form-designer-toolbar {
-  min-height: 40px;
-}
-
-:deep(.form-designer-tabs) {
-  display: flex;
-  flex-direction: column;
-}
-
-:deep(.form-designer-tabs .el-tabs__header) {
-  margin-bottom: 0;
-  padding: 0 8px;
-  border-bottom: 1px solid var(--el-border-color-light);
-}
-
-:deep(.form-designer-tabs .el-tabs__content) {
-  flex: 1;
-  overflow: hidden;
-  min-height: 0;
-}
-
-:deep(.form-designer-tabs .el-tab-pane) {
+.form-designer-left,
+.form-designer-right {
   height: 100%;
+  min-height: 0;
 }
 </style>

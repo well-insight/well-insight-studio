@@ -2,7 +2,7 @@
  * 表单设计器组件目录
  * 基于 Element Plus 表单组件体系
  */
-import type { FormComponentCategory, FormComponentDefinition } from '../types'
+import type { FormComponentCategory, FormComponentDefinition } from './types'
 
 /**
  * 表单组件分类
@@ -11,44 +11,22 @@ export const FORM_COMPONENT_CATEGORIES: FormComponentCategory[] = [
   {
     key: 'basic',
     label: '基础字段',
-    components: [
-      'input',
-      'textarea',
-      'number',
-      'password',
-    ],
+    components: ['input', 'textarea', 'number', 'password'],
   },
   {
     key: 'selection',
     label: '选择字段',
-    components: [
-      'select',
-      'radio',
-      'checkbox',
-      'switch',
-      'rate',
-      'slider',
-    ],
+    components: ['select', 'radio', 'checkbox', 'switch', 'rate', 'slider'],
   },
   {
     key: 'datetime',
     label: '日期时间',
-    components: [
-      'datePicker',
-      'timePicker',
-      'datetimePicker',
-    ],
+    components: ['datePicker', 'timePicker', 'datetimePicker'],
   },
   {
     key: 'advanced',
     label: '高级字段',
-    components: [
-      'cascader',
-      'treeSelect',
-      'colorPicker',
-      'upload',
-      'transfer',
-    ],
+    components: ['cascader', 'treeSelect', 'colorPicker', 'upload', 'transfer'],
   },
 ]
 
@@ -151,7 +129,6 @@ export const FORM_COMPONENT_REGISTRY: Record<string, FormComponentDefinition> = 
     ],
     defaultProps: {
       border: false,
-      size: 'default',
     },
   },
   checkbox: {
@@ -170,7 +147,6 @@ export const FORM_COMPONENT_REGISTRY: Record<string, FormComponentDefinition> = 
       min: undefined,
       max: undefined,
       border: false,
-      size: 'default',
     },
   },
   switch: {
@@ -311,9 +287,14 @@ export const FORM_COMPONENT_REGISTRY: Record<string, FormComponentDefinition> = 
       showAlpha: false,
       colorFormat: '',
       predefine: [
-        '#ff4500', '#ff8c00', '#ffd700',
-        '#90ee90', '#00ced1', '#1e90ff',
-        '#c71585', 'rgba(255, 69, 0, 0.68)',
+        '#ff4500',
+        '#ff8c00',
+        '#ffd700',
+        '#90ee90',
+        '#00ced1',
+        '#1e90ff',
+        '#c71585',
+        'rgba(255, 69, 0, 0.68)',
       ],
     },
   },

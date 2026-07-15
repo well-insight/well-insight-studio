@@ -3,9 +3,9 @@
  * JSON Schema 编辑器
  * 使用 Monaco Editor 双向编辑 FormSchema
  */
-import type { FormSchema } from '../../types'
-import { computed, ref, watch } from 'vue'
+import type { FormSchema } from '../../../types'
 import { ElMessage } from 'element-plus'
+import { onBeforeUnmount, ref, watch } from 'vue'
 
 const props = defineProps<{
   schema: FormSchema
@@ -17,12 +17,14 @@ const emit = defineEmits<{
 
 /** JSON 文本 */
 const jsonText = ref('')
+const isEditing = ref(false)
 
 /** 格式化 Schema → JSON 文本 */
 function schemaToJson(schema: FormSchema): string {
   try {
     return JSON.stringify(schema, null, 2)
-  } catch {
+  }
+  catch {
     return '{}'
   }
 }
@@ -31,12 +33,14 @@ function schemaToJson(schema: FormSchema): string {
 function jsonToSchema(text: string): FormSchema | null {
   try {
     const obj = JSON.parse(text)
-    if (!obj || typeof obj !== 'object') return null
+    if (!obj || typeof obj !== 'object')
+      return null
     if (!('config' in obj) || !('fields' in obj) || !Array.isArray(obj.fields)) {
       return null
     }
     return obj as FormSchema
-  } catch {
+  }
+  catch {
     return null
   }
 }
@@ -45,11 +49,11 @@ function jsonToSchema(text: string): FormSchema | null {
 watch(
   () => props.schema,
   (schema) => {
-    if (schema) {
+    if (schema && !isEditing.value) {
       jsonText.value = schemaToJson(schema)
     }
   },
-  { immediate: true },
+  { immediate: true, deep: true },
 )
 
 /** JSON 变更防抖同步 */
@@ -57,15 +61,19 @@ let syncTimer: ReturnType<typeof setTimeout> | null = null
 
 function onCodeChange(value: string) {
   jsonText.value = value
+  isEditing.value = true
 
-  if (syncTimer) clearTimeout(syncTimer)
+  if (syncTimer)
+    clearTimeout(syncTimer)
   syncTimer = setTimeout(() => {
     const schema = jsonToSchema(value)
     if (schema) {
       emit('update', schema)
-    } else {
+    }
+    else {
       ElMessage.warning('JSON 格式有误，请修正后再同步')
     }
+    isEditing.value = false
   }, 500)
 }
 
@@ -74,24 +82,33 @@ function formatJson() {
   const schema = jsonToSchema(jsonText.value)
   if (schema) {
     jsonText.value = schemaToJson(schema)
+    emit('update', schema)
     ElMessage.success('格式化完成')
-  } else {
+  }
+  else {
     ElMessage.error('JSON 格式有误，无法格式化')
   }
 }
+
+onBeforeUnmount(() => {
+  if (syncTimer) {
+    clearTimeout(syncTimer)
+    syncTimer = null
+  }
+})
 </script>
 
 <template>
   <div class="json-editor flex h-full flex-col">
-    <div class="flex items-center justify-between px-3 py-2 border-b border-[var(--el-border-color-light)]">
-      <span class="text-sm font-semibold">JSON 编辑</span>
-      <el-button size="small" text @click="formatJson">格式化</el-button>
+    <div class="flex shrink-0 items-center justify-between px-3 pt-3 pb-1">
+      <span class="text-xs text-[var(--el-text-color-placeholder)]">
+        直接编辑 JSON Schema，修改后自动同步
+      </span>
+      <el-button text type="primary" @click="formatJson">
+        格式化
+      </el-button>
     </div>
-    <div class="px-3 py-1 text-xs text-[var(--el-text-color-placeholder)]">
-      直接编辑 JSON Schema，修改后自动同步
-    </div>
-    <el-scrollbar class="flex-1">
-      <div class="p-2">
+    <div class="min-h-0 flex-1 p-3 pt-1">
       <el-input
         type="textarea"
         :model-value="jsonText"
@@ -101,26 +118,32 @@ function formatJson() {
         placeholder="编辑 JSON Schema..."
         @input="onCodeChange"
       />
-      </div>
-    </el-scrollbar>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .json-editor {
-  min-height: 300px;
+  height: 100%;
+  min-height: 0;
 }
 
 .json-textarea {
   height: 100%;
 }
 
+:deep(.json-textarea .el-textarea) {
+  height: 100%;
+}
+
 :deep(.json-textarea .el-textarea__inner) {
   height: 100% !important;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-family: var(--wc-font-mono, Consolas, Monaco, monospace);
   font-size: 12px;
   line-height: 1.5;
   resize: none;
   background: var(--el-fill-color-light);
+  color: var(--el-text-color-primary);
+  box-shadow: 0 0 0 1px var(--el-border-color) inset;
 }
 </style>
