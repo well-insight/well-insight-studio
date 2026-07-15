@@ -1,0 +1,22 @@
+---
+description: 后端 API 约定
+globs:
+  - "packages/backend/**/*"
+alwaysApply: false
+---
+
+# Backend
+
+本包为 Express + TypeScript + SQLite，接口前缀 `/api/v1`。
+
+- `routes` 只挂路由和中间件，不写业务分支。
+- `controllers` 负责入参校验、状态码和响应；复杂逻辑进 `services` / `models`。
+- 未登录或 Token 无效 → 401；已登录但无权限 → 403。
+- 权限以服务端存储和校验为准，不信请求体里的自报角色。
+- 密钥、JWT Secret 只走环境变量，不写进仓库。
+- 入参非法返回 400，并指明字段；响应字段保持现有约定。
+- SQL 一律参数化；多步写入用事务。
+- Schema 变更走现有初始化/迁移，不散落一次性 ALTER。
+- 按登录用户约束数据范围，防止越权读写。
+- 新接口同步 OpenAPI；变更附带验证步骤。
+- 注释遵守 `code-quality`：只补关键约束和原因，不写流程旁白。
