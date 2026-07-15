@@ -228,7 +228,7 @@ function onDblClick(variant: WidgetVariantItem) {
               {{ activeVariant.description || activeComponent.description }}
             </div>
             <div :class="$style.previewHint">
-              拖拽到画布添加 · 双击快速添加
+              拖到画布，或双击添加
             </div>
           </div>
         </div>
@@ -253,10 +253,13 @@ function onDblClick(variant: WidgetVariantItem) {
 <style lang="scss" module>
 .panel {
   width: 532px;
-  background: var(--el-bg-color);
-  border-radius: 12px;
   overflow: hidden;
-  box-shadow: var(--el-box-shadow);
+  border-radius: var(--ve-radius-md, 10px);
+  border: 1px solid var(--ve-paper-edge, var(--el-border-color-light));
+  background: var(--el-bg-color);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--el-color-primary) 8%, transparent),
+    var(--el-box-shadow);
 }
 
 .header {
@@ -265,10 +268,11 @@ function onDblClick(variant: WidgetVariantItem) {
   justify-content: space-between;
   gap: 8px;
   padding: 10px 10px 10px 14px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--el-text-color-regular);
-  border-bottom: 1px solid var(--el-border-color-light);
+  letter-spacing: 0.04em;
+  color: var(--el-text-color-primary);
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 .headerMain {
@@ -326,7 +330,8 @@ function onDblClick(variant: WidgetVariantItem) {
   font-size: 11px;
   font-weight: 600;
   color: var(--el-text-color-secondary);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .colScroll {
@@ -353,14 +358,15 @@ function onDblClick(variant: WidgetVariantItem) {
   &:hover,
   &:focus-visible {
     outline: none;
-    background: var(--el-color-primary-light-9);
+    background: var(--ve-active-fill, var(--el-color-primary-light-9));
     color: var(--el-color-primary);
   }
 
   &--active {
-    background: var(--el-color-primary-light-9);
+    background: var(--ve-active-fill, var(--el-color-primary-light-9));
     color: var(--el-color-primary);
     font-weight: 600;
+    box-shadow: inset 2px 0 0 var(--ve-spine, var(--el-color-primary));
   }
 }
 
@@ -400,13 +406,14 @@ function onDblClick(variant: WidgetVariantItem) {
   &:hover,
   &:focus-visible {
     outline: none;
-    background: var(--el-color-primary-light-9);
+    background: var(--ve-active-fill, var(--el-color-primary-light-9));
     color: var(--el-color-primary);
   }
 
   &--active {
-    background: var(--el-color-primary-light-9);
+    background: var(--ve-active-fill, var(--el-color-primary-light-9));
     color: var(--el-color-primary);
+    box-shadow: inset 2px 0 0 var(--ve-spine, var(--el-color-primary));
   }
 
   &--disabled {
@@ -439,21 +446,30 @@ function onDblClick(variant: WidgetVariantItem) {
   flex-direction: column;
   height: calc(100% - 28px);
   min-height: 280px;
-  border-radius: 10px;
-  border: 1px solid var(--el-border-color-light);
-  background: var(--el-fill-color-blank);
+  border-radius: var(--ve-radius-md, 10px);
+  border: 1px solid var(--ve-paper-edge, var(--el-border-color-light));
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--el-color-primary) 10%, transparent) 0,
+      color-mix(in srgb, var(--el-color-primary) 10%, transparent) 3px,
+      transparent 3px,
+      transparent 100%
+    ),
+    var(--el-fill-color-blank);
   cursor: grab;
   overflow: hidden;
-  transition: all 0.2s ease;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 
   &:hover {
-    border-color: var(--el-color-primary-light-5);
-    box-shadow: 0 4px 12px rgb(64 158 255 / 12%);
+    border-color: color-mix(in srgb, var(--el-color-primary) 40%, var(--el-border-color));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--el-color-primary) 16%, transparent);
   }
 
   &:active {
     cursor: grabbing;
-    transform: scale(0.99);
   }
 }
 
@@ -461,7 +477,10 @@ function onDblClick(variant: WidgetVariantItem) {
   flex: 1;
   min-height: 120px;
   padding: 8px;
-  background: var(--el-fill-color-light);
+  background:
+    radial-gradient(circle, var(--ve-grid-dot, var(--el-fill-color-lighter)) 1px, transparent 1px)
+      var(--el-fill-color-light);
+  background-size: 16px 16px;
   overflow: hidden;
 }
 

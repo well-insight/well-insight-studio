@@ -8,6 +8,7 @@
   background-color: transparent !important;
 
   --el-menu-item-height: 42px;
+  --el-menu-sub-item-height: 42px;
   --el-menu-bg-color: transparent;
   --el-menu-hover-bg-color: var(--el-fill-color-light);
   --el-menu-active-color: var(--el-color-primary);
@@ -20,6 +21,10 @@
       background-color: var(--wc-active-fill, var(--el-color-primary-light-9));
       color: var(--el-color-primary);
     }
+  }
+
+  .el-sub-menu__title {
+    margin-bottom: 6px;
   }
 }
 

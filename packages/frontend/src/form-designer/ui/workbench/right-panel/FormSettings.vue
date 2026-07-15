@@ -34,6 +34,12 @@ const labelPositionOptions = [
   { label: '顶部', value: 'top' },
 ]
 
+const sizeOptions = [
+  { label: '大', value: 'large' },
+  { label: '默认', value: 'default' },
+  { label: '小', value: 'small' },
+]
+
 const gridColOptions = [12, 24].map(v => ({ label: `${v} 列`, value: v }))
 
 const btnPositionOptions = [
@@ -73,6 +79,25 @@ const btnPositionOptions = [
             />
           </el-form-item>
 
+          <el-form-item label="标签后缀">
+            <el-input
+              :model-value="local.labelSuffix"
+              placeholder="如：冒号 :"
+              @input="sync('labelSuffix', $event)"
+            />
+          </el-form-item>
+
+          <el-form-item label="尺寸">
+            <el-select :model-value="local.size" @change="sync('size', $event)">
+              <el-option
+                v-for="opt in sizeOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
+          </el-form-item>
+
           <div class="mb-3 flex items-center justify-between">
             <span class="text-xs text-[var(--el-text-color-regular)]">显示必填星号</span>
             <el-switch
@@ -97,10 +122,62 @@ const btnPositionOptions = [
           </el-form-item>
 
           <div class="mb-3 flex items-center justify-between">
+            <span class="text-xs text-[var(--el-text-color-regular)]">行内模式</span>
+            <el-switch
+              :model-value="local.inline"
+              @change="sync('inline', $event)"
+            />
+          </div>
+
+          <div class="mb-3 flex items-center justify-between">
             <span class="text-xs text-[var(--el-text-color-regular)]">全局禁用</span>
             <el-switch
               :model-value="local.disabled"
               @change="sync('disabled', $event)"
+            />
+          </div>
+
+          <div class="form-section-title mb-2 mt-4">
+            校验与反馈
+          </div>
+
+          <div class="mb-3 flex items-center justify-between">
+            <span class="text-xs text-[var(--el-text-color-regular)]">显示校验错误信息</span>
+            <el-switch
+              :model-value="local.showMessage"
+              @change="sync('showMessage', $event)"
+            />
+          </div>
+
+          <div class="mb-3 flex items-center justify-between">
+            <span class="text-xs text-[var(--el-text-color-regular)]">内联校验信息</span>
+            <el-switch
+              :model-value="local.inlineMessage"
+              @change="sync('inlineMessage', $event)"
+            />
+          </div>
+
+          <div class="mb-3 flex items-center justify-between">
+            <span class="text-xs text-[var(--el-text-color-regular)]">校验状态图标</span>
+            <el-switch
+              :model-value="local.statusIcon"
+              @change="sync('statusIcon', $event)"
+            />
+          </div>
+
+          <div class="mb-3 flex items-center justify-between">
+            <span class="text-xs text-[var(--el-text-color-regular)]">校验失败滚动到错误</span>
+            <el-switch
+              :model-value="local.scrollToError"
+              @change="sync('scrollToError', $event)"
+            />
+          </div>
+
+          <div class="mb-3 flex items-center justify-between">
+            <span class="text-xs text-[var(--el-text-color-regular)]">规则变更时重新校验</span>
+            <el-switch
+              :model-value="local.validateOnRuleChange"
+              @change="sync('validateOnRuleChange', $event)"
             />
           </div>
 
@@ -165,24 +242,5 @@ const btnPositionOptions = [
 .form-settings {
   min-width: 280px;
   height: 100%;
-}
-
-.form-section-title {
-  position: relative;
-  padding-left: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--el-text-color-secondary);
-}
-
-.form-section-title::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 2px;
-  bottom: 2px;
-  width: 3px;
-  border-radius: 2px;
-  background: var(--el-color-primary);
 }
 </style>

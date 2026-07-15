@@ -7,6 +7,7 @@ import { useControlStore } from '@/stores/controlStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { EditTools } from '@/visual-editor/ui/workbench/edit-tools'
 import RightAttributePanel from '@/visual-editor/ui/workbench/right-attribute-panel/RightAttributePanel.vue'
+import '@/visual-editor/styles/visual-editor.scss'
 import { ComponentList } from '../../workbench/component-list-new'
 import BlockSettingsBar from './BlockSettingsBar.vue'
 import PcWrapper from './PcWrapper.vue'
@@ -16,9 +17,6 @@ defineOptions({
 })
 
 const workspaceStore = useWorkspaceStore()
-
-const { currentApp } = storeToRefs(workspaceStore)
-
 const controlStore = useControlStore()
 const { floatingSettingVisible } = storeToRefs(controlStore)
 
@@ -32,10 +30,6 @@ onClickOutside(floatingPanelRef, () => {
   }
 })
 
-function triggerShowComponents() {
-  controlStore.customComponentsVisible = !controlStore.customComponentsVisible
-}
-
 onUnmounted(() => {
   workspaceStore.setCurrentApp(null)
   controlStore.floatingSettingVisible = false
@@ -43,8 +37,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="simulator-container">
-    <div class="h-[50px] w-full shrink-0">
+  <div class="simulator-container visual-editor">
+    <div class="simulator-toolbar h-[var(--ve-header-h,50px)] w-full shrink-0">
       <EditTools>
         <template #center>
           <BlockSettingsBar />
@@ -53,7 +47,7 @@ onUnmounted(() => {
     </div>
 
     <div class="simulator-editor">
-      <div class="flex h-full w-[100px] shrink-0 items-center justify-center">
+      <div class="simulator-rail flex h-full shrink-0 items-center justify-center px-2">
         <ComponentList
           @drag-start="() => wrapperRef?.drag()"
           @drag="() => wrapperRef?.drag()"
@@ -67,7 +61,7 @@ onUnmounted(() => {
         <transition name="floating-setting-panel">
           <div v-if="floatingSettingVisible" ref="floatingPanelRef" class="floating-setting-panel">
             <div class="floating-setting-panel__header">
-              <span>详细配置</span>
+              <span class="ve-panel-title">配置</span>
               <el-button text circle @click="controlStore.floatingSettingVisible = false">
                 <el-icon><CloseBold /></el-icon>
               </el-button>
@@ -79,18 +73,6 @@ onUnmounted(() => {
         </transition>
       </div>
     </div>
-
-    <!-- 添加按钮 -->
-    <!-- <el-button
-      class="absolute right-6 bottom-6 h-[60px]! w-[60px]!"
-      type="primary"
-      circle
-      @click="triggerShowComponents"
-    >
-      <el-icon size="30px">
-        <Plus />
-      </el-icon>
-    </el-button> -->
   </div>
 </template>
 
@@ -118,10 +100,18 @@ onUnmounted(() => {
   display: flex;
   width: 100%;
   height: 100%;
-  align-items: center;
-  justify-content: center;
   position: relative;
   flex-direction: column;
+  overflow: hidden;
+  background: var(--el-bg-color-page);
+}
+
+.simulator-toolbar {
+  background: var(--el-bg-color);
+}
+
+.simulator-rail {
+  width: calc(var(--ve-rail-w, 52px) + 16px);
 }
 
 .simulator-canvas-area {
@@ -134,7 +124,6 @@ onUnmounted(() => {
   align-items: stretch;
   justify-content: center;
 
-  /* 画布根节点撑满可视区域 */
   :deep(> *) {
     width: 100%;
     min-width: 0;
@@ -145,52 +134,25 @@ onUnmounted(() => {
 
 .simulator-editor {
   width: 100%;
-  overflow: hidden auto;
-  background-image:
-    linear-gradient(var(--el-fill-color-lighter) 9px, transparent 0),
-    linear-gradient(90deg, transparent 9px, var(--el-border-color-darker) 0);
-  background-color: var(--el-bg-color);
-  background-size:
-    10px 10px,
-    10px 10px;
+  flex: 1;
+  height: 0;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
-  background-clip: content-box;
-  contain: layout;
-  flex: 1;
-  height: 0;
-  display: flex;
-  justify-content: center;
-  position: relatuve;
-  // padding: 32px 0 0 0;
+  background-color: var(--el-bg-color-page);
+  background-image: radial-gradient(circle, var(--ve-grid-dot, var(--el-fill-color-lighter)) 1px, transparent 1px);
+  background-size: 20px 20px;
 
   &::-webkit-scrollbar {
     width: 0;
-  }
-
-  .simulator-editor-wrapper {
-    width: 100%;
-    height: 100%;
-    position: relative;
-  }
-
-  &-content {
-    background-color: var(--el-bg-color);
-    // transform: translate(0);
-    box-shadow: var(--el-box-shadow-light);
-    margin-top: 32px;
-    border-radius: var(--el-border-radius-base);
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    // transform: translate(-50%, -50%);
   }
 }
 
 .list-group-item {
   position: relative;
-  // padding: 3px;
   border: 2px solid var(--el-bg-color);
   cursor: move;
 
@@ -219,11 +181,9 @@ onUnmounted(() => {
   }
 
   &:hover {
-    // 边框
     @include showComponentBorder;
 
     &::after {
-      // 标签
       opacity: 1;
       transition: opacity 0.2s;
       @include showSoliOutline;
@@ -243,11 +203,13 @@ onUnmounted(() => {
   z-index: 1200;
   display: flex;
   flex-direction: column;
-  background: var(--el-bg-color-overlay);
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 12px;
-  box-shadow: var(--el-box-shadow-dark);
   overflow: hidden;
+  border-radius: var(--ve-radius-md, 10px);
+  border: 1px solid var(--ve-paper-edge, var(--el-border-color-light));
+  background: var(--el-bg-color);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--el-color-primary) 8%, transparent),
+    var(--el-box-shadow);
 }
 
 .floating-setting-panel__header {
@@ -258,9 +220,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--el-fill-color-blank);
-  font-size: 13px;
-  font-weight: 600;
+  background: var(--el-bg-color);
 }
 
 .floating-setting-panel__body {
@@ -270,7 +230,7 @@ onUnmounted(() => {
 
 .floating-setting-panel-enter-active,
 .floating-setting-panel-leave-active {
-  transition: all 0.2s ease;
+  transition: opacity 0.18s ease, transform 0.18s ease;
 }
 
 .floating-setting-panel-enter-from,

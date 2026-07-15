@@ -1,57 +1,25 @@
 <script lang="ts" setup>
-import type { ApiPageListItem, PageStatus, PageType } from '@/api/pages'
-import { DataLine, Delete, EditPen, EditPen as EditPenIcon, Monitor, Plus, Search, View } from '@element-plus/icons-vue'
+/**
+ * 报表设计页面列表
+ */
+import type { ApiPageListItem } from '@/api/pages'
+import { Delete, Plus, Search, View } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { onActivated, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { onActivated, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { createPage, deletePage, fetchPageList, updatePage } from '@/api/pages'
 import { AdaptiveDialog } from '@/components/adaptive-dialog'
-import { ButtonTabs } from '@/components/button-tabs'
 
 const router = useRouter()
-const route = useRoute()
 
-/** 根据路由名称决定默认 Tab */
-const routeTabMap: Record<string, 'all' | PageType> = {
-  VisualDesign: 'visualization',
-  PageListForm: 'form',
-  PageListReport: 'report',
-}
-const activeTab = ref<'all' | PageType>(routeTabMap[route.name as string] || 'all')
 const loading = ref(false)
 const pageItems = ref<ApiPageListItem[]>([])
 const total = ref(0)
-const createDialogVisible = ref(false)
 const searchKeyword = ref('')
 const editDialogVisible = ref(false)
 const editingPage = ref<ApiPageListItem | null>(null)
-const editForm = ref({ name: '', type: '' as PageType })
+const editForm = ref({ name: '' })
 const editSaving = ref(false)
-
-const tabOptions = [
-  { label: '全部', value: 'all' },
-  { label: '可视化', value: 'visualization' },
-  { label: '表单', value: 'form' },
-  { label: '报表', value: 'report' },
-]
-
-const typeLabels: Record<string, string> = {
-  visualization: '可视化',
-  form: '表单',
-  report: '报表',
-}
-
-const typeIcons: Record<string, any> = {
-  visualization: Monitor,
-  form: EditPenIcon,
-  report: DataLine,
-}
-
-const typeColors: Record<string, string> = {
-  visualization: '',
-  form: 'success',
-  report: 'warning',
-}
 
 function formatTime(iso: string): string {
   if (!iso)
@@ -64,9 +32,8 @@ function formatTime(iso: string): string {
 async function loadList() {
   loading.value = true
   try {
-    const params: { type?: PageType, keyword?: string } = {}
-    if (activeTab.value !== 'all') {
-      params.type = activeTab.value
+    const params: { type: 'report', keyword?: string } = {
+      type: 'report',
     }
     if (searchKeyword.value.trim()) {
       params.keyword = searchKeyword.value.trim()
@@ -83,10 +50,6 @@ async function loadList() {
   }
 }
 
-watch(activeTab, () => {
-  loadList()
-})
-
 onMounted(() => {
   loadList()
 })
@@ -101,19 +64,16 @@ function designPage(id: string) {
 
 function openEditDialog(row: ApiPageListItem) {
   editingPage.value = row
-  editForm.value = { name: row.name, type: row.type }
+  editForm.value = { name: row.name }
   editDialogVisible.value = true
 }
 
 async function savePageInfo() {
-  if (!editingPage.value) {
+  if (!editingPage.value)
     return
-  }
   editSaving.value = true
   try {
-    await updatePage(editingPage.value.id, {
-      name: editForm.value.name,
-    })
+    await updatePage(editingPage.value.id, { name: editForm.value.name })
     ElMessage.success('页面信息已更新')
     editDialogVisible.value = false
     await loadList()
@@ -126,11 +86,9 @@ async function savePageInfo() {
   }
 }
 
-async function createNewPage(type: PageType) {
-  createDialogVisible.value = false
+async function createNewPage() {
   try {
-    const name = type === 'visualization' ? '未命名大屏' : type === 'form' ? '未命名表单' : '未命名报表'
-    const page = await createPage({ name, type, status: 'draft' })
+    const page = await createPage({ name: '未命名报表', type: 'report', status: 'draft' })
     router.push({ name: 'PageEditor', params: { id: page.id } })
   }
   catch (e) {
@@ -169,10 +127,12 @@ async function removePage(row: ApiPageListItem) {
   <div class="h-full w-full flex flex-col bg-[var(--el-bg-color)]">
     <!-- 顶部工具栏 -->
     <div class="border-bottom-1 flex h-[54px] items-center justify-between px-3 shrink-0">
-      <ButtonTabs v-model="activeTab" :options="tabOptions" />
+      <h2 class="text-lg font-semibold">
+        报表设计
+      </h2>
       <div class="flex items-center gap-2">
-        <el-button round type="primary" :icon="Plus" @click="createDialogVisible = true">
-          新建页面
+        <el-button round type="primary" :icon="Plus" @click="createNewPage">
+          新建报表页面
         </el-button>
         <el-input
           v-model="searchKeyword"
@@ -195,18 +155,9 @@ async function removePage(row: ApiPageListItem) {
     >
       <el-table-column prop="name" label="页面名称" min-width="200">
         <template #default="{ row }">
-          <el-space>
-            <el-button link text type="primary" :icon="typeIcons[row.type]" @click="designPage(row.id)">
-              {{ row.name }}
-            </el-button>
-          </el-space>
-        </template>
-      </el-table-column>
-      <el-table-column prop="type" label="类型" width="120" align="center">
-        <template #default="{ row }">
-          <el-tag :type="typeColors[row.type] as any" size="small">
-            {{ typeLabels[row.type] }}
-          </el-tag>
+          <el-button link text type="primary" @click="designPage(row.id)">
+            {{ row.name }}
+          </el-button>
         </template>
       </el-table-column>
       <el-table-column prop="status" label="状态" width="100" align="center">
@@ -239,57 +190,6 @@ async function removePage(row: ApiPageListItem) {
       </el-table-column>
     </el-table>
 
-    <!-- 新建页面对话框 -->
-    <AdaptiveDialog v-model="createDialogVisible" title="选择页面类型" width="640px">
-      <div class="type-cards grid grid-cols-3 gap-4">
-        <el-card
-          shadow="hover"
-          class="cursor-pointer text-center"
-          @click="createNewPage('visualization')"
-        >
-          <el-icon :size="40" color="#409EFF">
-            <Monitor />
-          </el-icon>
-          <h3 class="my-2">
-            可视化大屏
-          </h3>
-          <p class="text-sm text-gray-400">
-            图表展示、数据看板、监控大屏
-          </p>
-        </el-card>
-        <el-card
-          shadow="hover"
-          class="cursor-pointer text-center"
-          @click="createNewPage('form')"
-        >
-          <el-icon :size="40" color="#67C23A">
-            <EditPenIcon />
-          </el-icon>
-          <h3 class="my-2">
-            表单管理
-          </h3>
-          <p class="text-sm text-gray-400">
-            数据录入、增删改查、列表展示
-          </p>
-        </el-card>
-        <el-card
-          shadow="hover"
-          class="cursor-pointer text-center"
-          @click="createNewPage('report')"
-        >
-          <el-icon :size="40" color="#E6A23C">
-            <DataLine />
-          </el-icon>
-          <h3 class="my-2">
-            复杂报表
-          </h3>
-          <p class="text-sm text-gray-400">
-            分组汇总、交叉表、导出打印
-          </p>
-        </el-card>
-      </div>
-    </AdaptiveDialog>
-
     <!-- 编辑页面基础信息对话框 -->
     <AdaptiveDialog v-model="editDialogVisible" title="编辑页面信息" width="480px" @close="editingPage = null">
       <el-form v-if="editingPage" :model="editForm" label-width="80px">
@@ -297,8 +197,8 @@ async function removePage(row: ApiPageListItem) {
           <el-input v-model="editForm.name" placeholder="请输入页面名称" />
         </el-form-item>
         <el-form-item label="页面类型">
-          <el-tag :type="typeColors[editForm.type] as any" size="default">
-            {{ typeLabels[editForm.type] }}
+          <el-tag size="default">
+            报表
           </el-tag>
         </el-form-item>
       </el-form>

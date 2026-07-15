@@ -5,7 +5,7 @@ import { Delete, Link, Operation } from '@element-plus/icons-vue'
 import { throttle } from '@vexip-ui/utils'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { GridLayout } from '@/components/grid-layout-plus'
-import { getFormComponent } from '../../form-component-registry'
+import FormFieldPreview from './FormFieldPreview.vue'
 
 const props = defineProps<{
   fields: FormField[]
@@ -46,6 +46,8 @@ let canvasResizeObserver: ResizeObserver | null = null
 
 onMounted(() => {
   document.addEventListener('dragover', syncMousePosition)
+  document.addEventListener('dragend', clearDragArtifacts)
+  document.addEventListener('mouseup', clearGridDraggingFlag)
   const el = canvasRoot.value
   if (!el)
     return
@@ -58,6 +60,8 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   document.removeEventListener('dragover', syncMousePosition)
+  document.removeEventListener('dragend', clearDragArtifacts)
+  document.removeEventListener('mouseup', clearGridDraggingFlag)
   canvasResizeObserver?.disconnect()
   canvasResizeObserver = null
 })
@@ -68,23 +72,50 @@ const gridLayout = ref<InstanceType<typeof GridLayout>>()
 const placeholderLayoutItem = ref<LayoutItem | null>(null)
 const canvasLayout = ref<Layout>([])
 
+/** 清除外部拖入占位与网格拖拽阴影 */
+function clearDragArtifacts() {
+  isDragOver.value = false
+  if (placeholderLayoutItem.value && gridLayout.value) {
+    try {
+      gridLayout.value.dragEvent('dragend', dropId, 0, 0, 1, 12)
+    }
+    catch {
+      /* ignore */
+    }
+  }
+  placeholderLayoutItem.value = null
+  clearGridDraggingFlag()
+}
+
+function clearGridDraggingFlag() {
+  const state = gridLayout.value?.state as { isDragging?: boolean } | undefined
+  if (state)
+    state.isDragging = false
+}
+
 type FormLayoutItem = LayoutItem & {
   dragAllowFrom?: string
   resizeIgnoreFrom?: string
 }
 
 function toLayoutItem(field: FormField, index: number): FormLayoutItem {
+  const h = isStackField(field) ? 2 : 1
   return {
     i: field._vid,
     x: Math.min(cols - 1, Math.max(0, field.layout?.x ?? 0)),
     y: Math.max(0, field.layout?.y ?? index),
     w: Math.min(cols, Math.max(1, field.colSpan || cols)),
-    h: 1,
+    h,
     minW: 1,
     maxW: cols,
+    minH: h,
     dragAllowFrom: '.drag-handle',
     resizeIgnoreFrom: '.field-actions,button',
   }
+}
+
+function isStackField(field: FormField) {
+  return ['textarea', 'upload', 'transfer', 'slider', 'radio', 'checkbox'].includes(field.componentKey)
 }
 
 function syncCanvasLayoutFromFields() {
@@ -133,7 +164,7 @@ function syncCanvasLayoutFromGrid(realItems: Layout) {
 }
 
 watch(
-  () => props.fields.map(field => `${field._vid}:${field.colSpan}:${field.layout?.x ?? ''}:${field.layout?.y ?? ''}`).join('|'),
+  () => props.fields.map(field => `${field._vid}:${field.componentKey}:${field.colSpan}:${field.layout?.x ?? ''}:${field.layout?.y ?? ''}`).join('|'),
   () => {
     syncCanvasLayoutFromFields()
   },
@@ -149,6 +180,16 @@ const layout = computed<Layout>(() => {
 })
 
 const fieldMap = computed(() => new Map(props.fields.map(field => [field._vid, field])))
+
+/** 获取字段的实际标签宽度（字段级 > 表单级） */
+function resolveLabelWidth(field: FormField): number {
+  return field.labelWidth ?? props.formConfig.labelWidth
+}
+
+/** 获取字段的实际尺寸（字段级 > 表单级） */
+function resolveSize(field: FormField): string {
+  return field.size ?? props.formConfig.size
+}
 
 // ---- 内部网格拖拽 / 缩放回调 ----
 function onLayoutUpdated(newLayout: Layout) {
@@ -198,6 +239,10 @@ function onLayoutUpdated(newLayout: Layout) {
 
 // ---- 外部拖入网格：占位 + 定位 ----
 const updatePlaceholder = throttle(() => {
+  // drop / dragend 后可能仍有节流回调，避免再次点亮占位
+  if (!isDragOver.value)
+    return
+
   const parentRect = wrapper.value?.getBoundingClientRect()
   if (!parentRect || !gridLayout.value) {
     return
@@ -210,7 +255,8 @@ const updatePlaceholder = throttle(() => {
       && mouseAt.y < parentRect.bottom
 
   // 鼠标进入网格 → 创建占位
-  if (mouseInGrid && !placeholderLayoutItem.value) {
+  const wasPlaceholderMissing = !placeholderLayoutItem.value
+  if (mouseInGrid && wasPlaceholderMissing) {
     placeholderLayoutItem.value = {
       i: dropId,
       x: 0,
@@ -240,11 +286,20 @@ const updatePlaceholder = throttle(() => {
     const newPos = item.calcXY(mouseAt.y - parentRect.top, mouseAt.x - parentRect.left)
 
     if (mouseInGrid) {
-      gridLayout.value.dragEvent('dragstart', dropId, newPos.x, newPos.y, 1, 12)
+      // 首次 dragstart，之后用 dragmove，避免多次 nextTick 把 isDragging 重新置 true
+      gridLayout.value.dragEvent(
+        wasPlaceholderMissing ? 'dragstart' : 'dragmove',
+        dropId,
+        newPos.x,
+        newPos.y,
+        1,
+        12,
+      )
     }
     else {
       gridLayout.value.dragEvent('dragend', dropId, newPos.x, newPos.y, 1, 12)
       placeholderLayoutItem.value = null
+      clearGridDraggingFlag()
     }
   }
 }, 16)
@@ -268,7 +323,7 @@ function onDropCanvas(event: DragEvent) {
 
   const raw = event.dataTransfer?.getData('application/json')
   if (!raw) {
-    placeholderLayoutItem.value = null
+    clearDragArtifacts()
     return
   }
 
@@ -288,20 +343,27 @@ function onDropCanvas(event: DragEvent) {
     }
 
     emit('addField', { ...field, layout: dropLayout }, props.fields.length)
+    clearGridDraggingFlag()
   }
   catch (e) {
-    placeholderLayoutItem.value = null
+    clearDragArtifacts()
     console.error('[FormCanvas] drop parse error:', e)
   }
 }
 
-// ---- 字段预览 ----
-function getFieldPreview(field: FormField) {
-  const comp = getFormComponent(field.componentKey)
-  return {
-    label: field.label || comp?.label || '字段',
-    placeholder: field.placeholder || '请输入',
+function onCanvasPointerDown(event: MouseEvent) {
+  const target = event.target as HTMLElement | null
+  if (!target)
+    return
+  if (
+    target.closest('.form-field-card')
+    || target.closest('.vgl-item__resizer')
+    || target.closest('.field-actions')
+  ) {
+    return
   }
+  clearDragArtifacts()
+  emit('select', null)
 }
 </script>
 
@@ -313,28 +375,33 @@ function getFieldPreview(field: FormField) {
     @dragover="onDragOverCanvas"
     @dragleave="onDragLeaveCanvas"
     @drop="onDropCanvas"
+    @pointerdown.capture="onCanvasPointerDown"
   >
     <el-scrollbar height="100%" class="form-canvas__scrollbar">
       <div
-        class="form-canvas-inner mx-auto w-full max-w-[860px] px-4 py-4"
+        class="form-canvas-inner mx-auto w-full px-4 py-4"
         :style="viewportHeight > 0 ? { minHeight: `${viewportHeight}px` } : undefined"
       >
         <div
           ref="wrapper"
-          class="form-canvas-body rounded-[12px] border border-[var(--el-border-color-light)] bg-[var(--el-bg-color)] p-6 shadow-[var(--el-box-shadow-lighter)]"
+          class="form-canvas-body"
           :class="{ 'drag-hover': isDragOver }"
           :style="paperMinHeight ? { minHeight: paperMinHeight } : undefined"
-          @click="emit('select', null)"
         >
           <div
             v-if="fields.length === 0 && !placeholderLayoutItem"
-            class="pointer-events-none absolute inset-0 z-0 flex flex-col items-center justify-center text-[var(--el-text-color-placeholder)]"
+            class="form-canvas-empty pointer-events-none absolute inset-0 z-0 flex flex-col items-center justify-center"
           >
-            <el-icon :size="48" class="mb-3 opacity-30">
-              <Operation />
-            </el-icon>
-            <p class="text-sm">
-              拖拽或点击组件开始构建表单
+            <div class="form-canvas-empty__mark mb-4 flex h-14 w-14 items-center justify-center rounded-full">
+              <el-icon :size="28" class="opacity-70">
+                <Operation />
+              </el-icon>
+            </div>
+            <p class="text-sm font-medium text-[var(--el-text-color-regular)]">
+              把组件拖到这里
+            </p>
+            <p class="mt-1 text-xs text-[var(--el-text-color-placeholder)]">
+              或在左侧点击添加字段
             </p>
           </div>
 
@@ -343,7 +410,7 @@ function getFieldPreview(field: FormField) {
             class="relative z-[1]"
             :layout="layout"
             :col-num="cols"
-            :row-height="72"
+            :row-height="80"
             :margin="[8, 8]"
             :is-draggable="true"
             :is-resizable="true"
@@ -355,50 +422,55 @@ function getFieldPreview(field: FormField) {
           >
             <template #item="{ item }">
               <template v-if="fieldMap.get(String(item.i))">
-                <div
-                  class="form-field-card group relative h-full cursor-pointer rounded-[8px] border px-3 py-2"
-                  :class="{
-                    'selected-card border-[var(--el-color-primary)] bg-[var(--wc-active-fill,var(--el-color-primary-light-9))]': activeFieldId === String(item.i),
-                    'border-transparent hover:border-[var(--el-color-primary-light-5)]': activeFieldId !== String(item.i),
-                    'opacity-60': fieldMap.get(String(item.i))?.hidden,
-                  }"
-                  @click.stop="emit('select', String(item.i))"
-                >
-                  <div class="flex items-center gap-2">
-                    <span class="drag-handle shrink-0 cursor-grab text-lg font-bold text-[var(--el-text-color-secondary)]">⠿</span>
-                    <label class="shrink-0 text-xs font-medium text-[var(--el-text-color-primary)]">
-                      {{ fieldMap.get(String(item.i))?.label }}<span v-if="fieldMap.get(String(item.i))?.required" class="text-[var(--el-color-danger)]">*</span>
-                      <el-icon
-                        v-if="fieldMap.get(String(item.i))?.datasetBinding"
-                        :size="12"
-                        class="ml-1 inline-block text-[var(--el-color-success)]"
-                        title="已绑定数据集"
-                      ><Link /></el-icon>
-                    </label>
-                    <div class="min-w-0 flex-1">
-                      <div
-                        class="rounded border border-dashed border-[var(--el-border-color)] bg-[var(--el-fill-color-light)] px-2 py-1 text-xs text-[var(--el-text-color-placeholder)]"
-                      >
-                        {{ getFieldPreview(fieldMap.get(String(item.i))!).placeholder }}
-                      </div>
-                    </div>
-                  </div>
-                  <div
-                    class="field-actions absolute right-1 top-1 gap-0.5"
-                    :class="{
-                      'flex': activeFieldId === String(item.i),
-                      'hidden group-hover:flex': activeFieldId !== String(item.i),
+              <div
+                class="form-field-card group"
+                :class="{
+                  'selected-card': activeFieldId === String(item.i),
+                  'is-hidden-field': fieldMap.get(String(item.i))?.hidden,
+                  'is-stack': isStackField(fieldMap.get(String(item.i))!),
+                  'label-pos-top': formConfig.labelPosition === 'top',
+                  'label-pos-right': formConfig.labelPosition === 'right',
+                }"
+                @click.stop="emit('select', String(item.i))"
+              >
+                <span class="drag-handle shrink-0 select-none text-[15px] leading-none text-[var(--fd-ink,var(--el-text-color-secondary))]">⠿</span>
+                <div class="form-field-card__content">
+                  <label
+                    class="form-field-card__label shrink-0"
+                    :style="{
+                      width: resolveLabelWidth(fieldMap.get(String(item.i))!) + 'px',
+                      maxWidth: resolveLabelWidth(fieldMap.get(String(item.i))!) + 'px',
+                      textAlign: formConfig.labelPosition === 'right' ? 'right' : 'left',
                     }"
                   >
-                    <el-button
-                      text
-                      :icon="Delete"
-                      class="field-actions__delete"
-                      @click.stop="emit('remove', String(item.i))"
-                    />
+                    {{ fieldMap.get(String(item.i))?.label }}<span v-if="fieldMap.get(String(item.i))?.required" class="text-[var(--el-color-danger)]">*</span>{{ formConfig.labelSuffix || '' }}
+                    <el-icon
+                      v-if="fieldMap.get(String(item.i))?.datasetBinding"
+                      :size="12"
+                      class="ml-1 inline-block align-[-2px] text-[var(--el-color-success)]"
+                      title="已绑定数据集"
+                    ><Link /></el-icon>
+                  </label>
+                  <div class="form-field-card__control">
+                    <FormFieldPreview :field="fieldMap.get(String(item.i))!" :size="resolveSize(fieldMap.get(String(item.i))!)" />
                   </div>
                 </div>
-              </template>
+                <div
+                  class="field-actions absolute right-1.5 top-1.5 z-[2] gap-0.5"
+                  :class="{
+                    'flex': activeFieldId === String(item.i),
+                    'hidden group-hover:flex': activeFieldId !== String(item.i),
+                  }"
+                >
+                  <el-button
+                    text
+                    :icon="Delete"
+                    class="field-actions__delete"
+                    @click.stop="emit('remove', String(item.i))"
+                  />
+                </div>
+              </div>
+            </template>
             </template>
           </GridLayout>
         </div>
@@ -414,8 +486,8 @@ function getFieldPreview(field: FormField) {
   overflow: hidden;
   background-color: var(--el-bg-color-page);
   background-image:
-    radial-gradient(circle, var(--el-fill-color-lighter) 1px, transparent 1px);
-  background-size: 16px 16px;
+    radial-gradient(circle, var(--fd-grid-dot, var(--el-fill-color-lighter)) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
 .form-canvas__scrollbar {
@@ -432,57 +504,147 @@ function getFieldPreview(field: FormField) {
 .form-canvas-inner {
   box-sizing: border-box;
   width: 100%;
+  max-width: var(--fd-paper-max, 860px);
 }
 
 .form-canvas-body {
   position: relative;
   box-sizing: border-box;
   width: 100%;
+  padding: 16px 16px 16px 20px;
+  border-radius: var(--fd-radius-sm, 6px);
+  border: 1px solid var(--fd-paper-edge, var(--el-border-color-light));
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--el-color-primary) 10%, transparent) 0,
+      color-mix(in srgb, var(--el-color-primary) 10%, transparent) 3px,
+      transparent 3px,
+      transparent 100%
+    ),
+    var(--el-bg-color);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--el-color-primary) 8%, transparent),
+    var(--el-box-shadow-lighter);
+}
+
+.form-canvas-empty__mark {
+  color: var(--el-color-primary);
+  background: var(--fd-chip-bg, var(--el-fill-color-light));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--el-color-primary) 18%, transparent);
 }
 
 .form-field-card {
-  user-select: none;
-  background: var(--el-bg-color);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  width: 100%;
   height: 100%;
+  min-height: 100%;
+  padding: 10px 36px 10px 12px;
+  cursor: pointer;
+  user-select: none;
+  border: 1px solid transparent;
+  border-radius: var(--fd-radius-sm, 6px);
+  background: transparent;
   transition:
-    border-color 0.2s ease,
-    background-color 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.form-field-card__content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+.form-field-card.is-stack .form-field-card__content {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 6px;
+}
+
+.form-field-card.is-stack .form-field-card__label {
+  max-width: 100%;
+}
+
+/* --- 标签位置：顶部 --- */
+.form-field-card.label-pos-top {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.form-field-card.label-pos-top .form-field-card__content {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.form-field-card.label-pos-top .form-field-card__label {
+  max-width: 100%;
+  width: 100%;
+}
+
+/* --- 标签位置：右侧对齐 --- */
+.form-field-card.label-pos-right .form-field-card__label {
+  text-align: right;
+  padding-right: 4px;
+}
+
+.form-field-card__label {
+  flex: 0 0 auto;
+  max-width: 88px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--el-text-color-primary);
+}
+
+.form-field-card__control {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
 }
 
 .form-field-card .drag-handle {
   cursor: grab;
+  line-height: 1;
 }
 
 .form-field-card:active .drag-handle {
   cursor: grabbing;
 }
 
-.form-field-card.selected-card {
-  position: relative;
-  box-shadow: var(--el-box-shadow-lighter);
+.form-field-card.is-hidden-field {
+  opacity: 0.55;
 }
 
-.form-field-card.selected-card::before {
-  content: '';
-  position: absolute;
-  left: -1px;
-  top: 6px;
-  bottom: 6px;
-  width: 3px;
-  border-radius: 2px;
-  background: var(--el-color-primary);
+.form-field-card:not(.selected-card):hover {
+  border-color: color-mix(in srgb, var(--el-color-primary) 28%, transparent);
+  background: color-mix(in srgb, var(--el-color-primary) 4%, var(--el-bg-color));
+}
+
+.form-field-card.selected-card {
+  border-color: color-mix(in srgb, var(--el-color-primary) 55%, var(--el-border-color));
+  background: var(--wc-active-fill, var(--el-color-primary-light-9));
+  box-shadow: inset 3px 0 0 var(--fd-spine, var(--el-color-primary));
 }
 
 .form-field-card.selected-card .field-actions {
   display: flex !important;
-}
-
-.form-field-card:not(.selected-card):hover {
-  transform: translateY(-1px);
-  box-shadow: var(--el-box-shadow-lighter);
-  background: var(--el-fill-color-blank);
 }
 
 .field-actions__delete:hover {
@@ -492,15 +654,59 @@ function getFieldPreview(field: FormField) {
 :deep(.vgl-layout) {
   width: 100% !important;
   background: transparent;
+  /* 不用实心底，避免残留时看起来像字段选中态 */
+  --vgl-placeholder-bg: transparent;
+  --vgl-placeholder-opacity: 1;
+}
+
+:deep(.vgl-item--placeholder) {
+  border-radius: var(--fd-radius-sm, 6px);
+  pointer-events: none;
+  background-color: transparent !important;
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--el-color-primary) 45%, transparent);
+}
+
+:deep(.vgl-item--placeholder .vgl-item__resizer) {
+  display: none !important;
+}
+
+:deep(.vgl-item) {
+  display: flex !important;
+  align-items: stretch;
+}
+
+:deep(.vgl-item > .form-field-card),
+:deep(.vgl-item > div) {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  height: 100%;
+}
+
+:deep(.vgl-item__resizer) {
+  --vgl-resizer-border-color: color-mix(in srgb, var(--el-color-primary) 55%, transparent);
+  --vgl-resizer-border-width: 1.5px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+/* 仅选中字段显示缩放角 */
+:deep(.vgl-item:has(.form-field-card.selected-card) .vgl-item__resizer) {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .drag-active {
-  outline: 2px dashed var(--el-color-primary);
+  outline: 1px dashed color-mix(in srgb, var(--el-color-primary) 55%, transparent);
   outline-offset: -2px;
 }
 
 .drag-hover {
-  border-color: var(--el-color-primary) !important;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--el-color-primary) 22%, transparent);
+  border-color: color-mix(in srgb, var(--el-color-primary) 45%, var(--el-border-color)) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--el-color-primary) 20%, transparent),
+    var(--el-box-shadow-lighter);
 }
 </style>

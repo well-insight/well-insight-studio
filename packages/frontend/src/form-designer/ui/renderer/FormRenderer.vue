@@ -6,9 +6,7 @@ import type { FormField, FormOption, FormSchema } from '../../types'
  * 将 FormSchema 渲染为真实的 Element Plus 表单
  * 用于预览模式
  */
-import { storeToRefs } from 'pinia'
 import { ref, watch } from 'vue'
-import { useThemeStore } from '@/stores/themeStore'
 
 const props = defineProps<{
   schema: FormSchema
@@ -18,8 +16,6 @@ const emit = defineEmits<{
   (e: 'submit', data: Record<string, any>): void
   (e: 'reset'): void
 }>()
-
-const { config: themeConfig } = storeToRefs(useThemeStore())
 
 const formRef = ref<FormInstance>()
 const formData = ref<Record<string, any>>({})
@@ -121,7 +117,18 @@ function fieldStyle(field: FormField): Record<string, string> {
 }
 
 function fieldLabel(field: FormField): string {
-  return field.datasetBinding ? `${field.label} \u{1F517}` : field.label
+  return field.datasetBinding ? `${field.label} [link]` : field.label
+}
+
+/** 构建 el-form-item 的 v-bind 对象（ElFormItem 扩展属性） */
+function getItemBindings(field: FormField) {
+  return {
+    labelWidth: field.labelWidth ? `${field.labelWidth}px` : undefined,
+    showMessage: field.showMessage,
+    inlineMessage: field.inlineMessage,
+    size: field.size,
+    error: field.error,
+  }
 }
 
 type CascaderLikeOption = FormOption & {
@@ -159,15 +166,22 @@ function handleReset() {
 </script>
 
 <template>
-  <div class="form-renderer mx-auto max-w-[800px] rounded-lg border border-[var(--el-border-color-light)] bg-[var(--el-bg-color)] p-8 shadow-[var(--el-box-shadow-lighter)]">
+  <div class="form-renderer mx-auto max-w-[860px] p-8">
     <el-form
       ref="formRef"
       :model="formData"
       :label-width="`${schema.config.labelWidth}px`"
       :label-position="schema.config.labelPosition"
-      :size="themeConfig.size"
+      :size="schema.config.size"
       :disabled="schema.config.disabled"
       :hide-required-asterisk="!schema.config.requiredAsterisk"
+      :label-suffix="schema.config.labelSuffix"
+      :show-message="schema.config.showMessage"
+      :inline-message="schema.config.inlineMessage"
+      :status-icon="schema.config.statusIcon"
+      :scroll-to-error="schema.config.scrollToError"
+      :inline="schema.config.inline"
+      :validate-on-rule-change="schema.config.validateOnRuleChange"
     >
       <div class="flex flex-wrap items-start">
         <template v-for="field in schema.fields" :key="field._vid">
@@ -177,6 +191,7 @@ function handleReset() {
                 :label="fieldLabel(field)"
                 :prop="field.field"
                 :rules="buildRules(field)"
+                v-bind="getItemBindings(field)"
               >
                 <el-input
                   v-model="formData[field.field]"
@@ -196,6 +211,7 @@ function handleReset() {
                 :label="fieldLabel(field)"
                 :prop="field.field"
                 :rules="buildRules(field)"
+                v-bind="getItemBindings(field)"
               >
                 <el-input
                   v-model="formData[field.field]"
@@ -214,6 +230,7 @@ function handleReset() {
                 :label="fieldLabel(field)"
                 :prop="field.field"
                 :rules="buildRules(field)"
+                v-bind="getItemBindings(field)"
               >
                 <el-input
                   v-model="formData[field.field]"
@@ -234,6 +251,7 @@ function handleReset() {
                 :label="fieldLabel(field)"
                 :prop="field.field"
                 :rules="buildRules(field)"
+                v-bind="getItemBindings(field)"
               >
                 <el-input-number
                   v-model="formData[field.field]"
@@ -256,6 +274,7 @@ function handleReset() {
                 :label="fieldLabel(field)"
                 :prop="field.field"
                 :rules="buildRules(field)"
+                v-bind="getItemBindings(field)"
               >
                 <el-select
                   v-model="formData[field.field]"
@@ -284,6 +303,7 @@ function handleReset() {
                 :label="fieldLabel(field)"
                 :prop="field.field"
                 :rules="buildRules(field)"
+                v-bind="getItemBindings(field)"
               >
                 <el-radio-group
                   v-model="formData[field.field]"
@@ -308,6 +328,7 @@ function handleReset() {
                 :label="fieldLabel(field)"
                 :prop="field.field"
                 :rules="buildRules(field)"
+                v-bind="getItemBindings(field)"
               >
                 <el-checkbox-group
                   v-model="formData[field.field]"
@@ -333,6 +354,7 @@ function handleReset() {
                 :label="fieldLabel(field)"
                 :prop="field.field"
                 :rules="buildRules(field)"
+                v-bind="getItemBindings(field)"
               >
                 <el-switch
                   v-model="formData[field.field]"
@@ -351,6 +373,7 @@ function handleReset() {
                 :label="fieldLabel(field)"
                 :prop="field.field"
                 :rules="buildRules(field)"
+                v-bind="getItemBindings(field)"
               >
                 <el-rate
                   v-model="formData[field.field]"
@@ -369,6 +392,7 @@ function handleReset() {
                 :label="fieldLabel(field)"
                 :prop="field.field"
                 :rules="buildRules(field)"
+                v-bind="getItemBindings(field)"
               >
                 <el-slider
                   v-model="formData[field.field]"
@@ -388,6 +412,7 @@ function handleReset() {
                 :label="fieldLabel(field)"
                 :prop="field.field"
                 :rules="buildRules(field)"
+                v-bind="getItemBindings(field)"
               >
                 <el-date-picker
                   v-model="formData[field.field]"
@@ -409,6 +434,7 @@ function handleReset() {
                 :label="fieldLabel(field)"
                 :prop="field.field"
                 :rules="buildRules(field)"
+                v-bind="getItemBindings(field)"
               >
                 <el-time-picker
                   v-model="formData[field.field]"
@@ -430,6 +456,7 @@ function handleReset() {
                 :label="fieldLabel(field)"
                 :prop="field.field"
                 :rules="buildRules(field)"
+                v-bind="getItemBindings(field)"
               >
                 <el-date-picker
                   v-model="formData[field.field]"
@@ -451,6 +478,7 @@ function handleReset() {
                 :label="fieldLabel(field)"
                 :prop="field.field"
                 :rules="buildRules(field)"
+                v-bind="getItemBindings(field)"
               >
                 <el-cascader
                   v-model="formData[field.field]"
@@ -471,6 +499,7 @@ function handleReset() {
                 :label="fieldLabel(field)"
                 :prop="field.field"
                 :rules="buildRules(field)"
+                v-bind="getItemBindings(field)"
               >
                 <el-tree-select
                   v-model="formData[field.field]"
@@ -491,6 +520,7 @@ function handleReset() {
                 :label="fieldLabel(field)"
                 :prop="field.field"
                 :rules="buildRules(field)"
+                v-bind="getItemBindings(field)"
               >
                 <el-color-picker
                   v-model="formData[field.field]"
@@ -507,6 +537,7 @@ function handleReset() {
                 :label="fieldLabel(field)"
                 :prop="field.field"
                 :rules="buildRules(field)"
+                v-bind="getItemBindings(field)"
               >
                 <el-upload
                   :disabled="field.disabled"
@@ -530,6 +561,7 @@ function handleReset() {
                 :label="fieldLabel(field)"
                 :prop="field.field"
                 :rules="buildRules(field)"
+                v-bind="getItemBindings(field)"
               >
                 <el-transfer
                   v-model="formData[field.field]"
@@ -562,7 +594,7 @@ function handleReset() {
       >
         <el-button
           v-if="schema.config.resetBtn.show"
-          :size="themeConfig.size"
+          :size="schema.config.size"
           @click="handleReset"
         >
           {{ schema.config.resetBtn.text }}
@@ -570,7 +602,7 @@ function handleReset() {
         <el-button
           v-if="schema.config.submitBtn.show"
           type="primary"
-          :size="themeConfig.size"
+          :size="schema.config.size"
           @click="handleSubmit"
         >
           {{ schema.config.submitBtn.text }}
@@ -582,7 +614,21 @@ function handleReset() {
 
 <style scoped>
 .form-renderer {
+  box-sizing: border-box;
   min-height: 200px;
-  box-shadow: var(--el-box-shadow-lighter);
+  border-radius: var(--fd-radius-md, 10px);
+  border: 1px solid var(--fd-paper-edge, var(--el-border-color-light));
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--el-color-primary) 10%, transparent) 0,
+      color-mix(in srgb, var(--el-color-primary) 10%, transparent) 3px,
+      transparent 3px,
+      transparent 100%
+    ),
+    var(--el-bg-color);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--el-color-primary) 8%, transparent),
+    var(--el-box-shadow-lighter);
 }
 </style>

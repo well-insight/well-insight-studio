@@ -346,17 +346,12 @@ function dragEvent(
     state.placeholder.y = l.y
     state.placeholder.w = w
     state.placeholder.h = h
-
-    nextTick(() => {
-      state.isDragging = true
-    })
-
+    // 同步切换：避免 dragend 清掉后又被排队的 nextTick 置回 true，造成占位阴影残留
+    state.isDragging = true
     emitter.emit('updateWidth', state.width)
   }
   else {
-    nextTick(() => {
-      state.isDragging = false
-    })
+    state.isDragging = false
   }
 
   // Move the element to the dragged location.
@@ -434,16 +429,11 @@ function resizeEvent(
     state.placeholder.y = y
     state.placeholder.w = l.w
     state.placeholder.h = l.h
-    nextTick(() => {
-      state.isDragging = true
-    })
-    // this.$broadcast("updateWidth", this.width);
+    state.isDragging = true
     emitter.emit('updateWidth', state.width)
   }
   else if (eventName) {
-    nextTick(() => {
-      state.isDragging = false
-    })
+    state.isDragging = false
   }
 
   if (props.responsive)
@@ -527,13 +517,16 @@ function findDifference(layout: Layout, originalLayout: Layout) {
       </GridItem>
     </template>
     <GridItem
-      v-show="state.isDragging"
+      v-if="state.isDragging"
       class="vgl-item--placeholder"
       :x="state.placeholder.x"
       :y="state.placeholder.y"
       :w="state.placeholder.w"
       :h="state.placeholder.h"
       :i="state.placeholder.i"
+      :is-draggable="false"
+      :is-resizable="false"
+      :static="true"
     />
   </div>
 </template>

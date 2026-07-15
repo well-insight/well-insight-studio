@@ -2380,10 +2380,13 @@ defineExpose({
     min-height: 0;
     display: flex;
     flex-direction: column;
-    box-shadow: var(--el-box-shadow-light);
-    background-color: var(--el-fill-color-light);
-    border-radius: var(--el-border-radius-base);
     overflow: hidden;
+    border-radius: var(--ve-radius-md, 10px);
+    border: 1px solid var(--ve-paper-edge, var(--el-border-color-light));
+    background: color-mix(in srgb, var(--el-color-primary) 4%, var(--el-fill-color-light));
+    box-shadow:
+      0 1px 0 color-mix(in srgb, var(--el-color-primary) 8%, transparent),
+      var(--el-box-shadow-lighter);
   }
 }
 </style>
@@ -2422,9 +2425,19 @@ defineExpose({
   position: relative;
   flex-shrink: 0;
   width: 100%;
-  box-shadow: var(--el-box-shadow-light);
-  border-radius: var(--el-border-radius-base);
   overflow: visible;
+  border-radius: var(--ve-radius-md, 10px);
+  border: 1px solid var(--ve-paper-edge, var(--el-border-color-light));
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--el-color-primary) 10%, transparent) 0,
+      color-mix(in srgb, var(--el-color-primary) 10%, transparent) 3px,
+      transparent 3px,
+      transparent 100%
+    ),
+    var(--el-bg-color);
+  box-shadow: var(--el-box-shadow-lighter);
 }
 
 .edit-canvas-inner {

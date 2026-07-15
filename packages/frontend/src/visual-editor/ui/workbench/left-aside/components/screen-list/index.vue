@@ -162,7 +162,7 @@ function setDefaultPage(_data: PageTreeNode) {
 <template>
   <div class="full w-full flex flex-col">
     <div class="w-full h-[50px] flex items-center justify-between px-3 border-bottom-1">
-      <el-text>页面</el-text>
+      <span class="ve-panel-title">页面</span>
       <el-space>
         <el-button :icon="Search" link />
         <el-button :icon="Plus" link @click="addPage" />

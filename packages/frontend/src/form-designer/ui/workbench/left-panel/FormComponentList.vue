@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 /**
- * 表单组件面板
- * 左侧拖拽源，展示所有可用表单组件（样式对齐可视化组件列表）
+ * 左侧表单组件库
  */
 import type { FormComponentDefinition, FormField } from '../../../types'
 import {
@@ -38,23 +37,19 @@ const emit = defineEmits<{
   (e: 'addField', field: FormField): void
 }>()
 
-/** 展开/折叠的分类 */
 const expandedCategories = ref<Set<string>>(new Set(FORM_COMPONENT_CATEGORIES.map(c => c.key)))
 
 function toggleCategory(key: string) {
-  if (expandedCategories.value.has(key)) {
+  if (expandedCategories.value.has(key))
     expandedCategories.value.delete(key)
-  }
-  else {
+  else
     expandedCategories.value.add(key)
-  }
 }
 
 function isExpanded(key: string): boolean {
   return expandedCategories.value.has(key)
 }
 
-/** 拖拽开始 */
 function onDragStart(event: DragEvent, comp: FormComponentDefinition) {
   if (!event.dataTransfer)
     return
@@ -63,7 +58,6 @@ function onDragStart(event: DragEvent, comp: FormComponentDefinition) {
   event.dataTransfer.effectAllowed = 'copy'
 }
 
-/** 图标映射 */
 const iconMap: Record<string, any> = {
   input: EditPen,
   textarea: Document,
@@ -89,13 +83,10 @@ function getIcon(comp: FormComponentDefinition): any {
   return iconMap[comp.key] ?? Setting
 }
 
-/** 点击添加 */
 function onClickAdd(comp: FormComponentDefinition) {
-  const field = createFormField(comp.key)
-  emit('addField', field)
+  emit('addField', createFormField(comp.key))
 }
 
-/** 搜索 */
 const searchText = ref('')
 const filteredCategories = computed(() => {
   if (!searchText.value.trim()) {
@@ -117,57 +108,61 @@ const filteredCategories = computed(() => {
 
 <template>
   <div class="form-component-list flex h-full flex-col bg-[var(--el-bg-color)]">
-    <div class="border-bottom-1 flex h-[50px] shrink-0 items-center px-3">
-      <span class="text-sm font-semibold text-[var(--el-text-color-primary)]">表单组件</span>
+    <div class="border-bottom-1 flex h-[var(--fd-header-h,50px)] shrink-0 items-center gap-2 px-3">
+      <span class="fd-panel-title">组件库</span>
+      <span class="text-[11px] text-[var(--el-text-color-placeholder)]">拖入或点击添加</span>
     </div>
 
-    <div class="shrink-0 px-3 py-2">
+    <div class="shrink-0 px-3 py-2.5">
       <el-input
         v-model="searchText"
-        placeholder="搜索组件..."
+        placeholder="搜索组件"
         :prefix-icon="Search"
         clearable
       />
     </div>
 
     <el-scrollbar class="min-h-0 flex-1">
-      <div class="px-2 pb-3">
-        <div v-for="cat in filteredCategories" :key="cat.key" class="mb-2">
-          <div
-            class="mb-1 flex cursor-pointer items-center justify-between rounded-md px-2 py-2 text-xs font-medium text-[var(--el-text-color-secondary)] hover:bg-[var(--el-fill-color-light)]"
+      <div class="px-2.5 pb-4">
+        <div v-for="cat in filteredCategories" :key="cat.key" class="mb-3">
+          <button
+            type="button"
+            class="fd-cat-row mb-1.5 flex w-full cursor-pointer items-center justify-between rounded-[var(--fd-radius-sm,6px)] px-2 py-1.5 hover:bg-[var(--el-fill-color-light)]"
             @click="toggleCategory(cat.key)"
           >
-            <span>{{ cat.label }}</span>
+            <span class="fd-cat-label">{{ cat.label }}</span>
             <el-icon
               :class="{ 'rotate-90': isExpanded(cat.key) }"
-              class="transition-transform duration-200"
+              class="text-[var(--el-text-color-placeholder)] transition-transform duration-200"
             >
               <ArrowRight />
             </el-icon>
-          </div>
+          </button>
 
-          <div v-show="isExpanded(cat.key)" class="grid grid-cols-2 gap-2 px-0.5">
+          <div v-show="isExpanded(cat.key)" class="grid grid-cols-2 gap-2">
             <div
               v-for="comp in cat.components"
               :key="comp.key"
-              class="form-component-item group flex min-h-[44px] cursor-pointer items-center gap-2.5 rounded-[8px] border border-[var(--el-border-color-light)] bg-[var(--el-fill-color-blank)] px-3 py-2.5 text-[13px] leading-snug text-[var(--el-text-color-regular)] transition-colors hover:border-[var(--el-color-primary-light-5)] hover:bg-[var(--wc-active-fill,var(--el-color-primary-light-9))] hover:text-[var(--el-color-primary)]"
+              class="form-component-item group flex min-h-[48px] cursor-pointer items-center gap-2.5 rounded-[var(--fd-radius-md,10px)] border border-[var(--el-border-color-lighter)] bg-[var(--el-fill-color-blank)] px-2.5 py-2 text-[13px] text-[var(--el-text-color-regular)]"
               draggable="true"
               @dragstart="onDragStart($event, comp)"
               @click="onClickAdd(comp)"
             >
-              <el-icon :size="18" class="shrink-0 text-[var(--el-color-primary)] opacity-80">
-                <component :is="getIcon(comp)" />
-              </el-icon>
-              <span class="truncate">{{ comp.label }}</span>
+              <span class="form-component-item__icon flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--fd-radius-sm,6px)]">
+                <el-icon :size="16" class="text-[var(--el-color-primary)]">
+                  <component :is="getIcon(comp)" />
+                </el-icon>
+              </span>
+              <span class="truncate font-medium">{{ comp.label }}</span>
             </div>
           </div>
         </div>
 
         <div
           v-if="filteredCategories.length === 0"
-          class="py-8 text-center text-sm text-[var(--el-text-color-placeholder)]"
+          class="py-10 text-center text-sm text-[var(--el-text-color-placeholder)]"
         >
-          未找到匹配的组件
+          没有匹配的组件
         </div>
       </div>
     </el-scrollbar>
@@ -175,8 +170,35 @@ const filteredCategories = computed(() => {
 </template>
 
 <style scoped>
+.form-component-item {
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.form-component-item__icon {
+  background: var(--fd-chip-bg, var(--el-fill-color-light));
+}
+
+.form-component-item:hover {
+  border-color: color-mix(in srgb, var(--el-color-primary) 45%, var(--el-border-color));
+  background: var(--wc-active-fill, var(--el-color-primary-light-9));
+  color: var(--el-color-primary);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--el-color-primary) 16%, transparent);
+  transform: translateY(-1px);
+}
+
 .form-component-item:active {
   cursor: grabbing;
-  opacity: 0.75;
+  transform: translateY(0);
+  opacity: 0.85;
+}
+
+.fd-cat-row {
+  border: 0;
+  background: transparent;
+  text-align: left;
 }
 </style>

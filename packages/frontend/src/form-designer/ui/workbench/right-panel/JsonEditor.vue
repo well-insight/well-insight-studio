@@ -100,22 +100,22 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="json-editor flex h-full flex-col">
-    <div class="flex shrink-0 items-center justify-between px-3 pt-3 pb-1">
-      <span class="text-xs text-[var(--el-text-color-placeholder)]">
-        直接编辑 JSON Schema，修改后自动同步
+    <div class="border-bottom-1 flex shrink-0 items-center justify-between px-3 py-2">
+      <span class="text-xs text-[var(--el-text-color-secondary)]">
+        编辑后自动同步 Schema
       </span>
       <el-button text type="primary" @click="formatJson">
         格式化
       </el-button>
     </div>
-    <div class="min-h-0 flex-1 p-3 pt-1">
+    <div class="min-h-0 flex-1 p-3">
       <el-input
         type="textarea"
         :model-value="jsonText"
         class="json-textarea"
         :autosize="false"
         resize="none"
-        placeholder="编辑 JSON Schema..."
+        placeholder="FormSchema JSON"
         @input="onCodeChange"
       />
     </div>
@@ -140,10 +140,11 @@ onBeforeUnmount(() => {
   height: 100% !important;
   font-family: var(--wc-font-mono, Consolas, Monaco, monospace);
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.55;
   resize: none;
-  background: var(--el-fill-color-light);
+  border-radius: var(--fd-radius-sm, 6px);
+  background: color-mix(in srgb, var(--el-color-primary) 3%, var(--el-fill-color-blank));
   color: var(--el-text-color-primary);
-  box-shadow: 0 0 0 1px var(--el-border-color) inset;
+  box-shadow: inset 0 0 0 1px var(--fd-paper-edge, var(--el-border-color));
 }
 </style>

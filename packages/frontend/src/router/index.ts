@@ -31,12 +31,26 @@ const routes2: RouteRecordRaw[] = [
     component: () => import('@/layout/index.vue'),
     meta: { title: '项目' },
     children: [
-      // 页面设计
+      // 页面设计 - 可视化
       {
         path: 'project/pages',
         name: 'VisualDesign',
-        component: () => import('@/views/page-factory/PageList.vue'),
-        meta: { title: '页面设计' },
+        component: () => import('@/views/page-factory/VisualDesignList.vue'),
+        meta: { title: '可视化设计' },
+      },
+      // 页面设计 - 表单
+      {
+        path: 'project/pages/form',
+        name: 'PageListForm',
+        component: () => import('@/views/page-factory/FormDesignList.vue'),
+        meta: { title: '表单设计' },
+      },
+      // 页面设计 - 报表
+      {
+        path: 'project/pages/report',
+        name: 'PageListReport',
+        component: () => import('@/views/page-factory/ReportDesignList.vue'),
+        meta: { title: '报表设计' },
       },
       // 页面编辑 - 新建
       {

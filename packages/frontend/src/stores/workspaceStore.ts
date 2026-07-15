@@ -24,6 +24,29 @@ export const useWorkspaceStore = defineStore('useWorkspaceStore', {
         meta: {
           icon: 'page-setting',
         },
+        children: [
+          {
+            path: '/project/pages',
+            title: '可视化设计',
+            meta: {
+              icon: 'dashboard',
+            },
+          },
+          {
+            path: '/project/pages/form',
+            title: '表单设计',
+            meta: {
+              icon: 'form',
+            },
+          },
+          {
+            path: '/project/pages/report',
+            title: '报表设计',
+            meta: {
+              icon: 'chart',
+            },
+          },
+        ],
       },
       {
         path: '/project/app-assembly',

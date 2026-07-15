@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 /**
  * 表单设计器主组件
- * 组合顶部工具栏、左侧面板、中间画布/预览、右侧属性/JSON面板
+ * 组合左侧组件库、中间画布/预览、右侧属性/JSON
  */
 import type { FormField, FormSchema } from './types'
 import { debounce } from 'lodash-es'
@@ -10,17 +10,15 @@ import { ButtonTabs } from '@/components/button-tabs'
 import { cloneFormSchema } from './form-designer.utils'
 import { FORM_DATA_KEY, useFormData } from './hooks/useFormData'
 import FormCanvas from './ui/canvas/FormCanvas.vue'
-import FormRenderer from './ui/renderer/FormRenderer.vue'
 import FormComponentList from './ui/workbench/left-panel/FormComponentList.vue'
 import FormFieldSettings from './ui/workbench/right-panel/FormFieldSettings.vue'
 import FormSettings from './ui/workbench/right-panel/FormSettings.vue'
 import JsonEditor from './ui/workbench/right-panel/JsonEditor.vue'
+import './styles/form-designer.scss'
 
 const props = defineProps<{
   /** 外部传入的初始 Schema（用于加载已有页面） */
   initialSchema?: FormSchema | null
-  /** 是否预览模式 */
-  preview?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -120,16 +118,12 @@ defineExpose({
 <template>
   <div class="form-designer h-full w-full flex flex-col overflow-hidden bg-[var(--el-bg-color-page)]">
     <div class="form-designer-body flex min-h-0 flex-1 overflow-hidden">
-      <div
-        v-show="!preview"
-        class="form-designer-left border-end-1 w-[280px] shrink-0 bg-[var(--el-bg-color)]"
-      >
+      <div class="form-designer-left border-end-1 shrink-0 bg-[var(--el-bg-color)]">
         <FormComponentList @add-field="handleAddField" />
       </div>
 
-      <div class="form-designer-center flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[var(--el-bg-color-page)]">
+      <div class="form-designer-center flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <FormCanvas
-          v-if="!preview"
           class="min-h-0 flex-1"
           :fields="formData.fields.value"
           :active-field-id="formData.activeFieldId.value"
@@ -140,18 +134,10 @@ defineExpose({
           @move-field="handleMoveField"
           @update-field-layout="handleUpdateFieldLayout"
         />
-        <el-scrollbar v-else class="h-full">
-          <div class="p-6">
-            <FormRenderer :schema="formData.formSchema" />
-          </div>
-        </el-scrollbar>
       </div>
 
-      <div
-        v-show="!preview"
-        class="form-designer-right border-start-1 flex w-[300px] shrink-0 flex-col bg-[var(--el-bg-color)]"
-      >
-        <div class="border-bottom-1 flex h-[50px] shrink-0 items-center px-3">
+      <div class="form-designer-right border-start-1 flex shrink-0 flex-col bg-[var(--el-bg-color)]">
+        <div class="border-bottom-1 flex h-[var(--fd-header-h,50px)] shrink-0 items-center px-3">
           <ButtonTabs v-model="rightTab" :options="rightTabOptions" />
         </div>
         <div class="min-h-0 flex-1 overflow-hidden">
@@ -181,9 +167,16 @@ defineExpose({
   height: 100%;
 }
 
-.form-designer-left,
-.form-designer-right {
+.form-designer-left {
+  width: var(--fd-rail-width, 280px);
   height: 100%;
   min-height: 0;
 }
+
+.form-designer-right {
+  width: var(--fd-inspector-width, 300px);
+  height: 100%;
+  min-height: 0;
+}
+
 </style>

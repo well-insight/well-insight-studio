@@ -3,10 +3,12 @@
  * 参考 Element Plus 表单组件体系设计
  */
 
-/** 表单标签位置 */
+/**
+ * 表单标签位置 — 对应 ElForm label-position
+ */
 export type FormLabelPosition = 'left' | 'right' | 'top'
 
-/** 表单组件尺寸 */
+/** 表单组件尺寸 — 对应 ElForm / ElFormItem size */
 export type FormSize = 'large' | 'default' | 'small'
 
 /** 按钮位置 */
@@ -14,23 +16,35 @@ export type ButtonPosition = 'left' | 'center' | 'right'
 
 /**
  * 表单全局配置
+ * 参考 Element Plus Form API 设计
  */
 export interface FormConfig {
-  /** 标签宽度 (px) */
+  /** 标签宽度 (px) — 对应 ElForm label-width */
   labelWidth: number
-  /** 标签位置 */
+  /** 标签位置 — 对应 ElForm label-position */
   labelPosition: FormLabelPosition
-  /**
-   * 已废弃：渲染时改用系统主题尺寸（el-config-provider）
-   * 保留字段以兼容已保存的 schema
-   */
-  size?: FormSize
-  /** 是否禁用所有表单项 */
+  /** 表单尺寸 — 对应 ElForm size */
+  size: FormSize
+  /** 是否禁用所有表单项 — 对应 ElForm disabled */
   disabled: boolean
-  /** 栅格列数，默认 24 */
+  /** 栅格列数，默认 24（自定义扩展，非 ElForm 原生） */
   gridColumns: number
-  /** 是否显示必填星号 */
+  /** 是否显示必填星号 — 对应 ElForm hide-required-asterisk（反向） */
   requiredAsterisk: boolean
+  /** 标签后缀文本 — 对应 ElForm label-suffix */
+  labelSuffix: string
+  /** 是否显示校验错误信息 — 对应 ElForm show-message */
+  showMessage: boolean
+  /** 是否以内联形式展示校验信息 — 对应 ElForm inline-message */
+  inlineMessage: boolean
+  /** 是否展示校验状态图标 — 对应 ElForm status-icon */
+  statusIcon: boolean
+  /** 校验失败时滚动到第一个错误 — 对应 ElForm scroll-to-error */
+  scrollToError: boolean
+  /** 是否行内模式 — 对应 ElForm inline */
+  inline: boolean
+  /** 是否在 rules 变化后重新校验 — 对应 ElForm validate-on-rule-change */
+  validateOnRuleChange: boolean
   /** 提交按钮配置 */
   submitBtn: {
     show: boolean
@@ -80,21 +94,22 @@ export interface FormRule {
 
 /**
  * 表单字段数据模型
+ * 参考 Element Plus FormItem API 设计
  */
 export interface FormField {
   /** 唯一标识 */
   _vid: string
   /** 组件类型 key：'input' | 'select' | 'checkbox' | 'radio' | 'datePicker' | 'switch' | ... */
   componentKey: string
-  /** 标签文本 */
+  /** 标签文本 — 对应 ElFormItem label */
   label: string
-  /** 数据字段名（用于表单数据收集） */
+  /** 数据字段名（用于表单数据收集）— 对应 ElFormItem prop */
   field: string
   /** 占位提示 */
   placeholder: string
   /** 默认值 */
   defaultValue: any
-  /** 是否必填 */
+  /** 是否必填 — 对应 ElFormItem required */
   required: boolean
   /** 是否禁用 */
   disabled: boolean
@@ -122,6 +137,17 @@ export interface FormField {
     datasetId: string
     field: string
   } | null
+  /** ===== ElFormItem 扩展属性 ===== */
+  /** 单独设置标签宽度（px）— 对应 ElFormItem label-width */
+  labelWidth?: number
+  /** 单独设置是否显示校验信息 — 对应 ElFormItem show-message */
+  showMessage?: boolean
+  /** 单独设置内联校验信息 — 对应 ElFormItem inline-message */
+  inlineMessage?: boolean
+  /** 单独设置表单项尺寸 — 对应 ElFormItem size */
+  size?: FormSize
+  /** 自定义错误信息 — 对应 ElFormItem error */
+  error?: string
 }
 
 /**

@@ -1,0 +1,44 @@
+/* 可视化设计器局部视觉令牌 — 与表单设计器同属蓝图制表工作台 */
+
+.visual-editor,
+.simulator-container {
+  --ve-header-h: 50px;
+  --ve-rail-w: 52px;
+  --ve-radius-sm: 6px;
+  --ve-radius-md: 10px;
+  --ve-ink: color-mix(in srgb, var(--el-color-primary) 55%, var(--el-text-color-secondary));
+  --ve-grid-dot: color-mix(in srgb, var(--el-color-primary) 22%, transparent);
+  --ve-paper-edge: color-mix(in srgb, var(--el-color-primary) 12%, var(--el-border-color-light));
+  --ve-spine: color-mix(in srgb, var(--el-color-primary) 70%, transparent);
+  --ve-chip-bg: color-mix(in srgb, var(--el-color-primary) 8%, var(--el-fill-color-blank));
+  --ve-active-fill: var(--wc-active-fill, var(--el-color-primary-light-9));
+}
+
+.visual-editor .ve-panel-title,
+.simulator-container .ve-panel-title {
+  font-size: 12px;
+  font-weight: var(--wc-font-weight-semibold, 600);
+  letter-spacing: 0.06em;
+  color: var(--el-text-color-primary);
+}
+
+.visual-editor .ve-cat-label,
+.simulator-container .ve-cat-label {
+  font-size: 11px;
+  font-weight: var(--wc-font-weight-medium, 500);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--el-text-color-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .visual-editor *,
+  .visual-editor *::before,
+  .visual-editor *::after,
+  .simulator-container *,
+  .simulator-container *::before,
+  .simulator-container *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

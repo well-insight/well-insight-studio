@@ -410,6 +410,56 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="form-section-title mb-2 mt-4">
+            表单项扩展（ElFormItem）
+          </div>
+
+          <el-form-item label="标签宽度 (px)">
+            <el-input-number
+              :model-value="local.labelWidth"
+              :min="0"
+              :max="300"
+              :step="10"
+              placeholder="0 表示继承全局"
+              @change="syncImmediate('labelWidth', $event || undefined)"
+            />
+            <div class="mt-1 text-xs text-[var(--el-text-color-placeholder)]">
+              留空或 0 表示使用表单全局标签宽度
+            </div>
+          </el-form-item>
+
+          <el-form-item label="尺寸">
+            <el-select
+              :model-value="local.size || ''"
+              placeholder="继承全局"
+              clearable
+              @change="syncImmediate('size', $event || undefined)"
+            >
+              <el-option label="大" value="large" />
+              <el-option label="默认" value="default" />
+              <el-option label="小" value="small" />
+            </el-select>
+            <div class="mt-1 text-xs text-[var(--el-text-color-placeholder)]">
+              不选则继承表单全局尺寸
+            </div>
+          </el-form-item>
+
+          <div class="mb-3 flex items-center justify-between">
+            <span class="text-xs text-[var(--el-text-color-regular)]">显示校验信息</span>
+            <el-switch
+              :model-value="local.showMessage"
+              @change="syncImmediate('showMessage', $event ?? undefined)"
+            />
+          </div>
+
+          <el-form-item label="自定义错误信息">
+            <el-input
+              :model-value="local.error"
+              placeholder="留空则使用校验规则中的提示"
+              @input="syncToParent('error', $event || undefined)"
+            />
+          </el-form-item>
+
+          <div class="form-section-title mb-2 mt-4">
             数据绑定
           </div>
 
@@ -548,24 +598,5 @@ onBeforeUnmount(() => {
 .form-field-settings {
   min-width: 280px;
   height: 100%;
-}
-
-.form-section-title {
-  position: relative;
-  padding-left: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--el-text-color-secondary);
-}
-
-.form-section-title::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 2px;
-  bottom: 2px;
-  width: 3px;
-  border-radius: 2px;
-  background: var(--el-color-primary);
 }
 </style>

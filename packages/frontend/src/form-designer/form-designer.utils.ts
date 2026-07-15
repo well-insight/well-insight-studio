@@ -20,6 +20,13 @@ export function getDefaultFormConfig(): FormConfig {
     disabled: false,
     gridColumns: 24,
     requiredAsterisk: true,
+    labelSuffix: '',
+    showMessage: true,
+    inlineMessage: false,
+    statusIcon: false,
+    scrollToError: false,
+    inline: false,
+    validateOnRuleChange: true,
     submitBtn: {
       show: true,
       text: '提交',
@@ -100,6 +107,12 @@ export function createFormField(componentKey: string, overrides?: Partial<FormFi
     options: getDefaultOptions(componentKey),
     props: cloneDeep(getFormComponent(componentKey)?.defaultProps ?? {}),
     sort: Date.now(),
+    // ElFormItem 扩展属性（默认缺省即为 undefined，使 ElForm 全局值生效）
+    labelWidth: undefined,
+    showMessage: undefined,
+    inlineMessage: undefined,
+    size: undefined,
+    error: undefined,
     ...overrides,
   }
 }

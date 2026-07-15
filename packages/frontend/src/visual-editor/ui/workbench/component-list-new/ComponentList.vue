@@ -177,13 +177,14 @@ function onCatalogDblclickAdd(block: VisualEditorBlockData) {
 <template>
   <div
     :class="$style['component-list-container']"
-    class="flex flex-col items-center justify-center rounded-[16px] bg-[var(--el-bg-color)]"
+    class="flex flex-col items-center justify-center"
   >
     <el-button
       v-for="catalog in catalogs"
       :key="catalog.title"
       :ref="(el) => setNavBtnRef(catalog.title, (el as any)?.$el ?? el)"
       text
+      :title="catalog.title"
       :class="[
         $style['nav-btn'],
         {
@@ -195,7 +196,7 @@ function onCatalogDblclickAdd(block: VisualEditorBlockData) {
       @mouseleave="onBtnMouseLeave()"
       @click="onBtnClick(catalog.title)"
     >
-      <SvgIcon :size="20" :name="catalog.icon" />
+      <SvgIcon :size="18" :name="catalog.icon" />
     </el-button>
 
     <Teleport to="body">
@@ -223,14 +224,14 @@ function onCatalogDblclickAdd(block: VisualEditorBlockData) {
 
 <style lang="scss" module>
 .component-list-container {
-  box-shadow: var(--el-box-shadow-light);
-  gap: 16px;
-  padding: 8px 4px;
-  transition: box-shadow 0.25s ease;
-
-  &:hover {
-    box-shadow: var(--el-box-shadow);
-  }
+  gap: 6px;
+  padding: 8px 6px;
+  border-radius: var(--ve-radius-md, 10px);
+  border: 1px solid var(--ve-paper-edge, var(--el-border-color-light));
+  background: var(--el-bg-color);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--el-color-primary) 8%, transparent),
+    var(--el-box-shadow-lighter);
 
   :global {
     .el-button + .el-button {
@@ -244,35 +245,37 @@ function onCatalogDblclickAdd(block: VisualEditorBlockData) {
   width: 36px;
   height: 36px;
   padding: 6px;
-  border-radius: 10px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: var(--ve-radius-sm, 6px);
   color: var(--el-text-color-secondary);
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
 
   &:hover {
-    background-color: var(--el-color-primary-light-9);
+    background-color: var(--ve-active-fill, var(--el-color-primary-light-9));
     color: var(--el-color-primary);
-    transform: scale(1.08);
   }
 
   &--active {
-    background-color: var(--el-color-primary-light-9);
+    background-color: var(--ve-chip-bg, var(--el-color-primary-light-9));
     color: var(--el-color-primary);
 
     &::before {
       content: '';
       position: absolute;
-      left: -8px;
+      left: -7px;
       top: 50%;
       transform: translateY(-50%);
-      width: 3px;
-      height: 18px;
-      border-radius: 0 3px 3px 0;
-      background-color: var(--el-color-primary);
+      width: 2px;
+      height: 16px;
+      border-radius: 1px;
+      background-color: var(--ve-spine, var(--el-color-primary));
     }
   }
 
   &--pinned {
-    box-shadow: inset 0 0 0 1px var(--el-color-primary-light-5);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--el-color-primary) 40%, transparent);
   }
 }
 

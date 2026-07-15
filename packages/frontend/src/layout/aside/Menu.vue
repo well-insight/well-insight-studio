@@ -100,8 +100,10 @@ watch(
             :key="child.path"
             :index="child.path"
           >
-            <SvgIcon :name="child?.meta?.icon" size="20px" class="flex-shrink-0" :class="collapse ? '' : 'mr-2'" />
-            <span>{{ child?.title }}</span>
+            <SvgIcon :name="child?.meta?.icon" size="22px" class="flex-shrink-0" :class="collapse ? '' : 'mr-2'" />
+            <template #title>
+              <span>{{ child?.title }}</span>
+            </template>
           </el-menu-item>
         </el-sub-menu>
 
