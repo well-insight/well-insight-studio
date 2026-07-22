@@ -27,13 +27,17 @@ const routes2: RouteRecordRaw[] = [
   // 带 Layout 的主应用
   {
     path: '/',
-    redirect: '/project/pages',
+    redirect: '/project/pages/visual',
     component: () => import('@/layout/index.vue'),
     meta: { title: '项目' },
     children: [
-      // 页面设计 - 可视化
       {
         path: 'project/pages',
+        redirect: '/project/pages/visual',
+      },
+      // 页面设计 - 可视化
+      {
+        path: 'project/pages/visual',
         name: 'VisualDesign',
         component: () => import('@/views/page-factory/VisualDesignList.vue'),
         meta: { title: '可视化设计' },
@@ -62,16 +66,38 @@ const routes2: RouteRecordRaw[] = [
         },
         meta: { title: '新建页面' },
       },
-      // 页面编辑 - 编辑已有
+      // 页面编辑 - 可视化
       {
-        path: 'project/pages/edit/:id',
-        name: 'PageEditor',
+        path: 'project/pages/visual/edit/:id',
+        name: 'VisualPageEditor',
         components: {
           default: () => import('@/views/page-factory/PageEditor.vue'),
           headerCenter: () => import('@/views/page-factory/components/PageTitle.vue'),
           headerActions: () => import('@/views/page-factory/components/PageEditorActions.vue'),
         },
-        meta: { title: '页面编辑' },
+        meta: { title: '可视化编辑' },
+      },
+      // 页面编辑 - 表单
+      {
+        path: 'project/pages/form/edit/:id',
+        name: 'FormPageEditor',
+        components: {
+          default: () => import('@/views/page-factory/PageEditor.vue'),
+          headerCenter: () => import('@/views/page-factory/components/PageTitle.vue'),
+          headerActions: () => import('@/views/page-factory/components/PageEditorActions.vue'),
+        },
+        meta: { title: '表单编辑' },
+      },
+      // 页面编辑 - 报表
+      {
+        path: 'project/pages/report/:id',
+        name: 'ReportPageEditor',
+        components: {
+          default: () => import('@/views/page-factory/PageEditor.vue'),
+          headerCenter: () => import('@/views/page-factory/components/PageTitle.vue'),
+          headerActions: () => import('@/views/page-factory/components/PageEditorActions.vue'),
+        },
+        meta: { title: '报表编辑' },
       },
       // 应用集
       {

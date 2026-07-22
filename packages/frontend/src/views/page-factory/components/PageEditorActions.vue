@@ -8,8 +8,22 @@ import PageEditorVisualActions from './PageEditorVisualActions.vue'
 const route = useRoute()
 const pageStore = usePageStore()
 
+function getPageTypeFromPath(path: string) {
+  if (path.startsWith('/project/pages/visual/edit'))
+    return 'visualization'
+  if (path.startsWith('/project/pages/report/'))
+    return 'report'
+  if (path.startsWith('/project/pages/form/edit'))
+    return 'form'
+  return undefined
+}
+
 const isVisualization = computed(() => {
-  if (route.params.type) return route.params.type === 'visualization'
+  const pathType = getPageTypeFromPath(route.path)
+  if (pathType)
+    return pathType === 'visualization'
+  if (route.params.type)
+    return route.params.type === 'visualization'
   return pageStore.currentPage?.type === 'visualization'
 })
 </script>

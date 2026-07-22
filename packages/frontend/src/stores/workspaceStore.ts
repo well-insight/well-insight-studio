@@ -26,7 +26,7 @@ export const useWorkspaceStore = defineStore('useWorkspaceStore', {
         },
         children: [
           {
-            path: '/project/pages',
+            path: '/project/pages/visual',
             title: '可视化设计',
             meta: {
               icon: 'dashboard',

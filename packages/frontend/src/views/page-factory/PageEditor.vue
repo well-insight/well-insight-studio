@@ -42,6 +42,14 @@ const pageType = ref<PageType>('visualization')
 const isNew = computed(() => route.params.type != null && route.path.includes('/new/'))
 const pageId = computed(() => isNew.value ? null : (route.params.id as string))
 
+function getEditorRouteName(type: PageType) {
+  if (type === 'form')
+    return 'FormPageEditor'
+  if (type === 'report')
+    return 'ReportPageEditor'
+  return 'VisualPageEditor'
+}
+
 /** 根据类型获取默认 schema */
 function getDefaultSchema(type: PageType): Record<string, unknown> {
   switch (type) {
@@ -215,7 +223,7 @@ async function _savePageDraft() {
     ElMessage.success('保存成功')
     // 如果是新建页面，保存后跳转到编辑模式
     if (isNew.value && saved.id) {
-      router.replace({ name: 'PageEditor', params: { id: saved.id } })
+      router.replace({ name: getEditorRouteName(pageType.value), params: { id: saved.id } })
     }
     // 同步表单保存基线
     if (pageType.value === 'form' && formDesignerRef.value) {
@@ -250,7 +258,7 @@ async function _publishPage() {
     })
     ElMessage.success('发布成功')
     if (isNew.value && saved.id) {
-      router.replace({ name: 'PageEditor', params: { id: saved.id } })
+      router.replace({ name: getEditorRouteName(pageType.value), params: { id: saved.id } })
     }
     if (pageType.value === 'form' && formDesignerRef.value) {
       formDesignerRef.value.syncSavedBaseline()

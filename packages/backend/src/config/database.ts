@@ -22,6 +22,20 @@ db.pragma("foreign_keys = ON");
 db.pragma("journal_mode = WAL");
 db.pragma("synchronous = NORMAL");
 
+function ensureColumn(tableName: string, columnDef: string, columnName: string) {
+  const columns = db.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{ name: string }>;
+  if (!columns.some(column => column.name === columnName)) {
+    db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnDef}`);
+  }
+}
+
+try {
+  ensureColumn("pages", "folder_id TEXT", "folder_id");
+}
+catch (error) {
+  console.warn("[DATABASE] 迁移 pages.folder_id 失败:", error);
+}
+
 // 每5分钟自动 checkpoint，确保 WAL 数据合并到主库
 const walCheckpointTimer = setInterval(() => {
   try {

@@ -6,6 +6,7 @@ export type PageStatus = "draft" | "published";
 
 export interface Page {
   id: string;
+  folder_id?: string | null;
   name: string;
   type: PageType;
   dsl: string;
@@ -19,6 +20,7 @@ export interface Page {
 
 export interface PagePublic {
   id: string;
+  folder_id?: string | null;
   name: string;
   type: PageType;
   dsl: Record<string, unknown>;
@@ -41,6 +43,7 @@ export const PAGE_TYPE_LABELS: Record<PageType, string> = {
 function parseRow(row: Record<string, unknown>): PagePublic {
   return {
     id: String(row.id),
+    folder_id: row.folder_id ? String(row.folder_id) : null,
     name: String(row.name),
     type: row.type as PageType,
     dsl: parseJsonField(String(row.dsl || "{}")),
@@ -66,6 +69,7 @@ function parseJsonField(raw: string): Record<string, unknown> {
 export class PageModel {
   /** 创建页面 */
   static create(data: {
+    folder_id?: string | null;
     name: string;
     type: PageType;
     dsl?: Record<string, unknown>;
@@ -78,10 +82,11 @@ export class PageModel {
     const now = new Date().toISOString();
 
     db.prepare(
-      `INSERT INTO pages (id, name, type, dsl, dataset_bindings, preview_url, status, created_by, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO pages (id, folder_id, name, type, dsl, dataset_bindings, preview_url, status, created_by, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       id,
+      data.folder_id ?? null,
       data.name,
       data.type,
       JSON.stringify(data.dsl ?? {}),
@@ -112,6 +117,7 @@ export class PageModel {
     status?: PageStatus;
     keyword?: string;
     created_by?: string;
+    folder_id?: string | null;
     page?: number;
     pageSize?: number;
   }): { items: PagePublic[]; total: number } {
@@ -133,6 +139,15 @@ export class PageModel {
     if (options?.created_by) {
       conditions.push("created_by = ?");
       params.push(options.created_by);
+    }
+    if (options?.folder_id !== undefined) {
+      if (options.folder_id === null) {
+        conditions.push("folder_id IS NULL");
+      }
+      else {
+        conditions.push("folder_id = ?");
+        params.push(options.folder_id);
+      }
     }
 
     const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
@@ -161,6 +176,7 @@ export class PageModel {
     data: {
       name?: string;
       type?: PageType;
+      folder_id?: string | null;
       dsl?: Record<string, unknown>;
       dataset_bindings?: Record<string, unknown>;
       preview_url?: string | null;
@@ -174,6 +190,7 @@ export class PageModel {
 
     const now = new Date().toISOString();
     const name = data.name ?? String(existing.name);
+    const folderId = data.folder_id !== undefined ? data.folder_id : existing.folder_id ?? null;
     const type = data.type ?? (existing.type as PageType);
     const dsl = data.dsl !== undefined ? JSON.stringify(data.dsl) : String(existing.dsl);
     const datasetBindings =
@@ -187,8 +204,8 @@ export class PageModel {
     const status = data.status ?? (existing.status as PageStatus);
 
     db.prepare(
-      `UPDATE pages SET name = ?, type = ?, dsl = ?, dataset_bindings = ?, preview_url = ?, status = ?, updated_at = ? WHERE id = ?`,
-    ).run(name, type, dsl, datasetBindings, previewUrl, status, now, id);
+      `UPDATE pages SET folder_id = ?, name = ?, type = ?, dsl = ?, dataset_bindings = ?, preview_url = ?, status = ?, updated_at = ? WHERE id = ?`,
+    ).run(folderId, name, type, dsl, datasetBindings, previewUrl, status, now, id);
 
     const row = db.prepare("SELECT * FROM pages WHERE id = ?").get(id) as Record<string, unknown>;
     return parseRow(row);

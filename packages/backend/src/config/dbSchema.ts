@@ -3,6 +3,8 @@ import { generateSnowflakeId } from "../utils/snowflake";
 
 const TABLES_IN_DROP_ORDER = [
   "app_page_menus",
+  "form_records",
+  "page_folders",
   "pages",
   "role_permissions",
   "user_roles",
@@ -31,6 +33,12 @@ function requiresSchemaReset(): boolean {
   const datasetsIdType = columnType("datasets", "id");
   if (!usersIdType && !datasetsIdType) return false;
   return usersIdType !== "TEXT" || datasetsIdType !== "TEXT";
+}
+
+function ensureColumn(tableName: string, columnDef: string, columnName: string) {
+  const columns = db.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{ name: string }>;
+  if (!columns.some(column => column.name === columnName))
+    db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnDef}`);
 }
 
 function resetLegacySchema() {
@@ -149,6 +157,7 @@ function createTables() {
   db.exec(`
     CREATE TABLE IF NOT EXISTS pages (
       id TEXT PRIMARY KEY,
+      folder_id TEXT,
       name TEXT NOT NULL,
       type TEXT NOT NULL CHECK(type IN ('visualization', 'form', 'report')),
       dsl TEXT NOT NULL DEFAULT '{}',
@@ -159,6 +168,21 @@ function createTables() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (created_by) REFERENCES users(id)
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS page_folders (
+      id TEXT PRIMARY KEY,
+      parent_id TEXT,
+      name TEXT NOT NULL,
+      description TEXT,
+      owner_id TEXT NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (parent_id) REFERENCES page_folders(id) ON DELETE CASCADE,
+      FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
 
@@ -177,6 +201,20 @@ function createTables() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE CASCADE,
       FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS form_records (
+      id TEXT PRIMARY KEY,
+      page_id TEXT NOT NULL,
+      values_json TEXT NOT NULL DEFAULT '{}',
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_by TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE,
+      FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
 
@@ -255,8 +293,13 @@ function createTables() {
   db.exec("CREATE INDEX IF NOT EXISTS idx_dataset_fields_dataset ON dataset_fields(dataset_id)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset ON dataset_rows(dataset_id)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_pages_created_by ON pages(created_by)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_pages_folder ON pages(folder_id)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_pages_type ON pages(type)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_pages_status ON pages(status)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_page_folders_owner ON page_folders(owner_id)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_page_folders_parent ON page_folders(parent_id)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_form_records_page ON form_records(page_id)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_form_records_created_by ON form_records(created_by)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_app_page_menus_app ON app_page_menus(application_id)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_app_page_menus_page ON app_page_menus(page_id)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_app_page_menus_parent ON app_page_menus(parent_id)");
@@ -270,6 +313,7 @@ export function initializeDatabaseSchema() {
   }
 
   createTables();
+  ensureColumn("pages", "folder_id TEXT", "folder_id");
   initializeDefaultRoles();
 
   console.log("[DATABASE] 数据库表结构初始化完成");

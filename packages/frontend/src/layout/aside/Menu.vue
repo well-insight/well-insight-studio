@@ -1,8 +1,11 @@
 <script lang="ts" setup>
+import type { Component } from 'vue'
+import { DataLine, EditPen, Monitor } from '@element-plus/icons-vue'
 import { storeToRefs } from 'pinia'
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SvgIcon from '@/components/svg-icon/SvgIcon.vue'
+import { usePageStore } from '@/stores/pageStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 
 defineProps<{ collapse?: boolean }>()
@@ -11,31 +14,79 @@ const route = useRoute()
 const router = useRouter()
 
 const workspaceStore = useWorkspaceStore()
+const pageStore = usePageStore()
 
 const { menuList } = storeToRefs(workspaceStore)
 
 const currentMenuPath = ref(route?.path)
 
-/** 编辑器子路由 → 所属菜单路径映射 */
+type MenuAccentKey = 'visualization' | 'form' | 'report' | 'default'
+
 const editorMenuMap: Record<string, string> = {
-  '/project/pages/edit': '/project/pages',
+  '/project/pages/visual/edit': '/project/pages/visual',
+  '/project/pages/form/edit': '/project/pages/form',
+  '/project/pages/report/': '/project/pages/report',
+  '/project/pages/edit': '/project/pages/visual',
   '/project/app-assembly/': '/project/app-assembly',
   '/project/dataset/edit': '/project/dataset',
 }
 
-/** 从菜单树中查找当前路径匹配的菜单项 */
+const menuAccentMap: Record<string, MenuAccentKey> = {
+  '/project/pages/visual': 'default',
+  '/project/pages/form': 'form',
+  '/project/pages/report': 'report',
+}
+
+const menuIconMap: Record<MenuAccentKey, Component> = {
+  visualization: Monitor,
+  form: EditPen,
+  report: DataLine,
+  default: Monitor,
+}
+
+const menuToneMap: Record<MenuAccentKey, string> = {
+  visualization: 'menu-icon--visualization',
+  form: 'menu-icon--form',
+  report: 'menu-icon--report',
+  default: 'menu-icon--default',
+}
+
+function getMenuAccent(path: string): MenuAccentKey {
+  return menuAccentMap[path] ?? 'default'
+}
+
+function isSameMenuPath(currentPath: string, menuPath: string) {
+  return currentPath === menuPath || currentPath.startsWith(`${menuPath}/`)
+}
+
+function getPageEditorMenuPath() {
+  const pageType = pageStore.currentPage?.type
+  if (pageType === 'form')
+    return '/project/pages/form'
+  if (pageType === 'report')
+    return '/project/pages/report'
+  return '/project/pages/visual'
+}
+
 function findMenuByPath(path: string): string | undefined {
-  // 先检查是否匹配编辑器子路由
   for (const [editorPrefix, menuPath] of Object.entries(editorMenuMap)) {
-    if (path.startsWith(editorPrefix)) return menuPath
+    if (path.startsWith(editorPrefix))
+      return menuPath
   }
+
+  if (path.startsWith('/project/pages/edit'))
+    return getPageEditorMenuPath()
 
   for (const item of menuList.value ?? []) {
     if (item.children?.length) {
-      const child = item.children.find(c => path.includes(c.path))
-      if (child) return child.path
+      const child = [...item.children]
+        .sort((a, b) => b.path.length - a.path.length)
+        .find(c => isSameMenuPath(path, c.path))
+      if (child)
+        return child.path
     }
-    if (path.includes(item.path)) return item.path
+    if (isSameMenuPath(path, item.path))
+      return item.path
   }
   return undefined
 }
@@ -53,7 +104,6 @@ function changeMenu(index: string) {
 function updateCurrentMenu() {
   const found = findMenuByPath(route?.path)
   if (found) {
-    // 扁平查找匹配菜单项
     for (const item of menuList.value ?? []) {
       if (item.path === found) {
         workspaceStore.setCurrentMenu(item)
@@ -71,7 +121,7 @@ function updateCurrentMenu() {
 }
 
 watch(
-  () => route?.path,
+  () => [route?.path, pageStore.currentPage?.type],
   () => {
     updateCurrentMenu()
     currentMenuPath.value = findMenuByPath(route?.path)
@@ -89,10 +139,11 @@ watch(
       @select="changeMenu"
     >
       <template v-for="item in menuList" :key="item?.path">
-        <!-- 有子菜单：渲染为分组 -->
         <el-sub-menu v-if="item?.children?.length" :index="item.path">
           <template #title>
-            <SvgIcon :name="item?.meta?.icon" size="22px" class="flex-shrink-0" :class="collapse ? '' : 'mr-2'" />
+            <span class="menu-icon menu-icon--default" :class="{ 'is-collapse': collapse }">
+              <SvgIcon :name="item?.meta?.icon" size="18px" />
+            </span>
             <span>{{ item?.title }}</span>
           </template>
           <el-menu-item
@@ -100,16 +151,27 @@ watch(
             :key="child.path"
             :index="child.path"
           >
-            <SvgIcon :name="child?.meta?.icon" size="22px" class="flex-shrink-0" :class="collapse ? '' : 'mr-2'" />
+            <span
+              class="menu-icon"
+              :class="[menuToneMap[getMenuAccent(child.path)], { 'is-collapse': collapse }]"
+            >
+              <el-icon :size="16">
+                <component :is="menuIconMap[getMenuAccent(child.path)]" />
+              </el-icon>
+            </span>
             <template #title>
               <span>{{ child?.title }}</span>
             </template>
           </el-menu-item>
         </el-sub-menu>
 
-        <!-- 无子菜单：渲染为普通菜单项 -->
         <el-menu-item v-else :index="item?.path">
-          <SvgIcon :name="item?.meta?.icon" size="22px" class="flex-shrink-0" :class="collapse ? '' : 'mr-2'" />
+          <span
+            class="menu-icon"
+            :class="[menuToneMap[getMenuAccent(item.path)], { 'is-collapse': collapse }]"
+          >
+            <SvgIcon :name="item?.meta?.icon" size="18px" />
+          </span>
           <template #title>
             <span>{{ item?.title }}</span>
           </template>
@@ -120,7 +182,6 @@ watch(
 </template>
 
 <style lang="scss" scoped>
-/* 侧栏折叠宽度为 100px 时，让菜单铺满并居中图标 */
 :deep(.custom-menu-wrapper.el-menu--collapse) {
   width: 100%;
 }
@@ -128,5 +189,93 @@ watch(
 :deep(.custom-menu-wrapper.el-menu--collapse .el-menu-item) {
   padding: 0;
   justify-content: center;
+}
+
+:deep(.custom-menu-wrapper .el-sub-menu__title) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+:deep(.custom-menu-wrapper .el-menu-item) {
+  gap: 10px;
+}
+
+.menu-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  line-height: 0;
+  border: 1px solid transparent;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.2));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  color: var(--el-text-color-primary);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.menu-icon :deep(svg) {
+  display: block;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.menu-icon :deep(.svg-icon) {
+  display: block;
+}
+
+.menu-icon :deep(.el-icon) {
+  margin-right: 0 !important;
+}
+
+.menu-icon--default {
+  background:
+    linear-gradient(180deg, rgba(64, 158, 255, 0.18), rgba(64, 158, 255, 0.08)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.18));
+  border-color: rgba(64, 158, 255, 0.18);
+  color: #2d7ff9;
+}
+
+.menu-icon--visualization {
+  background:
+    radial-gradient(circle at 30% 25%, rgba(64, 158, 255, 0.28), transparent 52%),
+    linear-gradient(180deg, rgba(64, 158, 255, 0.18), rgba(64, 158, 255, 0.08));
+  border-color: rgba(64, 158, 255, 0.2);
+  color: #2d7ff9;
+}
+
+.menu-icon--form {
+  background:
+    radial-gradient(circle at 28% 26%, rgba(103, 194, 58, 0.26), transparent 48%),
+    linear-gradient(180deg, rgba(103, 194, 58, 0.18), rgba(103, 194, 58, 0.08));
+  border-color: rgba(103, 194, 58, 0.2);
+  color: #3c9c41;
+}
+
+.menu-icon--report {
+  background:
+    radial-gradient(circle at 28% 26%, rgba(230, 162, 60, 0.28), transparent 48%),
+    linear-gradient(180deg, rgba(230, 162, 60, 0.18), rgba(230, 162, 60, 0.08));
+  border-color: rgba(230, 162, 60, 0.22);
+  color: #c77e12;
+}
+
+.menu-icon.is-collapse {
+  margin: 0;
+}
+
+:deep(.custom-menu-wrapper .el-menu-item.is-active .menu-icon),
+:deep(.custom-menu-wrapper .el-sub-menu.is-active > .el-sub-menu__title .menu-icon) {
+  transform: translateY(-1px);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 </style>

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import type { ApiPageListItem, PageStatus, PageType } from '@/api/pages'
-import { DataLine, Delete, EditPen, EditPen as EditPenIcon, Monitor, Plus, Search, View } from '@element-plus/icons-vue'
+import type { ApiPageListItem, PageType } from '@/api/pages'
+import { DataLine, EditPen as EditPenIcon, Monitor, Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { onActivated, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -34,6 +34,14 @@ const tabOptions = [
   { label: '表单', value: 'form' },
   { label: '报表', value: 'report' },
 ]
+
+function getEditorRouteName(type: PageType) {
+  if (type === 'form')
+    return 'FormPageEditor'
+  if (type === 'report')
+    return 'ReportPageEditor'
+  return 'VisualPageEditor'
+}
 
 const typeLabels: Record<string, string> = {
   visualization: '可视化',
@@ -95,8 +103,8 @@ onActivated(() => {
   loadList()
 })
 
-function designPage(id: string) {
-  router.push({ name: 'PageEditor', params: { id } })
+function designPage(row: ApiPageListItem) {
+  router.push({ name: getEditorRouteName(row.type), params: { id: row.id } })
 }
 
 function openEditDialog(row: ApiPageListItem) {
@@ -131,7 +139,7 @@ async function createNewPage(type: PageType) {
   try {
     const name = type === 'visualization' ? '未命名大屏' : type === 'form' ? '未命名表单' : '未命名报表'
     const page = await createPage({ name, type, status: 'draft' })
-    router.push({ name: 'PageEditor', params: { id: page.id } })
+    router.push({ name: getEditorRouteName(type), params: { id: page.id } })
   }
   catch (e) {
     ElMessage.error((e as Error).message || '创建失败')
@@ -196,7 +204,7 @@ async function removePage(row: ApiPageListItem) {
       <el-table-column prop="name" label="页面名称" min-width="200">
         <template #default="{ row }">
           <el-space>
-            <el-button link text type="primary" :icon="typeIcons[row.type]" @click="designPage(row.id)">
+            <el-button link text type="primary" :icon="typeIcons[row.type]" @click="designPage(row)">
               {{ row.name }}
             </el-button>
           </el-space>
@@ -223,7 +231,7 @@ async function removePage(row: ApiPageListItem) {
       </el-table-column>
       <el-table-column label="操作" width="300" align="center" fixed="right">
         <template #default="{ row }">
-          <el-button size="small" text type="primary" @click="designPage(row.id)">
+          <el-button size="small" text type="primary" @click="designPage(row)">
             设计
           </el-button>
           <el-button size="small" text @click="openEditDialog(row)">

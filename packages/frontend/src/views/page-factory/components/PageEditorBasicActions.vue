@@ -13,11 +13,38 @@ const saving = ref(false)
 
 const pageId = computed(() => {
   const raw = route.params.id
-  if (!raw) return undefined
+  if (!raw)
+    return undefined
   return Array.isArray(raw) ? raw[0] : String(raw)
 })
 const isNew = computed(() => !pageId.value || pageId.value === 'new')
-const pageType = computed(() => (route.params.type as string) || pageStore.currentPage?.type || 'form')
+
+function getPageTypeFromPath(path: string) {
+  if (path.startsWith('/project/pages/visual/edit'))
+    return 'visualization'
+  if (path.startsWith('/project/pages/report/'))
+    return 'report'
+  if (path.startsWith('/project/pages/form/edit'))
+    return 'form'
+  return undefined
+}
+
+const pageType = computed(() => getPageTypeFromPath(route.path) || (route.params.type as string) || pageStore.currentPage?.type || 'form')
+const listRouteName = computed(() => {
+  if (pageType.value === 'form')
+    return 'PageListForm'
+  if (pageType.value === 'report')
+    return 'PageListReport'
+  return 'VisualDesign'
+})
+
+function getEditorRouteName(type: string) {
+  if (type === 'form')
+    return 'FormPageEditor'
+  if (type === 'report')
+    return 'ReportPageEditor'
+  return 'VisualPageEditor'
+}
 
 async function handleSave(status?: 'draft' | 'published') {
   saving.value = true
@@ -41,7 +68,7 @@ async function handleSave(status?: 'draft' | 'published') {
     notifySaved()
     ElMessage.success(status === 'published' ? '已发布' : '保存成功')
     if (isNew.value && saved.id) {
-      router.replace({ name: 'PageEditor', params: { id: saved.id } })
+      router.replace({ name: getEditorRouteName(pageType.value), params: { id: saved.id } })
     }
   }
   catch (e) {
@@ -53,22 +80,31 @@ async function handleSave(status?: 'draft' | 'published') {
 }
 
 async function handlePreview() {
-  if (!pageId.value) return
+  if (!pageId.value)
+    return
   const url = router.resolve({ name: 'PagePreview', params: { id: pageId.value } }).href
   window.open(url, '_blank')
 }
 
 function goBack() {
-  router.push({ name: 'VisualDesign' })
+  router.push({ name: listRouteName.value })
 }
 </script>
 
 <template>
   <div class="flex items-center gap-0">
-    <el-button :loading="saving" size="small" @click="() => handleSave()">保存</el-button>
-    <el-button size="small" type="primary" @click="() => handleSave('published')">发布</el-button>
-    <el-button size="small" @click="handlePreview">预览</el-button>
+    <el-button :loading="saving" size="small" @click="() => handleSave()">
+      保存
+    </el-button>
+    <el-button size="small" type="primary" @click="() => handleSave('published')">
+      发布
+    </el-button>
+    <el-button size="small" @click="handlePreview">
+      预览
+    </el-button>
     <el-divider direction="vertical" />
-    <el-button size="small" @click="goBack">返回</el-button>
+    <el-button size="small" @click="goBack">
+      返回
+    </el-button>
   </div>
 </template>

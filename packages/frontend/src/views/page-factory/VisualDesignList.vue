@@ -3,7 +3,7 @@
  * 可视化设计页面列表
  */
 import type { ApiPageListItem } from '@/api/pages'
-import { Delete, Plus, Search, View } from '@element-plus/icons-vue'
+import { Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { onActivated, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -59,7 +59,7 @@ onActivated(() => {
 })
 
 function designPage(id: string) {
-  router.push({ name: 'PageEditor', params: { id } })
+  router.push({ name: 'VisualPageEditor', params: { id } })
 }
 
 function openEditDialog(row: ApiPageListItem) {
@@ -89,7 +89,7 @@ async function savePageInfo() {
 async function createNewPage() {
   try {
     const page = await createPage({ name: '未命名大屏', type: 'visualization', status: 'draft' })
-    router.push({ name: 'PageEditor', params: { id: page.id } })
+    router.push({ name: 'VisualPageEditor', params: { id: page.id } })
   }
   catch (e) {
     ElMessage.error((e as Error).message || '创建失败')

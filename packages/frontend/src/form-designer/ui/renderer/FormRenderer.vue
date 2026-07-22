@@ -10,6 +10,7 @@ import { ref, watch } from 'vue'
 
 const props = defineProps<{
   schema: FormSchema
+  initialValues?: Record<string, any>
 }>()
 
 const emit = defineEmits<{
@@ -30,6 +31,16 @@ watch(
       }
     }
     formData.value = data
+  },
+  { immediate: true, deep: true },
+)
+
+watch(
+  () => props.initialValues,
+  (value) => {
+    if (!value)
+      return
+    formData.value = { ...formData.value, ...value }
   },
   { immediate: true, deep: true },
 )
@@ -163,10 +174,14 @@ function handleReset() {
   formData.value = data
   emit('reset')
 }
+
+defineExpose({
+  getFormValues: () => ({ ...formData.value }),
+})
 </script>
 
 <template>
-  <div class="form-renderer mx-auto max-w-[860px] p-8">
+  <div class="form-renderer">
     <el-form
       ref="formRef"
       :model="formData"
@@ -615,20 +630,7 @@ function handleReset() {
 <style scoped>
 .form-renderer {
   box-sizing: border-box;
-  min-height: 200px;
-  border-radius: var(--fd-radius-md, 10px);
-  border: 1px solid var(--fd-paper-edge, var(--el-border-color-light));
-  background:
-    linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--el-color-primary) 10%, transparent) 0,
-      color-mix(in srgb, var(--el-color-primary) 10%, transparent) 3px,
-      transparent 3px,
-      transparent 100%
-    ),
-    var(--el-bg-color);
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--el-color-primary) 8%, transparent),
-    var(--el-box-shadow-lighter);
+  width: 100%;
+  min-height: 0;
 }
 </style>
