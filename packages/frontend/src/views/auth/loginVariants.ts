@@ -4,7 +4,7 @@ import type { Component } from 'vue'
  * 登录页变体标识。
  * 通过环境变量 VITE_LOGIN_VARIANT 切换；新增变体时在此注册即可。
  */
-export type LoginVariant = 'classic' | 'business' | 'hero'
+export type LoginVariant = 'classic' | 'business' | 'hero' | 'cube'
 
 type LoginVariantLoader = () => Promise<{ default: Component }>
 
@@ -15,9 +15,11 @@ const loginVariantLoaders: Record<LoginVariant, LoginVariantLoader> = {
   business: () => import('./LoginBusiness.vue'),
   /** 纯英雄图背景登录页（历史备用） */
   hero: () => import('./Login2.vue'),
+  /** 签名立方体设计风格登录页（酸性、区别度强） */
+  cube: () => import('./LoginCube.vue'),
 }
 
-const DEFAULT_LOGIN_VARIANT: LoginVariant = 'classic'
+const DEFAULT_LOGIN_VARIANT: LoginVariant = 'cube'
 
 function normalizeVariant(raw: string | undefined): LoginVariant {
   const key = (raw ?? '').trim().toLowerCase() as LoginVariant
