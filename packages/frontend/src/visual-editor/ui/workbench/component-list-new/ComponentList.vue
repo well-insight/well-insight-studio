@@ -224,14 +224,14 @@ function onCatalogDblclickAdd(block: VisualEditorBlockData) {
 
 <style lang="scss" module>
 .component-list-container {
-  gap: 6px;
+  gap: 7px;
   padding: 8px 6px;
-  border-radius: var(--ve-radius-md, 10px);
+  border-radius: 12px;
   border: 1px solid var(--ve-paper-edge, var(--el-border-color-light));
-  background: var(--el-bg-color);
+  background: rgba(255, 255, 255, 0.88);
   box-shadow:
     0 1px 0 color-mix(in srgb, var(--el-color-primary) 8%, transparent),
-    var(--el-box-shadow-lighter);
+    0 12px 26px rgba(31, 58, 112, 0.12);
 
   :global {
     .el-button + .el-button {
@@ -242,12 +242,13 @@ function onCatalogDblclickAdd(block: VisualEditorBlockData) {
 
 .nav-btn {
   position: relative;
-  width: 36px;
-  height: 36px;
-  padding: 6px;
-  border-radius: var(--ve-radius-sm, 6px);
+  width: 38px;
+  height: 38px;
+  padding: 7px;
+  border-radius: 10px;
   color: var(--el-text-color-secondary);
   transition:
+    transform 0.18s ease,
     background-color 0.18s ease,
     color 0.18s ease,
     box-shadow 0.18s ease;
@@ -255,10 +256,11 @@ function onCatalogDblclickAdd(block: VisualEditorBlockData) {
   &:hover {
     background-color: var(--ve-active-fill, var(--el-color-primary-light-9));
     color: var(--el-color-primary);
+    transform: translateY(-1px);
   }
 
   &--active {
-    background-color: var(--ve-chip-bg, var(--el-color-primary-light-9));
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(20, 184, 166, 0.08));
     color: var(--el-color-primary);
 
     &::before {
@@ -287,7 +289,9 @@ function onCatalogDblclickAdd(block: VisualEditorBlockData) {
 <style scoped>
 .component-panel-fade-enter-active,
 .component-panel-fade-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
 }
 
 .component-panel-fade-enter-from,

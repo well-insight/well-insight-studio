@@ -107,13 +107,13 @@ const filteredCategories = computed(() => {
 </script>
 
 <template>
-  <div class="form-component-list flex h-full flex-col bg-[var(--el-bg-color)]">
-    <div class="border-bottom-1 flex h-[var(--fd-header-h,50px)] shrink-0 items-center gap-2 px-3">
+  <div class="form-component-list flex h-full flex-col">
+    <div class="form-component-list__head flex h-[var(--fd-header-h,54px)] shrink-0 items-center gap-2 px-3">
       <span class="fd-panel-title">组件库</span>
       <span class="text-[11px] text-[var(--el-text-color-placeholder)]">拖入或点击添加</span>
     </div>
 
-    <div class="shrink-0 px-3 py-2.5">
+    <div class="form-component-list__search shrink-0 px-3 py-2.5">
       <el-input
         v-model="searchText"
         placeholder="搜索组件"
@@ -170,6 +170,21 @@ const filteredCategories = computed(() => {
 </template>
 
 <style scoped>
+.form-component-list {
+  overflow: hidden;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 251, 255, 0.84)), var(--el-bg-color);
+}
+
+.form-component-list__head {
+  border-bottom: 1px solid rgba(82, 124, 181, 0.12);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.form-component-list__search {
+  border-bottom: 1px solid rgba(82, 124, 181, 0.08);
+}
+
 .form-component-item {
   transition:
     border-color 0.18s ease,
@@ -179,14 +194,14 @@ const filteredCategories = computed(() => {
 }
 
 .form-component-item__icon {
-  background: var(--fd-chip-bg, var(--el-fill-color-light));
+  background: linear-gradient(135deg, rgba(var(--el-color-primary-rgb), 0.12), rgba(20, 184, 166, 0.08));
 }
 
 .form-component-item:hover {
   border-color: color-mix(in srgb, var(--el-color-primary) 45%, var(--el-border-color));
-  background: var(--wc-active-fill, var(--el-color-primary-light-9));
+  background: linear-gradient(135deg, rgba(var(--el-color-primary-rgb), 0.1), rgba(20, 184, 166, 0.06));
   color: var(--el-color-primary);
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--el-color-primary) 16%, transparent);
+  box-shadow: 0 10px 20px rgba(31, 58, 112, 0.1);
   transform: translateY(-1px);
 }
 
@@ -200,5 +215,15 @@ const filteredCategories = computed(() => {
   border: 0;
   background: transparent;
   text-align: left;
+}
+
+:global(html.dark) .form-component-list {
+  background: linear-gradient(180deg, rgba(13, 40, 64, 0.86), rgba(8, 28, 48, 0.78)), var(--el-bg-color);
+}
+
+:global(html.dark) .form-component-list__head,
+:global(html.dark) .form-component-list__search {
+  border-color: rgba(140, 210, 255, 0.1);
+  background: rgba(13, 40, 64, 0.68);
 }
 </style>

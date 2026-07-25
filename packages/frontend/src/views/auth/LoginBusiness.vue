@@ -188,7 +188,7 @@ onUnmounted(() => {
         <div class="login-biz__brand-mark login-biz__enter">
           <span class="login-biz__logo-wrap">
             <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-              <rect width="28" height="28" rx="7" fill="#2b73af" />
+              <rect width="28" height="28" rx="7" fill="#5b5bd6" />
               <path d="M7 14L12 9L17 14L12 19L7 14Z" fill="white" fill-opacity="0.95" />
               <path d="M13 14L18 9L21 12V16L18 19L13 14Z" fill="white" fill-opacity="0.55" />
             </svg>
@@ -225,7 +225,7 @@ onUnmounted(() => {
           <div class="login-card__glow" aria-hidden="true" />
           <div class="login-card__brand">
             <svg width="22" height="22" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-              <rect width="28" height="28" rx="7" fill="#2b73af" />
+              <rect width="28" height="28" rx="7" fill="#5b5bd6" />
               <path d="M7 14L12 9L17 14L12 19L7 14Z" fill="white" fill-opacity="0.95" />
               <path d="M13 14L18 9L21 12V16L18 19L13 14Z" fill="white" fill-opacity="0.55" />
             </svg>
@@ -363,7 +363,7 @@ onUnmounted(() => {
                   clearable
                 />
                 <canvas
-                  ref="captchaCanvas"
+                  ref="canvasRef"
                   width="112"
                   height="40"
                   class="login-captcha-canvas"
@@ -409,7 +409,7 @@ onUnmounted(() => {
   overflow: hidden;
   background:
     radial-gradient(900px 520px at 18% 20%, rgba(56, 160, 255, 0.28), transparent 58%),
-    radial-gradient(700px 480px at 72% 10%, rgba(43, 115, 175, 0.35), transparent 55%),
+    radial-gradient(700px 480px at 72% 10%, rgba(91, 91, 214, 0.35), transparent 55%),
     radial-gradient(800px 500px at 60% 90%, rgba(20, 90, 160, 0.4), transparent 50%),
     linear-gradient(150deg, #071420 0%, #0d2840 38%, #124066 72%, #1a5a8c 100%);
 }
@@ -417,16 +417,15 @@ onUnmounted(() => {
 .login-biz__aurora {
   position: absolute;
   inset: -20%;
-  background:
-    conic-gradient(
-      from 120deg at 40% 35%,
-      rgba(40, 140, 255, 0.18),
-      transparent 28%,
-      rgba(90, 210, 255, 0.12),
-      transparent 55%,
-      rgba(43, 115, 175, 0.2),
-      transparent 78%
-    );
+  background: conic-gradient(
+    from 120deg at 40% 35%,
+    rgba(40, 140, 255, 0.18),
+    transparent 28%,
+    rgba(90, 210, 255, 0.12),
+    transparent 55%,
+    rgba(91, 91, 214, 0.2),
+    transparent 78%
+  );
   filter: blur(40px);
   animation: login-biz-aurora 18s linear infinite;
   pointer-events: none;
@@ -437,12 +436,7 @@ onUnmounted(() => {
   width: 2px;
   height: 140%;
   top: -20%;
-  background: linear-gradient(
-    180deg,
-    transparent,
-    rgba(140, 210, 255, 0.55),
-    transparent
-  );
+  background: linear-gradient(180deg, transparent, rgba(140, 210, 255, 0.55), transparent);
   filter: blur(1px);
   opacity: 0.55;
   animation: login-biz-beam 7s ease-in-out infinite;
@@ -491,16 +485,8 @@ onUnmounted(() => {
   height: 48%;
   background:
     linear-gradient(90deg, transparent 0%, rgba(100, 190, 255, 0.08) 50%, transparent 100%),
-    repeating-linear-gradient(
-      90deg,
-      rgba(120, 200, 255, 0.14) 0 1px,
-      transparent 1px 64px
-    ),
-    repeating-linear-gradient(
-      0deg,
-      rgba(120, 200, 255, 0.12) 0 1px,
-      transparent 1px 48px
-    );
+    repeating-linear-gradient(90deg, rgba(120, 200, 255, 0.14) 0 1px, transparent 1px 64px),
+    repeating-linear-gradient(0deg, rgba(120, 200, 255, 0.12) 0 1px, transparent 1px 48px);
   transform: perspective(600px) rotateX(62deg);
   transform-origin: center top;
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.75), transparent 85%);
@@ -540,7 +526,7 @@ onUnmounted(() => {
   bottom: 6%;
   width: 420px;
   height: 420px;
-  background: rgba(43, 115, 175, 0.55);
+  background: rgba(91, 91, 214, 0.55);
   animation-delay: -4s;
 }
 
@@ -636,7 +622,7 @@ onUnmounted(() => {
   border: 1px solid rgba(186, 224, 255, 0.45);
   border-radius: 12px;
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.18), rgba(43, 115, 175, 0.22)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.18), rgba(91, 91, 214, 0.22)),
     radial-gradient(circle at 30% 25%, rgba(180, 230, 255, 0.35), transparent 55%);
   box-shadow:
     0 0 24px rgba(74, 180, 255, 0.25),
@@ -685,12 +671,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   height: 120px;
-  background: linear-gradient(
-    180deg,
-    transparent,
-    rgba(120, 210, 255, 0.08),
-    transparent
-  );
+  background: linear-gradient(180deg, transparent, rgba(120, 210, 255, 0.08), transparent);
   animation: login-biz-scan 5.5s ease-in-out infinite;
   pointer-events: none;
   mix-blend-mode: screen;
@@ -732,7 +713,9 @@ onUnmounted(() => {
 .login-biz__logo-wrap {
   display: inline-flex;
   border-radius: 10px;
-  box-shadow: 0 0 0 1px rgba(140, 210, 255, 0.35), 0 0 28px rgba(74, 180, 255, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(140, 210, 255, 0.35),
+    0 0 28px rgba(74, 180, 255, 0.45);
   animation: login-biz-logo-glow 3.2s ease-in-out infinite;
 }
 
@@ -1043,10 +1026,10 @@ onUnmounted(() => {
   font-weight: 600;
   border-radius: 10px;
   letter-spacing: 0.08em;
-  --el-button-bg-color: #2b73af;
-  --el-button-border-color: #2b73af;
-  --el-button-hover-bg-color: #3484c4;
-  --el-button-hover-border-color: #3484c4;
+  --el-button-bg-color: #5b5bd6;
+  --el-button-border-color: #5b5bd6;
+  --el-button-hover-bg-color: #6a6ae0;
+  --el-button-hover-border-color: #6a6ae0;
   box-shadow: 0 8px 20px rgba(8, 30, 50, 0.35);
   transition: box-shadow 0.2s;
 
@@ -1098,7 +1081,10 @@ onUnmounted(() => {
 
 @keyframes login-biz-floor {
   to {
-    background-position: 64px 0, 64px 0, 0 48px;
+    background-position:
+      64px 0,
+      64px 0,
+      0 48px;
   }
 }
 
@@ -1178,10 +1164,14 @@ onUnmounted(() => {
 @keyframes login-biz-logo-glow {
   0%,
   100% {
-    box-shadow: 0 0 0 1px rgba(140, 210, 255, 0.35), 0 0 20px rgba(74, 180, 255, 0.35);
+    box-shadow:
+      0 0 0 1px rgba(140, 210, 255, 0.35),
+      0 0 20px rgba(74, 180, 255, 0.35);
   }
   50% {
-    box-shadow: 0 0 0 1px rgba(160, 230, 255, 0.55), 0 0 36px rgba(74, 180, 255, 0.65);
+    box-shadow:
+      0 0 0 1px rgba(160, 230, 255, 0.55),
+      0 0 36px rgba(74, 180, 255, 0.65);
   }
 }
 

@@ -1,4 +1,5 @@
 import type { ConfigProviderProps } from 'element-plus'
+import type { ThemeConfig, ThemeMode, ThemeSize } from '@/styles/theme/tokens'
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { ThemeEnum } from '@/enums/styleEnum'
@@ -7,17 +8,26 @@ import {
   applyPrimaryColor,
   DEFAULT_THEME_CONFIG,
   resolveIsDark,
-  type ThemeConfig,
-  type ThemeMode,
-  type ThemeSize,
+
   WELLCUBE_PRIMARY,
 } from '@/styles/theme/tokens'
 
 const STORAGE_KEY = 'wellcube-theme-config'
 const LEGACY_STORAGE_KEY = 'wellcube-theme'
+const STORAGE_VERSION_KEY = 'wellcube-theme-version'
+const CURRENT_STORAGE_VERSION = 2
 
 function loadConfig(): ThemeConfig {
   try {
+    const storedVersion = Number(localStorage.getItem(STORAGE_VERSION_KEY)) || 0
+    if (storedVersion < CURRENT_STORAGE_VERSION) {
+      // 存储版本过期，清理旧缓存，使用新默认值
+      localStorage.removeItem(STORAGE_KEY)
+      localStorage.removeItem(LEGACY_STORAGE_KEY)
+      localStorage.setItem(STORAGE_VERSION_KEY, String(CURRENT_STORAGE_VERSION))
+      return { ...DEFAULT_THEME_CONFIG }
+    }
+
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<ThemeConfig>

@@ -833,33 +833,39 @@ onActivated(() => {
 
 <style scoped>
 .form-page-shell {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0)), var(--el-bg-color-page);
+  gap: 12px;
+  padding: 12px;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(20, 184, 166, 0.1), transparent 28%),
+    linear-gradient(135deg, rgba(248, 251, 255, 0.94), rgba(240, 249, 255, 0.78)), var(--el-bg-color-page);
 }
 
 .form-page-shell__sidebar {
   display: flex;
   flex-direction: column;
-  background: color-mix(in srgb, var(--el-bg-color) 92%, var(--el-fill-color-light));
-  border-right: 1px solid var(--el-border-color);
   overflow: hidden;
+  border: 1px solid rgba(82, 124, 181, 0.18);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 251, 255, 0.86)), var(--el-bg-color);
+  box-shadow: 0 12px 32px rgba(31, 58, 112, 0.08);
 }
 
 .form-page-shell__sidebar-head,
 .form-page-shell__sidebar-foot,
 .form-page-shell__header,
 .form-page-shell__pager {
-  background: var(--el-bg-color);
+  background: rgba(255, 255, 255, 0.82);
 }
 
 .form-page-shell__sidebar-head {
-  height: 54px;
+  height: 58px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 0 12px 0 18px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  padding: 0 14px 0 18px;
+  border-bottom: 1px solid rgba(82, 124, 181, 0.12);
 }
 
 .form-page-shell__eyebrow {
@@ -872,16 +878,15 @@ onActivated(() => {
 .form-page-shell__sidebar-title {
   color: var(--el-text-color-primary);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.25;
-  margin-top: 4px;
 }
 
 .form-page-shell__tree {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 6px 0;
+  padding: 8px;
 }
 
 .form-page-shell__tree-row {
@@ -913,7 +918,7 @@ onActivated(() => {
   align-items: center;
   justify-content: center;
   padding: 4px;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   color: var(--el-text-color-secondary);
   outline: none;
@@ -921,7 +926,7 @@ onActivated(() => {
 
 .form-page-shell__tree-more-trigger:hover {
   color: var(--el-color-primary);
-  background: var(--el-fill-color-light);
+  background: rgba(var(--el-color-primary-rgb), 0.08);
 }
 
 .form-page-shell__sidebar-foot {
@@ -929,7 +934,7 @@ onActivated(() => {
   flex-direction: column;
   gap: 8px;
   padding: 12px;
-  border-top: 1px solid var(--el-border-color-lighter);
+  border-top: 1px solid rgba(82, 124, 181, 0.12);
 }
 
 .form-page-shell__sidebar-meta {
@@ -942,36 +947,41 @@ onActivated(() => {
   line-height: 1.2;
 }
 
+.form-page-shell__sidebar-meta span {
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: rgba(var(--el-color-primary-rgb), 0.06);
+}
+
 .form-page-shell__main {
   display: flex;
   flex-direction: column;
-  padding: 12px;
   gap: 12px;
 }
 
 .form-page-shell__header {
   flex-shrink: 0;
-  min-height: 64px;
+  min-height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 14px;
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  padding: 14px 16px;
+  border: 1px solid rgba(82, 124, 181, 0.16);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(31, 58, 112, 0.08);
 }
 
 .form-page-shell__title {
   margin: 0;
   color: var(--el-text-color-primary);
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 800;
   line-height: 1.2;
 }
 
 .form-page-shell__subtitle {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   color: var(--el-text-color-secondary);
   font-size: 12px;
   line-height: 1.4;
@@ -990,10 +1000,10 @@ onActivated(() => {
   min-height: 0;
   flex: 1;
   overflow: hidden;
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(82, 124, 181, 0.16);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(31, 58, 112, 0.08);
 }
 
 .form-page-shell__record-form {
@@ -1016,20 +1026,54 @@ onActivated(() => {
   display: flex;
   justify-content: flex-end;
   padding: 10px 12px;
-  border-top: 1px solid var(--el-border-color-lighter);
+  border-top: 1px solid rgba(82, 124, 181, 0.12);
 }
 
 :deep(.form-page-shell .el-tree) {
   background: transparent;
 }
 
+:deep(.form-page-shell .el-tree-node__content) {
+  height: 34px;
+  border-radius: 9px;
+}
+
+:deep(.form-page-shell .el-tree-node__content:hover) {
+  background: rgba(var(--el-color-primary-rgb), 0.06);
+}
+
+:deep(.form-page-shell .el-tree-node.is-current > .el-tree-node__content) {
+  background: linear-gradient(90deg, rgba(var(--el-color-primary-rgb), 0.14), rgba(20, 184, 166, 0.08));
+  color: var(--el-color-primary);
+  font-weight: 700;
+}
+
 :deep(.form-page-shell .el-table__header th) {
   background: color-mix(in srgb, var(--el-fill-color-light) 82%, var(--el-bg-color));
   color: var(--el-text-color-regular);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 :deep(.form-page-shell .el-table__row:hover > td) {
-  background: rgba(var(--el-color-primary-rgb), 0.03);
+  background: rgba(var(--el-color-primary-rgb), 0.035);
+}
+
+:global(html.dark) .form-page-shell {
+  background:
+    radial-gradient(circle at 12% 10%, rgba(20, 184, 166, 0.1), transparent 28%),
+    linear-gradient(135deg, rgba(6, 17, 28, 0.95), rgba(7, 26, 43, 0.8)), var(--el-bg-color-page);
+}
+
+:global(html.dark) .form-page-shell__sidebar,
+:global(html.dark) .form-page-shell__header,
+:global(html.dark) .form-page-shell__body {
+  border-color: rgba(140, 210, 255, 0.14);
+  background: rgba(8, 28, 48, 0.72);
+}
+
+:global(html.dark) .form-page-shell__sidebar-head,
+:global(html.dark) .form-page-shell__sidebar-foot,
+:global(html.dark) .form-page-shell__pager {
+  background: rgba(13, 40, 64, 0.72);
 }
 </style>

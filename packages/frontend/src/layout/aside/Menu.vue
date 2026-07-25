@@ -131,7 +131,7 @@ watch(
 </script>
 
 <template>
-  <div class="h-full w-full">
+  <div class="menu-panel" :class="{ 'menu-panel--collapsed': collapse }">
     <el-menu
       class="custom-menu-wrapper border-0"
       :collapse="collapse"
@@ -182,23 +182,67 @@ watch(
 </template>
 
 <style lang="scss" scoped>
+.menu-panel {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.menu-panel--collapsed {
+  overflow: visible;
+}
+
 :deep(.custom-menu-wrapper.el-menu--collapse) {
   width: 100%;
 }
 
+:deep(.custom-menu-wrapper.el-menu--collapse .el-sub-menu__title),
 :deep(.custom-menu-wrapper.el-menu--collapse .el-menu-item) {
-  padding: 0;
   justify-content: center;
+  padding: 0;
 }
 
 :deep(.custom-menu-wrapper .el-sub-menu__title) {
   display: flex;
   align-items: center;
   gap: 10px;
+  height: 44px;
+  padding: 0 12px !important;
+  border-radius: 12px;
+  font-weight: 700;
 }
 
 :deep(.custom-menu-wrapper .el-menu-item) {
   gap: 10px;
+  height: 44px;
+  padding: 0 12px !important;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+:deep(.custom-menu-wrapper .el-sub-menu .el-menu-item) {
+  height: 40px;
+  margin-left: 8px;
+  font-weight: 600;
+}
+
+:deep(.custom-menu-wrapper .el-menu-item.is-active) {
+  position: relative;
+  box-shadow:
+    0 8px 22px rgba(37, 99, 235, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62);
+}
+
+:deep(.custom-menu-wrapper .el-menu-item.is-active::before) {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 5px;
+  width: 3px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #2563eb, #14b8a6);
+  content: '';
 }
 
 .menu-icon {

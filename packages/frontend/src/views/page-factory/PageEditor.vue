@@ -379,16 +379,17 @@ onUnmounted(() => {
     element-loading-text="加载页面配置…"
   >
     <!-- 可视化编辑器 -->
-    <ELayout v-if="pageType === 'visualization'" class="relative flex flex-1 overflow-hidden">
+    <ELayout v-if="pageType === 'visualization'" class="visual-editor-shell">
       <ELayoutSider
         v-model:collapsed="layoutCollapse"
+        class="visual-editor-shell__aside"
         show-trigger="button"
-        :width="280"
+        :width="292"
         :collapsed-width="0"
       >
         <LeftAside />
       </ELayoutSider>
-      <ELayoutContent>
+      <ELayoutContent class="visual-editor-shell__content">
         <SimulatorEditor />
       </ELayoutContent>
     </ELayout>
@@ -418,3 +419,55 @@ onUnmounted(() => {
     </div>
   </div>
 </template>
+
+<style lang="scss" scoped>
+.visual-editor-shell {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 10px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 14% 10%, rgba(37, 99, 235, 0.08), transparent 26%),
+    linear-gradient(135deg, rgba(248, 251, 255, 0.94), rgba(240, 249, 255, 0.76));
+}
+
+.visual-editor-shell__aside {
+  overflow: visible;
+  border: 1px solid rgba(82, 124, 181, 0.18);
+  border-radius: 12px;
+  background: var(--el-bg-color);
+  box-shadow: 0 12px 32px rgba(31, 58, 112, 0.08);
+}
+
+.visual-editor-shell__content {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid rgba(82, 124, 181, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: 0 12px 32px rgba(31, 58, 112, 0.08);
+}
+
+:deep(.visual-editor-shell__aside .e-layout-sider__toggle-button) {
+  right: -16px;
+  border: 1px solid rgba(82, 124, 181, 0.18);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 8px 18px rgba(31, 58, 112, 0.14);
+}
+
+:global(html.dark) .visual-editor-shell {
+  background:
+    radial-gradient(circle at 14% 10%, rgba(67, 156, 255, 0.13), transparent 28%),
+    linear-gradient(135deg, rgba(6, 17, 28, 0.95), rgba(7, 26, 43, 0.8));
+}
+
+:global(html.dark) .visual-editor-shell__aside,
+:global(html.dark) .visual-editor-shell__content {
+  border-color: rgba(140, 210, 255, 0.14);
+  background: rgba(8, 28, 48, 0.72);
+}
+</style>

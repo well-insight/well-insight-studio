@@ -2,29 +2,36 @@
 
 .custom-menu-wrapper {
   width: 100%;
-  height: 100%;
-  padding: 6px;
+  height: auto;
+  min-height: 100%;
+  padding: 0;
   border: none;
   background-color: transparent !important;
 
-  --el-menu-item-height: 42px;
-  --el-menu-sub-item-height: 42px;
+  --el-menu-item-height: 44px;
+  --el-menu-sub-item-height: 44px;
   --el-menu-bg-color: transparent;
-  --el-menu-hover-bg-color: var(--el-fill-color-light);
+  --el-menu-hover-bg-color: rgba(var(--el-color-primary-rgb), 0.07);
   --el-menu-active-color: var(--el-color-primary);
 
-  .el-menu-item {
+  .el-menu-item,
+  .el-sub-menu__title {
     margin-bottom: 6px;
-    border-radius: var(--el-border-radius-base);
+    border-radius: 12px;
+  }
 
+  .el-menu-item {
     &.is-active {
-      background-color: var(--wc-active-fill, var(--el-color-primary-light-9));
+      background:
+        linear-gradient(90deg, rgba(var(--el-color-primary-rgb), 0.14), rgba(20, 184, 166, 0.08)),
+        var(--wc-active-fill, var(--el-color-primary-light-9));
       color: var(--el-color-primary);
     }
   }
 
-  .el-sub-menu__title {
-    margin-bottom: 6px;
+  .el-sub-menu .el-menu {
+    padding: 2px 0 4px;
+    background-color: transparent;
   }
 }
 
@@ -35,7 +42,7 @@
   height: 0;
   width: 100%;
   flex: 1 1 0%;
-  background-color: var(--el-bg-color-page);
+  background-color: transparent;
 }
 
 /* Tree Custom Styles */

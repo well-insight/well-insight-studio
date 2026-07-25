@@ -7,10 +7,10 @@ import { useControlStore } from '@/stores/controlStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { EditTools } from '@/visual-editor/ui/workbench/edit-tools'
 import RightAttributePanel from '@/visual-editor/ui/workbench/right-attribute-panel/RightAttributePanel.vue'
-import '@/visual-editor/styles/visual-editor.scss'
 import { ComponentList } from '../../workbench/component-list-new'
 import BlockSettingsBar from './BlockSettingsBar.vue'
 import PcWrapper from './PcWrapper.vue'
+import '@/visual-editor/styles/visual-editor.scss'
 
 defineOptions({
   name: 'SimulatorGridEditor',
@@ -47,7 +47,7 @@ onUnmounted(() => {
     </div>
 
     <div class="simulator-editor">
-      <div class="simulator-rail flex h-full shrink-0 items-center justify-center px-2">
+      <div class="simulator-rail flex h-full shrink-0 items-center justify-center">
         <ComponentList
           @drag-start="() => wrapperRef?.drag()"
           @drag="() => wrapperRef?.drag()"
@@ -103,15 +103,23 @@ onUnmounted(() => {
   position: relative;
   flex-direction: column;
   overflow: hidden;
-  background: var(--el-bg-color-page);
+  border-radius: 12px;
+  background: radial-gradient(circle at 18% 16%, rgba(45, 212, 191, 0.08), transparent 24%), var(--el-bg-color-page);
 }
 
 .simulator-toolbar {
-  background: var(--el-bg-color);
+  position: relative;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.82);
+  border-bottom: 1px solid rgba(82, 124, 181, 0.14);
+  backdrop-filter: blur(14px);
 }
 
 .simulator-rail {
-  width: calc(var(--ve-rail-w, 52px) + 16px);
+  width: calc(var(--ve-rail-w, 52px) + 20px);
+  padding: 12px 10px;
+  border-right: 1px solid rgba(82, 124, 181, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(248, 251, 255, 0.3));
 }
 
 .simulator-canvas-area {
@@ -143,12 +151,32 @@ onUnmounted(() => {
   overflow: hidden;
   box-sizing: border-box;
   background-color: var(--el-bg-color-page);
-  background-image: radial-gradient(circle, var(--ve-grid-dot, var(--el-fill-color-lighter)) 1px, transparent 1px);
-  background-size: 20px 20px;
+  background-image:
+    linear-gradient(rgba(37, 99, 235, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 99, 235, 0.035) 1px, transparent 1px),
+    radial-gradient(circle, var(--ve-grid-dot, var(--el-fill-color-lighter)) 1px, transparent 1px);
+  background-size:
+    80px 80px,
+    80px 80px,
+    20px 20px;
 
   &::-webkit-scrollbar {
     width: 0;
   }
+}
+
+:global(html.dark) .simulator-container {
+  background: radial-gradient(circle at 18% 16%, rgba(45, 212, 191, 0.08), transparent 24%), var(--el-bg-color-page);
+}
+
+:global(html.dark) .simulator-toolbar {
+  border-color: rgba(140, 210, 255, 0.12);
+  background: rgba(13, 40, 64, 0.78);
+}
+
+:global(html.dark) .simulator-rail {
+  border-color: rgba(140, 210, 255, 0.1);
+  background: linear-gradient(180deg, rgba(13, 40, 64, 0.5), rgba(8, 28, 48, 0.28));
 }
 
 .list-group-item {
@@ -196,31 +224,32 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 .floating-setting-panel {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 360px;
-  height: calc(100% - 32px);
+  top: 14px;
+  right: 14px;
+  width: 368px;
+  height: calc(100% - 28px);
   z-index: 1200;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-radius: var(--ve-radius-md, 10px);
+  border-radius: 12px;
   border: 1px solid var(--ve-paper-edge, var(--el-border-color-light));
-  background: var(--el-bg-color);
+  background: rgba(255, 255, 255, 0.92);
   box-shadow:
     0 1px 0 color-mix(in srgb, var(--el-color-primary) 8%, transparent),
-    var(--el-box-shadow);
+    0 18px 46px rgba(31, 58, 112, 0.16);
+  backdrop-filter: blur(14px);
 }
 
 .floating-setting-panel__header {
-  height: 46px;
+  height: 48px;
   flex-shrink: 0;
-  padding: 0 12px;
+  padding: 0 14px;
   border-bottom: 1px solid var(--el-border-color-lighter);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--el-bg-color);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(248, 251, 255, 0.58));
 }
 
 .floating-setting-panel__body {
@@ -230,7 +259,9 @@ onUnmounted(() => {
 
 .floating-setting-panel-enter-active,
 .floating-setting-panel-leave-active {
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
 }
 
 .floating-setting-panel-enter-from,

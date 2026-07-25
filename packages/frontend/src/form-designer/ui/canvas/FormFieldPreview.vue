@@ -3,8 +3,8 @@
  * 画布内字段真实控件示意（只读预览，不抢交互）
  */
 import type { FormField } from '../../types'
-import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
+import { computed } from 'vue'
 import { useThemeStore } from '@/stores/themeStore'
 
 const props = defineProps<{
@@ -34,7 +34,7 @@ const previewValue = computed(() => {
     case 'select':
       return field.props?.multiple ? [] : undefined
     case 'colorPicker':
-      return '#2b73af'
+      return '#5b5bd6'
     default:
       return undefined
   }
@@ -254,7 +254,7 @@ const transferData = computed(() =>
 
     <el-color-picker
       v-else-if="field.componentKey === 'colorPicker'"
-      :model-value="previewValue || '#2b73af'"
+      :model-value="previewValue || '#5b5bd6'"
       :disabled="true"
       :size="resolvedSize"
     />

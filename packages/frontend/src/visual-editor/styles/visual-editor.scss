@@ -2,10 +2,10 @@
 
 .visual-editor,
 .simulator-container {
-  --ve-header-h: 50px;
-  --ve-rail-w: 52px;
-  --ve-radius-sm: 6px;
-  --ve-radius-md: 10px;
+  --ve-header-h: 54px;
+  --ve-rail-w: 54px;
+  --ve-radius-sm: 8px;
+  --ve-radius-md: 12px;
   --ve-ink: color-mix(in srgb, var(--el-color-primary) 55%, var(--el-text-color-secondary));
   --ve-grid-dot: color-mix(in srgb, var(--el-color-primary) 22%, transparent);
   --ve-paper-edge: color-mix(in srgb, var(--el-color-primary) 12%, var(--el-border-color-light));

@@ -477,9 +477,8 @@ function onDblClick(variant: WidgetVariantItem) {
   flex: 1;
   min-height: 120px;
   padding: 8px;
-  background:
-    radial-gradient(circle, var(--ve-grid-dot, var(--el-fill-color-lighter)) 1px, transparent 1px)
-      var(--el-fill-color-light);
+  background: radial-gradient(circle, var(--ve-grid-dot, var(--el-fill-color-lighter)) 1px, transparent 1px)
+    var(--el-fill-color-light);
   background-size: 16px 16px;
   overflow: hidden;
 }

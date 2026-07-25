@@ -24,109 +24,109 @@ Usage notes:
 
 <skill>
 <name>algorithmic-art</name>
-<description>Creating algorithmic art using p5.js with seeded randomness and interactive parameter exploration. Use this when users request creating art using code, generative art, algorithmic art, flow fields, or particle systems. Create original algorithmic art rather than copying existing artists' work to avoid copyright violations.</description>
+<description>当用户要求用代码创作艺术、生成艺术、算法艺术、flow fields、粒子系统、p5.js 视觉效果时使用。适合生成原创的程序化视觉作品与可调参数的艺术实验。Use this skill when the user asks for code-based art, generative art, algorithmic art, flow fields, particle systems, or p5.js visual experiments. Create original artwork rather than copying living artists or copyrighted styles.</description>
 <location>project</location>
 </skill>
 
 <skill>
 <name>brand-guidelines</name>
-<description>Applies Anthropic's official brand colors and typography to any sort of artifact that may benefit from having Anthropic's look-and-feel. Use it when brand colors or style guidelines, visual formatting, or company design standards apply.</description>
+<description>当任务涉及品牌视觉、品牌色、字体规范、公司风格、界面或文档需要统一品牌调性时使用。Use this skill when brand colors, typography, visual consistency, or company design standards should be applied to an artifact.</description>
 <location>project</location>
 </skill>
 
 <skill>
 <name>canvas-design</name>
-<description>Create beautiful visual art in .png and .pdf documents using design philosophy. You should use this skill when the user asks to create a poster, piece of art, design, or other static piece. Create original visual designs, never copying existing artists' work to avoid copyright violations.</description>
+<description>当用户要制作海报、封面、静态视觉、PNG、PDF 设计稿或其他非交互式视觉作品时使用。Use this skill to create polished static visual design pieces such as posters, covers, and art in PNG or PDF formats. Always create original visuals.</description>
 <location>project</location>
 </skill>
 
 <skill>
 <name>claude-api</name>
-<description>|-</description>
+<description>当任务涉及 Claude API、接口调用、消息格式、模型参数、流式输出、SDK 接入或相关示例时使用。Use this skill when working with the Claude API, SDK integration, request formats, streaming, parameters, or implementation examples.</description>
 <location>project</location>
 </skill>
 
 <skill>
 <name>doc-coauthoring</name>
-<description>Guide users through a structured workflow for co-authoring documentation. Use when user wants to write documentation, proposals, technical specs, decision docs, or similar structured content. This workflow helps users efficiently transfer context, refine content through iteration, and verify the doc works for readers. Trigger when user mentions writing docs, creating proposals, drafting specs, or similar documentation tasks.</description>
+<description>当用户要撰写文档、方案、技术设计、决策记录、提案、说明文档，或希望协作打磨文档结构与内容时使用。Use this skill for co-authoring structured documentation such as specs, proposals, decision docs, and technical documents.</description>
 <location>project</location>
 </skill>
 
 <skill>
 <name>docx</name>
-<description>"Use this skill whenever the user wants to create, read, edit, or manipulate Word documents (.docx files). Triggers include: any mention of 'Word doc', 'word document', '.docx', or requests to produce professional documents with formatting like tables of contents, headings, page numbers, or letterheads. Also use when extracting or reorganizing content from .docx files, inserting or replacing images in documents, performing find-and-replace in Word files, working with tracked changes or comments, or converting content into a polished Word document. If the user asks for a 'report', 'memo', 'letter', 'template', or similar deliverable as a Word or .docx file, use this skill. Do NOT use for PDFs, spreadsheets, Google Docs, or general coding tasks unrelated to document generation."</description>
+<description>当用户提到 Word、word 文档、.docx，或要创建、读取、编辑、整理、替换内容、插入图片、输出正式报告/信函/模板时使用。Use this skill whenever a Word document (.docx) needs to be created, read, edited, reorganized, or polished. Do not use for PDFs, spreadsheets, or unrelated coding tasks.</description>
 <location>project</location>
 </skill>
 
 <skill>
 <name>frontend-design</name>
-<description>Guidance for distinctive, intentional visual design when building new UI or reshaping an existing one. Helps with aesthetic direction, typography, and making choices that don't read as templated defaults.</description>
+<description>当用户要优化页面视觉、重做 UI、提升界面设计感、调整排版、配色、层次、组件观感时使用。Use this skill when reshaping an existing UI or creating a more intentional and distinctive frontend visual design.</description>
 <location>project</location>
 </skill>
 
 <skill>
 <name>internal-comms</name>
-<description>A set of resources to help me write all kinds of internal communications, using the formats that my company likes to use. Claude should use this skill whenever asked to write some sort of internal communications (status reports, leadership updates, 3P updates, company newsletters, FAQs, incident reports, project updates, etc.).</description>
+<description>当用户要写内部沟通材料，如周报、项目进展、状态更新、FAQ、事故复盘、领导汇报、团队公告等时使用。Use this skill for internal communications such as status reports, leadership updates, incident reports, newsletters, and project updates.</description>
 <location>project</location>
 </skill>
 
 <skill>
 <name>mcp-builder</name>
-<description>Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use when building MCP servers to integrate external APIs or services, whether in Python (FastMCP) or Node/TypeScript (MCP SDK).</description>
+<description>当任务是开发 MCP 服务、设计 MCP 工具、封装外部 API、用 FastMCP 或 Node/TypeScript MCP SDK 构建集成时使用。Use this skill when building MCP servers or designing high-quality MCP tools for external services.</description>
 <location>project</location>
 </skill>
 
 <skill>
 <name>pdf</name>
-<description>Use this skill whenever the user wants to do anything with PDF files. This includes reading or extracting text/tables from PDFs, combining or merging multiple PDFs into one, splitting PDFs apart, rotating pages, adding watermarks, creating new PDFs, filling PDF forms, encrypting/decrypting PDFs, extracting images, and OCR on scanned PDFs to make them searchable. If the user mentions a .pdf file or asks to produce one, use this skill.</description>
+<description>当用户提到 PDF、pdf、读取 PDF、总结 PDF、提取文字/表格、合并 PDF、拆分 PDF、旋转页面、加水印、OCR、生成 PDF、填写表单时使用。Use this skill whenever a PDF is the input or output, including reading, summarizing, extracting, merging, splitting, OCR, watermarking, or generating PDF files.</description>
 <location>project</location>
 </skill>
 
 <skill>
 <name>pptx</name>
-<description>"Use this skill any time a .pptx file is involved in any way — as input, output, or both. This includes: creating slide decks, pitch decks, or presentations; reading, parsing, or extracting text from any .pptx file (even if the extracted content will be used elsewhere, like in an email or summary); editing, modifying, or updating existing presentations; combining or splitting slide files; working with templates, layouts, speaker notes, or comments. Trigger whenever the user mentions \"deck,\" \"slides,\" \"presentation,\" or references a .pptx filename, regardless of what they plan to do with the content afterward. If a .pptx file needs to be opened, created, or touched, use this skill."</description>
+<description>当用户提到 PPT、幻灯片、演示文稿、deck、slides、.pptx，或要创建、读取、编辑、合并、拆分、整理演示内容时使用。Use this skill any time a PowerPoint file (.pptx) is involved as input or output, including creating, parsing, updating, or reorganizing presentations.</description>
 <location>project</location>
 </skill>
 
 <skill>
 <name>skill-creator</name>
-<description>Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's description for better triggering accuracy.</description>
+<description>当用户要新建 skill、修改 skill、优化 skill 描述、提高触发率、做 skill 评测或性能对比时使用。Use this skill when creating, editing, evaluating, or optimizing skills and their trigger descriptions.</description>
 <location>project</location>
 </skill>
 
 <skill>
 <name>slack-gif-creator</name>
-<description>Knowledge and utilities for creating animated GIFs optimized for Slack. Provides constraints, validation tools, and animation concepts. Use when users request animated GIFs for Slack like "make me a GIF of X doing Y for Slack."</description>
+<description>当用户要制作 Slack 用的 GIF、动图、短动画，并希望符合 Slack 常见尺寸与播放约束时使用。Use this skill to create animated GIFs optimized for Slack, including concepting, constraints, and export guidance.</description>
 <location>project</location>
 </skill>
 
 <skill>
 <name>template</name>
-<description>Replace with description of the skill and when Claude should use it.</description>
+<description>用于占位或示例。若你准备新增 skill，请把这里替换成清晰的中英双语触发描述。Placeholder skill entry. Replace this description with a real bilingual trigger description before relying on it.</description>
 <location>project</location>
 </skill>
 
 <skill>
 <name>theme-factory</name>
-<description>Toolkit for styling artifacts with a theme. These artifacts can be slides, docs, reportings, HTML landing pages, etc. There are 10 pre-set themes with colors/fonts that you can apply to any artifact that has been creating, or can generate a new theme on-the-fly.</description>
+<description>当用户要给网页、文档、幻灯片、报告、落地页等应用统一主题、配色、字体与视觉风格时使用。Use this skill when applying or generating themes for artifacts such as slides, docs, reports, or landing pages.</description>
 <location>project</location>
 </skill>
 
 <skill>
 <name>web-artifacts-builder</name>
-<description>Suite of tools for creating elaborate, multi-component claude.ai HTML artifacts using modern frontend web technologies (React, Tailwind CSS, shadcn/ui). Use for complex artifacts requiring state management, routing, or shadcn/ui components - not for simple single-file HTML/JSX artifacts.</description>
+<description>当用户要构建较复杂的 Web artifact、React 页面、Tailwind/shadcn 界面、多组件交互、带状态管理或路由的网页作品时使用。Use this skill for complex HTML/React web artifacts that need multiple components, state, routing, or shadcn/ui. Do not use for simple single-file pages.</description>
 <location>project</location>
 </skill>
 
 <skill>
 <name>webapp-testing</name>
-<description>Toolkit for interacting with and testing local web applications using Playwright. Supports verifying frontend functionality, debugging UI behavior, capturing browser screenshots, and viewing browser logs.</description>
+<description>当用户要测试本地网页、验证前端功能、复现界面问题、看浏览器日志、截图、检查交互是否正常时使用。Use this skill for testing local web apps with browser automation, frontend verification, screenshots, and debugging browser behavior.</description>
 <location>project</location>
 </skill>
 
 <skill>
 <name>xlsx</name>
-<description>"Use this skill any time a spreadsheet file is the primary input or output. This means any task where the user wants to: open, read, edit, or fix an existing .xlsx, .xlsm, .csv, or .tsv file (e.g., adding columns, computing formulas, formatting, charting, cleaning messy data); create a new spreadsheet from scratch or from other data sources; or convert between tabular file formats. Trigger especially when the user references a spreadsheet file by name or path — even casually (like \"the xlsx in my downloads\") — and wants something done to it or produced from it. Also trigger for cleaning or restructuring messy tabular data files (malformed rows, misplaced headers, junk data) into proper spreadsheets. The deliverable must be a spreadsheet file. Do NOT trigger when the primary deliverable is a Word document, HTML report, standalone Python script, database pipeline, or Google Sheets API integration, even if tabular data is involved."</description>
+<description>当用户提到 Excel、表格、.xlsx、.xlsm、.csv、.tsv，或要读取、整理、清洗、修复、增加列、算公式、排序、图表、导入导出表格时使用。Use this skill whenever a spreadsheet file is the main input or output, including cleaning, editing, formatting, calculating, charting, or converting tabular files.</description>
 <location>project</location>
 </skill>
 

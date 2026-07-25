@@ -1,12 +1,12 @@
 /* 表单设计器局部视觉令牌 — 蓝图制表工作台 */
 
 .form-designer {
-  --fd-rail-width: 280px;
-  --fd-inspector-width: 300px;
-  --fd-header-h: 50px;
-  --fd-paper-max: 860px;
-  --fd-radius-sm: 6px;
-  --fd-radius-md: 10px;
+  --fd-rail-width: 292px;
+  --fd-inspector-width: 320px;
+  --fd-header-h: 54px;
+  --fd-paper-max: 920px;
+  --fd-radius-sm: 8px;
+  --fd-radius-md: 12px;
   --fd-ink: color-mix(in srgb, var(--el-color-primary) 55%, var(--el-text-color-secondary));
   --fd-grid-dot: color-mix(in srgb, var(--el-color-primary) 22%, transparent);
   --fd-paper-edge: color-mix(in srgb, var(--el-color-primary) 12%, var(--el-border-color-light));

@@ -34,7 +34,7 @@ export function useAuthForm(options: UseAuthFormOptions = {}) {
   })
 
   const captchaAnswer = ref('')
-  const canvasRef = useTemplateRef<HTMLCanvasElement>('captchaCanvas')
+  const canvasRef = useTemplateRef<HTMLCanvasElement>('canvasRef')
 
   function drawCaptcha() {
     const chars = '0123456789'
@@ -55,7 +55,7 @@ export function useAuthForm(options: UseAuthFormOptions = {}) {
     ctx.fillRect(0, 0, w, h)
 
     for (let i = 0; i < 5; i++) {
-      ctx.strokeStyle = `rgba(43, 115, 175, ${0.12 + Math.random() * 0.2})`
+      ctx.strokeStyle = `rgba(91, 91, 214, ${0.12 + Math.random() * 0.2})`
       ctx.lineWidth = 1
       ctx.beginPath()
       ctx.moveTo(Math.random() * w, Math.random() * h)

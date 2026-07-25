@@ -36,14 +36,12 @@ html.dark {
   --el-box-shadow: 0 12px 32px rgba(4, 16, 30, 0.45);
   --el-box-shadow-light: 0 0 12px rgba(4, 16, 30, 0.35);
   --el-box-shadow-lighter: 0 0 6px rgba(4, 16, 30, 0.28);
-  --el-box-shadow-dark:
-    0 16px 48px 16px rgba(4, 16, 30, 0.4),
-    0 12px 32px rgba(4, 16, 30, 0.35);
+  --el-box-shadow-dark: 0 16px 48px 16px rgba(4, 16, 30, 0.4), 0 12px 32px rgba(4, 16, 30, 0.35);
 
   /* --- Menu --- */
   --el-menu-bg-color: transparent;
   --el-menu-text-color: #c8dff0;
-  --el-menu-hover-bg-color: rgba(43, 115, 175, 0.18);
+  --el-menu-hover-bg-color: rgba(91, 91, 214, 0.18);
   --el-menu-hover-text-color: #e8f4ff;
   --el-menu-active-color: #9ad4ff;
   --el-menu-border-color: transparent;
@@ -52,7 +50,7 @@ html.dark {
   --el-table-bg-color: transparent;
   --el-table-tr-bg-color: transparent;
   --el-table-header-bg-color: rgba(8, 28, 48, 0.55);
-  --el-table-row-hover-bg-color: rgba(43, 115, 175, 0.14);
+  --el-table-row-hover-bg-color: rgba(91, 91, 214, 0.14);
   --el-table-border-color: rgba(140, 210, 255, 0.14);
   --el-table-header-text-color: #c8dff0;
   --el-table-text-color: #e8f4ff;
@@ -71,7 +69,7 @@ html.dark {
   --wc-border-color-lighter: rgba(140, 210, 255, 0.12);
   --wc-accent-cyan: #9ad4ff;
   --wc-glass-bg: rgba(12, 28, 46, 0.42);
-  --wc-active-fill: rgba(43, 115, 175, 0.28);
+  --wc-active-fill: rgba(91, 91, 214, 0.28);
 
   /* ========== 全局页面底板 ========== */
   body,
@@ -94,7 +92,7 @@ html.dark {
   }
 
   .matrix-dot {
-    background-color: #2b73af !important;
+    background-color: #5b5bd6 !important;
   }
 
   .placeholder {
@@ -330,7 +328,7 @@ html.dark {
 
   .el-segmented {
     --el-segmented-bg-color: rgba(8, 28, 48, 0.45);
-    --el-segmented-item-selected-bg-color: rgba(43, 115, 175, 0.45);
+    --el-segmented-item-selected-bg-color: rgba(91, 91, 214, 0.45);
     --el-segmented-item-selected-color: #fff;
     --el-segmented-color: var(--el-text-color-regular);
   }
