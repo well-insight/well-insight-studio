@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>低代码平台 · 主题配色方案库</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/element-plus/dist/index.full.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f0f2f6;
+      padding: 20px 16px;
+    }
+    #app { max-width: 1600px; margin: 0 auto; }
+
+    .page-header { margin-bottom: 28px; }
+    .page-header h1 {
+      font-weight: 700;
+      font-size: 30px;
+      color: #0b1a33;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .page-header .badge-count {
+      font-size: 14px;
+      background: #e8edf5;
+      padding: 2px 16px;
+      border-radius: 40px;
+      color: #2a405e;
+      font-weight: 500;
+    }
+    .page-header p {
+      color: #5a6b8a;
+      font-size: 15px;
+      margin-top: 4px;
+    }
+
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .filter-bar .el-tag {
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 12px;
+    }
+    .filter-bar .el-tag:hover { transform: scale(1.02); }
+
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+      gap: 12px;
+      margin-bottom: 36px;
+    }
+    .palette-card {
+      background: white;
+      border-radius: 14px;
+      padding: 12px 10px 10px;
+      box-shadow: 0 2px 10px rgba(0, 20, 40, 0.04);
+      border: 2.5px solid transparent;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+    .palette-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 24px -8px rgba(0, 20, 40, 0.12);
+      border-color: #cdd8e8;
+    }
+    .palette-card.active {
+      border-color: var(--el-color-primary, #409EFF);
+      box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.2);
+    }
+    .palette-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .theme-name {
+      font-weight: 600;
+      font-size: 12px;
+      color: #11213a;
+      letter-spacing: -0.2px;
+    }
+    .theme-badge {
+      font-size: 9px;
+      background: #eef2f7;
+      padding: 1px 8px;
+      border-radius: 30px;
+      color: #3e5270;
+      font-weight: 500;
+    }
+    .color-strip {
+      display: flex;
+      gap: 3px;
+      flex-wrap: wrap;
+      margin: 3px 0 8px;
+    }
+    .color-swatch {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: 1px solid rgba(0,0,0,0.04);
+      flex-shrink: 0;
+      transition: transform 0.12s;
+    }
+    .color-swatch:hover { transform: scale(1.15); }
+    .palette-footer {
+      display: flex;
+      gap: 3px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+    .palette-footer .el-tag { font-size: 9px; height: 18px; line-height: 16px; }
+
+    .preview-section {
+      background: white;
+      border-radius: 24px;
+      padding: 22px 24px 26px;
+      box-shadow: 0 8px 32px rgba(0, 20, 40, 0.05);
+      margin-bottom: 20px;
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #13233e;
+      margin-bottom: 20px;
+      border-left: 4px solid var(--el-color-primary, #409EFF);
+      padding-left: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .preview-container {
+      border: 2px solid #e6ecf3;
+      border-radius: 20px;
+      padding: 22px 18px;
+      transition: border-color 0.25s;
+    }
+    .demo-card .el-card__header {
+      border-bottom: 1px solid #eff2f7;
+      font-weight: 500;
+      font-size: 14px;
+    }
+    .card-body .el-divider { margin: 12px 0; }
+    .demo-tabs .el-tabs__item.is-active { font-weight: 500; }
+    .demo-pagination { justify-content: center; }
+
+    .theme-info-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      background: white;
+      border-radius: 60px;
+      padding: 8px 20px 8px 24px;
+      border: 1px solid #e2eaf2;
+      gap: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
+    .theme-info-bar .el-alert { flex: 1; min-width: 180px; }
+    .reset-btn { margin-left: auto; }
+
+    @media (max-width: 700px) {
+      #app { padding: 0 4px; }
+      .palette-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+      .preview-container { padding: 10px 6px; }
+      .page-header h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="page-header">
+      <h1>
+        🎨 低代码平台 · 主题配色方案库
+        <span class="badge-count">{{ themes.length }} 套配色</span>
+      </h1>
+      <p>点击任意配色卡片切换全局主题，下方组件实时预览效果</p>
+    </div>
+
+    <div class="filter-bar">
+      <el-tag size="small" type="info" @click="filterTag='all'" :effect="filterTag==='all'?'dark':'plain'">全部</el-tag>
+      <el-tag size="small" type="primary" @click="filterTag='blue'" :effect="filterTag==='blue'?'dark':'plain'">🔵 蓝色系</el-tag>
+      <el-tag size="small" type="success" @click="filterTag='green'" :effect="filterTag==='green'?'dark':'plain'">🟢 绿色系</el-tag>
+      <el-tag size="small" type="warning" @click="filterTag='orange'" :effect="filterTag==='orange'?'dark':'plain'">🟠 暖色系</el-tag>
+      <el-tag size="small" @click="filterTag='purple'" :effect="filterTag==='purple'?'dark':'plain'" style="color:#7B5EA7;border-color:#7B5EA7;">🟣 紫色系</el-tag>
+      <el-tag size="small" @click="filterTag='red'" :effect="filterTag==='red'?'dark':'plain'" style="color:#D94A6A;border-color:#D94A6A;">🔴 红色系</el-tag>
+      <el-tag size="small" @click="filterTag='neutral'" :effect="filterTag==='neutral'?'dark':'plain'" style="color:#4A5A6A;border-color:#4A5A6A;">⚪ 中性色</el-tag>
+    </div>
+
+    <div class="palette-grid">
+      <div 
+        v-for="theme in filteredThemes" 
+        :key="theme.name"
+        class="palette-card"
+        :class="{ active: currentTheme === theme.name }"
+        @click="applyTheme(theme)"
+      >
+        <div class="palette-header">
+          <span class="theme-name">{{ theme.label }}</span>
+          <span class="theme-badge">{{ theme.name }}</span>
+        </div>
+        <div class="color-strip">
+          <div 
+            v-for="(color, idx) in theme.colors" 
+            :key="idx"
+            class="color-swatch"
+            :style="{ backgroundColor: color }"
+            :title="color"
+          />
+        </div>
+        <div class="palette-footer">
+          <el-tag size="small" type="info" effect="plain">{{ theme.primary }}</el-tag>
+        </div>
+      </div>
+    </div>
+
+    <div class="preview-section">
+      <div class="section-title">
+        <span>🔍 组件实时预览</span>
+        <span style="font-size:13px; font-weight:400; color:#5e6f8d;">— 主题色自动同步</span>
+      </div>
+      <div class="preview-container" :style="{ borderColor: currentPrimary }">
+        <el-row :gutter="20">
+          <el-col :xs="24" :sm="12" :md="8">
+            <el-card shadow="hover" class="demo-card">
+              <template #header>
+                <span>卡片标题</span>
+                <el-button type="primary" size="small" style="float: right;">操作</el-button>
+              </template>
+              <div class="card-body">
+                <el-progress :percentage="72" :stroke-color="currentPrimary" />
+                <el-divider />
+                <el-tag type="primary">主要</el-tag>
+                <el-tag type="success" style="margin-left: 6px;">成功</el-tag>
+                <el-tag type="warning" style="margin-left: 6px;">警告</el-tag>
+                <el-tag type="danger" style="margin-left: 6px;">危险</el-tag>
+              </div>
+            </el-card>
+          </el-col>
+          <el-col :xs="24" :sm="12" :md="8">
+            <el-card shadow="hover" class="demo-card">
+              <template #header><span>表单控件</span></template>
+              <el-form label-width="70px">
+                <el-form-item label="用户名">
+                  <el-input placeholder="请输入" prefix-icon="User" />
+                </el-form-item>
+                <el-form-item label="角色">
+                  <el-select placeholder="请选择" style="width: 100%;">
+                    <el-option label="管理员" value="admin" />
+                    <el-option label="编辑" value="editor" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" plain>次要</el-button>
+                  <el-button type="primary">主要</el-button>
+                </el-form-item>
+              </el-form>
+            </el-card>
+          </el-col>
+          <el-col :xs="24" :sm="12" :md="8">
+            <el-card shadow="hover" class="demo-card">
+              <template #header><span>数据展示</span></template>
+              <el-statistic title="总访问量" :value="198768" :precision="0" />
+              <el-divider />
+              <el-switch v-model="switchVal" active-text="启用" inactive-text="停用" />
+              <div style="margin-top: 12px;">
+                <el-radio-group v-model="radioVal">
+                  <el-radio-button label="A" />
+                  <el-radio-button label="B" />
+                  <el-radio-button label="C" />
+                </el-radio-group>
+              </div>
+            </el-card>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" style="margin-top: 18px;">
+          <el-col :xs="24" :sm="12">
+            <el-card shadow="hover">
+              <el-tabs v-model="tabActive" class="demo-tabs">
+                <el-tab-pane label="面板一" name="first">当前主题色已应用至 tabs 激活态</el-tab-pane>
+                <el-tab-pane label="面板二" name="second">切换配色时，边框、阴影、激活色同步变化</el-tab-pane>
+              </el-tabs>
+            </el-card>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-card shadow="hover">
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <el-button type="primary" round>圆角</el-button>
+                <el-button type="primary" plain round>朴素</el-button>
+                <el-button type="primary" text>文字</el-button>
+                <el-button type="primary" link>链接</el-button>
+              </div>
+              <el-divider />
+              <el-pagination background layout="prev, pager, next" :total="100" :page-size="10" :current-page="1" class="demo-pagination" />
+            </el-card>
+          </el-col>
+        </el-row>
+      </div>
+    </div>
+
+    <div class="theme-info-bar">
+      <el-alert
+        :title="`当前主题：${currentThemeLabel} (主色 ${currentPrimary})`"
+        type="info"
+        show-icon
+        :closable="false"
+      />
+      <el-button size="small" class="reset-btn" @click="resetTheme">重置为默认</el-button>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const { createApp, ref, computed, onMounted } = Vue
+
+      // 25套配色方案 (新增10套)
+      const themePalettes = [
+        // === 蓝色系 (5套) ===
+        { name: 'breeze', label: '清风 · 蓝', primary: '#409EFF', success: '#67C23A', warning: '#E6A23C', danger: '#F56C6C', colors: ['#409EFF','#66B1FF','#A6C9FF','#D9ECFF','#F0F7FF'], category: 'blue' },
+        { name: 'sky', label: '天穹 · 淡蓝', primary: '#4A90D9', success: '#5A9A7A', warning: '#D4A84A', danger: '#C45A5A', colors: ['#4A90D9','#7AB0E8','#A8CCF0','#D4E6F8','#EEF4FA'], category: 'blue' },
+        { name: 'indigo', label: '靛蓝 · 深邃', primary: '#3A5A9A', success: '#4A8A7A', warning: '#C4A04A', danger: '#B84A5A', colors: ['#3A5A9A','#6A8AC4','#9AB0D8','#C8D8EC','#E8EEF6'], category: 'blue' },
+        { name: 'ocean', label: '海洋 · 深蓝', primary: '#1A5276', success: '#2E86A0', warning: '#D4A84A', danger: '#C0392B', colors: ['#1A5276','#2E86A0','#5DADE2','#85C1E9','#D6EAF8'], category: 'blue' },
+        { name: 'iceberg', label: '冰山 · 冷蓝', primary: '#5DADE2', success: '#48C9B0', warning: '#F4D03F', danger: '#EC7063', colors: ['#5DADE2','#85C1E9','#A9CCE3','#D4E6F1','#EBF5FB'], category: 'blue' },
+
+        // === 绿色系 (5套) ===
+        { name: 'forest', label: '森林 · 绿', primary: '#2D8C5A', success: '#3AA76D', warning: '#D4A843', danger: '#C45A4A', colors: ['#2D8C5A','#4CAF7A','#7ECBA0','#B8E0CC','#E6F4EE'], category: 'green' },
+        { name: 'mint', label: '薄荷 · 青', primary: '#3A9A8A', success: '#4AB89A', warning: '#D4B84A', danger: '#C46A5A', colors: ['#3A9A8A','#5AB8A8','#7AD0C0','#B0E4DC','#DFF3EE'], category: 'green' },
+        { name: 'emerald', label: '翡翠 · 碧', primary: '#1A8A5A', success: '#3AAA7A', warning: '#C4A84A', danger: '#B85A4A', colors: ['#1A8A5A','#4ABA8A','#7AD0AA','#B0E4CC','#E0F4EA'], category: 'green' },
+        { name: 'spring', label: '春芽 · 嫩绿', primary: '#7CB342', success: '#8BC34A', warning: '#FFB300', danger: '#E53935', colors: ['#7CB342','#9CCC65','#AED581','#C5E1A5','#F1F8E9'], category: 'green' },
+        { name: 'teal', label: '墨绿 · 复古', primary: '#00695C', success: '#00897B', warning: '#F9A825', danger: '#C62828', colors: ['#00695C','#00897B','#26A69A','#4DB6AC','#B2DFDB'], category: 'green' },
+
+        // === 暖色系 (5套) ===
+        { name: 'sunset', label: '落日 · 橙', primary: '#E8734A', success: '#E8A14A', warning: '#E8C14A', danger: '#D95A5A', colors: ['#E8734A','#F09A6A','#F7C2A0','#FCE0CC','#FFF3EC'], category: 'orange' },
+        { name: 'sunflower', label: '向日葵 · 黄', primary: '#E8B84A', success: '#7AB87A', warning: '#E8A84A', danger: '#D46A4A', colors: ['#E8B84A','#F0CC7A','#F8DCA8','#FCECD4','#FFF6EC'], category: 'orange' },
+        { name: 'apricot', label: '杏色 · 暖橘', primary: '#E88A5A', success: '#C4A84A', warning: '#E8B84A', danger: '#D46A4A', colors: ['#E88A5A','#F0AA7A','#F8C8A8','#FCE4D4','#FFF4EC'], category: 'orange' },
+        { name: 'amber', label: '琥珀 · 金', primary: '#F9A825', success: '#8BC34A', warning: '#FFB300', danger: '#E53935', colors: ['#F9A825','#FBC02D','#FFD54F','#FFE082','#FFF8E1'], category: 'orange' },
+        { name: 'peach', label: '蜜桃 · 粉橘', primary: '#FF8A65', success: '#A5D6A7', warning: '#FFD54F', danger: '#EF5350', colors: ['#FF8A65','#FFAB91','#FFCCBC','#FBE9E7','#FFF3E0'], category: 'orange' },
+
+        // === 紫色系 (3套) ===
+        { name: 'purple', label: '星云 · 紫', primary: '#7B5EA7', success: '#A07BC4', warning: '#D4A0C4', danger: '#C47BA0', colors: ['#7B5EA7','#9F82C4','#C4AEDC','#E2D4F0','#F4EEFA'], category: 'purple' },
+        { name: 'lavender', label: '薰衣草 · 淡紫', primary: '#8A7AC4', success: '#7A9A7A', warning: '#D4B84A', danger: '#C46A7A', colors: ['#8A7AC4','#B09AD8','#C8BCE8','#E2DCF2','#F4F0FA'], category: 'purple' },
+        { name: 'magenta', label: '品红 · 紫粉', primary: '#9C27B0', success: '#AB47BC', warning: '#FFA726', danger: '#EF5350', colors: ['#9C27B0','#AB47BC','#CE93D8','#E1BEE7','#F3E5F5'], category: 'purple' },
+
+        // === 红色系 (3套) ===
+        { name: 'cherry', label: '樱花 · 粉', primary: '#E05A7A', success: '#E07A9A', warning: '#E8B07A', danger: '#D94A6A', colors: ['#E05A7A','#E8829A','#F0AABA','#F8D4DE','#FDEFF2'], category: 'red' },
+        { name: 'coral', label: '珊瑚 · 红', primary: '#E0655A', success: '#7AB87A', warning: '#E8B04A', danger: '#D94A4A', colors: ['#E0655A','#E88A7A','#F0B0A0','#F8D4CC','#FDEEEC'], category: 'red' },
+        { name: 'rose', label: '玫瑰 · 酒红', primary: '#A84A6A', success: '#7A8A5A', warning: '#C4A04A', danger: '#B84A4A', colors: ['#A84A6A','#C47A9A','#D8A8BA','#E8D0D8','#F4EAEC'], category: 'red' },
+
+        // === 中性色 (4套) ===
+        { name: 'graphite', label: '石墨 · 灰蓝', primary: '#4A5A6A', success: '#5A8A7A', warning: '#B8A84A', danger: '#B85A5A', colors: ['#4A5A6A','#6A7A8A','#8A9AAA','#B0C0CC','#E0E8EC'], category: 'neutral' },
+        { name: 'slate', label: '板岩 · 冷灰', primary: '#607D8B', success: '#78909C', warning: '#FFB300', danger: '#E53935', colors: ['#607D8B','#78909C','#90A4AE','#B0BEC5','#ECEFF1'], category: 'neutral' },
+        { name: 'taupe', label: '灰褐 · 暖灰', primary: '#8D6E63', success: '#A1887F', warning: '#D4A84A', danger: '#C45A4A', colors: ['#8D6E63','#A1887F','#BCAAA4','#D7CCC8','#EFEBE9'], category: 'neutral' },
+        { name: 'charcoal', label: '木炭 · 深灰', primary: '#37474F', success: '#546E7A', warning: '#FFA726', danger: '#EF5350', colors: ['#37474F','#546E7A','#78909C','#B0BEC5','#ECEFF1'], category: 'neutral' }
+      ]
+
+      function adjustColor(hex, percent) {
+        let r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16)
+        const delta = (percent/100)*255
+        r = Math.min(255, Math.max(0, Math.round(r+delta)))
+        g = Math.min(255, Math.max(0, Math.round(g+delta)))
+        b = Math.min(255, Math.max(0, Math.round(b+delta)))
+        return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`
+      }
+
+      const app = createApp({
+        setup() {
+          const currentTheme = ref('breeze')
+          const switchVal = ref(true)
+          const radioVal = ref('A')
+          const tabActive = ref('first')
+          const filterTag = ref('all')
+
+          const currentThemeObj = computed(() => themePalettes.find(t => t.name === currentTheme.value) || themePalettes[0])
+          const currentPrimary = computed(() => currentThemeObj.value?.primary || '#409EFF')
+          const currentThemeLabel = computed(() => currentThemeObj.value?.label || '清风 · 蓝')
+
+          const filteredThemes = computed(() => {
+            if (filterTag.value === 'all') return themePalettes
+            return themePalettes.filter(t => t.category === filterTag.value)
+          })
+
+          const applyTheme = (theme) => {
+            const root = document.documentElement
+            const p = theme.primary
+            root.style.setProperty('--el-color-primary', p)
+            root.style.setProperty('--el-color-primary-light-3', adjustColor(p, 30))
+            root.style.setProperty('--el-color-primary-light-5', adjustColor(p, 50))
+            root.style.setProperty('--el-color-primary-light-7', adjustColor(p, 70))
+            root.style.setProperty('--el-color-primary-light-8', adjustColor(p, 80))
+            root.style.setProperty('--el-color-primary-light-9', adjustColor(p, 90))
+            root.style.setProperty('--el-color-primary-dark-2', adjustColor(p, -20))
+            if (theme.success) {
+              root.style.setProperty('--el-color-success', theme.success)
+              root.style.setProperty('--el-color-success-light-5', adjustColor(theme.success, 50))
+              root.style.setProperty('--el-color-success-light-7', adjustColor(theme.success, 70))
+            }
+            if (theme.warning) {
+              root.style.setProperty('--el-color-warning', theme.warning)
+            }
+            if (theme.danger) {
+              root.style.setProperty('--el-color-danger', theme.danger)
+            }
+            currentTheme.value = theme.name
+            ElMessage.success(`已切换至「${theme.label}」主题`)
+          }
+
+          const resetTheme = () => {
+            const defaultTheme = themePalettes.find(t => t.name === 'breeze')
+            if (defaultTheme) applyTheme(defaultTheme)
+          }
+
+          onMounted(() => {
+            const defaultTheme = themePalettes.find(t => t.name === 'breeze')
+            if (defaultTheme) applyTheme(defaultTheme)
+          })
+
+          return {
+            themes: themePalettes,
+            filteredThemes,
+            currentTheme,
+            currentPrimary,
+            currentThemeLabel,
+            switchVal,
+            radioVal,
+            tabActive,
+            filterTag,
+            applyTheme,
+            resetTheme
+          }
+        }
+      })
+
+      app.use(ElementPlus)
+      app.mount('#app')
+    })()
+  </script>
+</body>
+</html>

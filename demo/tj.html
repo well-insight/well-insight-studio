@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>炫酷统计卡片 · 纯白背景</title>
+    <!-- Font Awesome 6 (免费) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #ffffff;  /* 纯白背景 */
+            padding: 2rem 1.5rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 白色背景上的微妙纹理 (极淡) */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(0, 180, 255, 0.02), transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(100, 80, 255, 0.015), transparent 40%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 主网格 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            max-width: 1280px;
+            width: 100%;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* 卡片 — 白底 + 玻璃阴影 + 霓虹边框 */
+        .stat-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 40px;
+            padding: 2rem 1.8rem 1.8rem 1.8rem;
+            border: 1px solid rgba(0, 180, 255, 0.15);
+            box-shadow:
+                0 20px 40px -12px rgba(0, 20, 40, 0.08),
+                0 8px 24px -6px rgba(0, 0, 0, 0.02),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            transition: all 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 动态霓虹光晕 (更克制, 适合白底) */
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg at 50% 50%,
+                rgba(0, 180, 255, 0.03),
+                rgba(100, 100, 255, 0.02),
+                rgba(255, 0, 200, 0.015),
+                rgba(0, 200, 255, 0.03));
+            animation: rotateGlow 22s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes rotateGlow {
+            0% { transform: rotate(0deg) scale(1.3); }
+            100% { transform: rotate(360deg) scale(1.3); }
+        }
+
+        /* 精致边框发光 (白色背景上更明显) */
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 40px;
+            padding: 1.5px;
+            background: linear-gradient(135deg, rgba(0, 180, 255, 0.2), rgba(150, 80, 255, 0.1), rgba(0, 200, 255, 0.15));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            z-index: 1;
+            transition: 0.4s;
+        }
+
+        .stat-card:hover::after {
+            background: linear-gradient(135deg, rgba(0, 200, 255, 0.4), rgba(200, 80, 255, 0.25), rgba(0, 180, 255, 0.35));
+        }
+
+        /* 卡片悬浮效果 */
+        .stat-card:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow:
+                0 30px 60px -16px rgba(0, 100, 200, 0.12),
+                0 0 0 1.5px rgba(0, 180, 255, 0.08),
+                inset 0 0 30px rgba(0, 150, 255, 0.02);
+            border-color: rgba(0, 180, 255, 0.25);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        /* 内容区 z-index 提升 */
+        .card-header, .stat-number, .stat-description, .stat-visual {
+            position: relative;
+            z-index: 5;
+        }
+
+        /* 卡片头部 */
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.8rem;
+        }
+
+        .card-icon {
+            font-size: 1.9rem;
+            width: 3.4rem;
+            height: 3.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 180, 255, 0.04);
+            border-radius: 20px;
+            color: #1f4a7a;
+            border: 1px solid rgba(0, 180, 255, 0.06);
+            box-shadow: 0 0 20px rgba(0, 150, 255, 0.02);
+            transition: 0.25s;
+        }
+
+        .stat-card:hover .card-icon {
+            background: rgba(0, 180, 255, 0.08);
+            border-color: rgba(0, 180, 255, 0.15);
+            transform: scale(1.05) rotate(2deg);
+            color: #0a2a4a;
+            box-shadow: 0 0 30px rgba(0, 150, 255, 0.06);
+        }
+
+        .card-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: #4a6a8a;
+            background: rgba(0, 40, 80, 0.02);
+            padding: 0.3rem 1.1rem;
+            border-radius: 40px;
+            border: 1px solid rgba(0, 180, 255, 0.04);
+            backdrop-filter: blur(4px);
+        }
+
+        /* 主数字 — 深色 + 微光 */
+        .stat-number {
+            font-size: 3.6rem;
+            font-weight: 700;
+            line-height: 1;
+            color: #0b1e33;
+            text-shadow: 0 0 20px rgba(0, 100, 200, 0.04);
+            letter-spacing: -1px;
+            margin-bottom: 0.2rem;
+            display: flex;
+            align-items: baseline;
+            gap: 0.2rem;
+        }
+
+        .stat-number .unit {
+            font-size: 1.2rem;
+            font-weight: 400;
+            color: #5a7a9a;
+            margin-left: 4px;
+            text-shadow: none;
+        }
+
+        /* 描述 + 标签 */
+        .stat-description {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem 0.8rem;
+            flex-wrap: wrap;
+            font-size: 0.9rem;
+            color: #3a5a7a;
+            margin-top: 0.1rem;
+        }
+
+        .stat-description i {
+            font-size: 0.75rem;
+            color: #5a7a9a;
+            opacity: 0.6;
+        }
+
+        .badge {
+            background: rgba(0, 180, 255, 0.04);
+            padding: 0.2rem 0.9rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            color: #1a5a8a;
+            border: 1px solid rgba(0, 180, 255, 0.06);
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.06);
+            color: #a46b1a;
+            border-color: rgba(245, 158, 11, 0.08);
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.06);
+            color: #0c7a5e;
+            border-color: rgba(16, 185, 129, 0.08);
+        }
+
+        .badge-info {
+            background: rgba(59, 130, 246, 0.04);
+            color: #1a5a9a;
+            border-color: rgba(59, 130, 246, 0.06);
+        }
+
+        .badge-cyan {
+            background: rgba(0, 180, 255, 0.04);
+            color: #0a6a8a;
+            border-color: rgba(0, 180, 255, 0.06);
+        }
+
+        /* 可视化底部 (进度条) */
+        .stat-visual {
+            margin-top: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.02);
+            padding-top: 1rem;
+            font-size: 0.75rem;
+            color: #5a7a9a;
+        }
+
+        .stat-visual .bar-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex: 1;
+            height: 6px;
+        }
+
+        .bar-group .bar {
+            height: 6px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.04);
+            flex: 1;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bar-group .bar.fill {
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.08);
+        }
+
+        .bar-group .bar.fill-green {
+            background: linear-gradient(90deg, #10b981, #34d399);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.08);
+        }
+
+        .bar-group .bar.fill-amber {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.08);
+        }
+
+        .bar-group .bar.fill-sky {
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.08);
+        }
+
+        /* 每个卡片自定义颜色 (图标/边框) */
+        .card-all .card-icon { color: #2563eb; }
+        .card-published .card-icon { color: #059669; }
+        .card-draft .card-icon { color: #d97706; }
+        .card-updated .card-icon { color: #2563eb; }
+
+        .card-all:hover { border-color: rgba(37, 99, 235, 0.2); }
+        .card-published:hover { border-color: rgba(5, 150, 105, 0.2); }
+        .card-draft:hover { border-color: rgba(217, 119, 6, 0.2); }
+        .card-updated:hover { border-color: rgba(37, 99, 235, 0.2); }
+
+        /* 装饰性光点 (白色背景上更淡) */
+        .stat-card .glow-dot {
+            position: absolute;
+            bottom: 1.2rem;
+            right: 1.5rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,180,255,0.04), transparent 70%);
+            filter: blur(20px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1024px) {
+            .stats-grid {
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 820px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.2rem;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1.2rem;
+            }
+
+            .stat-card {
+                padding: 1.6rem 1.2rem;
+            }
+
+            .stat-number {
+                font-size: 2.8rem;
+            }
+        }
+
+        /* 底部标签 (白色背景适配) */
+        .demo-tag {
+            position: fixed;
+            bottom: 2.2rem;
+            right: 2.2rem;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            color: #1a3a5a;
+            padding: 0.5rem 1.4rem 0.5rem 1.2rem;
+            border-radius: 60px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(0, 180, 255, 0.08);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.02), 0 2px 8px rgba(0,0,0,0.01);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 99;
+            pointer-events: none;
+        }
+
+        .demo-tag i {
+            color: #2563eb;
+            font-size: 0.9rem;
+        }
+
+        /* 数字内小标签微调 */
+        .stat-number .sub-text {
+            font-size: 1.1rem;
+            font-weight: 400;
+            color: #5a7a9a;
+            margin-left: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="stats-grid">
+        <!-- 卡片 1: 全部页面 -->
+        <div class="stat-card card-all">
+            <div class="glow-dot" style="background: radial-gradient(circle, rgba(37,99,235,0.04), transparent 70%);"></div>
+            <div class="card-header">
+                <span class="card-icon"><i class="fas fa-layer-group"></i></span>
+                <span class="card-label">全部页面</span>
+            </div>
+            <div class="stat-number">
+                1
+                <span class="unit"></span>
+            </div>
+            <div class="stat-description">
+                <span><i class="fas fa-plus-circle"></i> 创建新的页面</span>
+                <span class="badge badge-info"><i class="fas fa-rotate-right"></i> 新建</span>
+            </div>
+            <div class="stat-visual">
+                <span style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-chart-line"></i> 演示可视化</span>
+                <div class="bar-group">
+                    <span class="bar fill" style="flex:3;"></span>
+                    <span class="bar" style="flex:1;"></span>
+                    <span class="bar" style="flex:1;"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 卡片 2: 已发布 -->
+        <div class="stat-card card-published">
+            <div class="glow-dot" style="background: radial-gradient(circle, rgba(5,150,105,0.04), transparent 70%);"></div>
+            <div class="card-header">
+                <span class="card-icon"><i class="fas fa-check-circle"></i></span>
+                <span class="card-label">已发布</span>
+            </div>
+            <div class="stat-number">
+                0
+                <span class="unit"></span>
+            </div>
+            <div class="stat-description">
+                <span><i class="fas fa-eye"></i> 可用于预览交付</span>
+                <span class="badge badge-success"><i class="fas fa-check"></i> 就绪</span>
+            </div>
+            <div class="stat-visual">
+                <span style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-rocket"></i> 线上</span>
+                <div class="bar-group">
+                    <span class="bar fill-green" style="flex:1;"></span>
+                    <span class="bar" style="flex:3;"></span>
+                    <span class="bar" style="flex:1;"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 卡片 3: 草稿 -->
+        <div class="stat-card card-draft">
+            <div class="glow-dot" style="background: radial-gradient(circle, rgba(217,119,6,0.04), transparent 70%);"></div>
+            <div class="card-header">
+                <span class="card-icon"><i class="fas fa-pen-fancy"></i></span>
+                <span class="card-label">草稿</span>
+            </div>
+            <div class="stat-number">
+                1
+                <span class="unit"></span>
+            </div>
+            <div class="stat-description">
+                <span><i class="fas fa-clock"></i> 等待继续设计</span>
+                <span class="badge badge-warning"><i class="fas fa-spinner"></i> 进行中</span>
+            </div>
+            <div class="stat-visual">
+                <span style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-pencil"></i> 未完成</span>
+                <div class="bar-group">
+                    <span class="bar fill-amber" style="flex:2;"></span>
+                    <span class="bar" style="flex:2;"></span>
+                    <span class="bar" style="flex:1;"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 卡片 4: 最近更新 -->
+        <div class="stat-card card-updated">
+            <div class="glow-dot" style="background: radial-gradient(circle, rgba(37,99,235,0.04), transparent 70%);"></div>
+            <div class="card-header">
+                <span class="card-icon"><i class="fas fa-history"></i></span>
+                <span class="card-label">最近更新</span>
+            </div>
+            <div class="stat-number" style="font-size: 3rem; gap: 4px;">
+                7
+                <span class="sub-text">小时前</span>
+            </div>
+            <div class="stat-description">
+                <span><i class="fas fa-sync-alt"></i> 演示可视化</span>
+                <span class="badge badge-cyan"><i class="fas fa-bolt"></i> 动态</span>
+            </div>
+            <div class="stat-visual">
+                <span style="display: flex; align-items: center; gap: 6px;"><i class="fas fa-wave-square"></i> 活跃</span>
+                <div class="bar-group">
+                    <span class="bar fill-sky" style="flex:1;"></span>
+                    <span class="bar fill-sky" style="flex:2;"></span>
+                    <span class="bar fill-sky" style="flex:1;"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部标签 -->
+    <div class="demo-tag">
+        <i class="fas fa-bolt"></i> 演示可视化 · 白底炫卡
+    </div>
+</body>
+</html>

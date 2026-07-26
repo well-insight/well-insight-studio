@@ -1,15 +1,18 @@
 <script lang="ts" setup>
 import type { ThemeMode, ThemeSize } from '@/styles/theme/tokens'
+import type { ThemeCategory, ThemePreset } from '@/styles/theme/presets'
 import { ArrowDown, Expand, Fold, Monitor, Moon, Setting as SettingIcon, Sunny, SwitchButton } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { userDisplayLabel } from '@/api/auth'
+import { AdaptiveDialog } from '@/components/adaptive-dialog'
 import { useAuthStore } from '@/stores/auth'
 import { useControlStore } from '@/stores/controlStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { WELLCUBE_PRIMARY } from '@/styles/theme/tokens'
+import { CATEGORY_LABELS, THEME_PRESETS } from '@/styles/theme/presets'
 
 defineProps<{ collapse?: boolean }>()
 
@@ -17,9 +20,19 @@ const controlStore = useControlStore()
 const { asideCollapse } = storeToRefs(controlStore)
 
 const themeStore = useThemeStore()
-const { isDark, config } = storeToRefs(themeStore)
+const { isDark, config, currentPresetId, presets } = storeToRefs(themeStore)
 
-const themeDrawerVisible = ref(false)
+const themeDialogVisible = ref(false)
+const filterTag = ref<ThemeCategory | 'all'>('all')
+
+const borderRadius = ref(6)
+const borderRadiusOptions = [
+  { value: 2, label: '直角' },
+  { value: 4, label: '小圆角' },
+  { value: 6, label: '默认' },
+  { value: 10, label: '大圆角' },
+  { value: 16, label: '超圆角' },
+]
 
 const modeOptions: { value: ThemeMode, label: string, icon: typeof Sunny }[] = [
   { value: 'light', label: '浅色', icon: Sunny },
@@ -33,13 +46,20 @@ const sizeOptions: { value: ThemeSize, label: string }[] = [
   { value: 'small', label: '紧凑' },
 ]
 
+const filteredThemes = computed(() => {
+  if (filterTag.value === 'all') return THEME_PRESETS
+  return THEME_PRESETS.filter(t => t.category === filterTag.value)
+})
+
+const currentPreset = computed(() => THEME_PRESETS.find(p => p.name === currentPresetId.value))
+
 const themeSummary = computed(() => {
   const modeLabel = modeOptions.find(o => o.value === config.value.mode)?.label ?? '主题'
   return isDark.value ? `${modeLabel} · 暗色` : `${modeLabel} · 浅色`
 })
 
-function openThemeDrawer() {
-  themeDrawerVisible.value = true
+function openThemeDialog() {
+  themeDialogVisible.value = true
 }
 
 function onModeChange(mode: ThemeMode | string | number | boolean | undefined) {
@@ -54,6 +74,17 @@ function onSizeChange(size: ThemeSize | string | number | boolean | undefined) {
 
 function onPrimaryChange(color: string | null) {
   themeStore.setPrimary(color || WELLCUBE_PRIMARY)
+}
+
+function onPresetClick(preset: ThemePreset) {
+  themeStore.applyPreset(preset.name)
+}
+
+function onBorderRadiusChange(val: number) {
+  borderRadius.value = val
+  document.documentElement.style.setProperty('--el-border-radius-base', `${val}px`)
+  document.documentElement.style.setProperty('--el-border-radius-small', `${Math.max(1, val - 2)}px`)
+  document.documentElement.style.setProperty('--el-border-radius-round', `${val * 3}px`)
 }
 
 function toggleAsideCollapse() {
@@ -140,7 +171,7 @@ async function confirmLogout() {
           circle
           size="small"
           class="user-footer__theme-btn"
-          @click="openThemeDrawer"
+          @click="openThemeDialog"
         >
           <el-icon>
             <SettingIcon />
@@ -152,7 +183,7 @@ async function confirmLogout() {
         text
         bg
         class="user-footer__theme-btn user-footer__theme-btn--wide"
-        @click="openThemeDrawer"
+        @click="openThemeDialog"
       >
         <el-icon>
           <SettingIcon />
@@ -179,62 +210,130 @@ async function confirmLogout() {
       </el-button>
     </div>
 
-    <el-drawer
-      v-model="themeDrawerVisible"
-      title="系统主题"
-      direction="rtl"
-      size="360px"
-      append-to-body
-      class="theme-drawer"
+    <!-- 主题设置弹窗 -->
+    <AdaptiveDialog
+      v-model="themeDialogVisible"
+      title="主题设置"
+      width="720px"
+      default-mode="dialog"
+      :show-mode-switch="false"
     >
-      <div class="theme-drawer__body">
-        <section class="theme-drawer__section">
-          <div class="theme-drawer__label">
-            外观模式
+      <div class="theme-dialog__body">
+        <!-- 配色方案库 -->
+        <section class="theme-dialog__section">
+          <div class="theme-dialog__label">
+            配色方案库
+            <span class="theme-dialog__badge">{{ THEME_PRESETS.length }} 套配色</span>
           </div>
+          <p class="theme-dialog__hint">点击任意配色卡片切换全局主题，组件实时预览效果</p>
+
+          <!-- 分类筛选 -->
+          <div class="theme-dialog__filter">
+            <el-tag
+              size="small"
+              :type="filterTag === 'all' ? '' : 'info'"
+              :effect="filterTag === 'all' ? 'dark' : 'plain'"
+              class="theme-dialog__filter-tag"
+              @click="filterTag = 'all'"
+            >
+              全部
+            </el-tag>
+            <el-tag
+              v-for="cat in (['blue', 'green', 'orange', 'purple', 'red', 'neutral'] as ThemeCategory[])"
+              :key="cat"
+              size="small"
+              :effect="filterTag === cat ? 'dark' : 'plain'"
+              class="theme-dialog__filter-tag"
+              @click="filterTag = cat"
+            >
+              {{ CATEGORY_LABELS[cat] }}
+            </el-tag>
+          </div>
+
+          <!-- 配色卡片网格 -->
+          <div class="theme-dialog__palette-grid">
+            <button
+              v-for="theme in filteredThemes"
+              :key="theme.name"
+              class="theme-dialog__palette-card"
+              :class="{ 'is-active': currentPresetId === theme.name }"
+              type="button"
+              @click="onPresetClick(theme)"
+            >
+              <div class="theme-dialog__palette-header">
+                <span class="theme-dialog__palette-name">{{ theme.label }}</span>
+                <span class="theme-dialog__palette-badge">{{ theme.name }}</span>
+              </div>
+              <div class="theme-dialog__palette-strip">
+                <span
+                  v-for="(c, ci) in theme.colors"
+                  :key="ci"
+                  class="theme-dialog__palette-swatch"
+                  :style="{ backgroundColor: c }"
+                  :title="c"
+                />
+              </div>
+              <div class="theme-dialog__palette-footer">
+                <el-tag size="small" type="info" effect="plain">{{ theme.primary }}</el-tag>
+              </div>
+            </button>
+          </div>
+        </section>
+
+        <!-- 当前主题信息 -->
+        <div v-if="currentPreset" class="theme-dialog__current">
+          <span class="theme-dialog__current-label">当前主题：</span>
+          <span class="theme-dialog__current-name">{{ currentPreset.label }}</span>
+          <span class="theme-dialog__current-primary">（主色 {{ currentPreset.primary }}）</span>
+        </div>
+
+        <!-- 外观模式 -->
+        <section class="theme-dialog__section">
+          <div class="theme-dialog__label">外观模式</div>
           <el-segmented
             :model-value="config.mode"
             :options="modeOptions.map(o => ({ label: o.label, value: o.value }))"
             block
             @change="onModeChange"
           />
-          <p class="theme-drawer__hint">
-            暗黑模式配色与登录页深蓝科技风保持一致；选择「跟随系统」将随操作系统自动切换。
-          </p>
         </section>
 
-        <section class="theme-drawer__section">
-          <div class="theme-drawer__label">
-            品牌主色
-          </div>
-          <div class="theme-drawer__primary-row">
+        <!-- 品牌主色 -->
+        <section class="theme-dialog__section">
+          <div class="theme-dialog__label">品牌主色</div>
+          <p class="theme-dialog__hint">拖拽色盘或直接输入 hex 值，页面实时预览</p>
+          <div class="theme-dialog__primary-row">
             <el-color-picker
               :model-value="config.primary"
               color-format="hex"
-              class="shrink-0"
               @change="onPrimaryChange"
             />
             <el-input
               :model-value="config.primary"
               maxlength="7"
+              placeholder="#409EFF"
               @change="onPrimaryChange"
             />
-            <el-button text type="primary" @click="themeStore.setPrimary(WELLCUBE_PRIMARY)">
+            <el-button text type="primary" size="small" @click="themeStore.setPrimary(WELLCUBE_PRIMARY)">
               重置
             </el-button>
           </div>
-          <p class="theme-drawer__hint">
-            通过 CSS 变量驱动 Element Plus 主色及 light / dark 衍生色。
-          </p>
+          <div class="theme-dialog__color-preview">
+            <span
+              v-for="i in 10"
+              :key="i"
+              class="theme-dialog__color-chip"
+              :style="{ backgroundColor: `var(--el-color-primary-light-${i > 9 ? 9 : i})` }"
+            />
+          </div>
         </section>
 
-        <section class="theme-drawer__section">
-          <div class="theme-drawer__label">
-            组件尺寸
-          </div>
+        <!-- 组件尺寸 -->
+        <section class="theme-dialog__section">
+          <div class="theme-dialog__label">组件尺寸</div>
           <el-radio-group
             :model-value="config.size"
-            class="theme-drawer__size"
+            class="theme-dialog__size"
             @change="onSizeChange"
           >
             <el-radio-button
@@ -245,21 +344,42 @@ async function confirmLogout() {
               {{ item.label }}
             </el-radio-button>
           </el-radio-group>
-          <p class="theme-drawer__hint">
-            由 Element Plus ConfigProvider 的 size 全局下发到按钮、表单等组件。
-          </p>
         </section>
 
-        <div class="theme-drawer__footer">
-          <el-button @click="themeStore.resetTheme()">
-            恢复默认
-          </el-button>
-          <el-button type="primary" @click="themeDrawerVisible = false">
-            完成
-          </el-button>
+        <!-- 圆角大小 -->
+        <section class="theme-dialog__section">
+          <div class="theme-dialog__label">圆角大小</div>
+          <div class="theme-dialog__radius-row">
+            <el-radio-group
+              v-model="borderRadius"
+              size="small"
+              @change="onBorderRadiusChange"
+            >
+              <el-radio-button
+                v-for="item in borderRadiusOptions"
+                :key="item.value"
+                :value="item.value"
+              >
+                {{ item.label }}
+              </el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="theme-dialog__radius-preview">
+            <span class="theme-dialog__radius-box" :style="{ borderRadius: `${borderRadius}px` }">
+              预览
+            </span>
+            <span class="theme-dialog__radius-box" :style="{ borderRadius: `${borderRadius * 2}px` }">
+              按钮
+            </span>
+          </div>
+        </section>
+
+        <div class="theme-dialog__footer">
+          <el-button @click="themeStore.resetTheme()">恢复默认</el-button>
+          <el-button type="primary" @click="themeDialogVisible = false">完成</el-button>
         </div>
       </div>
-    </el-drawer>
+    </AdaptiveDialog>
   </div>
 </template>
 
@@ -391,39 +511,187 @@ async function confirmLogout() {
   word-break: break-all;
 }
 
-.theme-drawer__body {
+/* ---------- 主题弹窗 ---------- */
+.theme-dialog__body {
   display: flex;
   flex-direction: column;
-  gap: 28px;
-  padding-bottom: 12px;
+  gap: 24px;
+  padding-bottom: 4px;
 }
 
-.theme-drawer__section {
+.theme-dialog__section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
-.theme-drawer__label {
+.theme-dialog__label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 14px;
   font-weight: 600;
   color: var(--el-text-color-primary);
 }
 
-.theme-drawer__hint {
+.theme-dialog__badge {
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--el-fill-color);
+  padding: 1px 12px;
+  border-radius: 40px;
+  color: var(--el-text-color-secondary);
+}
+
+.theme-dialog__hint {
   margin: 0;
   font-size: 12px;
   line-height: 1.55;
   color: var(--el-text-color-secondary);
 }
 
-.theme-drawer__primary-row {
+/* 分类筛选 */
+.theme-dialog__filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.theme-dialog__filter-tag {
+  cursor: pointer;
+  transition: transform 0.12s;
+  font-size: 12px;
+
+  &:hover {
+    transform: scale(1.03);
+  }
+}
+
+/* 配色卡片网格 */
+.theme-dialog__palette-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.theme-dialog__palette-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 8px 6px;
+  border: 2.5px solid transparent;
+  border-radius: 10px;
+  background: var(--el-bg-color);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
+  text-align: left;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.1);
+    border-color: var(--el-border-color);
+  }
+
+  &.is-active {
+    border-color: var(--el-color-primary);
+    box-shadow: 0 0 0 3px var(--el-color-primary-light-7);
+  }
+}
+
+.theme-dialog__palette-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.theme-dialog__palette-name {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--el-text-color-primary);
+}
+
+.theme-dialog__palette-badge {
+  font-size: 9px;
+  background: var(--el-fill-color);
+  padding: 1px 6px;
+  border-radius: 30px;
+  color: var(--el-text-color-secondary);
+  font-weight: 500;
+}
+
+.theme-dialog__palette-strip {
+  display: flex;
+  gap: 3px;
+}
+
+.theme-dialog__palette-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  flex-shrink: 0;
+  transition: transform 0.1s;
+
+  &:hover {
+    transform: scale(1.15);
+  }
+}
+
+.theme-dialog__palette-footer {
+  display: flex;
+  gap: 3px;
+}
+
+/* 当前主题信息 */
+.theme-dialog__current {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--el-fill-color-light);
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.theme-dialog__current-label {
+  color: var(--el-text-color-secondary);
+}
+
+.theme-dialog__current-name {
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.theme-dialog__current-primary {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+
+/* 主色 */
+.theme-dialog__primary-row {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.theme-drawer__size {
+.theme-dialog__color-preview {
+  display: flex;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.theme-dialog__color-chip {
+  width: 100%;
+  height: 18px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* 组件尺寸 */
+.theme-dialog__size {
   width: 100%;
   display: flex;
 
@@ -436,7 +704,33 @@ async function confirmLogout() {
   }
 }
 
-.theme-drawer__footer {
+/* 圆角 */
+.theme-dialog__radius-row {
+  :deep(.el-radio-button__inner) {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+}
+
+.theme-dialog__radius-preview {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.theme-dialog__radius-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  height: 30px;
+  font-size: 12px;
+  color: #fff;
+  background: var(--el-color-primary);
+}
+
+/* 底部 */
+.theme-dialog__footer {
   display: flex;
   justify-content: flex-end;
   gap: 10px;

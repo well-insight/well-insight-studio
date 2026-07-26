@@ -1,5 +1,6 @@
 import type { ConfigProviderProps } from 'element-plus'
 import type { ThemeConfig, ThemeMode, ThemeSize } from '@/styles/theme/tokens'
+import type { ThemePreset } from '@/styles/theme/presets'
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { ThemeEnum } from '@/enums/styleEnum'
@@ -11,6 +12,7 @@ import {
 
   WELLCUBE_PRIMARY,
 } from '@/styles/theme/tokens'
+import { adjustColor, findPreset, THEME_PRESETS } from '@/styles/theme/presets'
 
 const STORAGE_KEY = 'wellcube-theme-config'
 const LEGACY_STORAGE_KEY = 'wellcube-theme'
@@ -77,9 +79,18 @@ function persist(config: ThemeConfig) {
 export const useThemeStore = defineStore('theme', () => {
   const config = ref<ThemeConfig>(loadConfig())
   const isDark = ref(resolveIsDark(config.value.mode))
+  const currentPresetId = ref<string>('breeze')
 
   /** 兼容旧字段：当前实际生效的明暗 */
   const theme = computed(() => (isDark.value ? ThemeEnum.DARK : ThemeEnum.LIGHT))
+
+  /** 所有可用预设列表 */
+  const presets = computed<ThemePreset[]>(() => THEME_PRESETS)
+
+  /** 当前激活的预设 */
+  const currentPreset = computed<ThemePreset>(() => {
+    return findPreset(currentPresetId.value) ?? THEME_PRESETS[0]
+  })
 
   /** 供 el-config-provider 绑定 */
   const epConfig = computed<Partial<ConfigProviderProps>>(() => ({
@@ -126,6 +137,32 @@ export const useThemeStore = defineStore('theme', () => {
     setMode(isDark.value ? 'light' : 'dark')
   }
 
+  /** 应用预设主题 */
+  function applyPreset(name: string) {
+    const preset = findPreset(name)
+    if (!preset) return
+    currentPresetId.value = preset.name
+    setPrimary(preset.primary)
+    applyAuxColors(preset)
+  }
+
+  /** 将 success / warning / danger 及变体写入 CSS 变量 */
+  function applyAuxColors(preset: ThemePreset) {
+    const root = document.documentElement
+    root.style.setProperty('--el-color-success', preset.success)
+    root.style.setProperty('--el-color-success-light-5', adjustColor(preset.success, 50))
+    root.style.setProperty('--el-color-success-light-7', adjustColor(preset.success, 70))
+    root.style.setProperty('--el-color-success-dark-2', adjustColor(preset.success, -20))
+    root.style.setProperty('--el-color-warning', preset.warning)
+    root.style.setProperty('--el-color-warning-light-5', adjustColor(preset.warning, 50))
+    root.style.setProperty('--el-color-warning-light-7', adjustColor(preset.warning, 70))
+    root.style.setProperty('--el-color-warning-dark-2', adjustColor(preset.warning, -20))
+    root.style.setProperty('--el-color-danger', preset.danger)
+    root.style.setProperty('--el-color-danger-light-5', adjustColor(preset.danger, 50))
+    root.style.setProperty('--el-color-danger-light-7', adjustColor(preset.danger, 70))
+    root.style.setProperty('--el-color-danger-dark-2', adjustColor(preset.danger, -20))
+  }
+
   syncDom()
 
   const mediaQuery = window.matchMedia?.('(prefers-color-scheme: dark)')
@@ -147,11 +184,15 @@ export const useThemeStore = defineStore('theme', () => {
     theme,
     isDark,
     epConfig,
+    currentPresetId,
+    presets,
+    currentPreset,
     setMode,
     setPrimary,
     setSize,
     resetTheme,
     applyTheme,
     toggleTheme,
+    applyPreset,
   }
 })

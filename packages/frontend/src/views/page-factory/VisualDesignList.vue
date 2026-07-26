@@ -4,6 +4,12 @@
  */
 import type { ApiPageListItem } from '@/api/pages'
 import { Plus, Search } from '@element-plus/icons-vue'
+import {
+  Grid,
+  CircleCheckFilled,
+  EditPen,
+  Clock
+} from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, onActivated, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -31,6 +37,7 @@ const draftCount = computed(() => pageItems.value.filter(item => item.status !==
 const latestPage = computed(() => {
   return [...pageItems.value].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0]
 })
+const latestPageTime = computed(() => latestPage.value ? relativeTimeParts(latestPage.value.updated_at) : { value: '-', unit: '' })
 const recentPages = computed(() => {
   return [...pageItems.value]
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
@@ -43,6 +50,39 @@ function formatTime(iso: string): string {
   const d = new Date(iso)
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function formatRelativeTime(iso: string): string {
+  if (!iso) return '-'
+  const now = Date.now()
+  const diff = now - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return '刚刚'
+  if (mins < 60) return `${mins}分钟前`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours}小时前`
+  const days = Math.floor(hours / 24)
+  if (days < 7) return `${days}天前`
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}`
+}
+
+/** 拆分为「数字值 + 单位」，用于卡片大数字展示 */
+function relativeTimeParts(iso: string): { value: string; unit: string } {
+  if (!iso) return { value: '-', unit: '' }
+  const now = Date.now()
+  const diff = now - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return { value: '', unit: '刚刚' }
+  if (mins < 60) return { value: String(mins), unit: '分钟前' }
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return { value: String(hours), unit: '小时前' }
+  const days = Math.floor(hours / 24)
+  if (days < 7) return { value: String(days), unit: '天前' }
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return { value: `${pad(d.getMonth() + 1)}/${pad(d.getDate())}`, unit: '' }
 }
 
 async function loadList() {
@@ -227,25 +267,98 @@ async function batchDelete() {
         </div>
 
         <section class="visual-home__stats" aria-label="页面统计">
-          <button class="visual-home__stat visual-home__stat--primary" type="button" @click="openCreateDialog">
-            <span class="visual-home__stat-label">全部页面</span>
-            <strong>{{ total }}</strong>
-            <span>创建新的画布</span>
+          <button class="stat-card card-all" type="button" @click="openCreateDialog">
+            <span class="glow-dot" style="background: radial-gradient(circle, rgba(37,99,235,0.06), transparent 70%);"></span>
+            <div class="card-header">
+              <span class="card-icon"><el-icon size="22"><Grid /></el-icon></span>
+              <span class="card-label">全部页面</span>
+            </div>
+            <div class="stat-number">
+              <strong>{{ total }}</strong>
+            </div>
+            <div class="stat-description">
+              <span><i class="stat-desc-icon">+</i> 创建新的画布</span>
+              <span class="badge badge-info">总计</span>
+            </div>
+            <div class="stat-visual">
+              <span class="stat-visual-label">已发布占比</span>
+              <div class="bar-group">
+                <span class="bar fill" :style="{ flex: total ? publishedCount : 0 }"></span>
+                <span class="bar" :style="{ flex: total ? total - publishedCount : 1 }"></span>
+              </div>
+            </div>
           </button>
-          <div class="visual-home__stat">
-            <span class="visual-home__stat-label">已发布</span>
-            <strong>{{ publishedCount }}</strong>
-            <span>可用于预览交付</span>
+
+          <div class="stat-card card-published">
+            <span class="glow-dot" style="background: radial-gradient(circle, rgba(5,150,105,0.06), transparent 70%);"></span>
+            <div class="card-header">
+              <span class="card-icon"><el-icon size="22"><CircleCheckFilled /></el-icon></span>
+              <span class="card-label">已发布</span>
+            </div>
+            <div class="stat-number">
+              <strong>{{ publishedCount }}</strong>
+            </div>
+            <div class="stat-description">
+              <span><i class="stat-desc-icon">✓</i> 可用于预览交付</span>
+              <span class="badge badge-success">已就绪</span>
+            </div>
+            <div class="stat-visual">
+              <span class="stat-visual-label">发布率</span>
+              <div class="bar-group">
+                <span class="bar fill-green" :style="{ flex: total ? publishedCount : 0 }"></span>
+                <span class="bar" :style="{ flex: total ? total - publishedCount : 1 }"></span>
+              </div>
+            </div>
           </div>
-          <div class="visual-home__stat">
-            <span class="visual-home__stat-label">草稿</span>
-            <strong>{{ draftCount }}</strong>
-            <span>等待继续设计</span>
+
+          <div class="stat-card card-draft">
+            <span class="glow-dot" style="background: radial-gradient(circle, rgba(217,119,6,0.06), transparent 70%);"></span>
+            <div class="card-header">
+              <span class="card-icon"><el-icon size="22"><EditPen /></el-icon></span>
+              <span class="card-label">草稿</span>
+            </div>
+            <div class="stat-number">
+              <strong>{{ draftCount }}</strong>
+            </div>
+            <div class="stat-description">
+              <span><i class="stat-desc-icon">◷</i> 等待继续设计</span>
+              <span class="badge badge-warning">进行中</span>
+            </div>
+            <div class="stat-visual">
+              <span class="stat-visual-label">草稿率</span>
+              <div class="bar-group">
+                <span class="bar fill-amber" :style="{ flex: total ? draftCount : 0 }"></span>
+                <span class="bar" :style="{ flex: total ? total - draftCount : 1 }"></span>
+              </div>
+            </div>
           </div>
-          <div class="visual-home__stat">
-            <span class="visual-home__stat-label">最近更新</span>
-            <strong>{{ latestPage ? formatTime(latestPage.updated_at).slice(5) : '-' }}</strong>
-            <span class="truncate">{{ latestPage?.name || '暂无页面' }}</span>
+
+          <div class="stat-card card-updated">
+            <span class="glow-dot" style="background: radial-gradient(circle, rgba(59,130,246,0.06), transparent 70%);"></span>
+            <div class="card-header">
+              <span class="card-icon"><el-icon size="22"><Clock /></el-icon></span>
+              <span class="card-label">最近更新</span>
+            </div>
+            <div class="stat-number">
+              <template v-if="latestPage && latestPageTime.value">
+                <strong>{{ latestPageTime.value }}</strong>
+                <span class="stat-unit">{{ latestPageTime.unit }}</span>
+              </template>
+              <strong v-else-if="latestPage">{{ latestPageTime.unit }}</strong>
+              <strong v-else>-</strong>
+            </div>
+            <div class="stat-description">
+              <span class="truncate"><i class="stat-desc-icon">↻</i> {{ latestPage?.name || '暂无页面' }}</span>
+              <span class="badge badge-cyan">活跃</span>
+            </div>
+            <div class="stat-visual">
+              <span class="stat-visual-label">动态</span>
+              <div class="bar-group">
+                <span class="bar fill-sky" style="flex:3"></span>
+                <span class="bar fill-sky" style="flex:2"></span>
+                <span class="bar" style="flex:1"></span>
+              </div>
+            </div>
           </div>
         </section>
       </div>
@@ -424,10 +537,10 @@ async function batchDelete() {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 48%);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 56%);
   gap: 24px;
   width: 100%;
-  padding: 22px 24px;
+  padding: 16px 20px;
 }
 
 .visual-home__intro {
@@ -476,52 +589,282 @@ async function batchDelete() {
 
 .visual-home__stats {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
   align-self: stretch;
 }
 
-.visual-home__stat {
+/* ── 卡片本体 ── */
+.stat-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
-  padding: 14px;
+  padding: 16px 18px 14px;
   text-align: left;
-  border: 1px solid rgba(37, 99, 235, 0.14);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.68);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(0, 120, 200, 0.12);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 16px 32px -12px rgba(0, 20, 40, 0.08),
+    0 4px 12px -6px rgba(0, 0, 0, 0.02),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  overflow: hidden;
+  transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
 }
 
-button.visual-home__stat {
+button.stat-card {
   cursor: pointer;
 }
 
-.visual-home__stat--primary {
-  color: #fff;
-  border-color: transparent;
-  background: linear-gradient(135deg, #1d4ed8, #0f766e);
+/* 精致渐变边框 — signature 元素 */
+.stat-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  padding: 1.2px;
+  background: linear-gradient(135deg, rgba(0, 160, 255, 0.18), rgba(130, 80, 255, 0.08), rgba(0, 200, 255, 0.12));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity 0.35s ease;
 }
 
-.visual-home__stat-label {
-  display: block;
-  color: inherit;
-  opacity: 0.72;
-  font-size: 12px;
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 20px 40px -14px rgba(0, 60, 120, 0.12),
+    0 0 0 1.5px rgba(0, 160, 255, 0.06);
+  border-color: rgba(0, 160, 255, 0.18);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.stat-card:hover::after {
+  opacity: 0.7;
+}
+
+/* 每个卡片 hover 边框色微调 */
+.card-all:hover { border-color: rgba(37, 99, 235, 0.18); }
+.card-published:hover { border-color: rgba(5, 150, 105, 0.18); }
+.card-draft:hover { border-color: rgba(217, 119, 6, 0.18); }
+.card-updated:hover { border-color: rgba(59, 130, 246, 0.18); }
+
+/* 装饰光点 */
+.glow-dot {
+  position: absolute;
+  bottom: 1rem;
+  right: 1.2rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  filter: blur(24px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 提升内容层级 */
+.card-header,
+.stat-number,
+.stat-description,
+.stat-visual {
+  position: relative;
+  z-index: 5;
+}
+
+/* ── header：图标 + 标签 ── */
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  background: rgba(0, 160, 255, 0.04);
+  border: 1px solid rgba(0, 160, 255, 0.06);
+  box-shadow:
+    0 0 16px rgba(0, 140, 255, 0.02),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: 0.25s ease;
+  color: #1f4a7a;
+}
+
+.card-all .card-icon { color: #2563eb; }
+.card-published .card-icon { color: #059669; }
+.card-draft .card-icon { color: #d97706; }
+.card-updated .card-icon { color: #3b82f6; }
+
+.stat-card:hover .card-icon {
+  background: rgba(0, 160, 255, 0.07);
+  border-color: rgba(0, 160, 255, 0.12);
+  transform: scale(1.04);
+  box-shadow: 0 0 20px rgba(0, 140, 255, 0.04);
+}
+
+.card-label {
+  font-size: 11px;
   font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #4a6a8a;
+  background: rgba(0, 40, 80, 0.02);
+  padding: 5px 14px;
+  border-radius: 30px;
+  border: 1px solid rgba(0, 160, 255, 0.05);
 }
 
-.visual-home__stat strong {
-  display: block;
-  margin-top: 8px;
-  font-size: 28px;
+/* ── 主数字 ── */
+.stat-number {
+  font-size: 34px;
+  font-weight: 700;
   line-height: 1;
+  color: #0b1e33;
+  letter-spacing: -1px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
 }
 
-.visual-home__stat span:last-child {
-  display: block;
-  margin-top: 10px;
-  color: inherit;
-  opacity: 0.66;
+.stat-number strong {
+  font-weight: 700;
+}
+
+.stat-unit {
+  font-size: 14px;
+  font-weight: 500;
+  color: #5a7a9a;
+  letter-spacing: 0;
+}
+
+/* ── 描述 + 徽章 ── */
+.stat-description {
+  display: flex;
+  align-items: center;
+  gap: 6px 10px;
+  flex-wrap: wrap;
   font-size: 12px;
+  color: #3a5a7a;
+  margin-bottom: 12px;
+}
+
+.stat-desc-icon {
+  font-style: normal;
+  margin-right: 3px;
+  opacity: 0.6;
+  font-size: 11px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 160, 255, 0.04);
+  padding: 3px 12px;
+  border-radius: 30px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: #1a5a8a;
+  border: 1px solid rgba(0, 160, 255, 0.06);
+}
+
+.badge-warning {
+  background: rgba(245, 158, 11, 0.06);
+  color: #a46b1a;
+  border-color: rgba(245, 158, 11, 0.08);
+}
+
+.badge-success {
+  background: rgba(16, 185, 129, 0.06);
+  color: #0c7a5e;
+  border-color: rgba(16, 185, 129, 0.08);
+}
+
+.badge-info {
+  background: rgba(37, 99, 235, 0.05);
+  color: #1a5a9a;
+  border-color: rgba(37, 99, 235, 0.06);
+}
+
+.badge-cyan {
+  background: rgba(0, 180, 255, 0.04);
+  color: #0a6a8a;
+  border-color: rgba(0, 180, 255, 0.06);
+}
+
+/* ── 底部进度条 ── */
+.stat-visual {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.03);
+  padding-top: 10px;
+  font-size: 10px;
+  color: #5a7a9a;
+}
+
+.stat-visual-label {
+  flex-shrink: 0;
+  opacity: 0.65;
+}
+
+.bar-group {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 1;
+  height: 5px;
+}
+
+.bar-group .bar {
+  height: 5px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.05);
+  transition: flex 0.5s ease, box-shadow 0.3s ease;
+}
+
+.bar-group .bar.fill {
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.08);
+}
+.bar-group .bar.fill-green {
+  background: linear-gradient(90deg, #10b981, #34d399);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.08);
+}
+.bar-group .bar.fill-amber {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.08);
+}
+.bar-group .bar.fill-sky {
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.08);
+}
+
+/* hover 时填充条微微高亮 */
+.stat-card:hover .bar-group .bar.fill {
+  box-shadow: 0 0 14px rgba(59, 130, 246, 0.14);
+}
+.stat-card:hover .bar-group .bar.fill-green {
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.14);
+}
+.stat-card:hover .bar-group .bar.fill-amber {
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.14);
+}
+.stat-card:hover .bar-group .bar.fill-sky {
+  box-shadow: 0 0 14px rgba(59, 130, 246, 0.14);
 }
 
 .visual-home__content {
@@ -709,8 +1052,103 @@ button.visual-home__stat {
 
 :global(html.dark) .visual-home__stat,
 :global(html.dark) .visual-home__section-head {
-  border-color: rgba(140, 210, 255, 0.12);
-  background: rgba(13, 40, 64, 0.62);
+  border-color: rgba(140, 210, 255, 0.1);
+  background: rgba(8, 32, 56, 0.65);
+}
+
+:global(html.dark) .stat-card {
+  border-color: rgba(140, 210, 255, 0.08);
+  background: rgba(10, 34, 56, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: none;
+}
+
+:global(html.dark) .stat-card::after {
+  background: linear-gradient(135deg, rgba(100, 200, 255, 0.12), rgba(180, 120, 255, 0.06), rgba(80, 200, 255, 0.08));
+}
+
+:global(html.dark) .stat-card:hover {
+  border-color: rgba(140, 210, 255, 0.18);
+  background: rgba(14, 42, 68, 0.75);
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.3);
+}
+
+:global(html.dark) .stat-card:hover::after {
+  background: linear-gradient(135deg, rgba(100, 210, 255, 0.25), rgba(180, 120, 255, 0.14), rgba(80, 200, 255, 0.2));
+}
+
+:global(html.dark) .card-all:hover { border-color: rgba(59, 130, 246, 0.25); }
+:global(html.dark) .card-published:hover { border-color: rgba(16, 185, 129, 0.25); }
+:global(html.dark) .card-draft:hover { border-color: rgba(245, 158, 11, 0.25); }
+:global(html.dark) .card-updated:hover { border-color: rgba(96, 165, 250, 0.25); }
+
+:global(html.dark) .card-icon {
+  border-color: rgba(140, 210, 255, 0.08);
+  background: rgba(140, 210, 255, 0.05);
+}
+
+:global(html.dark) .card-all .card-icon { color: #60a5fa; }
+:global(html.dark) .card-published .card-icon { color: #34d399; }
+:global(html.dark) .card-draft .card-icon { color: #fbbf24; }
+:global(html.dark) .card-updated .card-icon { color: #60a5fa; }
+
+:global(html.dark) .stat-card:hover .card-icon {
+  background: rgba(140, 210, 255, 0.09);
+  border-color: rgba(140, 210, 255, 0.14);
+}
+
+:global(html.dark) .card-label {
+  color: #8aacce;
+  background: rgba(140, 210, 255, 0.04);
+  border-color: rgba(140, 210, 255, 0.06);
+}
+
+:global(html.dark) .stat-number {
+  color: #e8f0f8;
+}
+
+:global(html.dark) .stat-unit {
+  color: #7a9aba;
+}
+
+:global(html.dark) .stat-description {
+  color: #8aacce;
+}
+
+:global(html.dark) .badge {
+  background: rgba(140, 210, 255, 0.06);
+  color: #8aacce;
+  border-color: rgba(140, 210, 255, 0.08);
+}
+:global(html.dark) .badge-info {
+  background: rgba(59, 130, 246, 0.08);
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.1);
+}
+:global(html.dark) .badge-success {
+  background: rgba(16, 185, 129, 0.08);
+  color: #6ee7b7;
+  border-color: rgba(16, 185, 129, 0.1);
+}
+:global(html.dark) .badge-warning {
+  background: rgba(245, 158, 11, 0.08);
+  color: #fcd34d;
+  border-color: rgba(245, 158, 11, 0.1);
+}
+:global(html.dark) .badge-cyan {
+  background: rgba(0, 200, 255, 0.08);
+  color: #67e8f9;
+  border-color: rgba(0, 200, 255, 0.1);
+}
+
+:global(html.dark) .stat-visual {
+  border-top-color: rgba(140, 210, 255, 0.08);
+  color: #6a8aaa;
+}
+
+:global(html.dark) .bar-group .bar {
+  background: rgba(140, 210, 255, 0.08);
 }
 
 :global(html.dark) .visual-home__recent,
@@ -747,7 +1185,7 @@ button.visual-home__stat {
   }
 
   .visual-home__stats {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .visual-home__search {
