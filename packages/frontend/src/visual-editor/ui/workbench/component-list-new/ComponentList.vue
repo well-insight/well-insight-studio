@@ -29,6 +29,7 @@ const controlStore = useControlStore()
 const catalogs = computed<WidgetCatalogConfig[]>(() => WIDGET_CATALOGS)
 const currentCategory = ref('all')
 const currentSearch = ref('')
+const gridColumns = ref<1 | 2>(2)
 
 const allComponents = computed<ComponentListItem[]>(() => {
   return catalogs.value.flatMap((catalog) => {
@@ -108,27 +109,43 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   <aside :class="$style['left-panel']">
     <div :class="$style['panel-header']">
       <h2>
-        <span :class="$style['panel-header-icon']">
-          <SvgIcon :size="14" name="component-base" />
+        <span :class="$style['panel-header-icon']" aria-hidden="true">
+          <svg width="19" height="19" viewBox="0 0 20 20" fill="none">
+            <rect x="3" y="3" width="5" height="5" rx="1" fill="currentColor" />
+            <rect x="12" y="3" width="5" height="5" rx="1" fill="currentColor" />
+            <rect x="3" y="12" width="5" height="5" rx="1" fill="currentColor" />
+            <rect x="12" y="12" width="5" height="5" rx="1" fill="currentColor" />
+          </svg>
         </span>
         组件库
       </h2>
       <span>{{ filteredComponents.length }} 个</span>
     </div>
 
-    <div :class="$style['search-box']">
-      <span :class="$style['search-icon']" aria-hidden="true">
-        <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
-          <circle cx="9" cy="9" r="5.75" stroke="currentColor" stroke-width="1.8" />
-          <path d="M13.2 13.2L17 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-        </svg>
-      </span>
-      <input
-        v-model="currentSearch"
-        type="text"
-        autocomplete="off"
-        placeholder="搜索组件..."
-      >
+    <div :class="$style['search-row']">
+      <div :class="$style['search-box']">
+        <span :class="$style['search-icon']" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+            <circle cx="9" cy="9" r="5.75" stroke="currentColor" stroke-width="1.8" />
+            <path d="M13.2 13.2L17 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+        </span>
+        <input v-model="currentSearch" type="text" autocomplete="off" placeholder="搜索组件...">
+      </div>
+      <div :class="$style['layout-switcher']" role="group" aria-label="组件列表布局">
+        <button type="button" :class="{ [$style.active]: gridColumns === 2 }" aria-label="双栏布局" :aria-pressed="gridColumns === 2" @click="gridColumns = 2">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <rect x="3" y="3" width="6" height="14" rx="1" stroke="currentColor" stroke-width="1.6" />
+            <rect x="11" y="3" width="6" height="14" rx="1" stroke="currentColor" stroke-width="1.6" />
+          </svg>
+        </button>
+        <button type="button" :class="{ [$style.active]: gridColumns === 1 }" aria-label="单栏布局" :aria-pressed="gridColumns === 1" @click="gridColumns = 1">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <rect x="3" y="3" width="14" height="6" rx="1" stroke="currentColor" stroke-width="1.6" />
+            <rect x="3" y="11" width="14" height="6" rx="1" stroke="currentColor" stroke-width="1.6" />
+          </svg>
+        </button>
+      </div>
     </div>
 
     <div :class="$style['category-tabs']">
@@ -136,6 +153,7 @@ function onVariantDblClick(variant: WidgetVariantItem) {
         v-for="tab in categoryTabs"
         :key="tab.key"
         type="button"
+        :data-category-key="tab.key"
         :class="[$style.tab, { [$style.active]: currentCategory === tab.key }]"
         @click="currentCategory = tab.key"
       >
@@ -144,8 +162,8 @@ function onVariantDblClick(variant: WidgetVariantItem) {
       </button>
     </div>
 
-    <div :class="$style['component-grid-wrap']">
-      <div :class="$style['component-grid']">
+    <el-scrollbar :class="$style['component-grid-wrap']">
+      <div :class="[$style['component-grid'], gridColumns === 1 ? $style['single-column'] : $style['two-columns']]">
         <div
           v-for="(item, index) in filteredComponents"
           :key="item.key"
@@ -160,14 +178,19 @@ function onVariantDblClick(variant: WidgetVariantItem) {
           <div :class="$style['card-icon']">
             <SvgIcon :size="18" :name="item.icon" />
           </div>
-          <div :class="$style['card-name']">
-            {{ item.label }}
-          </div>
-          <div :class="$style['card-drag-hint']">
-            <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M5 3.5h6M5 8h6M5 12.5h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-            </svg>
-            {{ item.available ? '拖拽' : '即将开放' }}
+          <div :class="$style['card-content']">
+            <div :class="$style['card-name']">
+              {{ item.label }}
+            </div>
+            <div :class="$style['card-description']">
+              {{ item.description }}
+            </div>
+            <div :class="$style['card-drag-hint']">
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M5 3.5h6M5 8h6M5 12.5h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              </svg>
+              {{ item.available ? '拖拽' : '即将开放' }}
+            </div>
           </div>
         </div>
 
@@ -181,7 +204,7 @@ function onVariantDblClick(variant: WidgetVariantItem) {
           <span>试试切换分类或更换关键词</span>
         </div>
       </div>
-    </div>
+    </el-scrollbar>
   </aside>
 </template>
 
@@ -192,7 +215,7 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   background: transparent;
   display: flex;
   flex-direction: column;
-  padding: 16px 14px 12px;
+  padding: 0 14px 12px;
   overflow: hidden;
 }
 
@@ -200,8 +223,10 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
-  flex-shrink: 0;
+  height: 54px;
+  min-height: 54px;
+  box-sizing: border-box;
+  margin-bottom: 0;
 
   h2 {
     font-size: 15px;
@@ -213,7 +238,7 @@ function onVariantDblClick(variant: WidgetVariantItem) {
     margin: 0;
   }
 
-  span {
+  > span {
     font-size: 11px;
     font-weight: 600;
     color: #1a5a9a;
@@ -228,8 +253,8 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   flex-shrink: 0;
   border-radius: 8px;
   background: rgba(37, 99, 235, 0.08);
@@ -237,10 +262,20 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   color: #2563eb;
 }
 
-.search-box {
-  position: relative;
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 12px;
   flex-shrink: 0;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+  flex-shrink: 1;
 }
 
 .search-icon {
@@ -253,6 +288,44 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   pointer-events: none;
 }
 
+.layout-switcher {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  gap: 2px;
+  flex-shrink: 0;
+  border: 1px solid rgba(82, 124, 181, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.56);
+
+  button {
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    color: #7a8da8;
+    background: transparent;
+    cursor: pointer;
+    transition:
+      color 0.3s ease,
+      background 0.3s ease;
+
+    &:hover {
+      color: #2563eb;
+      background: rgba(37, 99, 235, 0.06);
+    }
+
+    &.active {
+      color: #2563eb;
+      background: rgba(37, 99, 235, 0.1);
+    }
+  }
+}
+
 .search-box input {
   width: 100%;
   padding: 8px 12px 8px 36px;
@@ -261,7 +334,9 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   background: rgba(255, 255, 255, 0.6);
   font-size: 13px;
   outline: none;
-  transition: 0.2s;
+  transition:
+    color 0.3s ease,
+    background 0.3s ease;
   font-family: inherit;
   color: var(--el-text-color-primary);
 }
@@ -278,18 +353,13 @@ function onVariantDblClick(variant: WidgetVariantItem) {
 
 .category-tabs {
   display: flex;
-  gap: 4px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  padding-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 6px;
+  overflow: visible;
+  padding: 2px 0 10px;
   margin-bottom: 12px;
   border-bottom: 1px solid rgba(82, 124, 181, 0.13);
   flex-shrink: 0;
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
 }
 
 .tab {
@@ -301,8 +371,11 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   background: rgba(0, 40, 80, 0.02);
   border: 1px solid rgba(37, 99, 235, 0.05);
   cursor: pointer;
-  white-space: nowrap;
-  transition: 0.2s;
+  flex: 0 0 auto;
+  transition:
+    color 0.3s ease,
+    background 0.3s ease,
+    border-color 0.3s ease;
   font-family: inherit;
 
   &:hover {
@@ -335,24 +408,80 @@ function onVariantDblClick(variant: WidgetVariantItem) {
 
 .component-grid-wrap {
   flex: 1;
-  overflow-y: auto;
-  padding-right: 2px;
+  min-height: 0;
+  overflow: hidden;
   margin-right: -4px;
 
-  &::-webkit-scrollbar {
-    width: 4px;
+  :global(.el-scrollbar__wrap) {
+    overflow-x: hidden;
   }
 
-  &::-webkit-scrollbar-thumb {
-    background: #d0ddea;
-    border-radius: 10px;
+  :global(.el-scrollbar__view) {
+    min-height: 100%;
+    padding-right: 2px;
   }
 }
 
 .component-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+  transition: grid-template-columns 0.3s ease;
+}
+
+.component-grid.single-column {
+  grid-template-columns: 1fr;
+}
+
+.component-grid.single-column .component-card {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 12px 14px 30px;
+  text-align: left;
+}
+
+.component-grid.single-column .card-icon {
+  flex: 0 0 44px;
+  margin: 0 12px 0 0;
+}
+
+.card-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.component-grid.single-column .card-name {
+  margin-bottom: 4px;
+}
+
+.card-description {
+  overflow: hidden;
+  color: #8292a8;
+  font-size: 11px;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.component-grid.single-column .card-drag-hint {
+  width: fit-content;
+  margin: 0;
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+}
+
+.component-grid.two-columns .card-description {
+  display: none;
+}
+
+.component-grid.two-columns .card-content {
+  width: 100%;
+}
+
+.component-grid.two-columns {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .component-card {
@@ -360,16 +489,23 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   border-radius: 14px;
   padding: 12px 8px 10px;
   border: 1px solid rgba(82, 124, 181, 0.13);
-  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(31, 58, 112, 0.05);
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.3s ease,
+    border-color 0.3s ease,
+    background 0.3s ease;
   cursor: grab;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   user-select: none;
+  position: relative;
+  padding-bottom: 30px;
 
   &:hover {
-    transform: translateY(-3px);
+    transform: translateY(-2px);
     border-color: rgba(37, 99, 235, 0.22);
     box-shadow: 0 12px 24px -12px rgba(31, 58, 112, 0.14);
     background: rgba(255, 255, 255, 0.92);
@@ -382,8 +518,8 @@ function onVariantDblClick(variant: WidgetVariantItem) {
 }
 
 .card-icon {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   background: rgba(37, 99, 235, 0.06);
   border: 1px solid rgba(37, 99, 235, 0.08);
   border-radius: 12px;
@@ -394,7 +530,11 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   color: #2563eb;
   margin-bottom: 6px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  transition: 0.25s ease;
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.3s ease,
+    border-color 0.3s ease,
+    background 0.3s ease;
 }
 
 .component-card:hover .card-icon {
@@ -424,9 +564,15 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   background: rgba(0, 0, 0, 0.03);
   padding: 2px 10px;
   border-radius: 30px;
-  margin-top: 4px;
-  border: 1px solid transparent;
-  transition: 0.2s;
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  margin: 0;
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.3s ease,
+    border-color 0.3s ease,
+    background 0.3s ease;
 }
 
 .component-card:hover .card-drag-hint {

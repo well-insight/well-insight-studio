@@ -83,7 +83,9 @@ function goBack() {
     <!-- 顶栏 -->
     <header class="visual-workspace__header">
       <button class="visual-workspace__back" type="button" title="返回列表" @click="goBack">
-        <el-icon :size="18"><ArrowLeft /></el-icon>
+        <el-icon :size="18">
+          <ArrowLeft />
+        </el-icon>
       </button>
 
       <div class="visual-workspace__title">

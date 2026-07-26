@@ -114,14 +114,17 @@ onUnmounted(() => {
   border: 1px solid rgba(82, 124, 181, 0.16);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.68)), var(--el-bg-color-page);
   box-shadow: 0 18px 40px rgba(31, 58, 112, 0.08);
-  padding: 14px 16px 16px;
+  padding: 0 16px 16px;
 }
 
 .simulator-canvas-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 10px;
+  height: 54px;
+  min-height: 54px;
+  box-sizing: border-box;
+  padding: 0;
   flex-shrink: 0;
 
   h3 {
@@ -181,7 +184,10 @@ onUnmounted(() => {
   font-size: 15px;
   font-weight: 700;
   color: var(--el-text-color-primary);
-  padding: 14px 16px;
+  height: 54px;
+  min-height: 54px;
+  box-sizing: border-box;
+  padding: 0 16px;
   border-bottom: 1px solid rgba(82, 124, 181, 0.13);
   background: rgba(255, 255, 255, 0.72);
   display: flex;
