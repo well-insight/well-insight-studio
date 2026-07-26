@@ -8,8 +8,8 @@ import { ElMessage } from 'element-plus'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePageStore } from '@/stores/pageStore'
-import PageEditor from './PageEditor.vue'
 import PageEditorActions from './components/PageEditorActions.vue'
+import PageEditor from './PageEditor.vue'
 import { isPageDirty, markVisualClean } from './visualEditorState'
 
 const route = useRoute()
@@ -18,7 +18,9 @@ const pageStore = usePageStore()
 
 const pageId = computed(() => {
   const raw = route.params.id
-  if (!raw) return undefined
+  if (!raw) {
+    return undefined
+  }
   return Array.isArray(raw) ? raw[0] : String(raw)
 })
 
@@ -29,7 +31,9 @@ const inputValue = ref('')
 const inputRef = ref<HTMLInputElement | null>(null)
 
 watch(pageName, (val) => {
-  if (!editing.value) inputValue.value = val
+  if (!editing.value) {
+    inputValue.value = val
+  }
 }, { immediate: true })
 
 function startEdit() {
@@ -41,7 +45,9 @@ function startEdit() {
 async function finishEdit() {
   editing.value = false
   const newName = inputValue.value.trim()
-  if (!newName || newName === pageName.value) return
+  if (!newName || newName === pageName.value) {
+    return
+  }
   try {
     await pageStore.savePage({
       id: pageId.value,

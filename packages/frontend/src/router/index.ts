@@ -24,6 +24,19 @@ const routes2: RouteRecordRaw[] = [
     component: () => import('@/views/page-factory/PagePreview.vue'),
     meta: { title: '页面预览' },
   },
+  // 可视化编辑器 - 独立全屏工作区
+  {
+    path: '/workspace/visual-editor/new',
+    name: 'VisualEditorStandaloneNew',
+    component: () => import('@/views/page-factory/VisualEditorStandalone.vue'),
+    meta: { title: '新建可视化页面' },
+  },
+  {
+    path: '/workspace/visual-editor/:id',
+    name: 'VisualEditorStandalone',
+    component: () => import('@/views/page-factory/VisualEditorStandalone.vue'),
+    meta: { title: '可视化编辑器' },
+  },
   // 带 Layout 的主应用
   {
     path: '/',

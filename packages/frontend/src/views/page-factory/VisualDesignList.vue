@@ -53,16 +53,26 @@ function formatTime(iso: string): string {
 }
 
 function formatRelativeTime(iso: string): string {
-  if (!iso) return '-'
+  if (!iso) {
+    return '-'
+  }
   const now = Date.now()
   const diff = now - new Date(iso).getTime()
   const mins = Math.floor(diff / 60000)
-  if (mins < 1) return '刚刚'
-  if (mins < 60) return `${mins}分钟前`
+  if (mins < 1) {
+    return '刚刚'
+  }
+  if (mins < 60) {
+    return `${mins}分钟前`
+  }
   const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours}小时前`
+  if (hours < 24) {
+    return `${hours}小时前`
+  }
   const days = Math.floor(hours / 24)
-  if (days < 7) return `${days}天前`
+  if (days < 7) {
+    return `${days}天前`
+  }
   const d = new Date(iso)
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}`
@@ -70,16 +80,26 @@ function formatRelativeTime(iso: string): string {
 
 /** 拆分为「数字值 + 单位」，用于卡片大数字展示 */
 function relativeTimeParts(iso: string): { value: string; unit: string } {
-  if (!iso) return { value: '-', unit: '' }
+  if (!iso) {
+    return { value: '-', unit: '' }
+  }
   const now = Date.now()
   const diff = now - new Date(iso).getTime()
   const mins = Math.floor(diff / 60000)
-  if (mins < 1) return { value: '', unit: '刚刚' }
-  if (mins < 60) return { value: String(mins), unit: '分钟前' }
+  if (mins < 1) {
+    return { value: '', unit: '刚刚' }
+  }
+  if (mins < 60) {
+    return { value: String(mins), unit: '分钟前' }
+  }
   const hours = Math.floor(mins / 60)
-  if (hours < 24) return { value: String(hours), unit: '小时前' }
+  if (hours < 24) {
+    return { value: String(hours), unit: '小时前' }
+  }
   const days = Math.floor(hours / 24)
-  if (days < 7) return { value: String(days), unit: '天前' }
+  if (days < 7) {
+    return { value: String(days), unit: '天前' }
+  }
   const d = new Date(iso)
   const pad = (n: number) => String(n).padStart(2, '0')
   return { value: `${pad(d.getMonth() + 1)}/${pad(d.getDate())}`, unit: '' }
@@ -115,7 +135,7 @@ onActivated(() => {
 })
 
 function designPage(id: string) {
-  router.push({ name: 'VisualPageEditor', params: { id } })
+  router.push({ name: 'VisualEditorStandalone', params: { id } })
 }
 
 function openEditDialog(row: ApiPageListItem) {
@@ -157,7 +177,7 @@ async function submitCreatePage() {
     const page = await createPage({ name: createForm.value.name.trim(), type: 'visualization', status: 'draft' })
     ElMessage.success('页面已创建')
     createDialogVisible.value = false
-    router.push({ name: 'VisualPageEditor', params: { id: page.id } })
+    router.push({ name: 'VisualEditorStandalone', params: { id: page.id } })
   }
   catch (e) {
     ElMessage.error((e as Error).message || '创建失败')
