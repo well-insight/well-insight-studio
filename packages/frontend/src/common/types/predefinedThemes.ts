@@ -29,8 +29,15 @@ function paletteFromColors(colors: string[]) {
 /** 与 echarts-theme-builder PRE_DEFINED_THEMES 对齐 */
 export const PRESETS: PresetDef[] = [
   {
+    id: 'welldesign',
+    name: '蔚蓝 · 设计',
+    bg: 'rgba(0, 0, 0, 0)',
+    isDark: false,
+    colors: ['#2563eb', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc'],
+  },
+  {
     id: 'v5',
-    name: 'V5 默认',
+    name: 'V5 经典',
     bg: 'rgba(0, 0, 0, 0)',
     isDark: false,
     colors: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc'],

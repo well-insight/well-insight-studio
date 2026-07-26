@@ -14,7 +14,7 @@ import {
 } from '@/common/types/predefinedThemes'
 import { cloneDeep } from 'lodash-es'
 
-const DEFAULT_THEME_ID = 'v5'
+const DEFAULT_THEME_ID = 'welldesign'
 const STORAGE_KEY = 'canvas-theme-config'
 
 interface StoredThemeConfig {
@@ -80,7 +80,7 @@ export const useCanvasThemeStore = defineStore('canvasTheme', () => {
       if (found)
         return found.theme
     }
-    return getPredefinedTheme(activeThemeId.value) ?? getPredefinedTheme('v5')!
+    return getPredefinedTheme(activeThemeId.value) ?? getPredefinedTheme('welldesign')!
   })
 
   const themeCSSVars = computed(() => themeToCSSVars(currentTheme.value))
@@ -171,7 +171,7 @@ export const useCanvasThemeStore = defineStore('canvasTheme', () => {
   }
 
   function getDefaultTheme(): CanvasTheme {
-    return cloneDeep(getPredefinedTheme('v5')!)
+    return cloneDeep(getPredefinedTheme('welldesign')!)
   }
 
   function applyThemeToElement(el: HTMLElement | null) {

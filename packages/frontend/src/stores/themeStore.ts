@@ -1,9 +1,10 @@
 import type { ConfigProviderProps } from 'element-plus'
-import type { ThemeConfig, ThemeMode, ThemeSize } from '@/styles/theme/tokens'
 import type { ThemePreset } from '@/styles/theme/presets'
+import type { ThemeConfig, ThemeMode, ThemeSize } from '@/styles/theme/tokens'
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { ThemeEnum } from '@/enums/styleEnum'
+import { adjustColor, findPreset, THEME_PRESETS } from '@/styles/theme/presets'
 import {
   applyAppearanceVars,
   applyPrimaryColor,
@@ -12,12 +13,11 @@ import {
 
   WELLCUBE_PRIMARY,
 } from '@/styles/theme/tokens'
-import { adjustColor, findPreset, THEME_PRESETS } from '@/styles/theme/presets'
 
 const STORAGE_KEY = 'wellcube-theme-config'
 const LEGACY_STORAGE_KEY = 'wellcube-theme'
 const STORAGE_VERSION_KEY = 'wellcube-theme-version'
-const CURRENT_STORAGE_VERSION = 2
+const CURRENT_STORAGE_VERSION = 3
 
 function loadConfig(): ThemeConfig {
   try {
@@ -79,7 +79,7 @@ function persist(config: ThemeConfig) {
 export const useThemeStore = defineStore('theme', () => {
   const config = ref<ThemeConfig>(loadConfig())
   const isDark = ref(resolveIsDark(config.value.mode))
-  const currentPresetId = ref<string>('breeze')
+  const currentPresetId = ref<string>('welldesign')
 
   /** 兼容旧字段：当前实际生效的明暗 */
   const theme = computed(() => (isDark.value ? ThemeEnum.DARK : ThemeEnum.LIGHT))
@@ -140,7 +140,8 @@ export const useThemeStore = defineStore('theme', () => {
   /** 应用预设主题 */
   function applyPreset(name: string) {
     const preset = findPreset(name)
-    if (!preset) return
+    if (!preset)
+      return
     currentPresetId.value = preset.name
     setPrimary(preset.primary)
     applyAuxColors(preset)

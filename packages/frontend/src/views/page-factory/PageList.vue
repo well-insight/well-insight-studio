@@ -1,6 +1,12 @@
 <script lang="ts" setup>
 import type { ApiPageListItem, PageType } from '@/api/pages'
-import { DataLine, EditPen as EditPenIcon, Monitor, Plus, Search } from '@element-plus/icons-vue'
+import {
+  DataLine,
+  EditPen as EditPenIcon,
+  Monitor,
+  Plus,
+  Search,
+} from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { onActivated, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -17,7 +23,9 @@ const routeTabMap: Record<string, 'all' | PageType> = {
   PageListForm: 'form',
   PageListReport: 'report',
 }
-const activeTab = ref<'all' | PageType>(routeTabMap[route.name as string] || 'all')
+const activeTab = ref<'all' | PageType>(
+  routeTabMap[route.name as string] || 'all',
+)
 const loading = ref(false)
 const pageItems = ref<ApiPageListItem[]>([])
 const total = ref(0)
@@ -137,9 +145,17 @@ async function savePageInfo() {
 async function createNewPage(type: PageType) {
   createDialogVisible.value = false
   try {
-    const name = type === 'visualization' ? '未命名大屏' : type === 'form' ? '未命名表单' : '未命名报表'
+    const name
+      = type === 'visualization'
+        ? '未命名大屏'
+        : type === 'form'
+          ? '未命名表单'
+          : '未命名报表'
     const page = await createPage({ name, type, status: 'draft' })
-    router.push({ name: getEditorRouteName(type), params: { id: page.id } })
+    router.push({
+      name: getEditorRouteName(type),
+      params: { id: page.id },
+    })
   }
   catch (e) {
     ElMessage.error((e as Error).message || '创建失败')
@@ -153,11 +169,15 @@ async function previewPage(id: string) {
 
 async function removePage(row: ApiPageListItem) {
   try {
-    await ElMessageBox.confirm(`确定删除页面「${row.name}」吗？此操作不可恢复。`, '删除页面', {
-      type: 'warning',
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
-    })
+    await ElMessageBox.confirm(
+      `确定删除页面「${row.name}」吗？此操作不可恢复。`,
+      '删除页面',
+      {
+        type: 'warning',
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+      },
+    )
   }
   catch {
     return
@@ -176,10 +196,17 @@ async function removePage(row: ApiPageListItem) {
 <template>
   <div class="h-full w-full flex flex-col bg-[var(--el-bg-color)]">
     <!-- 顶部工具栏 -->
-    <div class="border-bottom-1 flex h-[54px] items-center justify-between px-3 shrink-0">
+    <div
+      class="border-bottom-1 flex h-[54px] items-center justify-between px-3 shrink-0"
+    >
       <ButtonTabs v-model="activeTab" :options="tabOptions" />
       <div class="flex items-center gap-2">
-        <el-button round type="primary" :icon="Plus" @click="createDialogVisible = true">
+        <el-button
+          round
+          type="primary"
+          :icon="Plus"
+          @click="createDialogVisible = true"
+        >
           新建页面
         </el-button>
         <el-input
@@ -204,43 +231,87 @@ async function removePage(row: ApiPageListItem) {
       <el-table-column prop="name" label="页面名称" min-width="200">
         <template #default="{ row }">
           <el-space>
-            <el-button link text type="primary" :icon="typeIcons[row.type]" @click="designPage(row)">
+            <el-button
+              link
+              text
+              type="primary"
+              :icon="typeIcons[row.type]"
+              @click="designPage(row)"
+            >
               {{ row.name }}
             </el-button>
           </el-space>
         </template>
       </el-table-column>
-      <el-table-column prop="type" label="类型" width="120" align="center">
+      <el-table-column
+        prop="type"
+        label="类型"
+        width="120"
+        align="center"
+      >
         <template #default="{ row }">
           <el-tag :type="typeColors[row.type] as any" size="small">
             {{ typeLabels[row.type] }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="status" label="状态" width="100" align="center">
+      <el-table-column
+        prop="status"
+        label="状态"
+        width="100"
+        align="center"
+      >
         <template #default="{ row }">
-          <el-tag :type="row.status === 'published' ? 'success' : 'info'" size="small">
-            {{ row.status === 'published' ? '已发布' : '草稿' }}
+          <el-tag
+            :type="row.status === 'published' ? 'success' : 'info'"
+            size="small"
+          >
+            {{ row.status === "published" ? "已发布" : "草稿" }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="updated_at" label="更新时间" width="180" align="center">
+      <el-table-column
+        prop="updated_at"
+        label="更新时间"
+        width="180"
+        align="center"
+      >
         <template #default="{ row }">
           {{ formatTime(row.updated_at) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="300" align="center" fixed="right">
+      <el-table-column
+        label="操作"
+        width="300"
+        align="center"
+        fixed="right"
+      >
         <template #default="{ row }">
-          <el-button size="small" text type="primary" @click="designPage(row)">
+          <el-button
+            size="small"
+            text
+            type="primary"
+            @click="designPage(row)"
+          >
             设计
           </el-button>
           <el-button size="small" text @click="openEditDialog(row)">
             编辑
           </el-button>
-          <el-button size="small" text type="success" @click="previewPage(row.id)">
+          <el-button
+            size="small"
+            text
+            type="success"
+            @click="previewPage(row.id)"
+          >
             预览
           </el-button>
-          <el-button size="small" text type="danger" @click="removePage(row)">
+          <el-button
+            size="small"
+            text
+            type="danger"
+            @click="removePage(row)"
+          >
             删除
           </el-button>
         </template>
@@ -248,7 +319,11 @@ async function removePage(row: ApiPageListItem) {
     </el-table>
 
     <!-- 新建页面对话框 -->
-    <AdaptiveDialog v-model="createDialogVisible" title="选择页面类型" width="640px">
+    <AdaptiveDialog
+      v-model="createDialogVisible"
+      title="选择页面类型"
+      width="640px"
+    >
       <div class="type-cards grid grid-cols-3 gap-4">
         <el-card
           shadow="hover"
@@ -299,13 +374,24 @@ async function removePage(row: ApiPageListItem) {
     </AdaptiveDialog>
 
     <!-- 编辑页面基础信息对话框 -->
-    <AdaptiveDialog v-model="editDialogVisible" title="编辑页面信息" width="480px" @close="editingPage = null">
+    <AdaptiveDialog
+      v-model="editDialogVisible"
+      title="编辑页面信息"
+      width="480px"
+      @close="editingPage = null"
+    >
       <el-form v-if="editingPage" :model="editForm" label-width="80px">
         <el-form-item label="页面名称">
-          <el-input v-model="editForm.name" placeholder="请输入页面名称" />
+          <el-input
+            v-model="editForm.name"
+            placeholder="请输入页面名称"
+          />
         </el-form-item>
         <el-form-item label="页面类型">
-          <el-tag :type="typeColors[editForm.type] as any" size="default">
+          <el-tag
+            :type="typeColors[editForm.type] as any"
+            size="default"
+          >
             {{ typeLabels[editForm.type] }}
           </el-tag>
         </el-form-item>
@@ -314,7 +400,11 @@ async function removePage(row: ApiPageListItem) {
         <el-button @click="editDialogVisible = false">
           取消
         </el-button>
-        <el-button type="primary" :loading="editSaving" @click="savePageInfo">
+        <el-button
+          type="primary"
+          :loading="editSaving"
+          @click="savePageInfo"
+        >
           保存
         </el-button>
       </template>

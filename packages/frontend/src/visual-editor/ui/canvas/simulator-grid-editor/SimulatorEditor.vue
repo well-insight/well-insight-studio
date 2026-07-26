@@ -1,14 +1,10 @@
 <script lang="tsx" setup>
-import { CloseBold } from '@element-plus/icons-vue'
-import { onClickOutside } from '@vueuse/core'
-import { storeToRefs } from 'pinia'
-import { onUnmounted, ref, useTemplateRef } from 'vue'
+import { onUnmounted, useTemplateRef } from 'vue'
+import { SvgIcon } from '@/components/svg-icon'
 import { useControlStore } from '@/stores/controlStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
-import { EditTools } from '@/visual-editor/ui/workbench/edit-tools'
 import RightAttributePanel from '@/visual-editor/ui/workbench/right-attribute-panel/RightAttributePanel.vue'
 import { ComponentList } from '../../workbench/component-list-new'
-import BlockSettingsBar from './BlockSettingsBar.vue'
 import PcWrapper from './PcWrapper.vue'
 import '@/visual-editor/styles/visual-editor.scss'
 
@@ -18,17 +14,8 @@ defineOptions({
 
 const workspaceStore = useWorkspaceStore()
 const controlStore = useControlStore()
-const { floatingSettingVisible } = storeToRefs(controlStore)
-
-const floatingPanelRef = ref<HTMLElement | null>(null)
 
 const wrapperRef = useTemplateRef('wrapperRef')
-
-onClickOutside(floatingPanelRef, () => {
-  if (controlStore.floatingSettingVisible) {
-    controlStore.floatingSettingVisible = false
-  }
-})
 
 onUnmounted(() => {
   workspaceStore.setCurrentApp(null)
@@ -38,41 +25,40 @@ onUnmounted(() => {
 
 <template>
   <div class="simulator-container visual-editor">
-    <div class="simulator-toolbar h-[var(--ve-header-h,50px)] w-full shrink-0">
-      <EditTools>
-        <template #center>
-          <BlockSettingsBar />
-        </template>
-      </EditTools>
-    </div>
+    <aside class="simulator-rail">
+      <ComponentList
+        @drag-start="() => wrapperRef?.drag()"
+        @drag="() => wrapperRef?.drag()"
+        @drag-end="() => wrapperRef?.dragEnd()"
+        @dblclick-add="(block) => wrapperRef?.addBlock(block)"
+      />
+    </aside>
 
-    <div class="simulator-editor">
-      <div class="simulator-rail flex h-full shrink-0 items-center justify-center">
-        <ComponentList
-          @drag-start="() => wrapperRef?.drag()"
-          @drag="() => wrapperRef?.drag()"
-          @drag-end="() => wrapperRef?.dragEnd()"
-          @dblclick-add="(block) => wrapperRef?.addBlock(block)"
-        />
+    <main class="simulator-canvas-wrapper">
+      <div class="simulator-canvas-toolbar">
+        <h3>
+          <span class="simulator-canvas-toolbar__icon">
+            <SvgIcon :size="15" name="component-base" />
+          </span>
+          画布设计
+        </h3>
       </div>
       <div class="simulator-canvas-area">
         <PcWrapper ref="wrapperRef" />
-
-        <transition name="floating-setting-panel">
-          <div v-if="floatingSettingVisible" ref="floatingPanelRef" class="floating-setting-panel">
-            <div class="floating-setting-panel__header">
-              <span class="ve-panel-title">配置</span>
-              <el-button text circle @click="controlStore.floatingSettingVisible = false">
-                <el-icon><CloseBold /></el-icon>
-              </el-button>
-            </div>
-            <div class="floating-setting-panel__body">
-              <RightAttributePanel />
-            </div>
-          </div>
-        </transition>
       </div>
-    </div>
+    </main>
+
+    <aside class="simulator-setting-rail">
+      <div class="simulator-setting-panel__header">
+        <span class="simulator-setting-panel__icon">
+          <SvgIcon :size="15" name="page-setting" />
+        </span>
+        属性配置
+      </div>
+      <div class="simulator-setting-panel__body">
+        <RightAttributePanel />
+      </div>
+    </aside>
   </div>
 </template>
 
@@ -98,85 +84,151 @@ onUnmounted(() => {
 
 .simulator-container {
   display: flex;
+  gap: 12px;
   width: 100%;
   height: 100%;
   position: relative;
-  flex-direction: column;
   overflow: hidden;
-  border-radius: 12px;
-  background: radial-gradient(circle at 18% 16%, rgba(45, 212, 191, 0.08), transparent 24%), var(--el-bg-color-page);
-}
-
-.simulator-toolbar {
-  position: relative;
-  z-index: 2;
-  background: rgba(255, 255, 255, 0.82);
-  border-bottom: 1px solid rgba(82, 124, 181, 0.14);
-  backdrop-filter: blur(14px);
 }
 
 .simulator-rail {
-  width: calc(var(--ve-rail-w, 52px) + 20px);
-  padding: 12px 10px;
-  border-right: 1px solid rgba(82, 124, 181, 0.12);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(248, 251, 255, 0.3));
+  width: 300px;
+  min-width: 300px;
+  flex-shrink: 0;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid rgba(82, 124, 181, 0.16);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 251, 255, 0.9)), var(--el-bg-color);
+  box-shadow: 0 18px 40px rgba(31, 58, 112, 0.08);
 }
 
-.simulator-canvas-area {
-  position: relative;
+.simulator-canvas-wrapper {
   flex: 1;
   min-width: 0;
   height: 100%;
-  overflow: hidden;
   display: flex;
-  align-items: stretch;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid rgba(82, 124, 181, 0.16);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.68)), var(--el-bg-color-page);
+  box-shadow: 0 18px 40px rgba(31, 58, 112, 0.08);
+  padding: 14px 16px 16px;
+}
+
+.simulator-canvas-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  flex-shrink: 0;
+
+  h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--el-text-color-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.simulator-canvas-toolbar__icon {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+}
+
+.simulator-canvas-area {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
 
   :deep(> *) {
     width: 100%;
-    min-width: 0;
     height: 100%;
+    min-width: 0;
     min-height: 0;
   }
 }
 
-.simulator-editor {
-  width: 100%;
-  flex: 1;
-  height: 0;
-  min-height: 0;
+.simulator-setting-rail {
+  width: 300px;
+  min-width: 300px;
+  flex-shrink: 0;
+  height: 100%;
   display: flex;
-  justify-content: center;
-  position: relative;
+  flex-direction: column;
   overflow: hidden;
-  box-sizing: border-box;
-  background-color: var(--el-bg-color-page);
-  background-image:
-    linear-gradient(rgba(37, 99, 235, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(37, 99, 235, 0.035) 1px, transparent 1px),
-    radial-gradient(circle, var(--ve-grid-dot, var(--el-fill-color-lighter)) 1px, transparent 1px);
-  background-size:
-    80px 80px,
-    80px 80px,
-    20px 20px;
-
-  &::-webkit-scrollbar {
-    width: 0;
-  }
+  border-radius: 16px;
+  border: 1px solid rgba(82, 124, 181, 0.16);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 251, 255, 0.9)), var(--el-bg-color);
+  box-shadow: 0 18px 40px rgba(31, 58, 112, 0.08);
 }
 
-:global(html.dark) .simulator-container {
-  background: radial-gradient(circle at 18% 16%, rgba(45, 212, 191, 0.08), transparent 24%), var(--el-bg-color-page);
+.simulator-setting-panel__header {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--el-text-color-primary);
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(82, 124, 181, 0.13);
+  background: rgba(255, 255, 255, 0.72);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-:global(html.dark) .simulator-toolbar {
+.simulator-setting-panel__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+}
+
+.simulator-setting-panel__body {
+  flex: 1;
+  min-height: 0;
+  padding: 4px 16px 12px;
+}
+
+:global(html.dark) .simulator-rail,
+:global(html.dark) .simulator-canvas-wrapper,
+:global(html.dark) .simulator-setting-rail {
+  border-color: rgba(140, 210, 255, 0.14);
+  background: linear-gradient(180deg, rgba(13, 40, 64, 0.92), rgba(8, 28, 48, 0.9)), var(--el-bg-color);
+  box-shadow: 0 18px 40px rgba(4, 16, 30, 0.3);
+}
+
+:global(html.dark) .simulator-setting-panel__header {
   border-color: rgba(140, 210, 255, 0.12);
-  background: rgba(13, 40, 64, 0.78);
+  background: rgba(13, 40, 64, 0.72);
 }
 
-:global(html.dark) .simulator-rail {
-  border-color: rgba(140, 210, 255, 0.1);
-  background: linear-gradient(180deg, rgba(13, 40, 64, 0.5), rgba(8, 28, 48, 0.28));
+:global(html.dark) .simulator-canvas-toolbar__icon,
+:global(html.dark) .simulator-setting-panel__icon {
+  background:
+    radial-gradient(circle at 30% 25%, rgba(64, 158, 255, 0.28), transparent 52%),
+    linear-gradient(180deg, rgba(64, 158, 255, 0.18), rgba(64, 158, 255, 0.08));
+  border-color: rgba(64, 158, 255, 0.2);
+  color: #5ab2ff;
 }
 
 .list-group-item {
@@ -218,55 +270,5 @@ onUnmounted(() => {
       @include showCompLabel(left);
     }
   }
-}
-</style>
-
-<style lang="scss" scoped>
-.floating-setting-panel {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 368px;
-  height: calc(100% - 28px);
-  z-index: 1200;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border-radius: 12px;
-  border: 1px solid var(--ve-paper-edge, var(--el-border-color-light));
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--el-color-primary) 8%, transparent),
-    0 18px 46px rgba(31, 58, 112, 0.16);
-  backdrop-filter: blur(14px);
-}
-
-.floating-setting-panel__header {
-  height: 48px;
-  flex-shrink: 0;
-  padding: 0 14px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(248, 251, 255, 0.58));
-}
-
-.floating-setting-panel__body {
-  flex: 1;
-  min-height: 0;
-}
-
-.floating-setting-panel-enter-active,
-.floating-setting-panel-leave-active {
-  transition:
-    opacity 0.18s ease,
-    transform 0.18s ease;
-}
-
-.floating-setting-panel-enter-from,
-.floating-setting-panel-leave-to {
-  opacity: 0;
-  transform: translateX(8px);
 }
 </style>

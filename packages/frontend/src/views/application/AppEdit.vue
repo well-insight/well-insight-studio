@@ -6,20 +6,17 @@ import { storeToRefs } from 'pinia'
 import { onActivated, onBeforeUnmount, onMounted, onUnmounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute } from 'vue-router'
 import { fetchApplication } from '@/api/application'
-import { ELayout, ELayoutContent, ELayoutSider } from '@/components/e-layout'
+import { ELayout, ELayoutContent } from '@/components/e-layout'
 import { useControlStore } from '@/stores/controlStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
-// import SimulatorEditor from "@/visual-editor/ui/canvas/simulator-editor/SimulatorEditor.vue";
 import SimulatorEditor from '@/visual-editor/ui/canvas/simulator-grid-editor/SimulatorEditor.vue'
-import LeftAside from '@/visual-editor/ui/workbench/left-aside/LeftAside.vue'
 
 const route = useRoute()
 const workspaceStore = useWorkspaceStore()
 const { appList } = storeToRefs(workspaceStore)
 
 const controlStore = useControlStore()
-const { layoutCollapse } = storeToRefs(controlStore)
 
 const { overrideProject, updateVisualLoading, isDirty } = useVisualData()
 
@@ -166,28 +163,9 @@ onUnmounted(() => {
     element-loading-text="加载应用配置…"
   >
     <ELayout class="relative flex h-full w-full overflow-hidden">
-      <ELayoutSider
-        v-model:collapsed="layoutCollapse"
-        show-trigger="button"
-        :width="280"
-        :collapsed-width="0"
-      >
-        <LeftAside />
-      </ELayoutSider>
-
       <ELayoutContent>
         <SimulatorEditor />
       </ELayoutContent>
-
-      <!-- <ELayoutSider
-        v-model:collapsed="settingCollapse"
-        show-trigger="button"
-        :width="360"
-        :collapsed-width="0"
-        position="right"
-      >
-        <RightAttributePanel />
-      </ELayoutSider> -->
     </ELayout>
   </div>
 </template>

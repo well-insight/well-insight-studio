@@ -25,6 +25,18 @@ export const CATEGORY_LABELS: Record<ThemeCategory, string> = {
 }
 
 export const THEME_PRESETS: ThemePreset[] = [
+  /* ===== WellDesign 默认 (1) ===== */
+  {
+    name: 'welldesign',
+    label: '蔚蓝 · WellDesign',
+    primary: '#2563EB',
+    success: '#67C23A',
+    warning: '#E6A23C',
+    danger: '#F56C6C',
+    colors: ['#2563EB', '#6096F0', '#A0C4F7', '#D0E2FC', '#F0F5FF'],
+    category: 'blue',
+  },
+
   /* ===== 蓝色系 (5) ===== */
   {
     name: 'breeze',

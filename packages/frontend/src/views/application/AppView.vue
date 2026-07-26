@@ -6,22 +6,17 @@ import { storeToRefs } from 'pinia'
 import { onActivated, onBeforeUnmount, onMounted, onUnmounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute } from 'vue-router'
 import { fetchApplication } from '@/api/application'
-import { ELayout, ELayoutContent, ELayoutSider } from '@/components/e-layout'
 import { useControlStore } from '@/stores/controlStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import SimulatorEditorPreview from '@/visual-editor/ui/canvas/simulator-editor-preview/SimulatorEditorPreview.vue'
 // import SimulatorEditor from "@/visual-editor/ui/canvas/simulator-editor/SimulatorEditor.vue";
-import SimulatorEditor from '@/visual-editor/ui/canvas/simulator-grid-editor/SimulatorEditor.vue'
-import { CustomComponents } from '@/visual-editor/ui/workbench/component-list'
-import LeftAside from '@/visual-editor/ui/workbench/left-aside/LeftAside.vue'
 
 const route = useRoute()
 const workspaceStore = useWorkspaceStore()
 const { appList } = storeToRefs(workspaceStore)
 
 const controlStore = useControlStore()
-const { layoutCollapse } = storeToRefs(controlStore)
 
 const { overrideProject, updateVisualLoading, isDirty } = useVisualData()
 

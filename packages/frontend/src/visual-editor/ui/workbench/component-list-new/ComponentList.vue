@@ -1,10 +1,21 @@
 <script lang="ts" setup>
+import type { WidgetCatalogConfig, WidgetVariantItem } from './widget-catalog'
 import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { SvgIcon } from '@/components/svg-icon'
 import { useControlStore } from '@/stores'
-import CascadeCatalogPanel from './CascadeCatalogPanel.vue'
-import { WIDGET_CATALOGS } from './widget-catalog'
+import { createBlockFromWidgetVariant, isWidgetVariantAvailable, WIDGET_CATALOGS } from './widget-catalog'
+
+interface ComponentListItem {
+  key: string
+  label: string
+  description: string
+  category: string
+  categoryLabel: string
+  icon: string
+  available: boolean
+  variant: WidgetVariantItem
+}
 
 const emits = defineEmits<{
   dragStart: [value: VisualEditorBlockData, index: number]
@@ -13,137 +24,68 @@ const emits = defineEmits<{
   dblclickAdd: [value: VisualEditorBlockData]
 }>()
 
-const activeComp = ref(WIDGET_CATALOGS[0]?.title ?? '')
 const controlStore = useControlStore()
 
-const hoveredPopover = ref<string | null>(null)
-/** 点击菜单图标后固定浮窗，避免拖拽或移开鼠标时自动关闭 */
-const pinnedPopover = ref<string | null>(null)
-const panelStyle = ref<Record<string, string>>({})
-const navBtnRefs = ref<Record<string, HTMLElement | null>>({})
+const catalogs = computed<WidgetCatalogConfig[]>(() => WIDGET_CATALOGS)
+const currentCategory = ref('all')
+const currentSearch = ref('')
 
-let closeTimer: ReturnType<typeof setTimeout> | null = null
-
-const catalogs = computed(() => WIDGET_CATALOGS)
-
-const activeCatalog = computed(() =>
-  catalogs.value.find(c => c.title === hoveredPopover.value),
-)
-
-function setNavBtnRef(title: string, el: HTMLElement | null) {
-  if (el)
-    navBtnRefs.value[title] = el
-}
-
-function cancelCloseTimer() {
-  if (closeTimer !== null) {
-    clearTimeout(closeTimer)
-    closeTimer = null
-  }
-}
-
-function updatePanelPosition(title: string) {
-  const el = navBtnRefs.value[title]
-  if (!el)
-    return
-
-  const rect = el.getBoundingClientRect()
-  const panelWidth = 532
-  const panelMaxHeight = 520
-  const gap = 10
-
-  let left = rect.right + gap
-  let top = rect.top
-
-  if (left + panelWidth > window.innerWidth - 8) {
-    left = Math.max(8, rect.left - panelWidth - gap)
-  }
-
-  if (top + panelMaxHeight > window.innerHeight - 8) {
-    top = Math.max(8, window.innerHeight - panelMaxHeight - 8)
-  }
-
-  panelStyle.value = {
-    position: 'fixed',
-    left: `${left}px`,
-    top: `${top}px`,
-    zIndex: '2050',
-  }
-}
-
-async function onBtnMouseEnter(title: string) {
-  cancelCloseTimer()
-  activeComp.value = title
-  hoveredPopover.value = title
-  await nextTick()
-  updatePanelPosition(title)
-}
-
-async function onBtnClick(title: string) {
-  cancelCloseTimer()
-  if (pinnedPopover.value === title) {
-    pinnedPopover.value = null
-    hoveredPopover.value = null
-    return
-  }
-  pinnedPopover.value = title
-  activeComp.value = title
-  hoveredPopover.value = title
-  await nextTick()
-  updatePanelPosition(title)
-}
-
-function shouldKeepPanelOpen() {
-  return Boolean(pinnedPopover.value || controlStore.isDragging)
-}
-
-function onBtnMouseLeave() {
-  if (shouldKeepPanelOpen())
-    return
-  cancelCloseTimer()
-  closeTimer = setTimeout(() => {
-    if (!controlStore.isDragging)
-      hoveredPopover.value = null
-    closeTimer = null
-  }, 150)
-}
-
-function onContentMouseEnter() {
-  cancelCloseTimer()
-}
-
-function onContentMouseLeave() {
-  if (shouldKeepPanelOpen())
-    return
-  cancelCloseTimer()
-  closeTimer = setTimeout(() => {
-    if (!controlStore.isDragging)
-      hoveredPopover.value = null
-    closeTimer = null
-  }, 200)
-}
-
-function onWindowChange() {
-  if (hoveredPopover.value)
-    updatePanelPosition(hoveredPopover.value)
-}
-
-watch(hoveredPopover, (title) => {
-  if (title) {
-    window.addEventListener('scroll', onWindowChange, true)
-    window.addEventListener('resize', onWindowChange)
-  }
-  else {
-    window.removeEventListener('scroll', onWindowChange, true)
-    window.removeEventListener('resize', onWindowChange)
-  }
+const allComponents = computed<ComponentListItem[]>(() => {
+  return catalogs.value.flatMap((catalog) => {
+    return catalog.groups.flatMap(group => group.variants.map((variant) => {
+      const description = variant.description || `${group.label}组件，可拖入画布后继续配置`
+      return {
+        key: variant.key,
+        label: variant.label,
+        description,
+        category: catalog.title,
+        categoryLabel: catalog.title.replace(/组件$/u, ''),
+        icon: group.icon || catalog.icon,
+        available: isWidgetVariantAvailable(variant),
+        variant,
+      }
+    }))
+  })
 })
 
-onBeforeUnmount(() => {
-  cancelCloseTimer()
-  window.removeEventListener('scroll', onWindowChange, true)
-  window.removeEventListener('resize', onWindowChange)
+const categoryTabs = computed(() => {
+  const tabs = catalogs.value.map(catalog => ({
+    key: catalog.title,
+    label: catalog.title.replace(/组件$/u, ''),
+    count: allComponents.value.filter(item => item.category === catalog.title).length,
+  }))
+
+  return [
+    { key: 'all', label: '全部', count: allComponents.value.length },
+    ...tabs,
+  ]
 })
+
+const filteredComponents = computed(() => {
+  const keyword = currentSearch.value.trim().toLowerCase()
+
+  return allComponents.value.filter((item) => {
+    const matchCategory = currentCategory.value === 'all' || item.category === currentCategory.value
+    const matchSearch = !keyword
+      || item.label.toLowerCase().includes(keyword)
+      || item.description.toLowerCase().includes(keyword)
+      || item.categoryLabel.toLowerCase().includes(keyword)
+
+    return matchCategory && matchSearch
+  })
+})
+
+function onVariantDragStart(e: DragEvent, variant: WidgetVariantItem, index: number) {
+  const block = createBlockFromWidgetVariant(variant)
+  if (!block)
+    return
+
+  e.dataTransfer?.setData('text/plain', variant.componentKey)
+  e.dataTransfer!.effectAllowed = 'move'
+  controlStore.setIsDragging(true)
+  controlStore.setMoveVisualData(block)
+  emits('dragStart', block, index)
+}
 
 function dragging() {
   controlStore.setDraggingVisualKey(Date.now().toString())
@@ -155,148 +97,399 @@ function dragEnd() {
   emits('dragEnd')
 }
 
-function onCatalogDragStart(block: VisualEditorBlockData, index: number) {
-  cancelCloseTimer()
-  if (hoveredPopover.value)
-    pinnedPopover.value = hoveredPopover.value
-  emits('dragStart', block, index)
-}
-
-function closePanel() {
-  cancelCloseTimer()
-  pinnedPopover.value = null
-  hoveredPopover.value = null
-}
-
-function onCatalogDblclickAdd(block: VisualEditorBlockData) {
-  closePanel()
-  emits('dblclickAdd', block)
+function onVariantDblClick(variant: WidgetVariantItem) {
+  const block = createBlockFromWidgetVariant(variant)
+  if (block)
+    emits('dblclickAdd', block)
 }
 </script>
 
 <template>
-  <div
-    :class="$style['component-list-container']"
-    class="flex flex-col items-center justify-center"
-  >
-    <el-button
-      v-for="catalog in catalogs"
-      :key="catalog.title"
-      :ref="(el) => setNavBtnRef(catalog.title, (el as any)?.$el ?? el)"
-      text
-      :title="catalog.title"
-      :class="[
-        $style['nav-btn'],
-        {
-          [$style['nav-btn--active']]: activeComp === catalog.title,
-          [$style['nav-btn--pinned']]: pinnedPopover === catalog.title,
-        },
-      ]"
-      @mouseenter="onBtnMouseEnter(catalog.title)"
-      @mouseleave="onBtnMouseLeave()"
-      @click="onBtnClick(catalog.title)"
-    >
-      <SvgIcon :size="18" :name="catalog.icon" />
-    </el-button>
+  <aside :class="$style['left-panel']">
+    <div :class="$style['panel-header']">
+      <h2>
+        <span :class="$style['panel-header-icon']">
+          <SvgIcon :size="14" name="component-base" />
+        </span>
+        组件库
+      </h2>
+      <span>{{ filteredComponents.length }} 个</span>
+    </div>
 
-    <Teleport to="body">
-      <Transition name="component-panel-fade">
+    <div :class="$style['search-box']">
+      <span :class="$style['search-icon']" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+          <circle cx="9" cy="9" r="5.75" stroke="currentColor" stroke-width="1.8" />
+          <path d="M13.2 13.2L17 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
+      </span>
+      <input
+        v-model="currentSearch"
+        type="text"
+        autocomplete="off"
+        placeholder="搜索组件..."
+      >
+    </div>
+
+    <div :class="$style['category-tabs']">
+      <button
+        v-for="tab in categoryTabs"
+        :key="tab.key"
+        type="button"
+        :class="[$style.tab, { [$style.active]: currentCategory === tab.key }]"
+        @click="currentCategory = tab.key"
+      >
+        {{ tab.label }}
+        <span :class="$style.badge">{{ tab.count }}</span>
+      </button>
+    </div>
+
+    <div :class="$style['component-grid-wrap']">
+      <div :class="$style['component-grid']">
         <div
-          v-if="hoveredPopover && activeCatalog"
-          :style="panelStyle"
-          :class="$style['floating-panel']"
-          @mouseenter="onContentMouseEnter"
-          @mouseleave="onContentMouseLeave"
+          v-for="(item, index) in filteredComponents"
+          :key="item.key"
+          :class="[$style['component-card'], { [$style.disabled]: !item.available }]"
+          :draggable="item.available"
+          :title="item.description"
+          @dragstart="(e) => item.available && onVariantDragStart(e, item.variant, index)"
+          @drag="dragging"
+          @dragend="dragEnd"
+          @dblclick="item.available && onVariantDblClick(item.variant)"
         >
-          <CascadeCatalogPanel
-            :config="activeCatalog"
-            @drag-start="onCatalogDragStart"
-            @drag="dragging"
-            @drag-end="dragEnd"
-            @dblclick-add="onCatalogDblclickAdd"
-            @close="closePanel"
-          />
+          <div :class="$style['card-icon']">
+            <SvgIcon :size="18" :name="item.icon" />
+          </div>
+          <div :class="$style['card-name']">
+            {{ item.label }}
+          </div>
+          <div :class="$style['card-drag-hint']">
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M5 3.5h6M5 8h6M5 12.5h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+            {{ item.available ? '拖拽' : '即将开放' }}
+          </div>
         </div>
-      </Transition>
-    </Teleport>
-  </div>
+
+        <div v-if="!filteredComponents.length" :class="$style['empty-state']">
+          <svg width="40" height="40" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+            <rect x="8" y="8" width="32" height="32" rx="10" stroke="currentColor" stroke-width="2.2" opacity="0.28" />
+            <circle cx="21" cy="21" r="4" fill="currentColor" opacity="0.28" />
+            <path d="M28.5 28.5L36 36" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+          </svg>
+          <p>没有找到匹配的组件</p>
+          <span>试试切换分类或更换关键词</span>
+        </div>
+      </div>
+    </div>
+  </aside>
 </template>
 
 <style lang="scss" module>
-.component-list-container {
-  gap: 7px;
-  padding: 8px 6px;
-  border-radius: 12px;
-  border: 1px solid var(--ve-paper-edge, var(--el-border-color-light));
-  background: rgba(255, 255, 255, 0.88);
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--el-color-primary) 8%, transparent),
-    0 12px 26px rgba(31, 58, 112, 0.12);
+.left-panel {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 14px 12px;
+  overflow: hidden;
+}
 
-  :global {
-    .el-button + .el-button {
-      margin-left: 0;
-    }
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+
+  h2 {
+    font-size: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--el-text-color-primary);
+    margin: 0;
+  }
+
+  span {
+    font-size: 11px;
+    font-weight: 600;
+    color: #1a5a9a;
+    background: rgba(37, 99, 235, 0.05);
+    border: 1px solid rgba(37, 99, 235, 0.06);
+    padding: 2px 10px;
+    border-radius: 30px;
   }
 }
 
-.nav-btn {
+.panel-header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+}
+
+.search-box {
   position: relative;
-  width: 38px;
-  height: 38px;
-  padding: 7px;
-  border-radius: 10px;
-  color: var(--el-text-color-secondary);
-  transition:
-    transform 0.18s ease,
-    background-color 0.18s ease,
-    color 0.18s ease,
-    box-shadow 0.18s ease;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9aa9bf;
+  line-height: 0;
+  pointer-events: none;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  border-radius: 30px;
+  border: 1px solid rgba(82, 124, 181, 0.16);
+  background: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  outline: none;
+  transition: 0.2s;
+  font-family: inherit;
+  color: var(--el-text-color-primary);
+}
+
+.search-box input::placeholder {
+  color: #a8b7ce;
+}
+
+.search-box input:focus {
+  border-color: #2563eb;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.category-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(82, 124, 181, 0.13);
+  flex-shrink: 0;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.tab {
+  padding: 4px 14px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4a6a8a;
+  background: rgba(0, 40, 80, 0.02);
+  border: 1px solid rgba(37, 99, 235, 0.05);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 0.2s;
+  font-family: inherit;
 
   &:hover {
-    background-color: var(--ve-active-fill, var(--el-color-primary-light-9));
-    color: var(--el-color-primary);
-    transform: translateY(-1px);
+    background: rgba(37, 99, 235, 0.06);
+    color: var(--el-text-color-primary);
   }
 
-  &--active {
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(20, 184, 166, 0.08));
-    color: var(--el-color-primary);
-
-    &::before {
-      content: '';
-      position: absolute;
-      left: -7px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 2px;
-      height: 16px;
-      border-radius: 1px;
-      background-color: var(--ve-spine, var(--el-color-primary));
-    }
-  }
-
-  &--pinned {
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--el-color-primary) 40%, transparent);
+  &.active {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
   }
 }
 
-.floating-panel {
-  pointer-events: auto;
-}
-</style>
-
-<style scoped>
-.component-panel-fade-enter-active,
-.component-panel-fade-leave-active {
-  transition:
-    opacity 0.15s ease,
-    transform 0.15s ease;
+.badge {
+  font-size: 10px;
+  background: rgba(0, 0, 0, 0.06);
+  color: inherit;
+  padding: 0 6px;
+  border-radius: 20px;
+  margin-left: 4px;
+  display: inline-block;
 }
 
-.component-panel-fade-enter-from,
-.component-panel-fade-leave-to {
-  opacity: 0;
-  transform: translateX(-6px);
+.tab.active .badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.component-grid-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 2px;
+  margin-right: -4px;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #d0ddea;
+    border-radius: 10px;
+  }
+}
+
+.component-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.component-card {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 14px;
+  padding: 12px 8px 10px;
+  border: 1px solid rgba(82, 124, 181, 0.13);
+  transition: all 0.2s ease;
+  cursor: grab;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  user-select: none;
+
+  &:hover {
+    transform: translateY(-3px);
+    border-color: rgba(37, 99, 235, 0.22);
+    box-shadow: 0 12px 24px -12px rgba(31, 58, 112, 0.14);
+    background: rgba(255, 255, 255, 0.92);
+  }
+
+  &:active {
+    cursor: grabbing;
+    transform: scale(0.97);
+  }
+}
+
+.card-icon {
+  width: 40px;
+  height: 40px;
+  background: rgba(37, 99, 235, 0.06);
+  border: 1px solid rgba(37, 99, 235, 0.08);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #2563eb;
+  margin-bottom: 6px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: 0.25s ease;
+}
+
+.component-card:hover .card-icon {
+  background: rgba(37, 99, 235, 0.14);
+  border-color: rgba(37, 99, 235, 0.2);
+  transform: scale(1.04);
+  box-shadow: 0 0 16px rgba(37, 99, 235, 0.12);
+}
+
+.card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.card-drag-hint {
+  font-size: 10px;
+  color: #8595ab;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.03);
+  padding: 2px 10px;
+  border-radius: 30px;
+  margin-top: 4px;
+  border: 1px solid transparent;
+  transition: 0.2s;
+}
+
+.component-card:hover .card-drag-hint {
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.06);
+  border-color: rgba(37, 99, 235, 0.1);
+}
+
+.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+
+  &:hover {
+    transform: none;
+    border-color: rgba(82, 124, 181, 0.13);
+    box-shadow: none;
+    background: rgba(255, 255, 255, 0.6);
+  }
+
+  &:hover .card-icon {
+    background: rgba(37, 99, 235, 0.06);
+    color: #2563eb;
+  }
+
+  &:hover .card-drag-hint {
+    color: #8595ab;
+    background: rgba(0, 0, 0, 0.03);
+    border-color: transparent;
+  }
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px 12px;
+  color: #7a8aa3;
+
+  svg {
+    color: rgba(82, 124, 181, 0.3);
+    margin-bottom: 10px;
+  }
+
+  p {
+    margin: 0 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #3a4a6b;
+  }
+
+  span {
+    font-size: 12px;
+    color: #8e9fb5;
+  }
+}
+
+@media (max-width: 1024px) {
+  .component-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .component-card {
+    padding: 10px 6px;
+  }
 }
 </style>

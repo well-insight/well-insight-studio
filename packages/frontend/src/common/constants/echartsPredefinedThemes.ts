@@ -3,6 +3,11 @@ import type { PreDefinedEchartsTheme } from '@/common/types/echartsTheme'
 /** ECharts 官方预设主题色板（展示在编辑器「默认方案」区域） */
 export const ECHARTS_PREDEFINED_THEMES: PreDefinedEchartsTheme[] = [
   {
+    name: 'welldesign',
+    background: 'rgba(0, 0, 0, 0)',
+    theme: ['#2563eb', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc'],
+  },
+  {
     name: 'v5',
     background: 'rgba(0, 0, 0, 0)',
     theme: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc'],

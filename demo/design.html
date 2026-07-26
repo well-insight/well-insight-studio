@@ -1,0 +1,1244 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>低代码平台 · 三栏演示</title>
+        <!-- 使用更稳定的 jsdelivr CDN 加载 Font Awesome -->
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.2/css/all.min.css"
+        />
+        <style>
+            /* ===== 全局重置 & 字体 ===== */
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family:
+                    "Inter",
+                    -apple-system,
+                    BlinkMacSystemFont,
+                    "Segoe UI",
+                    Roboto,
+                    sans-serif;
+                background: #e9edf4;
+                color: #1a2639;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            /* ===== 主布局 ===== */
+            .app {
+                display: flex;
+                height: 100vh;
+                background: #f2f6fc;
+                gap: 0;
+            }
+
+            /* ===== 左侧面板 ===== */
+            .left-panel {
+                width: 300px;
+                min-width: 300px;
+                background: #ffffff;
+                border-right: 1px solid #e3eaf2;
+                display: flex;
+                flex-direction: column;
+                padding: 18px 16px 12px;
+                overflow: hidden;
+            }
+
+            .left-panel .panel-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 14px;
+                flex-shrink: 0;
+            }
+
+            .left-panel .panel-header h2 {
+                font-size: 18px;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .left-panel .panel-header h2 i {
+                color: #4f6af5;
+            }
+
+            .left-panel .panel-header span {
+                font-size: 13px;
+                color: #7a8aa3;
+                font-weight: 400;
+            }
+
+            /* 搜索 & 分类 */
+            .left-panel .search-box {
+                position: relative;
+                margin-bottom: 12px;
+                flex-shrink: 0;
+            }
+
+            .left-panel .search-box i {
+                position: absolute;
+                left: 12px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #9aa9bf;
+                font-size: 14px;
+            }
+
+            .left-panel .search-box input {
+                width: 100%;
+                padding: 8px 12px 8px 36px;
+                border-radius: 30px;
+                border: 1.5px solid #e6edf5;
+                background: #f8fafd;
+                font-size: 13px;
+                outline: none;
+                transition: 0.2s;
+                font-family: inherit;
+            }
+
+            .left-panel .search-box input:focus {
+                border-color: #4f6af5;
+                background: #fff;
+                box-shadow: 0 0 0 3px rgba(79, 106, 245, 0.1);
+            }
+
+            /* 分类 Tabs (横向滚动) */
+            .left-panel .category-tabs {
+                display: flex;
+                gap: 4px;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding-bottom: 8px;
+                margin-bottom: 12px;
+                border-bottom: 1px solid #eef3f9;
+                flex-shrink: 0;
+                scrollbar-width: none;
+            }
+
+            .left-panel .category-tabs::-webkit-scrollbar {
+                display: none;
+            }
+
+            .left-panel .category-tabs .tab {
+                padding: 4px 14px;
+                border-radius: 30px;
+                font-size: 12px;
+                font-weight: 500;
+                color: #5b6e8a;
+                background: transparent;
+                border: none;
+                cursor: pointer;
+                white-space: nowrap;
+                transition: 0.2s;
+                font-family: inherit;
+            }
+
+            .left-panel .category-tabs .tab:hover {
+                background: #f1f5fb;
+                color: #1a2639;
+            }
+
+            .left-panel .category-tabs .tab.active {
+                background: #4f6af5;
+                color: #fff;
+                box-shadow: 0 2px 8px rgba(79, 106, 245, 0.25);
+            }
+
+            .left-panel .category-tabs .tab .badge {
+                font-size: 10px;
+                background: rgba(0, 0, 0, 0.06);
+                padding: 0 6px;
+                border-radius: 20px;
+                margin-left: 4px;
+            }
+
+            .left-panel .category-tabs .tab.active .badge {
+                background: rgba(255, 255, 255, 0.25);
+                color: #fff;
+            }
+
+            /* 组件网格 (滚动) */
+            .left-panel .component-grid-wrap {
+                flex: 1;
+                overflow-y: auto;
+                padding-right: 2px;
+                margin-right: -4px;
+            }
+
+            .left-panel .component-grid-wrap::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            .left-panel .component-grid-wrap::-webkit-scrollbar-thumb {
+                background: #d0ddea;
+                border-radius: 10px;
+            }
+
+            .component-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            /* 左侧卡片（紧凑） */
+            .component-card {
+                background: #ffffff;
+                border-radius: 14px;
+                padding: 12px 8px 10px;
+                border: 1.5px solid #edf2f9;
+                transition: all 0.2s ease;
+                cursor: pointer;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .component-card:hover {
+                transform: translateY(-3px);
+                border-color: #c8d6e8;
+                box-shadow: 0 8px 18px -8px rgba(0, 20, 50, 0.08);
+                background: #fbfdff;
+            }
+
+            .component-card .card-icon {
+                width: 40px;
+                height: 40px;
+                background: #f0f5ff;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+                color: #4f6af5;
+                margin-bottom: 6px;
+                transition: 0.2s;
+            }
+
+            .component-card:hover .card-icon {
+                background: #4f6af5;
+                color: #fff;
+            }
+
+            .component-card .card-name {
+                font-size: 13px;
+                font-weight: 600;
+                color: #1a2639;
+                margin-bottom: 2px;
+            }
+
+            .component-card .card-drag-hint {
+                font-size: 10px;
+                color: #b0bfd4;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                background: #f6fafe;
+                padding: 2px 10px;
+                border-radius: 30px;
+                margin-top: 4px;
+                border: 1px solid transparent;
+                transition: 0.2s;
+            }
+
+            .component-card:hover .card-drag-hint {
+                color: #4f6af5;
+                background: #eef4ff;
+                border-color: #d6e2ff;
+            }
+
+            .component-card .card-drag-hint i {
+                font-size: 11px;
+            }
+
+            /* ===== 中间画布 ===== */
+            .canvas-wrapper {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                background: #f2f6fc;
+                padding: 16px 20px 20px 20px;
+                overflow: hidden;
+            }
+
+            .canvas-toolbar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding-bottom: 10px;
+                flex-shrink: 0;
+            }
+
+            .canvas-toolbar h3 {
+                font-size: 16px;
+                font-weight: 500;
+                color: #2c3e5a;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .canvas-toolbar h3 i {
+                color: #4f6af5;
+            }
+
+            .canvas-toolbar .actions button {
+                background: #fff;
+                border: 1px solid #dce4ed;
+                border-radius: 30px;
+                padding: 4px 16px;
+                font-size: 12px;
+                color: #3a4a6b;
+                cursor: pointer;
+                transition: 0.2s;
+                font-family: inherit;
+            }
+
+            .canvas-toolbar .actions button:hover {
+                background: #f0f5ff;
+                border-color: #b0c6e0;
+            }
+
+            .canvas-area {
+                flex: 1;
+                background: #ffffff;
+                border-radius: 18px;
+                box-shadow:
+                    0 4px 24px rgba(0, 0, 0, 0.04),
+                    0 1px 4px rgba(0, 0, 0, 0.03);
+                padding: 24px;
+                overflow-y: auto;
+                position: relative;
+                background-image:
+                    linear-gradient(
+                        rgba(200, 212, 230, 0.15) 1px,
+                        transparent 1px
+                    ),
+                    linear-gradient(
+                        90deg,
+                        rgba(200, 212, 230, 0.15) 1px,
+                        transparent 1px
+                    );
+                background-size: 24px 24px;
+                min-height: 300px;
+            }
+
+            .canvas-area .empty-hint {
+                color: #9aabbf;
+                text-align: center;
+                padding: 60px 20px;
+                font-size: 16px;
+            }
+
+            .canvas-area .empty-hint i {
+                font-size: 48px;
+                display: block;
+                margin-bottom: 12px;
+                color: #cddae9;
+            }
+
+            /* 画布中的组件块 */
+            .canvas-item {
+                display: inline-block;
+                padding: 12px 18px;
+                border-radius: 12px;
+                border: 2px solid transparent;
+                background: #f8fafd;
+                margin: 8px 10px 8px 0;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                position: relative;
+                min-width: 60px;
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+                user-select: none;
+            }
+
+            .canvas-item:hover {
+                border-color: #c8d6e8;
+                background: #f5f9ff;
+            }
+
+            .canvas-item.selected {
+                border-color: #4f6af5;
+                background: #f0f5ff;
+                box-shadow: 0 0 0 3px rgba(79, 106, 245, 0.12);
+            }
+
+            .canvas-item .item-icon {
+                margin-right: 8px;
+                color: inherit;
+            }
+
+            .canvas-item .item-label {
+                font-size: 14px;
+                font-weight: 500;
+            }
+
+            .canvas-item .item-remove {
+                position: absolute;
+                top: -8px;
+                right: -8px;
+                background: #ff5a5a;
+                color: #fff;
+                border-radius: 50%;
+                width: 20px;
+                height: 20px;
+                font-size: 12px;
+                line-height: 20px;
+                text-align: center;
+                cursor: pointer;
+                opacity: 0;
+                transition: 0.2s;
+                border: 2px solid #fff;
+            }
+
+            .canvas-item:hover .item-remove {
+                opacity: 1;
+            }
+
+            .canvas-item .item-remove:hover {
+                background: #e04444;
+            }
+
+            /* 不同组件类型样式 */
+            .canvas-item.type-button {
+                background: #4f6af5;
+                color: #fff;
+                border-color: #4f6af5;
+                padding: 10px 28px;
+                border-radius: 40px;
+            }
+
+            .canvas-item.type-button .item-icon {
+                color: inherit;
+            }
+
+            .canvas-item.type-button.selected {
+                border-color: #1a2639;
+                box-shadow: 0 0 0 3px rgba(79, 106, 245, 0.3);
+            }
+
+            .canvas-item.type-container {
+                background: #ffffff;
+                border: 2px dashed #c8d6e8;
+                padding: 20px 30px;
+                min-width: 120px;
+                min-height: 80px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .canvas-item.type-container.selected {
+                border-color: #4f6af5;
+                border-style: solid;
+            }
+
+            /* ===== 右侧配置面板 ===== */
+            .right-panel {
+                width: 300px;
+                min-width: 300px;
+                background: #ffffff;
+                border-left: 1px solid #e3eaf2;
+                padding: 20px 18px;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            .right-panel .panel-title {
+                font-size: 16px;
+                font-weight: 600;
+                color: #1a2639;
+                padding-bottom: 14px;
+                border-bottom: 1px solid #eef3f9;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-shrink: 0;
+            }
+
+            .right-panel .panel-title i {
+                color: #4f6af5;
+            }
+
+            .right-panel .config-body {
+                flex: 1;
+                overflow-y: auto;
+                padding-top: 16px;
+            }
+
+            .right-panel .config-body .no-selection {
+                color: #7a8aa3;
+                text-align: center;
+                padding: 40px 0;
+            }
+
+            .right-panel .config-body .no-selection i {
+                font-size: 40px;
+                color: #cddae9;
+                display: block;
+                margin-bottom: 10px;
+            }
+
+            .config-group {
+                margin-bottom: 18px;
+            }
+
+            .config-group label {
+                display: block;
+                font-size: 13px;
+                font-weight: 500;
+                color: #3a4a6b;
+                margin-bottom: 4px;
+            }
+
+            .config-group input,
+            .config-group select {
+                width: 100%;
+                padding: 6px 12px;
+                border-radius: 8px;
+                border: 1.5px solid #e6edf5;
+                background: #f8fafd;
+                font-size: 13px;
+                font-family: inherit;
+                transition: 0.2s;
+                outline: none;
+            }
+
+            .config-group input:focus,
+            .config-group select:focus {
+                border-color: #4f6af5;
+                background: #fff;
+                box-shadow: 0 0 0 3px rgba(79, 106, 245, 0.08);
+            }
+
+            .config-group input[type="color"] {
+                padding: 2px;
+                height: 38px;
+                cursor: pointer;
+            }
+
+            .config-group .row {
+                display: flex;
+                gap: 12px;
+            }
+
+            .config-group .row > * {
+                flex: 1;
+            }
+
+            /* ===== 滚动条美化 ===== */
+            ::-webkit-scrollbar {
+                width: 5px;
+                height: 5px;
+            }
+
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background: #d0ddea;
+                border-radius: 10px;
+            }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background: #b8c8dd;
+            }
+
+            /* ===== 响应式 ===== */
+            @media (max-width: 1024px) {
+                .left-panel {
+                    width: 240px;
+                    min-width: 240px;
+                }
+                .right-panel {
+                    width: 240px;
+                    min-width: 240px;
+                }
+                .component-grid {
+                    grid-template-columns: 1fr 1fr;
+                    gap: 8px;
+                }
+                .component-card {
+                    padding: 10px 6px;
+                }
+            }
+
+            @media (max-width: 768px) {
+                .app {
+                    flex-direction: column;
+                    height: auto;
+                    overflow: auto;
+                }
+                .left-panel,
+                .right-panel {
+                    width: 100%;
+                    min-width: unset;
+                    border: none;
+                    border-bottom: 1px solid #e3eaf2;
+                    max-height: 300px;
+                }
+                .canvas-wrapper {
+                    padding: 12px;
+                    min-height: 400px;
+                }
+                .left-panel .component-grid-wrap {
+                    max-height: 200px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="app">
+            <!-- ========== 左侧组件面板 ========== -->
+            <aside class="left-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-th-large"></i> 组件库</h2>
+                    <span id="leftCount">24</span>
+                </div>
+
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input
+                        type="text"
+                        id="leftSearch"
+                        placeholder="搜索组件..."
+                        autocomplete="off"
+                    />
+                </div>
+
+                <div class="category-tabs" id="leftCategoryTabs">
+                    <button class="tab active" data-category="all">
+                        全部 <span class="badge">24</span>
+                    </button>
+                    <button class="tab" data-category="layout">
+                        布局 <span class="badge">5</span>
+                    </button>
+                    <button class="tab" data-category="form">
+                        表单 <span class="badge">6</span>
+                    </button>
+                    <button class="tab" data-category="data">
+                        数据 <span class="badge">5</span>
+                    </button>
+                    <button class="tab" data-category="feedback">
+                        反馈 <span class="badge">4</span>
+                    </button>
+                    <button class="tab" data-category="other">
+                        其他 <span class="badge">4</span>
+                    </button>
+                </div>
+
+                <div class="component-grid-wrap">
+                    <div class="component-grid" id="leftComponentGrid"></div>
+                </div>
+            </aside>
+
+            <!-- ========== 中间画布 ========== -->
+            <main class="canvas-wrapper">
+                <div class="canvas-toolbar">
+                    <h3><i class="fas fa-pen-fancy"></i> 画布设计</h3>
+                    <div class="actions">
+                        <button id="clearCanvasBtn">
+                            <i class="fas fa-trash-alt"></i> 清空
+                        </button>
+                    </div>
+                </div>
+                <div class="canvas-area" id="canvasArea">
+                    <!-- 动态渲染 canvas 项 -->
+                    <div class="empty-hint" id="emptyHint">
+                        <i class="fas fa-arrow-left"></i>
+                        从左侧点击组件添加到画布
+                    </div>
+                </div>
+            </main>
+
+            <!-- ========== 右侧配置面板 ========== -->
+            <aside class="right-panel">
+                <div class="panel-title">
+                    <i class="fas fa-sliders-h"></i> 属性配置
+                </div>
+                <div class="config-body" id="configBody">
+                    <div class="no-selection" id="noSelection">
+                        <i class="fas fa-mouse-pointer"></i>
+                        <p>点击画布中的组件<br />查看和修改属性</p>
+                    </div>
+                    <div id="configForm" style="display: none">
+                        <!-- 动态生成配置项 -->
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <script>
+            // ================================================================
+            //  1. 组件数据 (同之前)
+            // ================================================================
+            const COMPONENTS = [
+                {
+                    id: 1,
+                    name: "容器",
+                    desc: "基础布局容器",
+                    icon: "fa-cube",
+                    category: "layout",
+                },
+                {
+                    id: 2,
+                    name: "栅格",
+                    desc: "响应式栅格",
+                    icon: "fa-table-cells",
+                    category: "layout",
+                },
+                {
+                    id: 3,
+                    name: "分割面板",
+                    desc: "可拖拽调整",
+                    icon: "fa-arrows-left-right",
+                    category: "layout",
+                },
+                {
+                    id: 4,
+                    name: "卡片",
+                    desc: "内容容器",
+                    icon: "fa-credit-card",
+                    category: "layout",
+                },
+                {
+                    id: 5,
+                    name: "标签页",
+                    desc: "切换面板",
+                    icon: "fa-tab",
+                    category: "layout",
+                },
+                {
+                    id: 6,
+                    name: "输入框",
+                    desc: "文本输入",
+                    icon: "fa-pen-to-square",
+                    category: "form",
+                },
+                {
+                    id: 7,
+                    name: "选择器",
+                    desc: "下拉选择",
+                    icon: "fa-caret-down",
+                    category: "form",
+                },
+                {
+                    id: 8,
+                    name: "开关",
+                    desc: "布尔切换",
+                    icon: "fa-toggle-on",
+                    category: "form",
+                },
+                {
+                    id: 9,
+                    name: "日期选择",
+                    desc: "日期时间",
+                    icon: "fa-calendar-days",
+                    category: "form",
+                },
+                {
+                    id: 10,
+                    name: "文件上传",
+                    desc: "上传文件",
+                    icon: "fa-cloud-upload",
+                    category: "form",
+                },
+                {
+                    id: 11,
+                    name: "按钮",
+                    desc: "操作按钮",
+                    icon: "fa-square",
+                    category: "form",
+                },
+                {
+                    id: 12,
+                    name: "表格",
+                    desc: "数据表格",
+                    icon: "fa-table",
+                    category: "data",
+                },
+                {
+                    id: 13,
+                    name: "列表",
+                    desc: "垂直列表",
+                    icon: "fa-list",
+                    category: "data",
+                },
+                {
+                    id: 14,
+                    name: "统计数值",
+                    desc: "数据看板",
+                    icon: "fa-chart-simple",
+                    category: "data",
+                },
+                {
+                    id: 15,
+                    name: "进度条",
+                    desc: "进度展示",
+                    icon: "fa-chart-line",
+                    category: "data",
+                },
+                {
+                    id: 16,
+                    name: "时间线",
+                    desc: "垂直时间线",
+                    icon: "fa-clock",
+                    category: "data",
+                },
+                {
+                    id: 17,
+                    name: "提示框",
+                    desc: "全局提示",
+                    icon: "fa-circle-exclamation",
+                    category: "feedback",
+                },
+                {
+                    id: 18,
+                    name: "弹窗",
+                    desc: "模态对话框",
+                    icon: "fa-window-maximize",
+                    category: "feedback",
+                },
+                {
+                    id: 19,
+                    name: "加载状态",
+                    desc: "Spin/Skeleton",
+                    icon: "fa-spinner",
+                    category: "feedback",
+                },
+                {
+                    id: 20,
+                    name: "通知",
+                    desc: "通知条",
+                    icon: "fa-bell",
+                    category: "feedback",
+                },
+                {
+                    id: 21,
+                    name: "锚点",
+                    desc: "页面内跳转",
+                    icon: "fa-paperclip",
+                    category: "other",
+                },
+                {
+                    id: 22,
+                    name: "分割线",
+                    desc: "水平分割",
+                    icon: "fa-minus",
+                    category: "other",
+                },
+                {
+                    id: 23,
+                    name: "回到顶部",
+                    desc: "滚动回顶部",
+                    icon: "fa-arrow-up",
+                    category: "other",
+                },
+                {
+                    id: 24,
+                    name: "水印",
+                    desc: "全局水印",
+                    icon: "fa-water",
+                    category: "other",
+                },
+            ];
+
+            // ================================================================
+            //  2. 状态
+            // ================================================================
+            let leftCategory = "all";
+            let leftSearch = "";
+
+            // 画布数据
+            let canvasItems = [];
+            let nextId = 100;
+
+            // 选中的画布项ID
+            let selectedId = null;
+
+            // ================================================================
+            //  3. DOM 引用
+            // ================================================================
+            const leftGrid = document.getElementById("leftComponentGrid");
+            const leftSearchInput = document.getElementById("leftSearch");
+            const leftTabs = document.getElementById("leftCategoryTabs");
+            const leftCount = document.getElementById("leftCount");
+
+            const canvasArea = document.getElementById("canvasArea");
+            const emptyHint = document.getElementById("emptyHint");
+            const clearBtn = document.getElementById("clearCanvasBtn");
+
+            const configBody = document.getElementById("configBody");
+            const noSelection = document.getElementById("noSelection");
+            const configForm = document.getElementById("configForm");
+
+            // ================================================================
+            //  4. 左侧组件列表渲染
+            // ================================================================
+            function renderLeft() {
+                const filtered = COMPONENTS.filter((c) => {
+                    const matchCat =
+                        leftCategory === "all" || c.category === leftCategory;
+                    const matchSearch =
+                        c.name.includes(leftSearch) ||
+                        c.desc.includes(leftSearch);
+                    return matchCat && matchSearch;
+                });
+
+                leftCount.textContent = filtered.length;
+
+                if (filtered.length === 0) {
+                    leftGrid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#7a8aa3;padding:20px 0;">无匹配组件</div>`;
+                    return;
+                }
+
+                let html = "";
+                filtered.forEach((c) => {
+                    html += `
+                    <div class="component-card" data-id="${c.id}" data-category="${c.category}">
+                        <div class="card-icon"><i class="fas ${c.icon}"></i></div>
+                        <div class="card-name">${c.name}</div>
+                        <div class="card-drag-hint"><i class="fas fa-plus-circle"></i> 点击添加</div>
+                    </div>
+                `;
+                });
+                leftGrid.innerHTML = html;
+            }
+
+            // 左侧卡片点击：添加至画布
+            leftGrid.addEventListener("click", (e) => {
+                const card = e.target.closest(".component-card");
+                if (!card) return;
+                const id = parseInt(card.dataset.id);
+                const comp = COMPONENTS.find((c) => c.id === id);
+                if (!comp) return;
+
+                // 创建画布项
+                const newItem = {
+                    id: nextId++,
+                    name: comp.name,
+                    icon: comp.icon,
+                    type: "block", // 默认块
+                    content: comp.name,
+                    color: "#4f6af5",
+                    bgColor: "#f0f5ff",
+                    width: "auto",
+                    height: "auto",
+                    fontSize: 14,
+                };
+                // 根据组件名特殊处理类型
+                if (comp.name === "按钮") {
+                    newItem.type = "button";
+                    newItem.bgColor = "#4f6af5";
+                    newItem.color = "#ffffff";
+                } else if (comp.name === "容器" || comp.name === "卡片") {
+                    newItem.type = "container";
+                    newItem.bgColor = "#ffffff";
+                    newItem.color = "#1a2639";
+                    newItem.width = "200px";
+                    newItem.height = "100px";
+                } else {
+                    // 默认文本块
+                    newItem.type = "block";
+                }
+
+                canvasItems.push(newItem);
+                selectedId = newItem.id;
+                renderCanvas();
+                renderConfig();
+            });
+
+            // 搜索和分类
+            leftSearchInput.addEventListener("input", (e) => {
+                leftSearch = e.target.value.trim();
+                renderLeft();
+            });
+
+            leftTabs.addEventListener("click", (e) => {
+                const tab = e.target.closest(".tab");
+                if (!tab) return;
+                const cat = tab.dataset.category;
+                if (!cat) return;
+                leftTabs
+                    .querySelectorAll(".tab")
+                    .forEach((t) => t.classList.remove("active"));
+                tab.classList.add("active");
+                leftCategory = cat;
+                renderLeft();
+            });
+
+            // ================================================================
+            //  5. 画布渲染
+            // ================================================================
+            function renderCanvas() {
+                // 清空画布，保留emptyHint
+                const items = canvasArea.querySelectorAll(".canvas-item");
+                items.forEach((el) => el.remove());
+
+                if (canvasItems.length === 0) {
+                    emptyHint.style.display = "block";
+                    return;
+                }
+                emptyHint.style.display = "none";
+
+                // 按顺序渲染
+                canvasItems.forEach((item) => {
+                    const div = document.createElement("div");
+                    div.className = `canvas-item type-${item.type}`;
+                    if (selectedId === item.id) {
+                        div.classList.add("selected");
+                    }
+                    div.dataset.id = item.id;
+                    // 样式
+                    div.style.color = item.color || "#1a2639";
+                    div.style.backgroundColor = item.bgColor || "#f8fafd";
+                    if (item.width && item.width !== "auto")
+                        div.style.width = item.width;
+                    if (item.height && item.height !== "auto")
+                        div.style.height = item.height;
+                    if (item.fontSize)
+                        div.style.fontSize = item.fontSize + "px";
+
+                    // 内容
+                    const iconSpan = document.createElement("span");
+                    iconSpan.className = "item-icon";
+                    iconSpan.innerHTML = `<i class="fas ${item.icon || "fa-cube"}"></i>`;
+                    div.appendChild(iconSpan);
+
+                    const labelSpan = document.createElement("span");
+                    labelSpan.className = "item-label";
+                    labelSpan.textContent = item.content || item.name;
+                    div.appendChild(labelSpan);
+
+                    // 删除按钮
+                    const removeBtn = document.createElement("span");
+                    removeBtn.className = "item-remove";
+                    removeBtn.innerHTML = "×";
+                    removeBtn.title = "删除组件";
+                    removeBtn.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        removeCanvasItem(item.id);
+                    });
+                    div.appendChild(removeBtn);
+
+                    // 点击选中
+                    div.addEventListener("click", (e) => {
+                        if (e.target.closest(".item-remove")) return;
+                        selectedId = item.id;
+                        renderCanvas(); // 重新高亮
+                        renderConfig();
+                    });
+
+                    canvasArea.appendChild(div);
+                });
+            }
+
+            function removeCanvasItem(id) {
+                canvasItems = canvasItems.filter((item) => item.id !== id);
+                if (selectedId === id) {
+                    selectedId =
+                        canvasItems.length > 0 ? canvasItems[0].id : null;
+                }
+                renderCanvas();
+                renderConfig();
+            }
+
+            // 清空画布
+            clearBtn.addEventListener("click", () => {
+                canvasItems = [];
+                selectedId = null;
+                renderCanvas();
+                renderConfig();
+            });
+
+            // ================================================================
+            //  6. 配置面板渲染
+            // ================================================================
+            function renderConfig() {
+                if (!selectedId || canvasItems.length === 0) {
+                    noSelection.style.display = "block";
+                    configForm.style.display = "none";
+                    return;
+                }
+
+                const item = canvasItems.find((it) => it.id === selectedId);
+                if (!item) {
+                    noSelection.style.display = "block";
+                    configForm.style.display = "none";
+                    return;
+                }
+
+                noSelection.style.display = "none";
+                configForm.style.display = "block";
+
+                // 生成配置表单
+                let html = `
+                <div class="config-group">
+                    <label>组件名称</label>
+                    <input type="text" id="cfgName" value="${item.name}" />
+                </div>
+                <div class="config-group">
+                    <label>显示内容</label>
+                    <input type="text" id="cfgContent" value="${item.content || ""}" />
+                </div>
+                <div class="config-group">
+                    <label>图标 (FontAwesome类名)</label>
+                    <input type="text" id="cfgIcon" value="${item.icon || "fa-cube"}" />
+                </div>
+                <div class="config-group">
+                    <label>字体颜色</label>
+                    <input type="color" id="cfgColor" value="${item.color || "#1a2639"}" />
+                </div>
+                <div class="config-group">
+                    <label>背景颜色</label>
+                    <input type="color" id="cfgBgColor" value="${item.bgColor || "#f8fafd"}" />
+                </div>
+                <div class="config-group">
+                    <label>字体大小 (px)</label>
+                    <input type="number" id="cfgFontSize" value="${item.fontSize || 14}" min="10" max="40" />
+                </div>
+                <div class="config-group">
+                    <div class="row">
+                        <div>
+                            <label>宽度</label>
+                            <input type="text" id="cfgWidth" value="${item.width || "auto"}" placeholder="auto/px" />
+                        </div>
+                        <div>
+                            <label>高度</label>
+                            <input type="text" id="cfgHeight" value="${item.height || "auto"}" placeholder="auto/px" />
+                        </div>
+                    </div>
+                </div>
+                <div class="config-group">
+                    <button id="updateConfigBtn" style="width:100%;padding:8px;background:#4f6af5;color:#fff;border:none;border-radius:30px;font-size:14px;cursor:pointer;">应用更改</button>
+                </div>
+            `;
+                configForm.innerHTML = html;
+
+                // 绑定更新事件
+                document
+                    .getElementById("updateConfigBtn")
+                    .addEventListener("click", () => {
+                        const name =
+                            document.getElementById("cfgName").value.trim() ||
+                            item.name;
+                        const content =
+                            document
+                                .getElementById("cfgContent")
+                                .value.trim() || name;
+                        const icon =
+                            document.getElementById("cfgIcon").value.trim() ||
+                            "fa-cube";
+                        const color = document.getElementById("cfgColor").value;
+                        const bgColor =
+                            document.getElementById("cfgBgColor").value;
+                        const fontSize =
+                            parseInt(
+                                document.getElementById("cfgFontSize").value,
+                            ) || 14;
+                        const width =
+                            document.getElementById("cfgWidth").value.trim() ||
+                            "auto";
+                        const height =
+                            document.getElementById("cfgHeight").value.trim() ||
+                            "auto";
+
+                        // 更新
+                        const target = canvasItems.find(
+                            (it) => it.id === selectedId,
+                        );
+                        if (target) {
+                            target.name = name;
+                            target.content = content;
+                            target.icon = icon;
+                            target.color = color;
+                            target.bgColor = bgColor;
+                            target.fontSize = fontSize;
+                            target.width = width;
+                            target.height = height;
+                            renderCanvas();
+                            renderConfig(); // 刷新配置表单
+                        }
+                    });
+            }
+
+            // ================================================================
+            //  7. 初始化：预置画布示例 + 左侧渲染
+            // ================================================================
+            function initDemo() {
+                // 预置几个示例组件
+                const demoItems = [
+                    {
+                        id: nextId++,
+                        name: "标题",
+                        icon: "fa-heading",
+                        type: "block",
+                        content: "欢迎使用低代码平台",
+                        color: "#1a2639",
+                        bgColor: "#eef4ff",
+                        fontSize: 20,
+                        width: "auto",
+                        height: "auto",
+                    },
+                    {
+                        id: nextId++,
+                        name: "按钮",
+                        icon: "fa-square",
+                        type: "button",
+                        content: "点击我",
+                        color: "#ffffff",
+                        bgColor: "#4f6af5",
+                        fontSize: 16,
+                        width: "auto",
+                        height: "auto",
+                    },
+                    {
+                        id: nextId++,
+                        name: "容器",
+                        icon: "fa-cube",
+                        type: "container",
+                        content: "卡片容器",
+                        color: "#1a2639",
+                        bgColor: "#fafcff",
+                        fontSize: 14,
+                        width: "220px",
+                        height: "120px",
+                    },
+                ];
+                canvasItems = demoItems;
+                selectedId = demoItems[0].id;
+                renderCanvas();
+                renderConfig();
+
+                // 渲染左侧
+                renderLeft();
+
+                // 激活第一个tab
+                leftTabs
+                    .querySelector(".tab.active")
+                    ?.classList.remove("active");
+                leftTabs
+                    .querySelector('[data-category="all"]')
+                    ?.classList.add("active");
+            }
+
+            initDemo();
+
+            console.log(
+                "✨ 三栏低代码演示已启动 — 点击左侧组件添加，点击画布组件配置属性",
+            );
+        </script>
+    </body>
+</html>

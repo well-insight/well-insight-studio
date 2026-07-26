@@ -1,20 +1,20 @@
 {
-  "autosave": "on_focus_change",
+  "format_on_save": "on",
   "languages": {
     "Vue.js": {
-      "formatter": null,
+      "formatter": [{ "code_action": "source.fixAll.eslint" }],
       "code_actions_on_format": {
         "source.fixAll.eslint": true,
       },
     },
     "JavaScript": {
-      "formatter": null,
+      "formatter": [{ "code_action": "source.fixAll.eslint" }],
       "code_actions_on_format": {
         "source.fixAll.eslint": true,
       },
     },
     "TypeScript": {
-      "formatter": null,
+      "formatter": [{ "code_action": "source.fixAll.eslint" }],
       "code_actions_on_format": {
         "source.fixAll.eslint": true,
       },

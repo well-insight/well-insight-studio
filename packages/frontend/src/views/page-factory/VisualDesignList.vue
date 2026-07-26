@@ -3,13 +3,7 @@
  * 可视化设计页面列表
  */
 import type { ApiPageListItem } from '@/api/pages'
-import { Plus, Search } from '@element-plus/icons-vue'
-import {
-  Grid,
-  CircleCheckFilled,
-  EditPen,
-  Clock
-} from '@element-plus/icons-vue'
+import { CircleCheckFilled, Clock, EditPen, Grid, Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, onActivated, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -79,7 +73,7 @@ function formatRelativeTime(iso: string): string {
 }
 
 /** 拆分为「数字值 + 单位」，用于卡片大数字展示 */
-function relativeTimeParts(iso: string): { value: string; unit: string } {
+function relativeTimeParts(iso: string): { value: string, unit: string } {
   if (!iso) {
     return { value: '-', unit: '' }
   }
@@ -135,7 +129,8 @@ onActivated(() => {
 })
 
 function designPage(id: string) {
-  router.push({ name: 'VisualEditorStandalone', params: { id } })
+  const url = router.resolve({ name: 'VisualEditorStandalone', params: { id } }).href
+  window.open(url, '_blank')
 }
 
 function openEditDialog(row: ApiPageListItem) {
@@ -177,7 +172,8 @@ async function submitCreatePage() {
     const page = await createPage({ name: createForm.value.name.trim(), type: 'visualization', status: 'draft' })
     ElMessage.success('页面已创建')
     createDialogVisible.value = false
-    router.push({ name: 'VisualEditorStandalone', params: { id: page.id } })
+    const url = router.resolve({ name: 'VisualEditorStandalone', params: { id: page.id } }).href
+    window.open(url, '_blank')
   }
   catch (e) {
     ElMessage.error((e as Error).message || '创建失败')
@@ -288,7 +284,7 @@ async function batchDelete() {
 
         <section class="visual-home__stats" aria-label="页面统计">
           <button class="stat-card card-all" type="button" @click="openCreateDialog">
-            <span class="glow-dot" style="background: radial-gradient(circle, rgba(37,99,235,0.06), transparent 70%);"></span>
+            <span class="glow-dot" style="background: radial-gradient(circle, rgba(37,99,235,0.06), transparent 70%);" />
             <div class="card-header">
               <span class="card-icon"><el-icon size="22"><Grid /></el-icon></span>
               <span class="card-label">全部页面</span>
@@ -303,14 +299,14 @@ async function batchDelete() {
             <div class="stat-visual">
               <span class="stat-visual-label">已发布占比</span>
               <div class="bar-group">
-                <span class="bar fill" :style="{ flex: total ? publishedCount : 0 }"></span>
-                <span class="bar" :style="{ flex: total ? total - publishedCount : 1 }"></span>
+                <span class="bar fill" :style="{ flex: total ? publishedCount : 0 }" />
+                <span class="bar" :style="{ flex: total ? total - publishedCount : 1 }" />
               </div>
             </div>
           </button>
 
           <div class="stat-card card-published">
-            <span class="glow-dot" style="background: radial-gradient(circle, rgba(5,150,105,0.06), transparent 70%);"></span>
+            <span class="glow-dot" style="background: radial-gradient(circle, rgba(5,150,105,0.06), transparent 70%);" />
             <div class="card-header">
               <span class="card-icon"><el-icon size="22"><CircleCheckFilled /></el-icon></span>
               <span class="card-label">已发布</span>
@@ -325,14 +321,14 @@ async function batchDelete() {
             <div class="stat-visual">
               <span class="stat-visual-label">发布率</span>
               <div class="bar-group">
-                <span class="bar fill-green" :style="{ flex: total ? publishedCount : 0 }"></span>
-                <span class="bar" :style="{ flex: total ? total - publishedCount : 1 }"></span>
+                <span class="bar fill-green" :style="{ flex: total ? publishedCount : 0 }" />
+                <span class="bar" :style="{ flex: total ? total - publishedCount : 1 }" />
               </div>
             </div>
           </div>
 
           <div class="stat-card card-draft">
-            <span class="glow-dot" style="background: radial-gradient(circle, rgba(217,119,6,0.06), transparent 70%);"></span>
+            <span class="glow-dot" style="background: radial-gradient(circle, rgba(217,119,6,0.06), transparent 70%);" />
             <div class="card-header">
               <span class="card-icon"><el-icon size="22"><EditPen /></el-icon></span>
               <span class="card-label">草稿</span>
@@ -347,14 +343,14 @@ async function batchDelete() {
             <div class="stat-visual">
               <span class="stat-visual-label">草稿率</span>
               <div class="bar-group">
-                <span class="bar fill-amber" :style="{ flex: total ? draftCount : 0 }"></span>
-                <span class="bar" :style="{ flex: total ? total - draftCount : 1 }"></span>
+                <span class="bar fill-amber" :style="{ flex: total ? draftCount : 0 }" />
+                <span class="bar" :style="{ flex: total ? total - draftCount : 1 }" />
               </div>
             </div>
           </div>
 
           <div class="stat-card card-updated">
-            <span class="glow-dot" style="background: radial-gradient(circle, rgba(59,130,246,0.06), transparent 70%);"></span>
+            <span class="glow-dot" style="background: radial-gradient(circle, rgba(59,130,246,0.06), transparent 70%);" />
             <div class="card-header">
               <span class="card-icon"><el-icon size="22"><Clock /></el-icon></span>
               <span class="card-label">最近更新</span>
@@ -374,9 +370,9 @@ async function batchDelete() {
             <div class="stat-visual">
               <span class="stat-visual-label">动态</span>
               <div class="bar-group">
-                <span class="bar fill-sky" style="flex:3"></span>
-                <span class="bar fill-sky" style="flex:2"></span>
-                <span class="bar" style="flex:1"></span>
+                <span class="bar fill-sky" style="flex:3" />
+                <span class="bar fill-sky" style="flex:2" />
+                <span class="bar" style="flex:1" />
               </div>
             </div>
           </div>
@@ -418,8 +414,12 @@ async function batchDelete() {
           </div>
           <div class="visual-home__batch-actions">
             <span v-if="selectedIds.length > 0" class="visual-home__batch-count">已选 <strong>{{ selectedIds.length }}</strong> 项</span>
-            <el-button size="small" :disabled="selectedIds.length === 0" @click="clearSelection">取消选择</el-button>
-            <el-button size="small" type="danger" :disabled="selectedIds.length === 0" @click="batchDelete">批量删除</el-button>
+            <el-button size="small" :disabled="selectedIds.length === 0" @click="clearSelection">
+              取消选择
+            </el-button>
+            <el-button size="small" type="danger" :disabled="selectedIds.length === 0" @click="batchDelete">
+              批量删除
+            </el-button>
           </div>
         </div>
 
@@ -632,7 +632,11 @@ async function batchDelete() {
     0 4px 12px -6px rgba(0, 0, 0, 0.02),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
   overflow: hidden;
-  transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.3s ease,
+    border-color 0.3s ease,
+    background 0.3s ease;
 }
 
 button.stat-card {
@@ -647,8 +651,12 @@ button.stat-card {
   border-radius: 20px;
   padding: 1.2px;
   background: linear-gradient(135deg, rgba(0, 160, 255, 0.18), rgba(130, 80, 255, 0.08), rgba(0, 200, 255, 0.12));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -670,10 +678,18 @@ button.stat-card {
 }
 
 /* 每个卡片 hover 边框色微调 */
-.card-all:hover { border-color: rgba(37, 99, 235, 0.18); }
-.card-published:hover { border-color: rgba(5, 150, 105, 0.18); }
-.card-draft:hover { border-color: rgba(217, 119, 6, 0.18); }
-.card-updated:hover { border-color: rgba(59, 130, 246, 0.18); }
+.card-all:hover {
+  border-color: rgba(37, 99, 235, 0.18);
+}
+.card-published:hover {
+  border-color: rgba(5, 150, 105, 0.18);
+}
+.card-draft:hover {
+  border-color: rgba(217, 119, 6, 0.18);
+}
+.card-updated:hover {
+  border-color: rgba(59, 130, 246, 0.18);
+}
 
 /* 装饰光点 */
 .glow-dot {
@@ -721,10 +737,18 @@ button.stat-card {
   color: #1f4a7a;
 }
 
-.card-all .card-icon { color: #2563eb; }
-.card-published .card-icon { color: #059669; }
-.card-draft .card-icon { color: #d97706; }
-.card-updated .card-icon { color: #3b82f6; }
+.card-all .card-icon {
+  color: #2563eb;
+}
+.card-published .card-icon {
+  color: #059669;
+}
+.card-draft .card-icon {
+  color: #d97706;
+}
+.card-updated .card-icon {
+  color: #3b82f6;
+}
 
 .stat-card:hover .card-icon {
   background: rgba(0, 160, 255, 0.07);
@@ -853,7 +877,9 @@ button.stat-card {
   height: 5px;
   border-radius: 10px;
   background: rgba(0, 0, 0, 0.05);
-  transition: flex 0.5s ease, box-shadow 0.3s ease;
+  transition:
+    flex 0.5s ease,
+    box-shadow 0.3s ease;
 }
 
 .bar-group .bar.fill {
@@ -1098,20 +1124,36 @@ button.stat-card {
   background: linear-gradient(135deg, rgba(100, 210, 255, 0.25), rgba(180, 120, 255, 0.14), rgba(80, 200, 255, 0.2));
 }
 
-:global(html.dark) .card-all:hover { border-color: rgba(59, 130, 246, 0.25); }
-:global(html.dark) .card-published:hover { border-color: rgba(16, 185, 129, 0.25); }
-:global(html.dark) .card-draft:hover { border-color: rgba(245, 158, 11, 0.25); }
-:global(html.dark) .card-updated:hover { border-color: rgba(96, 165, 250, 0.25); }
+:global(html.dark) .card-all:hover {
+  border-color: rgba(59, 130, 246, 0.25);
+}
+:global(html.dark) .card-published:hover {
+  border-color: rgba(16, 185, 129, 0.25);
+}
+:global(html.dark) .card-draft:hover {
+  border-color: rgba(245, 158, 11, 0.25);
+}
+:global(html.dark) .card-updated:hover {
+  border-color: rgba(96, 165, 250, 0.25);
+}
 
 :global(html.dark) .card-icon {
   border-color: rgba(140, 210, 255, 0.08);
   background: rgba(140, 210, 255, 0.05);
 }
 
-:global(html.dark) .card-all .card-icon { color: #60a5fa; }
-:global(html.dark) .card-published .card-icon { color: #34d399; }
-:global(html.dark) .card-draft .card-icon { color: #fbbf24; }
-:global(html.dark) .card-updated .card-icon { color: #60a5fa; }
+:global(html.dark) .card-all .card-icon {
+  color: #60a5fa;
+}
+:global(html.dark) .card-published .card-icon {
+  color: #34d399;
+}
+:global(html.dark) .card-draft .card-icon {
+  color: #fbbf24;
+}
+:global(html.dark) .card-updated .card-icon {
+  color: #60a5fa;
+}
 
 :global(html.dark) .stat-card:hover .card-icon {
   background: rgba(140, 210, 255, 0.09);

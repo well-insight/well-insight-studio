@@ -1,0 +1,933 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>低代码平台 · 组件列表</title>
+        <!-- Font Awesome 图标库 (免费) -->
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        />
+        <style>
+            /* ===== 全局重置 & 字体 ===== */
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                background: #f0f4f9;
+                font-family:
+                    "Inter",
+                    -apple-system,
+                    BlinkMacSystemFont,
+                    "Segoe UI",
+                    Roboto,
+                    Helvetica,
+                    Arial,
+                    sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                padding: 32px 20px;
+                color: #1a2639;
+            }
+
+            /* ===== 主容器 — 模拟低代码平台侧边面板 ===== */
+            .component-panel {
+                max-width: 1100px;
+                width: 100%;
+                background: #ffffff;
+                border-radius: 28px;
+                box-shadow:
+                    0 25px 50px -12px rgba(0, 0, 0, 0.15),
+                    0 4px 18px rgba(0, 0, 0, 0.05);
+                padding: 32px 30px 40px;
+                transition: box-shadow 0.2s ease;
+            }
+
+            /* ===== 头部区域 ===== */
+            .panel-header {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 28px;
+                gap: 16px 10px;
+            }
+
+            .panel-header .title-section {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .panel-header .title-section i {
+                font-size: 28px;
+                color: #4f6af5;
+                background: #eef1ff;
+                padding: 10px;
+                border-radius: 14px;
+            }
+
+            .panel-header h1 {
+                font-size: 24px;
+                font-weight: 600;
+                letter-spacing: -0.3px;
+                background: linear-gradient(135deg, #1a2639 0%, #3a4a6b 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+
+            .panel-header h1 span {
+                font-weight: 400;
+                font-size: 16px;
+                color: #6b7a93;
+                -webkit-text-fill-color: #6b7a93;
+                background: none;
+                margin-left: 6px;
+            }
+
+            .header-actions {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                flex-wrap: wrap;
+            }
+
+            /* ===== 搜索框 ===== */
+            .search-wrapper {
+                position: relative;
+                display: flex;
+                align-items: center;
+            }
+
+            .search-wrapper i {
+                position: absolute;
+                left: 14px;
+                color: #9aa9bf;
+                font-size: 14px;
+                pointer-events: none;
+            }
+
+            .search-wrapper input {
+                padding: 10px 16px 10px 40px;
+                border-radius: 60px;
+                border: 1.5px solid #e6edf5;
+                background: #f8fafd;
+                font-size: 14px;
+                width: 220px;
+                transition: all 0.25s ease;
+                outline: none;
+                font-family: inherit;
+                color: #1a2639;
+            }
+
+            .search-wrapper input::placeholder {
+                color: #a8b7ce;
+                font-weight: 400;
+            }
+
+            .search-wrapper input:focus {
+                border-color: #4f6af5;
+                background: #ffffff;
+                box-shadow: 0 0 0 4px rgba(79, 106, 245, 0.12);
+                width: 250px;
+            }
+
+            /* ===== 视图切换 & 计数 ===== */
+            .view-toggle {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                background: #f1f5fb;
+                padding: 4px;
+                border-radius: 40px;
+            }
+
+            .view-toggle button {
+                background: transparent;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 30px;
+                font-size: 14px;
+                cursor: pointer;
+                color: #5b6e8a;
+                transition: 0.2s ease;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .view-toggle button i {
+                font-size: 14px;
+            }
+
+            .view-toggle button.active {
+                background: #ffffff;
+                color: #1a2639;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            }
+
+            .view-toggle button:hover:not(.active) {
+                color: #1a2639;
+            }
+
+            .component-count {
+                font-size: 14px;
+                color: #6b7a93;
+                background: #f1f5fb;
+                padding: 4px 14px;
+                border-radius: 40px;
+                font-weight: 500;
+                white-space: nowrap;
+            }
+
+            /* ===== 分类 Tab ===== */
+            .category-tabs {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px 4px;
+                margin-bottom: 28px;
+                border-bottom: 1.5px solid #eef3f9;
+                padding-bottom: 14px;
+            }
+
+            .category-tabs .tab {
+                padding: 8px 18px;
+                border-radius: 40px;
+                font-size: 14px;
+                font-weight: 500;
+                color: #5b6e8a;
+                background: transparent;
+                border: none;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                font-family: inherit;
+                letter-spacing: 0.2px;
+            }
+
+            .category-tabs .tab:hover {
+                color: #1a2639;
+                background: #f1f5fb;
+            }
+
+            .category-tabs .tab.active {
+                background: #4f6af5;
+                color: #fff;
+                box-shadow: 0 4px 12px rgba(79, 106, 245, 0.25);
+            }
+
+            .category-tabs .tab .badge {
+                display: inline-block;
+                background: rgba(0, 0, 0, 0.06);
+                color: #5b6e8a;
+                font-size: 11px;
+                font-weight: 600;
+                padding: 0 8px;
+                border-radius: 30px;
+                margin-left: 6px;
+                line-height: 18px;
+            }
+
+            .category-tabs .tab.active .badge {
+                background: rgba(255, 255, 255, 0.25);
+                color: #fff;
+            }
+
+            /* ===== 组件网格 ===== */
+            .component-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+                gap: 20px;
+                transition: all 0.2s ease;
+            }
+
+            /* ===== 单个组件卡片 ===== */
+            .component-card {
+                background: #ffffff;
+                border-radius: 18px;
+                padding: 20px 14px 18px;
+                border: 1.5px solid #edf2f9;
+                transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1);
+                cursor: default;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                position: relative;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+            }
+
+            .component-card:hover {
+                transform: translateY(-6px);
+                border-color: #d0ddea;
+                box-shadow:
+                    0 16px 32px -12px rgba(0, 20, 50, 0.12),
+                    0 6px 14px -6px rgba(79, 106, 245, 0.08);
+                background: #fbfdff;
+            }
+
+            /* 拖拽提示光晕 (模仿可拖拽) */
+            .component-card::after {
+                content: "";
+                position: absolute;
+                inset: -1.5px;
+                border-radius: 18px;
+                background: linear-gradient(
+                    135deg,
+                    rgba(79, 106, 245, 0),
+                    rgba(79, 106, 245, 0)
+                );
+                transition: 0.3s ease;
+                pointer-events: none;
+                z-index: 0;
+            }
+
+            .component-card:hover::after {
+                background: linear-gradient(
+                    135deg,
+                    rgba(79, 106, 245, 0.08),
+                    rgba(125, 150, 255, 0.05)
+                );
+            }
+
+            .component-card > * {
+                position: relative;
+                z-index: 1;
+            }
+
+            /* 卡片图标 */
+            .card-icon {
+                width: 56px;
+                height: 56px;
+                background: #f0f5ff;
+                border-radius: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 26px;
+                color: #4f6af5;
+                margin-bottom: 14px;
+                transition: 0.2s ease;
+                flex-shrink: 0;
+            }
+
+            .component-card:hover .card-icon {
+                background: #4f6af5;
+                color: #fff;
+                transform: scale(1.04);
+                box-shadow: 0 8px 18px rgba(79, 106, 245, 0.25);
+            }
+
+            /* 卡片文字 */
+            .card-name {
+                font-size: 15px;
+                font-weight: 600;
+                color: #1a2639;
+                margin-bottom: 4px;
+                letter-spacing: -0.2px;
+            }
+
+            .card-desc {
+                font-size: 12px;
+                color: #7a8aa3;
+                line-height: 1.4;
+                margin-bottom: 12px;
+                flex: 1;
+                max-width: 140px;
+            }
+
+            /* 卡片底部拖拽提示 */
+            .card-drag-hint {
+                font-size: 11px;
+                color: #b0bfd4;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                background: #f6fafe;
+                padding: 3px 12px 3px 10px;
+                border-radius: 30px;
+                transition: 0.2s ease;
+                border: 1px solid transparent;
+                margin-top: 2px;
+            }
+
+            .component-card:hover .card-drag-hint {
+                color: #4f6af5;
+                background: #eef4ff;
+                border-color: #d6e2ff;
+            }
+
+            .card-drag-hint i {
+                font-size: 12px;
+            }
+
+            /* ===== 空状态 ===== */
+            .empty-state {
+                grid-column: 1 / -1;
+                text-align: center;
+                padding: 50px 20px;
+                color: #6b7a93;
+            }
+
+            .empty-state i {
+                font-size: 48px;
+                color: #cddae9;
+                margin-bottom: 16px;
+                display: block;
+            }
+
+            .empty-state p {
+                font-size: 16px;
+                font-weight: 500;
+            }
+
+            .empty-state span {
+                font-size: 14px;
+                color: #8e9fb5;
+            }
+
+            /* ===== 响应式微调 ===== */
+            @media (max-width: 720px) {
+                .component-panel {
+                    padding: 20px 16px 28px;
+                    border-radius: 20px;
+                }
+
+                .panel-header {
+                    flex-direction: column;
+                    align-items: stretch;
+                    gap: 14px;
+                }
+
+                .panel-header .title-section i {
+                    font-size: 22px;
+                    padding: 8px;
+                }
+
+                .panel-header h1 {
+                    font-size: 20px;
+                }
+
+                .header-actions {
+                    flex-wrap: wrap;
+                    justify-content: space-between;
+                }
+
+                .search-wrapper input {
+                    width: 100%;
+                }
+
+                .search-wrapper input:focus {
+                    width: 100%;
+                }
+
+                .component-grid {
+                    grid-template-columns: repeat(
+                        auto-fill,
+                        minmax(140px, 1fr)
+                    );
+                    gap: 14px;
+                }
+
+                .category-tabs .tab {
+                    font-size: 13px;
+                    padding: 6px 14px;
+                }
+
+                .view-toggle button {
+                    font-size: 13px;
+                    padding: 4px 10px;
+                }
+            }
+
+            @media (max-width: 460px) {
+                .component-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 12px;
+                }
+
+                .component-card {
+                    padding: 16px 10px 14px;
+                }
+
+                .card-icon {
+                    width: 46px;
+                    height: 46px;
+                    font-size: 20px;
+                }
+
+                .card-name {
+                    font-size: 13px;
+                }
+            }
+
+            /* 小点缀 —— 拖拽时模拟 (仅视觉) */
+            .component-card:active {
+                cursor: grabbing;
+                transform: scale(0.97);
+                transition: 0.08s ease;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="component-panel">
+            <!-- ====== 头部 ====== -->
+            <div class="panel-header">
+                <div class="title-section">
+                    <i class="fas fa-th-large"></i>
+                    <h1>组件库 <span>· 低代码平台</span></h1>
+                </div>
+                <div class="header-actions">
+                    <!-- 搜索 -->
+                    <div class="search-wrapper">
+                        <i class="fas fa-search"></i>
+                        <input
+                            type="text"
+                            id="searchInput"
+                            placeholder="搜索组件..."
+                            autocomplete="off"
+                        />
+                    </div>
+                    <!-- 视图切换 -->
+                    <div class="view-toggle">
+                        <button
+                            class="active"
+                            id="gridViewBtn"
+                            title="网格视图"
+                        >
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button id="listViewBtn" title="列表视图">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                    <div class="component-count" id="componentCount">
+                        24 个组件
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== 分类 Tabs ====== -->
+            <div class="category-tabs" id="categoryTabs">
+                <button class="tab active" data-category="all">
+                    全部 <span class="badge">24</span>
+                </button>
+                <button class="tab" data-category="layout">
+                    布局 <span class="badge">5</span>
+                </button>
+                <button class="tab" data-category="form">
+                    表单 <span class="badge">6</span>
+                </button>
+                <button class="tab" data-category="data">
+                    数据展示 <span class="badge">5</span>
+                </button>
+                <button class="tab" data-category="feedback">
+                    反馈 <span class="badge">4</span>
+                </button>
+                <button class="tab" data-category="other">
+                    其他 <span class="badge">4</span>
+                </button>
+            </div>
+
+            <!-- ====== 组件网格 ====== -->
+            <div class="component-grid" id="componentGrid">
+                <!-- 卡片由 JavaScript 动态渲染 -->
+            </div>
+        </div>
+
+        <script>
+            // ================================================================
+            //  1. 组件数据
+            // ================================================================
+            const COMPONENTS = [
+                {
+                    id: 1,
+                    name: "容器",
+                    desc: "基础布局容器，支持弹性",
+                    icon: "fa-cube",
+                    category: "layout",
+                },
+                {
+                    id: 2,
+                    name: "栅格",
+                    desc: "24 列响应式栅格系统",
+                    icon: "fa-table-cells",
+                    category: "layout",
+                },
+                {
+                    id: 3,
+                    name: "分割面板",
+                    desc: "可拖拽调整左右/上下",
+                    icon: "fa-arrows-left-right",
+                    category: "layout",
+                },
+                {
+                    id: 4,
+                    name: "卡片",
+                    desc: "内容容器，带标题与阴影",
+                    icon: "fa-credit-card",
+                    category: "layout",
+                },
+                {
+                    id: 5,
+                    name: "标签页",
+                    desc: "切换式内容面板",
+                    icon: "fa-tab",
+                    category: "layout",
+                },
+                {
+                    id: 6,
+                    name: "输入框",
+                    desc: "文本/数字/密码输入",
+                    icon: "fa-pen-to-square",
+                    category: "form",
+                },
+                {
+                    id: 7,
+                    name: "选择器",
+                    desc: "下拉选择、多选",
+                    icon: "fa-caret-down",
+                    category: "form",
+                },
+                {
+                    id: 8,
+                    name: "开关",
+                    desc: "布尔值切换",
+                    icon: "fa-toggle-on",
+                    category: "form",
+                },
+                {
+                    id: 9,
+                    name: "日期选择",
+                    desc: "日期/时间范围选择",
+                    icon: "fa-calendar-days",
+                    category: "form",
+                },
+                {
+                    id: 10,
+                    name: "文件上传",
+                    desc: "拖拽或点击上传",
+                    icon: "fa-cloud-upload",
+                    category: "form",
+                },
+                {
+                    id: 11,
+                    name: "按钮",
+                    desc: "主要/次要/危险等",
+                    icon: "fa-square",
+                    category: "form",
+                },
+                {
+                    id: 12,
+                    name: "表格",
+                    desc: "数据表格，排序/筛选",
+                    icon: "fa-table",
+                    category: "data",
+                },
+                {
+                    id: 13,
+                    name: "列表",
+                    desc: "垂直列表，支持操作",
+                    icon: "fa-list",
+                    category: "data",
+                },
+                {
+                    id: 14,
+                    name: "统计数值",
+                    desc: "数据看板数字卡片",
+                    icon: "fa-chart-simple",
+                    category: "data",
+                },
+                {
+                    id: 15,
+                    name: "进度条",
+                    desc: "线性/圆形进度展示",
+                    icon: "fa-chart-line",
+                    category: "data",
+                },
+                {
+                    id: 16,
+                    name: "时间线",
+                    desc: "垂直时间线展示",
+                    icon: "fa-clock",
+                    category: "data",
+                },
+                {
+                    id: 17,
+                    name: "提示框",
+                    desc: "全局提示 / 确认框",
+                    icon: "fa-circle-exclamation",
+                    category: "feedback",
+                },
+                {
+                    id: 18,
+                    name: "弹窗",
+                    desc: "模态框 / 对话框",
+                    icon: "fa-window-maximize",
+                    category: "feedback",
+                },
+                {
+                    id: 19,
+                    name: "加载状态",
+                    desc: "Spin / Skeleton",
+                    icon: "fa-spinner",
+                    category: "feedback",
+                },
+                {
+                    id: 20,
+                    name: "通知",
+                    desc: "顶部/侧边通知条",
+                    icon: "fa-bell",
+                    category: "feedback",
+                },
+                {
+                    id: 21,
+                    name: "锚点",
+                    desc: "页面内跳转导航",
+                    icon: "fa-paperclip",
+                    category: "other",
+                },
+                {
+                    id: 22,
+                    name: "分割线",
+                    desc: "水平/垂直分割",
+                    icon: "fa-minus",
+                    category: "other",
+                },
+                {
+                    id: 23,
+                    name: "回到顶部",
+                    desc: "滚动回顶部按钮",
+                    icon: "fa-arrow-up",
+                    category: "other",
+                },
+                {
+                    id: 24,
+                    name: "水印",
+                    desc: "全局水印文字",
+                    icon: "fa-water",
+                    category: "other",
+                },
+            ];
+
+            // ================================================================
+            //  2. DOM 引用 & 状态
+            // ================================================================
+            const grid = document.getElementById("componentGrid");
+            const searchInput = document.getElementById("searchInput");
+            const categoryTabs = document.getElementById("categoryTabs");
+            const countEl = document.getElementById("componentCount");
+            const gridViewBtn = document.getElementById("gridViewBtn");
+            const listViewBtn = document.getElementById("listViewBtn");
+
+            let currentCategory = "all";
+            let currentSearch = "";
+            let isListView = false;
+
+            // ================================================================
+            //  3. 渲染函数
+            // ================================================================
+            function render() {
+                // 过滤
+                const filtered = COMPONENTS.filter((c) => {
+                    const matchCategory =
+                        currentCategory === "all" ||
+                        c.category === currentCategory;
+                    const matchSearch =
+                        c.name.includes(currentSearch) ||
+                        c.desc.includes(currentSearch) ||
+                        c.category.includes(currentSearch);
+                    return matchCategory && matchSearch;
+                });
+
+                // 更新计数
+                countEl.textContent = `${filtered.length} 个组件`;
+
+                // 空状态
+                if (filtered.length === 0) {
+                    grid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <p>没有找到匹配的组件</p>
+                        <span>试试其他关键词或分类</span>
+                    </div>
+                `;
+                    return;
+                }
+
+                // 构建卡片 HTML
+                const gridClass = isListView
+                    ? "component-grid list-view"
+                    : "component-grid";
+                // 列表视图下，我们用 flex-column 样式，通过额外的 class 控制
+                // 这里直接通过内联 style 或额外类；我采用额外类 .list-view 由 CSS 控制
+                // 但由于我们原本是 grid，转为 list 时改为 flex 列
+                // 在 CSS 中动态控制：我们添加一个 .list-view 样式
+                // 但为了演示，这里我们在渲染时对卡片容器添加类名
+                // 更好的方式：在 CSS 中定义 .list-view 覆盖 grid 为 flex
+                // 我们在 style 中增加一段 list-view 的样式，由 JS 切换 class
+
+                let html = "";
+                filtered.forEach((c) => {
+                    html += `
+                    <div class="component-card" data-id="${c.id}" data-category="${c.category}">
+                        <div class="card-icon">
+                            <i class="fas ${c.icon}"></i>
+                        </div>
+                        <div class="card-name">${c.name}</div>
+                        <div class="card-desc">${c.desc}</div>
+                        <div class="card-drag-hint">
+                            <i class="fas fa-grip-vertical"></i> 拖拽添加
+                        </div>
+                    </div>
+                `;
+                });
+
+                grid.innerHTML = html;
+
+                // 应用列表视图样式
+                if (isListView) {
+                    grid.classList.add("list-view");
+                } else {
+                    grid.classList.remove("list-view");
+                }
+            }
+
+            // ================================================================
+            //  4. 事件绑定
+            // ================================================================
+
+            // 搜索
+            searchInput.addEventListener("input", (e) => {
+                currentSearch = e.target.value.trim();
+                render();
+                // 高亮当前激活的分类 tab (保持)
+            });
+
+            // 分类 Tabs
+            categoryTabs.addEventListener("click", (e) => {
+                const tab = e.target.closest(".tab");
+                if (!tab) return;
+                const category = tab.dataset.category;
+                if (!category) return;
+
+                // 更新激活状态
+                document
+                    .querySelectorAll(".category-tabs .tab")
+                    .forEach((t) => t.classList.remove("active"));
+                tab.classList.add("active");
+
+                currentCategory = category;
+                render();
+            });
+
+            // 视图切换
+            gridViewBtn.addEventListener("click", () => {
+                if (isListView) {
+                    isListView = false;
+                    gridViewBtn.classList.add("active");
+                    listViewBtn.classList.remove("active");
+                    render();
+                }
+            });
+
+            listViewBtn.addEventListener("click", () => {
+                if (!isListView) {
+                    isListView = true;
+                    listViewBtn.classList.add("active");
+                    gridViewBtn.classList.remove("active");
+                    render();
+                }
+            });
+
+            // 额外：点击卡片模拟拖拽反馈（纯演示）
+            grid.addEventListener("mousedown", (e) => {
+                const card = e.target.closest(".component-card");
+                if (card) {
+                    // 只是视觉反馈，不实际拖拽
+                    card.style.cursor = "grabbing";
+                    setTimeout(() => {
+                        card.style.cursor = "";
+                    }, 200);
+                }
+            });
+
+            // ================================================================
+            //  5. 初始化
+            // ================================================================
+            render();
+
+            // 追加 list-view 样式 (动态注入)
+            // 因为纯演示，我们可以直接在 style 中追加，但为了整洁，用 JS 动态添加
+            const styleSheet = document.createElement("style");
+            styleSheet.textContent = `
+            /* 列表视图样式 */
+            .component-grid.list-view {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .component-grid.list-view .component-card {
+                flex-direction: row;
+                align-items: center;
+                text-align: left;
+                padding: 14px 20px;
+                gap: 16px;
+                border-radius: 14px;
+                justify-content: flex-start;
+            }
+            .component-grid.list-view .component-card .card-icon {
+                width: 44px;
+                height: 44px;
+                font-size: 20px;
+                margin-bottom: 0;
+                flex-shrink: 0;
+            }
+            .component-grid.list-view .component-card .card-name {
+                font-size: 15px;
+                margin-bottom: 0;
+                min-width: 80px;
+            }
+            .component-grid.list-view .component-card .card-desc {
+                margin-bottom: 0;
+                max-width: 200px;
+                flex: 1;
+                text-align: left;
+            }
+            .component-grid.list-view .component-card .card-drag-hint {
+                margin-top: 0;
+                margin-left: auto;
+                flex-shrink: 0;
+            }
+            .component-grid.list-view .component-card:hover {
+                transform: translateY(-2px);
+            }
+            @media (max-width: 600px) {
+                .component-grid.list-view .component-card {
+                    flex-wrap: wrap;
+                    gap: 8px 12px;
+                }
+                .component-grid.list-view .component-card .card-desc {
+                    max-width: 100%;
+                    flex-basis: 100%;
+                    margin-left: 0;
+                }
+                .component-grid.list-view .component-card .card-drag-hint {
+                    margin-left: 0;
+                }
+            }
+        `;
+            document.head.appendChild(styleSheet);
+
+            // 小彩蛋：控制台提示
+            console.log("✨ 低代码组件列表已加载 — 试试搜索或切换分类");
+        </script>
+    </body>
+</html>

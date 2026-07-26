@@ -13,8 +13,8 @@ import { useCanvasThemeStore } from '@/stores/canvasThemeStore'
  * 默认图表调色板（theme 未提供时的后备）
  */
 const FALLBACK_CHART_COLORS = [
-  '#409eff', '#67c23a', '#e6a23c', '#f56c6c', '#909399',
-  '#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de',
+  '#2563eb', '#67c23a', '#e6a23c', '#f56c6c', '#909399',
+  '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272',
 ]
 
 /**

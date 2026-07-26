@@ -9,12 +9,12 @@ import { cloneDeep, debounce, throttle } from 'lodash-es'
 import { storeToRefs } from 'pinia'
 import { computed, nextTick, onBeforeUnmount, onMounted, provide, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { resolvePageBackgroundColor } from '@/common/types/canvasTheme'
 import { useAnimate } from '@/hooks/useAnimate'
 import { useGlobalProperties } from '@/hooks/useGlobalProperties'
 import { ContainerEditorContextKey, EditingContainerIdKey } from '@/packages/pc/container-component/container'
 import CanvasItem from '@/packages/pc/container-component/shared/CanvasItem.vue'
 import { calcSlotDropLayout } from '@/packages/pc/container-component/shared/slot-grid.utils'
-import { resolvePageBackgroundColor } from '@/common/types/canvasTheme'
 import { useCanvasThemeStore } from '@/stores/canvasThemeStore'
 import { useControlStore } from '@/stores/controlStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
@@ -2371,7 +2371,7 @@ defineExpose({
   width: 100%;
   height: 100%;
   min-height: 0;
-  padding: 16px;
+  padding: 0;
   box-sizing: border-box;
 
   .wrap-container {
@@ -2381,12 +2381,11 @@ defineExpose({
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border-radius: var(--ve-radius-md, 10px);
-    border: 1px solid var(--ve-paper-edge, var(--el-border-color-light));
-    background: color-mix(in srgb, var(--el-color-primary) 4%, var(--el-fill-color-light));
-    box-shadow:
-      0 1px 0 color-mix(in srgb, var(--el-color-primary) 8%, transparent),
-      var(--el-box-shadow-lighter);
+    border-radius: 12px;
+    border: none;
+    background-color: transparent;
+    background-image: radial-gradient(circle, rgba(37, 99, 235, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
   }
 }
 </style>
@@ -2426,18 +2425,10 @@ defineExpose({
   flex-shrink: 0;
   width: 100%;
   overflow: visible;
-  border-radius: var(--ve-radius-md, 10px);
-  border: 1px solid var(--ve-paper-edge, var(--el-border-color-light));
-  background:
-    linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--el-color-primary) 10%, transparent) 0,
-      color-mix(in srgb, var(--el-color-primary) 10%, transparent) 3px,
-      transparent 3px,
-      transparent 100%
-    ),
-    var(--el-bg-color);
-  box-shadow: var(--el-box-shadow-lighter);
+  border-radius: 12px;
+  border: 1px solid rgba(82, 124, 181, 0.14);
+  background: #ffffff;
+  box-shadow: 0 12px 32px rgba(31, 58, 112, 0.06);
 }
 
 .edit-canvas-inner {

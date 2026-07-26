@@ -10,8 +10,8 @@ import {
   Expand,
   Fold,
   FolderRemove,
-  Lock,
   List,
+  Lock,
   Top,
   Unlock,
 } from '@element-plus/icons-vue'
@@ -23,6 +23,12 @@ import { useControlStore } from '@/stores/controlStore'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import { generateNanoid } from '@/visual-editor/lib'
 import { visualConfig } from '@/visual.config'
+
+const props = withDefaults(defineProps<{
+  embedded?: boolean
+}>(), {
+  embedded: false,
+})
 
 const emits = defineEmits<{
   close: []
@@ -137,7 +143,7 @@ function buildTreeNode(item: VisualEditorBlockData): TreeNode {
         return
 
       if (item.componentKey === 'group' && key === 'default') {
-        node.children.push(...children.slice().reverse().map(child => buildTreeNode(child)))
+        node.children.push(...children.slice().reverse().map((child: VisualEditorBlockData) => buildTreeNode(child)))
         return
       }
 
@@ -160,7 +166,7 @@ function buildTreeNode(item: VisualEditorBlockData): TreeNode {
         showStyleConfig: false,
         actions: [],
         events: [],
-        children: children.slice().reverse().map(child => buildTreeNode(child)),
+        children: children.slice().reverse().map((child: VisualEditorBlockData) => buildTreeNode(child)),
         isSlotGroup: true,
         slotKey: key,
       }
@@ -251,8 +257,8 @@ function reorderWithinSameList(
 }
 
 function allowTreeDrop(
-  draggingNode: { data: TreeNode },
-  dropNode: { data: TreeNode },
+  draggingNode: any,
+  dropNode: any,
   type: 'before' | 'after' | 'inner' | string,
 ): boolean {
   if (type === 'inner')
@@ -271,8 +277,8 @@ function allowTreeDrop(
 }
 
 function handleNodeDrop(
-  draggingNode: { data: TreeNode, key: string },
-  dropNode: { data: TreeNode, key: string },
+  draggingNode: any,
+  dropNode: any,
   dropType: 'before' | 'after' | 'inner',
 ) {
   if (dropType === 'inner' || draggingNode.data.isSlotGroup || dropNode.data.isSlotGroup)
@@ -600,8 +606,8 @@ watch(filterText, (val) => {
 </script>
 
 <template>
-  <div :class="$style.panel" @mousedown="onPanelBlankClick">
-    <div :class="$style.header">
+  <div :class="[$style.panel, props.embedded && $style.panelEmbedded]" @mousedown="onPanelBlankClick">
+    <div v-if="!props.embedded" :class="$style.header">
       <div :class="$style.headerMain">
         <el-icon :size="16">
           <List />
@@ -678,7 +684,7 @@ watch(filterText, (val) => {
         />
       </div>
 
-      <el-scrollbar :class="$style.treePanel">
+      <el-scrollbar :class="[$style.treePanel, props.embedded && $style.treePanelEmbedded]">
         <div :class="$style.treeInner">
           <el-tree
             ref="treeRef"
@@ -808,6 +814,15 @@ watch(filterText, (val) => {
   box-shadow: var(--el-box-shadow-light);
 }
 
+.panelEmbedded {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
 .header {
   display: flex;
   align-items: center;
@@ -872,7 +887,7 @@ watch(filterText, (val) => {
   flex-wrap: wrap;
   align-items: center;
   gap: 2px;
-  padding: 8px 12px 6px;
+  padding: 6px 12px 6px;
   flex-shrink: 0;
 
   :global(.el-button) {
@@ -893,7 +908,11 @@ watch(filterText, (val) => {
   padding: 0 12px 8px;
 
   :global(.el-input) {
-    --el-input-border-radius: 8px;
+    --el-input-border-radius: 10px;
+  }
+
+  :global(.el-input__wrapper) {
+    box-shadow: 0 0 0 1px rgba(82, 124, 181, 0.08);
   }
 }
 
@@ -905,6 +924,16 @@ watch(filterText, (val) => {
 
   :global(.el-scrollbar__wrap) {
     max-height: min(480px, calc(100vh - 200px));
+  }
+}
+
+.treePanelEmbedded {
+  height: 100%;
+  max-height: none;
+  padding-bottom: 12px;
+
+  :global(.el-scrollbar__wrap) {
+    max-height: none;
   }
 }
 

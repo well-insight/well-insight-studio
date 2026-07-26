@@ -1,6 +1,6 @@
 /** WellCube / 登录页对齐的系统主题色与 Element Plus 变量工具 */
 
-export const WELLCUBE_PRIMARY = '#5b5bd6'
+export const WELLCUBE_PRIMARY = '#2563eb'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 export type ThemeSize = 'large' | 'default' | 'small'
@@ -57,16 +57,16 @@ export const DARK_EP_CSS_VARS: Record<string, string> = {
   /* Menu */
   '--el-menu-bg-color': 'transparent',
   '--el-menu-text-color': '#c8dff0',
-  '--el-menu-hover-bg-color': 'rgba(91, 91, 214, 0.18)',
+  '--el-menu-hover-bg-color': 'rgba(37, 99, 235, 0.18)',
   '--el-menu-hover-text-color': '#e8f4ff',
-  '--el-menu-active-color': '#9ad4ff',
+  '--el-menu-active-color': '#5ab2ff',
   '--el-menu-border-color': 'transparent',
 
   /* Table */
   '--el-table-bg-color': 'transparent',
   '--el-table-tr-bg-color': 'transparent',
   '--el-table-header-bg-color': 'rgba(8, 28, 48, 0.55)',
-  '--el-table-row-hover-bg-color': 'rgba(91, 91, 214, 0.14)',
+  '--el-table-row-hover-bg-color': 'rgba(37, 99, 235, 0.14)',
   '--el-table-border-color': 'rgba(140, 210, 255, 0.14)',
   '--el-table-header-text-color': '#c8dff0',
   '--el-table-text-color': '#e8f4ff',
@@ -81,14 +81,14 @@ export const DARK_EP_CSS_VARS: Record<string, string> = {
   '--el-input-bg-color': 'rgba(8, 28, 48, 0.45)',
   '--el-input-border-color': 'rgba(140, 210, 255, 0.2)',
   '--el-input-hover-border-color': 'rgba(140, 210, 255, 0.4)',
-  '--el-input-focus-border-color': '#5b5bd6',
+  '--el-input-focus-border-color': '#2563eb',
   '--el-button-bg-color': 'rgba(18, 52, 80, 0.65)',
   '--el-button-border-color': 'rgba(140, 210, 255, 0.22)',
   '--el-button-text-color': '#e8f4ff',
   '--el-button-hover-text-color': '#ffffff',
-  '--el-button-hover-bg-color': 'rgba(91, 91, 214, 0.28)',
+  '--el-button-hover-bg-color': 'rgba(37, 99, 235, 0.28)',
   '--el-button-hover-border-color': 'rgba(140, 210, 255, 0.4)',
-  '--el-button-active-bg-color': 'rgba(91, 91, 214, 0.36)',
+  '--el-button-active-bg-color': 'rgba(37, 99, 235, 0.36)',
   '--el-button-active-border-color': 'rgba(140, 210, 255, 0.5)',
 
   /* Tabs */
@@ -103,9 +103,9 @@ export const DARK_WC_CSS_VARS: Record<string, string> = {
   '--wc-text-color-secondary': '#8eacc8',
   '--wc-border-color': 'rgba(140, 210, 255, 0.2)',
   '--wc-border-color-lighter': 'rgba(140, 210, 255, 0.12)',
-  '--wc-accent-cyan': '#9ad4ff',
+  '--wc-accent-cyan': '#5ab2ff',
   '--wc-glass-bg': 'rgba(12, 28, 46, 0.42)',
-  '--wc-active-fill': 'rgba(91, 91, 214, 0.28)',
+  '--wc-active-fill': 'rgba(37, 99, 235, 0.24)',
 }
 
 const PRIMARY_VAR_KEYS = [

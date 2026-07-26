@@ -4,6 +4,12 @@ import { ref } from 'vue'
 import { SvgIcon } from '@/components/svg-icon'
 import { PageSetting } from '../../right-attribute-panel/components/page-setting/pageSetting'
 
+const props = withDefaults(defineProps<{
+  embedded?: boolean
+}>(), {
+  embedded: false,
+})
+
 const emits = defineEmits<{
   close: []
 }>()
@@ -20,8 +26,8 @@ function collapseAll() {
 </script>
 
 <template>
-  <div :class="$style.panel">
-    <div :class="$style.header">
+  <div :class="[$style.panel, props.embedded && $style.panelEmbedded]">
+    <div v-if="!props.embedded" :class="$style.header">
       <div :class="$style.headerMain">
         <SvgIcon name="page-setting" :size="16" />
         <span>页面配置</span>
@@ -39,7 +45,7 @@ function collapseAll() {
       </div>
     </div>
 
-    <el-scrollbar :class="$style.scrollBody">
+    <el-scrollbar :class="[$style.scrollBody, props.embedded && $style.scrollBodyEmbedded]">
       <div :class="$style.cardList">
         <PageSetting ref="pageSettingRef" />
       </div>
@@ -55,6 +61,15 @@ function collapseAll() {
   overflow: hidden;
   border: 1px solid var(--el-border-color-light);
   box-shadow: var(--el-box-shadow-light);
+}
+
+.panelEmbedded {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
 }
 
 .header {
@@ -123,6 +138,16 @@ function collapseAll() {
   }
 }
 
+.scrollBodyEmbedded {
+  height: 100%;
+  max-height: none;
+  padding: 12px 14px 14px;
+
+  :global(.el-scrollbar__wrap) {
+    max-height: none;
+  }
+}
+
 .cardList {
   display: flex;
   flex-direction: column;
@@ -136,60 +161,74 @@ function collapseAll() {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding-bottom: 12px;
+  padding: 2px 0 12px;
 }
 
 .page-setting-card {
-  background: var(--el-fill-color-lighter);
-  border-radius: 10px;
+  background: #ffffff;
+  border-radius: 14px;
   overflow: hidden;
-  border: 1px solid var(--el-border-color-light);
-  transition: border-color 0.2s ease;
+  border: 1px solid rgba(82, 124, 181, 0.08);
+  box-shadow:
+    0 6px 16px rgba(54, 88, 150, 0.04),
+    0 1px 4px rgba(0, 0, 0, 0.02);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 
   &:hover {
-    border-color: var(--el-border-color);
+    border-color: rgba(37, 99, 235, 0.14);
+    box-shadow:
+      0 8px 18px rgba(54, 88, 150, 0.05),
+      0 2px 6px rgba(37, 99, 235, 0.04);
+    transform: translateY(-1px);
   }
 
   &__header {
     width: 100%;
-    height: 36px;
+    min-height: 42px;
     display: flex;
     align-items: center;
     justify-content: flex-start !important;
+    gap: 8px;
     padding: 0 12px;
     border: none !important;
     outline: none !important;
+    background: #fbfcff;
 
     &:hover {
-      background-color: var(--el-color-primary-light-9);
+      background: linear-gradient(180deg, rgba(37, 99, 235, 0.08), rgba(37, 99, 235, 0.03));
     }
   }
 
   &__arrow {
     font-size: 14px;
-    color: var(--el-text-color-secondary);
+    color: #6b7a93;
     flex-shrink: 0;
   }
 
   &__title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--el-text-color-primary);
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a2639;
     user-select: none;
+    letter-spacing: -0.1px;
   }
 
   &__body {
-    padding: 4px 12px 12px;
+    padding: 10px 14px 14px;
+    border-top: 1px solid rgba(82, 124, 181, 0.08);
   }
 
   &__border {
-    padding: 0 4px 8px;
+    padding: 2px 2px 4px;
   }
 }
 
 .page-setting-form {
   .el-form-item {
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 
     &:last-child {
       margin-bottom: 0;
@@ -198,7 +237,19 @@ function collapseAll() {
 
   .el-form-item__label {
     font-size: 12px;
-    color: var(--el-text-color-secondary);
+    font-weight: 600;
+    color: #6f7f98;
+  }
+
+  .el-input__wrapper,
+  .el-select__wrapper,
+  .el-textarea__inner {
+    border-radius: 12px;
+    box-shadow: 0 0 0 1px rgba(82, 124, 181, 0.08);
+  }
+
+  .el-switch {
+    --el-switch-on-color: #2563eb;
   }
 }
 </style>

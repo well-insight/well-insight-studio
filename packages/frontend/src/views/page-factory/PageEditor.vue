@@ -3,18 +3,17 @@ import type { PageType } from '@/api/pages'
 import type { FormSchema } from '@/form-designer/types'
 import { DataLine } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { storeToRefs } from 'pinia'
+
 import { computed, onActivated, onBeforeUnmount, onMounted, onUnmounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import { fetchPage } from '@/api/pages'
-import { ELayout, ELayoutContent, ELayoutSider } from '@/components/e-layout'
+import { ELayout, ELayoutContent } from '@/components/e-layout'
 import { FormDesigner } from '@/form-designer'
 import { getEmptyFormSchema, isValidFormSchema } from '@/form-designer/form-designer.utils'
 import { useControlStore } from '@/stores/controlStore'
 import { usePageStore } from '@/stores/pageStore'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import SimulatorEditor from '@/visual-editor/ui/canvas/simulator-grid-editor/SimulatorEditor.vue'
-import LeftAside from '@/visual-editor/ui/workbench/left-aside/LeftAside.vue'
 import { isPageDirty, saveCounter, updateVisualDSL } from './visualEditorState'
 
 const route = useRoute()
@@ -22,7 +21,6 @@ const router = useRouter()
 const pageStore = usePageStore()
 
 const controlStore = useControlStore()
-const { layoutCollapse } = storeToRefs(controlStore)
 
 const { overrideProject, updateVisualLoading, isDirty, jsonData, syncSavedBaseline } = useVisualData()
 
@@ -380,15 +378,6 @@ onUnmounted(() => {
   >
     <!-- 可视化编辑器 -->
     <ELayout v-if="pageType === 'visualization'" class="visual-editor-shell">
-      <ELayoutSider
-        v-model:collapsed="layoutCollapse"
-        class="visual-editor-shell__aside"
-        show-trigger="button"
-        :width="292"
-        :collapsed-width="0"
-      >
-        <LeftAside />
-      </ELayoutSider>
       <ELayoutContent class="visual-editor-shell__content">
         <SimulatorEditor />
       </ELayoutContent>
@@ -404,7 +393,7 @@ onUnmounted(() => {
     />
 
     <!-- 报表占位 -->
-    <div v-else class="flex flex-1 items-center justify-center bg-[var(--el-bg-color-page)]">
+    <div v-else class="flex flex-1 items-center justify-center bg-(--el-bg-color-page)">
       <div class="text-center">
         <el-icon :size="72" color="#e6a23c">
           <DataLine />
@@ -412,7 +401,7 @@ onUnmounted(() => {
         <h2 class="mt-4 mb-2 text-xl font-semibold">
           报表设计器
         </h2>
-        <p class="text-[var(--el-text-color-secondary)]">
+        <p class="text-(--el-text-color-secondary)">
           报表设计器正在开发中，敬请期待...
         </p>
       </div>
@@ -423,51 +412,27 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 .visual-editor-shell {
   display: flex;
-  gap: 10px;
   width: 100%;
   height: 100%;
   min-height: 0;
-  padding: 10px;
+  padding: 12px;
   overflow: hidden;
   background:
-    radial-gradient(circle at 14% 10%, rgba(37, 99, 235, 0.08), transparent 26%),
-    linear-gradient(135deg, rgba(248, 251, 255, 0.94), rgba(240, 249, 255, 0.76));
-}
-
-.visual-editor-shell__aside {
-  overflow: visible;
-  border: 1px solid rgba(82, 124, 181, 0.18);
-  border-radius: 12px;
-  background: var(--el-bg-color);
-  box-shadow: 0 12px 32px rgba(31, 58, 112, 0.08);
+    radial-gradient(circle at 14% 10%, rgba(37, 99, 235, 0.08), transparent 28%),
+    linear-gradient(135deg, rgba(38, 99, 235, 0.06), transparent 32%), var(--el-bg-color-page);
 }
 
 .visual-editor-shell__content {
+  position: relative;
   min-width: 0;
   min-height: 0;
+  flex: 1;
   overflow: hidden;
-  border: 1px solid rgba(82, 124, 181, 0.16);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.68);
-  box-shadow: 0 12px 32px rgba(31, 58, 112, 0.08);
-}
-
-:deep(.visual-editor-shell__aside .e-layout-sider__toggle-button) {
-  right: -16px;
-  border: 1px solid rgba(82, 124, 181, 0.18);
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 8px 18px rgba(31, 58, 112, 0.14);
 }
 
 :global(html.dark) .visual-editor-shell {
   background:
-    radial-gradient(circle at 14% 10%, rgba(67, 156, 255, 0.13), transparent 28%),
-    linear-gradient(135deg, rgba(6, 17, 28, 0.95), rgba(7, 26, 43, 0.8));
-}
-
-:global(html.dark) .visual-editor-shell__aside,
-:global(html.dark) .visual-editor-shell__content {
-  border-color: rgba(140, 210, 255, 0.14);
-  background: rgba(8, 28, 48, 0.72);
+    radial-gradient(circle at 14% 10%, rgba(67, 156, 255, 0.13), transparent 30%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.14), transparent 34%), var(--el-bg-color-page);
 }
 </style>

@@ -1,10 +1,12 @@
 <script lang="ts" setup>
 import { debounce } from 'lodash-es'
 import { storeToRefs } from 'pinia'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { ButtonTabs } from '@/components/button-tabs'
 import { useControlStore } from '@/stores/controlStore'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
+import CanvasLayerPanel from '@/visual-editor/ui/workbench/edit-tools/components/CanvasLayerPanel.vue'
+import PageSettingPanel from '@/visual-editor/ui/workbench/edit-tools/components/PageSettingPanel.vue'
 import { Animate, AttrEditor, EventAction, FormRule } from './components'
 
 defineOptions({
@@ -17,7 +19,9 @@ const { floatingSettingActiveTab } = storeToRefs(controlStore)
 
 const currentActive = ref('attr')
 
-const pageListOptions = ref([])
+const pageListOptions = ref<{ label: string, value: string }[]>([])
+const selectionTabs = ['attr', 'animate', 'form-rule', 'event']
+const hasCurrentBlock = computed(() => !!currentBlock.value?._vid)
 
 function initPageOptions() {
   const options = [
@@ -38,16 +42,39 @@ function initPageOptions() {
     })
   }
 
-  options.push({
-    label: '事件',
-    value: 'event',
-  })
-
-  if (floatingSettingActiveTab.value) {
-    currentActive.value = floatingSettingActiveTab.value
-  }
+  options.push(
+    {
+      label: '事件',
+      value: 'event',
+    },
+    {
+      label: '层级',
+      value: 'layer',
+    },
+    {
+      label: '页面',
+      value: 'page',
+    },
+  )
 
   pageListOptions.value = options
+
+  const nextActive = floatingSettingActiveTab.value || currentActive.value
+  const hasTarget = options.some(item => item.value === nextActive)
+
+  if (hasTarget) {
+    currentActive.value = nextActive
+    return
+  }
+
+  if (!hasCurrentBlock.value && selectionTabs.includes(currentActive.value)) {
+    currentActive.value = 'layer'
+    return
+  }
+
+  if (!options.some(item => item.value === currentActive.value)) {
+    currentActive.value = hasCurrentBlock.value ? 'attr' : 'layer'
+  }
 }
 
 const isOpen = ref(true)
@@ -63,21 +90,43 @@ watch(
   ),
   { immediate: true },
 )
+
+watch(
+  () => floatingSettingActiveTab.value,
+  () => {
+    initPageOptions()
+  },
+)
 </script>
 
 <template>
   <div :class="[$style.wrapper, isOpen ? $style['open-wrapper'] : '']">
     <div :class="[$style.drawer, isOpen ? $style['is-open'] : '']">
-      <div class="border-start-1 flex h-full w-full flex-col">
-        <div class="border-bottom-1 flex h-[50px] items-center px-3">
+      <div :class="$style.panelShell">
+        <div :class="$style.tabBar">
           <ButtonTabs v-model="currentActive" :options="pageListOptions" />
         </div>
         <div class="h-0 w-full flex-auto overflow-hidden">
-          <el-scrollbar :class="currentActive === 'animate' ? 'animate-scrollbar' : ''" class="p-3">
-            <AttrEditor v-if="currentActive === 'attr'" />
-            <Animate v-else-if="currentActive === 'animate'" />
-            <FormRule v-else-if="currentActive === 'form-rule'" />
-            <EventAction v-else-if="currentActive === 'event'" />
+          <template v-if="currentActive === 'layer'">
+            <CanvasLayerPanel embedded />
+          </template>
+          <template v-else-if="currentActive === 'page'">
+            <PageSettingPanel embedded />
+          </template>
+          <el-scrollbar v-else :class="currentActive === 'animate' ? 'animate-scrollbar' : ''" class="p-3">
+            <template v-if="hasCurrentBlock">
+              <AttrEditor v-if="currentActive === 'attr'" />
+              <Animate v-else-if="currentActive === 'animate'" />
+              <FormRule v-else-if="currentActive === 'form-rule'" />
+              <EventAction v-else-if="currentActive === 'event'" />
+            </template>
+            <div v-else :class="$style.emptyState">
+              <div :class="$style.emptyIcon">
+                ⚙️
+              </div>
+              <p>请先选择一个组件</p>
+              <span>然后在这里配置属性、动画或事件</span>
+            </div>
           </el-scrollbar>
         </div>
       </div>
@@ -102,9 +151,8 @@ watch(
   position: relative;
   height: 100%;
   width: 100%;
-  background-color: var(--el-bg-color);
+  background-color: transparent;
   transform: translateX(100%);
-  // box-shadow: $boxShadow;
   transition: transform 0.5s ease-in-out;
   contain: layout;
 
@@ -148,5 +196,60 @@ watch(
   height: 100%;
   overflow-y: hidden;
   background-color: var(--el-bg-color);
+}
+
+.panelShell {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+}
+
+.tabBar {
+  display: flex;
+  flex-wrap: wrap;
+  min-height: 40px;
+  align-items: center;
+  gap: 2px;
+  padding-bottom: 10px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(82, 124, 181, 0.13);
+  flex-shrink: 0;
+
+  :deep(.el-button) {
+    height: 26px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 12px;
+  }
+}
+
+.emptyState {
+  display: flex;
+  min-height: 100%;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  color: #7a8aa3;
+
+  p {
+    margin: 0 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #3a4a6b;
+  }
+
+  span {
+    font-size: 12px;
+    color: #8e9fb5;
+  }
+}
+
+.emptyIcon {
+  margin-bottom: 12px;
+  font-size: 30px;
+  line-height: 1;
+  filter: grayscale(1) opacity(0.5);
 }
 </style>
