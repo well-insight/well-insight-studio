@@ -5,38 +5,45 @@ import {
   ElPopover,
   ElRadioButton,
   ElRadioGroup,
-} from 'element-plus'
-import { computed, defineComponent, watch } from 'vue'
-import { isChartComponent } from '@/utils/datasetBinding'
-import { useVisualData } from '@/visual-editor/hooks/useVisualData'
-import ChartDatasetBindPanel from '@/visual-editor/ui/shared/dataset-bind/ChartDatasetBindPanel.vue'
-import { FormatInputNumber } from '@/visual-editor/ui/shared/format-input-number'
-import { AttrEditorCard } from './components/attr-editor-card'
-import { PropConfig } from './components/prop-config'
+  ElRadio,
+} from "element-plus";
+import { computed, defineComponent, watch } from "vue";
+import { isChartComponent } from "@/utils/datasetBinding";
+import { useVisualData } from "@/visual-editor/hooks/useVisualData";
+import ChartDatasetBindPanel from "@/visual-editor/ui/shared/dataset-bind/ChartDatasetBindPanel.vue";
+import { AttrEditorCard } from "./components/attr-editor-card";
+import styles from "./components/attr-editor-card/styles.module.scss";
+import { PropConfig } from "./components/prop-config";
 
 export const AttrEditor = defineComponent({
   setup() {
-    const { visualConfig, currentBlock } = useVisualData()
+    const { visualConfig, currentBlock } = useVisualData();
 
-    const compPaddingAttrs = ['paddingTop', 'paddingLeft', 'paddingRight', 'paddingBottom']
+    const compPaddingAttrs = [
+      "paddingTop",
+      "paddingLeft",
+      "paddingRight",
+      "paddingBottom",
+    ] as const;
 
     /**
      * @description 监听组件padding值的变化
      */
     watch(
-      compPaddingAttrs.map(item => () => currentBlock.value.styles?.[item]),
+      compPaddingAttrs.map((item) => () => currentBlock.value.styles?.[item]),
       (val: string[]) => {
-        const isSame = val.every(item => currentBlock.value.styles?.tempPadding == item)
+        const isSame = val.every(
+          (item) => currentBlock.value.styles?.tempPadding === item,
+        );
         if (isSame || new Set(val).size === 1) {
-          if (Reflect.has(currentBlock.value, 'styles')) {
-            currentBlock.value.styles.tempPadding = val[0]
+          if (Reflect.has(currentBlock.value, "styles")) {
+            currentBlock.value.styles.tempPadding = val[0];
           }
-        }
-        else {
-          currentBlock.value.styles.tempPadding = ''
+        } else {
+          currentBlock.value.styles.tempPadding = "";
         }
       },
-    )
+    );
 
     /**
      * @description 总的组件padding变化时进行的操作
@@ -44,18 +51,19 @@ export const AttrEditor = defineComponent({
     const compPadding = computed({
       get: () => currentBlock.value.styles?.tempPadding,
       set(val) {
-        compPaddingAttrs.forEach(item => (currentBlock.value.styles[item] = val))
-        currentBlock.value.styles.tempPadding = val
+        compPaddingAttrs.forEach(
+          (item) => (currentBlock.value.styles[item] = val),
+        );
+        currentBlock.value.styles.tempPadding = val;
       },
-    })
+    });
 
     // 表单项
     const FormEditor = () => {
-      const content: JSX.Element[] = []
+      const content: JSX.Element[] = [];
       if (currentBlock.value) {
-        const { componentKey } = currentBlock.value
-        const component = visualConfig.componentMap[componentKey]
-        console.log('props.block:', currentBlock.value)
+        const { componentKey } = currentBlock.value;
+        const component = visualConfig.componentMap[componentKey];
         content.push(
           <>
             <ElFormItem label="组件标识" labelWidth="70px">
@@ -66,12 +74,17 @@ export const AttrEditor = defineComponent({
                 content={`你可以利用该组件ID。对该组件进行获取和设置其属性，组件可用属性可在控制台输入：$$refs.${currentBlock.value._vid} 进行查看`}
               >
                 {{
-                  reference: () => <ElInput disabled v-model={currentBlock.value._vid}></ElInput>,
+                  reference: () => (
+                    <ElInput
+                      disabled
+                      v-model={currentBlock.value._vid}
+                    ></ElInput>
+                  ),
                 }}
               </ElPopover>
             </ElFormItem>
           </>,
-        )
+        );
         if (component) {
           if (component.props) {
             //
@@ -79,83 +92,163 @@ export const AttrEditor = defineComponent({
               content.push(
                 <>
                   <AttrEditorCard header="基础配置" class="mb-3">
-                    <el-space class="w-full">
-                      <ElFormItem label="宽度" labelWidth="40px">
-                        <ElInput type="number" v-model={currentBlock.value.width} class="w-full">
-                          {{
-                            suffix: () => <span>px</span>,
-                          }}
-                        </ElInput>
-                      </ElFormItem>
-                      <ElFormItem label="高度" labelWidth="40px">
-                        <ElInput v-model={currentBlock.value.height} type="number" class="w-full">
-                          {{
-                            suffix: () => <span>px</span>,
-                          }}
-                        </ElInput>
-                      </ElFormItem>
-                    </el-space>
-                    <el-space class="w-full">
-                      <ElFormItem label="X" labelWidth="40px" labelPosition="right">
-                        <ElInput type="number" v-model={currentBlock.value.x}>
-                          {{
-                            suffix: () => <span>px</span>,
-                          }}
-                        </ElInput>
-                      </ElFormItem>
-                      <ElFormItem label="Y" labelWidth="40px" labelPosition="right">
-                        <ElInput type="number" v-model={currentBlock.value.y}>
-                          {{
-                            suffix: () => <span>px</span>,
-                          }}
-                        </ElInput>
-                      </ElFormItem>
-                    </el-space>
+                    <ElFormItem label="" class={styles.paddingUniformItem}>
+                      <el-space class="w-full">
+                        <ElFormItem label="宽度" labelWidth="40px">
+                          <ElInput
+                            type="number"
+                            v-model={currentBlock.value.width}
+                            class="w-full"
+                          >
+                            {{
+                              suffix: () => <span>px</span>,
+                            }}
+                          </ElInput>
+                        </ElFormItem>
+                        <ElFormItem label="高度" labelWidth="40px">
+                          <ElInput
+                            v-model={currentBlock.value.height}
+                            type="number"
+                            class="w-full"
+                          >
+                            {{
+                              suffix: () => <span>px</span>,
+                            }}
+                          </ElInput>
+                        </ElFormItem>
+                      </el-space>
+                    </ElFormItem>
+
+                    <ElFormItem label="" class={styles.paddingUniformItem}>
+                      <el-space class="w-full">
+                        <ElFormItem
+                          label="X"
+                          labelWidth="40px"
+                          labelPosition="right"
+                        >
+                          <ElInput type="number" v-model={currentBlock.value.x}>
+                            {{
+                              suffix: () => <span>px</span>,
+                            }}
+                          </ElInput>
+                        </ElFormItem>
+                        <ElFormItem
+                          label="Y"
+                          labelWidth="40px"
+                          labelPosition="right"
+                        >
+                          <ElInput type="number" v-model={currentBlock.value.y}>
+                            {{
+                              suffix: () => <span>px</span>,
+                            }}
+                          </ElInput>
+                        </ElFormItem>
+                      </el-space>
+                    </ElFormItem>
 
                     {/* 样式配置合并到基础配置中 */}
                     <ElFormItem label="水平对齐" labelWidth="auto">
-                      <ElRadioGroup v-model={currentBlock.value.styles.justifyContent}>
-                        <ElRadioButton value="flex-start">左</ElRadioButton>
-                        <ElRadioButton value="center">中</ElRadioButton>
-                        <ElRadioButton value="flex-end">右</ElRadioButton>
-                      </ElRadioGroup>
+                      <div class="w-full flex items-center justify-end">
+                        <ElRadioGroup
+                          v-model={currentBlock.value.styles.justifyContent}
+                        >
+                          <ElRadio value="flex-start">左</ElRadio>
+                          <ElRadio value="center">中</ElRadio>
+                          <ElRadio value="flex-end">右</ElRadio>
+                        </ElRadioGroup>
+                      </div>
                     </ElFormItem>
                     <ElFormItem label="垂直对齐" labelWidth="auto">
-                      <ElRadioGroup v-model={currentBlock.value.styles.alignItems}>
-                        <ElRadioButton value="flex-start">上</ElRadioButton>
-                        <ElRadioButton value="center">中</ElRadioButton>
-                        <ElRadioButton value="flex-end">下</ElRadioButton>
-                      </ElRadioGroup>
+                      <div class="w-full flex items-center justify-end">
+                        <ElRadioGroup
+                          v-model={currentBlock.value.styles.alignItems}
+                        >
+                          <ElRadio value="flex-start">上</ElRadio>
+                          <ElRadio value="center">中</ElRadio>
+                          <ElRadio value="flex-end">下</ElRadio>
+                        </ElRadioGroup>
+                      </div>
                     </ElFormItem>
-                    <ElFormItem label="组件内边距">
-                      <FormatInputNumber v-model={compPadding.value} />
+                    <ElFormItem
+                      label="统一内边距"
+                      class={styles.paddingUniformItem}
+                    >
+                      <div class="flex w-full items-center gap-2">
+                        <ElInput
+                          v-model={compPadding.value}
+                          type="number"
+                          class={styles.paddingUniformInput}
+                        >
+                          {{
+                            suffix: () => <span>px</span>,
+                          }}
+                        </ElInput>
+                      </div>
                     </ElFormItem>
-                    <ElFormItem>
-                      <div class="w-full">
-                        <div class="grid grid-cols-3 gap-2 w-full bg-gray-100 p-20px items-center">
-                          <FormatInputNumber
+                    <ElFormItem label="" class={styles.paddingSidesItem}>
+                      <div class={styles.paddingEditor}>
+                        <div
+                          class={`${styles.paddingEditorField} ${styles.paddingEditorFieldTop}`}
+                        >
+                          <span class={styles.paddingEditorLabel}>上</span>
+                          <ElInput
                             v-model={currentBlock.value.styles.paddingTop}
-                            class="!w-100px col-span-full col-start-2"
-                          />
-                          <FormatInputNumber
+                            type="number"
+                            class={styles.paddingEditorInput}
+                          >
+                            {{
+                              suffix: () => <span>px</span>,
+                            }}
+                          </ElInput>
+                        </div>
+                        <div
+                          class={`${styles.paddingEditorField} ${styles.paddingEditorFieldLeft}`}
+                        >
+                          <span class={styles.paddingEditorLabel}>左</span>
+                          <ElInput
                             v-model={currentBlock.value.styles.paddingLeft}
-                            class="!w-100px col-span-1"
-                          />
-                          <div class="bg-white col-span-1 h-40px"></div>
-                          <FormatInputNumber
+                            type="number"
+                            class={styles.paddingEditorInput}
+                          >
+                            {{
+                              suffix: () => <span>px</span>,
+                            }}
+                          </ElInput>
+                        </div>
+                        <div class={styles.paddingEditorCenter}>内容</div>
+                        <div
+                          class={`${styles.paddingEditorField} ${styles.paddingEditorFieldRight}`}
+                        >
+                          <ElInput
                             v-model={currentBlock.value.styles.paddingRight}
-                            class="!w-100px col-span-1"
-                          />
-                          <FormatInputNumber
+                            type="number"
+                            class={styles.paddingEditorInput}
+                          >
+                            {{
+                              suffix: () => <span>px</span>,
+                            }}
+                          </ElInput>
+                          <span class={styles.paddingEditorLabel}>右</span>
+                        </div>
+                        <div
+                          class={`${styles.paddingEditorField} ${styles.paddingEditorFieldBottom}`}
+                        >
+                          <span class={styles.paddingEditorLabel}>下</span>
+                          <ElInput
                             v-model={currentBlock.value.styles.paddingBottom}
-                            class="!w-100px col-span-full col-start-2"
-                          />
+                            type="number"
+                            class={styles.paddingEditorInput}
+                          >
+                            {{
+                              suffix: () => <span>px</span>,
+                            }}
+                          </ElInput>
                         </div>
                       </div>
                     </ElFormItem>
                   </AttrEditorCard>
                 </>,
-              )
+              );
             }
 
             content.push(
@@ -166,10 +259,14 @@ export const AttrEditor = defineComponent({
                   </AttrEditorCard>
                 )}
                 <AttrEditorCard header="组件配置" class="mb-3">
-                  <PropConfig component={component} block={currentBlock.value} exclude-dataset />
+                  <PropConfig
+                    component={component}
+                    block={currentBlock.value}
+                    exclude-dataset
+                  />
                 </AttrEditorCard>
               </>,
-            )
+            );
           }
         }
       }
@@ -177,13 +274,13 @@ export const AttrEditor = defineComponent({
         <>
           <ElForm labelPosition="left">{content}</ElForm>
         </>
-      )
-    }
+      );
+    };
 
     return () => (
       <>
         <FormEditor />
       </>
-    )
+    );
   },
-})
+});

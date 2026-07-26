@@ -14,7 +14,7 @@ import { useControlStore } from '@/stores/controlStore'
 import { usePageStore } from '@/stores/pageStore'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
 import SimulatorEditor from '@/visual-editor/ui/canvas/simulator-grid-editor/SimulatorEditor.vue'
-import { isPageDirty, saveCounter, updateVisualDSL } from './visualEditorState'
+import { isPageDirty, markVisualClean, saveCounter, updateVisualDSL } from './visualEditorState'
 
 const route = useRoute()
 const router = useRouter()
@@ -29,7 +29,13 @@ const formDesignerRef = ref<InstanceType<typeof FormDesigner> | null>(null)
 const formSchemaRef = ref<FormSchema | null>(null)
 const formDirty = ref(false)
 
-/** 并发/重复进入时只应用最后一次请求结果 */
+/** 页面级自动保存状态 */
+const AUTO_SAVE_DELAY = 3000
+let autoSaveTimer: ReturnType<typeof setTimeout> | null = null
+let autoSaveInFlight = false
+let autoSaveQueued = false
+const autoSaveReady = ref(false)
+const autoSaveBaseline = ref('')
 let loadSeq = 0
 
 const loading = ref(false)
@@ -37,8 +43,16 @@ const pageName = ref('')
 const pageType = ref<PageType>('visualization')
 
 /** 确定当前是编辑已有页面还是新建页面 */
-const isNew = computed(() => route.params.type != null && route.path.includes('/new/'))
-const pageId = computed(() => isNew.value ? null : (route.params.id as string))
+const isNew = computed(() => {
+  const rawId = route.params.id
+  return route.path.includes('/new/') || rawId === 'new' || (Array.isArray(rawId) && rawId[0] === 'new')
+})
+const pageId = computed(() => {
+  if (isNew.value)
+    return null
+  const raw = route.params.id
+  return Array.isArray(raw) ? (raw[0] ? String(raw[0]) : null) : (raw ? String(raw) : null)
+})
 
 function getEditorRouteName(type: PageType) {
   if (type === 'form')
@@ -133,7 +147,9 @@ async function loadPageById(id: string) {
       overrideProject(dsl as any)
       updateVisualDSL(dsl as Record<string, unknown>)
       syncSavedBaseline()
+      autoSaveBaseline.value = JSON.stringify(getCurrentDSL())
     }
+    autoSaveReady.value = true
   }
   catch (error) {
     if (seq !== loadSeq)
@@ -151,6 +167,7 @@ async function loadPageById(id: string) {
 function initNewPage(type: PageType) {
   pageType.value = type
   pageName.value = ''
+  clearAutoSaveState()
 
   if (type === 'form') {
     formSchemaRef.value = getEmptyFormSchema()
@@ -163,12 +180,14 @@ function initNewPage(type: PageType) {
   overrideProject(defaultSchema as any)
   updateVisualDSL(defaultSchema)
   syncSavedBaseline()
+  autoSaveBaseline.value = JSON.stringify(getCurrentDSL())
   updateVisualLoading(false)
 }
 
 watch(
   () => route.params,
   () => {
+    clearAutoSaveState()
     if (isNew.value) {
       initNewPage(route.params.type as PageType)
     }
@@ -200,11 +219,110 @@ function getCurrentDSL(): Record<string, unknown> {
     }
     return (formSchemaRef.value ?? getEmptyFormSchema()) as unknown as Record<string, unknown>
   }
-  return JSON.parse(JSON.stringify(jsonData)) as Record<string, unknown>
+  return JSON.parse(JSON.stringify(jsonData.value)) as Record<string, unknown>
+}
+
+function cancelAutoSave() {
+  if (autoSaveTimer !== null) {
+    clearTimeout(autoSaveTimer)
+    autoSaveTimer = null
+  }
+}
+
+function clearAutoSaveState() {
+  cancelAutoSave()
+  autoSaveReady.value = false
+  autoSaveQueued = false
+  autoSaveBaseline.value = ''
+}
+
+function hasAutoSaveChanges() {
+  if (pageType.value === 'form')
+    return formDirty.value
+  return Boolean(autoSaveBaseline.value) && JSON.stringify(getCurrentDSL()) !== autoSaveBaseline.value
+}
+
+function currentPageIsPersisted() {
+  return Boolean(pageId.value) && !isNew.value && (pageType.value === 'visualization' || pageType.value === 'form')
+}
+
+async function performAutoSave(): Promise<boolean> {
+  if (!autoSaveReady.value || !currentPageIsPersisted())
+    return false
+  if (autoSaveInFlight) {
+    autoSaveQueued = true
+    return false
+  }
+
+  const dirty = hasAutoSaveChanges()
+  if (!dirty)
+    return true
+
+  autoSaveInFlight = true
+  try {
+    const name = pageName.value.trim() || `未命名${pageType.value === 'visualization' ? '可视化' : '表单'}`
+    const dsl = getCurrentDSL()
+    const savedSnapshot = JSON.stringify(dsl)
+    await pageStore.savePage({
+      id: pageId.value || undefined,
+      name,
+      type: pageType.value,
+      dsl,
+      status: 'draft',
+    })
+
+    if (JSON.stringify(getCurrentDSL()) !== savedSnapshot) {
+      scheduleAutoSave()
+      return false
+    }
+
+    autoSaveBaseline.value = savedSnapshot
+    if (pageType.value === 'visualization') {
+      syncSavedBaseline()
+      markVisualClean()
+    }
+    else if (formDesignerRef.value) {
+      formDesignerRef.value.syncSavedBaseline()
+      formDirty.value = false
+    }
+    return true
+  }
+  catch {
+    // 自动保存保持静默，脏状态会保留并在下一次修改时重试
+    return false
+  }
+  finally {
+    autoSaveInFlight = false
+    if (autoSaveQueued) {
+      autoSaveQueued = false
+      scheduleAutoSave()
+    }
+  }
+}
+
+function scheduleAutoSave() {
+  cancelAutoSave()
+  if (!autoSaveReady.value || !currentPageIsPersisted())
+    return
+  const dirty = hasAutoSaveChanges()
+  if (!dirty)
+    return
+  autoSaveTimer = setTimeout(() => {
+    autoSaveTimer = null
+    void performAutoSave()
+  }, AUTO_SAVE_DELAY)
+}
+
+async function flushAutoSave() {
+  cancelAutoSave()
+  if (!autoSaveReady.value || !currentPageIsPersisted())
+    return
+  await performAutoSave()
 }
 
 /** 保存页面 */
 async function _savePageDraft() {
+  cancelAutoSave()
   if (pageType.value === 'visualization') {
     updateVisualLoading(true)
   }
@@ -222,6 +340,11 @@ async function _savePageDraft() {
     // 如果是新建页面，保存后跳转到编辑模式
     if (isNew.value && saved.id) {
       router.replace({ name: getEditorRouteName(pageType.value), params: { id: saved.id } })
+    }
+    if (pageType.value === 'visualization') {
+      syncSavedBaseline()
+      autoSaveBaseline.value = JSON.stringify(getCurrentDSL())
+      markVisualClean()
     }
     // 同步表单保存基线
     if (pageType.value === 'form' && formDesignerRef.value) {
@@ -241,6 +364,7 @@ async function _savePageDraft() {
 
 /** 发布页面 */
 async function _publishPage() {
+  cancelAutoSave()
   if (pageType.value === 'visualization') {
     updateVisualLoading(true)
   }
@@ -257,6 +381,11 @@ async function _publishPage() {
     ElMessage.success('发布成功')
     if (isNew.value && saved.id) {
       router.replace({ name: getEditorRouteName(pageType.value), params: { id: saved.id } })
+    }
+    if (pageType.value === 'visualization') {
+      syncSavedBaseline()
+      autoSaveBaseline.value = JSON.stringify(getCurrentDSL())
+      markVisualClean()
     }
     if (pageType.value === 'form' && formDesignerRef.value) {
       formDesignerRef.value.syncSavedBaseline()
@@ -275,7 +404,7 @@ async function _publishPage() {
 
 /** 离开确认 */
 async function confirmLeaveIfDirty(): Promise<boolean> {
-  const dirty = pageType.value === 'form' ? formDirty.value : isDirty.value
+  const dirty = pageType.value === 'form' ? formDirty.value : hasAutoSaveChanges()
   if (!dirty)
     return true
   try {
@@ -291,6 +420,7 @@ async function confirmLeaveIfDirty(): Promise<boolean> {
 }
 
 onBeforeRouteLeave(async (_to, _from, next) => {
+  await flushAutoSave()
   const ok = await confirmLeaveIfDirty()
   next(ok)
 })
@@ -299,6 +429,7 @@ onBeforeRouteLeave(async (_to, _from, next) => {
 watch(saveCounter, () => {
   if (pageType.value === 'visualization') {
     syncSavedBaseline()
+    autoSaveBaseline.value = JSON.stringify(getCurrentDSL())
   }
   else if (pageType.value === 'form' && formDesignerRef.value) {
     formDesignerRef.value.syncSavedBaseline()
@@ -310,31 +441,38 @@ watch(saveCounter, () => {
 watch(isDirty, (val) => {
   if (pageType.value === 'visualization') {
     isPageDirty.value = val
+    scheduleAutoSave()
   }
 })
 
 watch(formDirty, (val) => {
   if (pageType.value === 'form') {
     isPageDirty.value = val
+    scheduleAutoSave()
   }
 })
 
 // 编辑过程中实时同步 visualDSL，确保 header 保存时拿到最新数据
-watch(jsonData, (data) => {
-  if (data && pageType.value === 'visualization') {
-    updateVisualDSL(JSON.parse(JSON.stringify(data)) as Record<string, unknown>)
-  }
-}, { deep: true })
+watch(
+  () => JSON.stringify(jsonData.value),
+  (serialized) => {
+    if (pageType.value === 'visualization') {
+      updateVisualDSL(JSON.parse(serialized) as Record<string, unknown>)
+      scheduleAutoSave()
+    }
+  },
+)
 
 // 表单 schema 变化时同步到 visualDSL
 watch(formSchemaRef, (schema) => {
   if (schema && pageType.value === 'form') {
     updateVisualDSL(schema as unknown as Record<string, unknown>)
+    scheduleAutoSave()
   }
 }, { deep: true })
 
 function onBeforeUnload(e: BeforeUnloadEvent) {
-  const dirty = pageType.value === 'form' ? formDirty.value : isDirty.value
+  const dirty = pageType.value === 'form' ? formDirty.value : hasAutoSaveChanges()
   if (dirty) {
     e.preventDefault()
     e.returnValue = ''
@@ -361,6 +499,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  cancelAutoSave()
   window.removeEventListener('beforeunload', onBeforeUnload)
 })
 

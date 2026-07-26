@@ -879,6 +879,8 @@ watch(filterText, (val) => {
 
 .body {
   display: flex;
+  height: 100%;
+  min-height: 0;
   flex-direction: column;
 }
 
@@ -917,7 +919,8 @@ watch(filterText, (val) => {
 }
 
 .treePanel {
-  padding: 0 12px;
+  min-height: 0;
+  padding: 4px 12px 0;
   height: min(480px, calc(100vh - 200px));
   max-height: min(480px, calc(100vh - 200px));
   box-sizing: border-box;
@@ -1044,22 +1047,36 @@ watch(filterText, (val) => {
 }
 
 .treeNode {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   width: 100%;
-  padding: 4px 6px;
-  min-height: 30px;
-  border-radius: 6px;
-  transition: background-color 0.15s;
+  min-height: 34px;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.3s ease,
+    border-color 0.3s ease,
+    background 0.3s ease;
 
   &:hover {
-    background-color: var(--el-color-primary-light-8);
+    border-color: var(--el-border-color-lighter);
+    background: var(--el-bg-color-overlay);
+    box-shadow: 0 2px 8px rgba(57, 82, 116, 0.06);
+    transform: translateY(-1px);
   }
 }
 
 .treeNodeSelected {
-  background-color: var(--el-color-primary-light-8);
+  border-color: var(--el-color-primary-light-5);
+  background: var(--el-color-primary-light-9);
+  box-shadow:
+    0 2px 8px rgba(64, 158, 255, 0.1),
+    inset 3px 0 0 var(--el-color-primary);
 }
 
 .treeNodeLocked .nodeLabel {
@@ -1086,9 +1103,11 @@ watch(filterText, (val) => {
 
 .nodeLabel {
   flex: 1;
+  min-width: 0;
+  padding-right: 4px;
+  color: var(--el-text-color-primary);
   font-size: 13px;
   font-weight: 500;
-  color: var(--el-text-color-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1104,14 +1123,24 @@ watch(filterText, (val) => {
 }
 
 .nodeActions {
-  display: none;
-  flex-shrink: 0;
+  position: absolute;
+  right: 6px;
+  display: flex;
+  align-items: center;
   gap: 2px;
-  margin-left: auto;
+  padding-left: 6px;
+  opacity: 0;
+  pointer-events: none;
+  background: var(--el-bg-color-overlay);
+  transition:
+    opacity 0.3s ease,
+    background 0.3s ease;
 }
 
-.treeNode:hover .nodeActions {
-  display: flex;
+.treeNode:hover .nodeActions,
+.treeNodeSelected .nodeActions {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .actionBtn {
@@ -1125,10 +1154,12 @@ watch(filterText, (val) => {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 8px 16px;
+  min-height: 38px;
+  padding: 8px 14px;
   border-top: 1px solid var(--el-border-color-lighter);
-  font-size: 11px;
+  background: color-mix(in srgb, var(--el-fill-color-lighter) 36%, transparent);
   color: var(--el-text-color-disabled);
+  font-size: 11px;
   flex-shrink: 0;
 }
 

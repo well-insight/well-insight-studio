@@ -92,20 +92,27 @@ export default ({ mode }: ConfigEnv): UserConfig => {
       chunkSizeWarningLimit: 550, // 单位kb  打包后文件大小警告的限制 (文件大于此此值会出现警告)
       assetsInlineLimit: 4096, // 单位字节（1024等于1kb） 小于此阈值的导入或引用资源将内联为 base64 编码，以避免额外的 http 请求。设置为 0 可以完全禁用此项。
       minify: 'esbuild', // 当前项目体量较大，使用 esbuild 可避免 terser 压缩阶段过慢
-      esbuild: {
-        drop: ['console', 'debugger'],
-      },
       rollupOptions: {
         input: {
           main: resolve(__dirname, 'index.html'),
         },
         output: {
-          manualChunks: {
-            jsonWorker: [`${prefix}/language/json/json.worker`],
-            cssWorker: [`${prefix}/language/css/css.worker`],
-            htmlWorker: [`${prefix}/language/html/html.worker`],
-            tsWorker: [`${prefix}/language/typescript/ts.worker`],
-            editorWorker: [`${prefix}/editor/editor.worker`],
+          manualChunks(id) {
+            if (id.includes(`${prefix}/language/json/json.worker`)) {
+              return 'jsonWorker'
+            }
+            if (id.includes(`${prefix}/language/css/css.worker`)) {
+              return 'cssWorker'
+            }
+            if (id.includes(`${prefix}/language/html/html.worker`)) {
+              return 'htmlWorker'
+            }
+            if (id.includes(`${prefix}/language/typescript/ts.worker`)) {
+              return 'tsWorker'
+            }
+            if (id.includes(`${prefix}/editor/editor.worker`)) {
+              return 'editorWorker'
+            }
           },
         },
       },

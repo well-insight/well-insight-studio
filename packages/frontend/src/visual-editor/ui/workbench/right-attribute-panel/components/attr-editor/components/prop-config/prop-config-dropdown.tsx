@@ -11,7 +11,6 @@ import {
   ElDropdownItem,
   ElIcon,
   ElInput,
-  ElInputNumber,
   ElOption,
   ElSelect,
   ElSwitch,
@@ -50,14 +49,23 @@ export const PropConfig = defineComponent({
      */
     const models = computed(() => cloneDeep(jsonData.value.models))
 
-    const renderPropItem = (propName: string, propConfig: VisualEditorProps) => {
+    const renderPropItem = (
+      propName: string,
+      propConfig: VisualEditorProps,
+    ) => {
       const { propObj, prop } = useDotProp(props.block.props, propName)
 
       propObj[prop] ??= propConfig.defaultValue
 
-      const renderFunc: Record<VisualEditorPropsType, () => JSX.Element | Component> = {
+      const renderFunc: Record<
+        VisualEditorPropsType,
+        () => JSX.Element | Component
+      > = {
         [VisualEditorPropsType.input]: () => {
-          if (!Object.is(propObj[prop], undefined) && !Object.is(propObj[prop], null)) {
+          if (
+            !Object.is(propObj[prop], undefined)
+            && !Object.is(propObj[prop], null)
+          ) {
             propObj[prop] = `${propObj[prop]}`
           }
           return (
@@ -71,9 +79,24 @@ export const PropConfig = defineComponent({
         [VisualEditorPropsType.inputNumber]: () => {
           const parseRes = Number.parseFloat(propObj[prop])
           propObj[prop] = Number.isNaN(parseRes) ? 0 : parseRes
-          return <ElInputNumber size={uiSize} v-model={propObj[prop]} />
+          return (
+            <ElInput
+              size={uiSize}
+              v-model={propObj[prop]}
+              type="number"
+              min={propConfig.min}
+              max={propConfig.max}
+              class="w-full"
+            >
+              {{
+                suffix: () => <span>px</span>,
+              }}
+            </ElInput>
+          )
         },
-        [VisualEditorPropsType.switch]: () => <ElSwitch size={uiSize} v-model={propObj[prop]} />,
+        [VisualEditorPropsType.switch]: () => (
+          <ElSwitch size={uiSize} v-model={propObj[prop]} />
+        ),
         [VisualEditorPropsType.color]: () => (
           <ElColorPicker size={uiSize} v-model={propObj[prop]} />
         ),
@@ -94,7 +117,11 @@ export const PropConfig = defineComponent({
             teleported={false}
           >
             {propConfig.options?.map(opt => (
-              <ElOption label={opt.label} style={{ fontFamily: opt.value }} value={opt.value} />
+              <ElOption
+                label={opt.label}
+                style={{ fontFamily: opt.value }}
+                value={opt.value}
+              />
             ))}
           </ElSelect>
         ),
@@ -151,22 +178,27 @@ export const PropConfig = defineComponent({
 
     return () => {
       const componentKey = props.block.componentKey
-      const propEntries = Object.entries(props.component.props ?? {}).filter(([propName, propConfig]) => {
-        if (isChartBindProp(propName, componentKey)) {
-          return false
-        }
-        if (!props.commonOnly) {
-          return true
-        }
-        return commonTypes.has(propConfig.type)
-      })
+      const propEntries = Object.entries(props.component.props ?? {}).filter(
+        ([propName, propConfig]) => {
+          if (isChartBindProp(propName, componentKey)) {
+            return false
+          }
+          if (!props.commonOnly) {
+            return true
+          }
+          return commonTypes.has(propConfig.type)
+        },
+      )
 
       return propEntries.map(([propName, propConfig]) => {
         const optionsProp = isOptionsProp(propConfig)
 
         if (optionsProp) {
           return (
-            <ElDropdownItem key={propName} class="items-start! toolbar-options-item">
+            <ElDropdownItem
+              key={propName}
+              class="items-start! toolbar-options-item"
+            >
               <div class="toolbar-item-row toolbar-item-row--stack">
                 <div class="toolbar-item-head">
                   <span class="toolbar-item-title inline-flex items-center gap-1">
@@ -226,7 +258,9 @@ export const PropConfig = defineComponent({
                 key={props.block._vid + propName}
                 class="toolbar-item-content flex items-center gap-4px"
               >
-                <div class="min-w-0 flex-1 flex items-center justify-end">{renderPropItem(propName, propConfig)}</div>
+                <div class="min-w-0 flex-1 flex items-center justify-end">
+                  {renderPropItem(propName, propConfig)}
+                </div>
                 <PropDatasetBindTrigger
                   block={props.block}
                   propName={propName}

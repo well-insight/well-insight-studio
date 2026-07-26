@@ -1,6 +1,9 @@
 import type { Component, PropType } from 'vue'
 import type { VisualEditorProps } from '@/visual-editor/visual-editor.props'
-import type { VisualEditorBlockData, VisualEditorComponent } from '@/visual-editor/visual-editor.utils'
+import type {
+  VisualEditorBlockData,
+  VisualEditorComponent,
+} from '@/visual-editor/visual-editor.utils'
 import { Warning } from '@element-plus/icons-vue'
 import {
   ElCascader,
@@ -8,7 +11,6 @@ import {
   ElFormItem,
   ElIcon,
   ElInput,
-  ElInputNumber,
   ElOption,
   ElSelect,
   ElSpace,
@@ -42,25 +44,55 @@ export const PropConfig = defineComponent({
      */
     const models = computed(() => cloneDeep(jsonData.value.models))
 
-    const renderPropItem = (propName: string, propConfig: VisualEditorProps) => {
+    const renderPropItem = (
+      propName: string,
+      propConfig: VisualEditorProps,
+    ) => {
       const { propObj, prop } = useDotProp(props.block.props, propName)
 
       propObj[prop] ??= propConfig.defaultValue
 
-      const renderFunc: Record<VisualEditorPropsType, () => JSX.Element | Component> = {
+      const renderFunc: Record<
+        VisualEditorPropsType,
+        () => JSX.Element | Component
+      > = {
         [VisualEditorPropsType.input]: () => {
-          if (!Object.is(propObj[prop], undefined) && !Object.is(propObj[prop], null)) {
+          if (
+            !Object.is(propObj[prop], undefined)
+            && !Object.is(propObj[prop], null)
+          ) {
             propObj[prop] = `${propObj[prop]}`
           }
-          return <ElInput v-model={propObj[prop]} placeholder={propConfig.tips || propConfig.label} />
+          return (
+            <ElInput
+              v-model={propObj[prop]}
+              placeholder={propConfig.tips || propConfig.label}
+            />
+          )
         },
         [VisualEditorPropsType.inputNumber]: () => {
           const parseRes = Number.parseFloat(propObj[prop])
           propObj[prop] = Number.isNaN(parseRes) ? 0 : parseRes
-          return <ElInputNumber v-model={propObj[prop]} />
+          return (
+            <ElInput
+              v-model={propObj[prop]}
+              type="number"
+              min={propConfig.min}
+              max={propConfig.max}
+              class="w-full"
+            >
+              {{
+                suffix: () => <span>px</span>,
+              }}
+            </ElInput>
+          )
         },
-        [VisualEditorPropsType.switch]: () => <ElSwitch v-model={propObj[prop]} />,
-        [VisualEditorPropsType.color]: () => <ElColorPicker v-model={propObj[prop]} />,
+        [VisualEditorPropsType.switch]: () => (
+          <ElSwitch v-model={propObj[prop]} />
+        ),
+        [VisualEditorPropsType.color]: () => (
+          <ElColorPicker v-model={propObj[prop]} />
+        ),
         [VisualEditorPropsType.crossSortable]: () => (
           <OptionsEditorDialog
             v-model={propObj[prop]}
@@ -70,13 +102,23 @@ export const PropConfig = defineComponent({
           />
         ),
         [VisualEditorPropsType.select]: () => (
-          <ElSelect v-model={propObj[prop]} valueKey="value" multiple={propConfig.multiple}>
+          <ElSelect
+            v-model={propObj[prop]}
+            valueKey="value"
+            multiple={propConfig.multiple}
+          >
             {propConfig.options?.map(opt => (
-              <ElOption label={opt.label} style={{ fontFamily: opt.value }} value={opt.value} />
+              <ElOption
+                label={opt.label}
+                style={{ fontFamily: opt.value }}
+                value={opt.value}
+              />
             ))}
           </ElSelect>
         ),
-        [VisualEditorPropsType.table]: () => <TablePropEditor v-model={propObj[prop]} propConfig={propConfig} />,
+        [VisualEditorPropsType.table]: () => (
+          <TablePropEditor v-model={propObj[prop]} propConfig={propConfig} />
+        ),
         [VisualEditorPropsType.modelBind]: () => (
           <ElCascader
             clearable={true}
@@ -97,7 +139,11 @@ export const PropConfig = defineComponent({
         [VisualEditorPropsType.imageUpload]: () => {
           return (
             <>
-              <ImageUploadEditor v-model={propObj[prop]} propConfig={propConfig}></ImageUploadEditor>
+              <ImageUploadEditor
+                v-model={propObj[prop]}
+                propConfig={propConfig}
+              >
+              </ImageUploadEditor>
             </>
           )
         },
@@ -134,7 +180,11 @@ export const PropConfig = defineComponent({
                       <ElSpace>
                         {propConfig.label}
                         {propConfig.tips && (
-                          <ElTooltip placement="left-start" popper-class="max-w-200px" content={propConfig.tips}>
+                          <ElTooltip
+                            placement="left-start"
+                            popper-class="max-w-200px"
+                            content={propConfig.tips}
+                          >
                             <div>
                               <ElIcon>
                                 <Warning />
@@ -156,7 +206,9 @@ export const PropConfig = defineComponent({
                 ),
                 default: () => (
                   <div class="flex w-full items-center gap-8px">
-                    <div class="min-w-0 flex-1 flex items-center justify-end">{renderPropItem(propName, propConfig)}</div>
+                    <div class="min-w-0 flex-1 flex items-center justify-end">
+                      {renderPropItem(propName, propConfig)}
+                    </div>
                     <PropDatasetBindTrigger
                       block={props.block}
                       propName={propName}

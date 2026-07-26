@@ -17,7 +17,12 @@ const controlStore = useControlStore()
 const { currentBlock } = useVisualData()
 const { floatingSettingActiveTab } = storeToRefs(controlStore)
 
-const currentActive = ref('attr')
+const currentActive = computed({
+  get: () => floatingSettingActiveTab.value || 'attr',
+  set: (value) => {
+    floatingSettingActiveTab.value = value
+  },
+})
 
 const pageListOptions = ref<{ label: string, value: string }[]>([])
 const selectionTabs = ['attr', 'animate', 'form-rule', 'event']
@@ -59,7 +64,7 @@ function initPageOptions() {
 
   pageListOptions.value = options
 
-  const nextActive = floatingSettingActiveTab.value || currentActive.value
+  const nextActive = currentActive.value
   const hasTarget = options.some(item => item.value === nextActive)
 
   if (hasTarget) {
@@ -76,8 +81,6 @@ function initPageOptions() {
     currentActive.value = hasCurrentBlock.value ? 'attr' : 'layer'
   }
 }
-
-const isOpen = ref(true)
 
 watch(
   () => currentBlock.value,
@@ -100,102 +103,48 @@ watch(
 </script>
 
 <template>
-  <div :class="[$style.wrapper, isOpen ? $style['open-wrapper'] : '']">
-    <div :class="[$style.drawer, isOpen ? $style['is-open'] : '']">
-      <div :class="$style.panelShell">
-        <div :class="$style.tabBar">
-          <ButtonTabs v-model="currentActive" :options="pageListOptions" />
-        </div>
-        <div class="h-0 w-full flex-auto overflow-hidden">
-          <template v-if="currentActive === 'layer'">
-            <CanvasLayerPanel embedded />
+  <div :class="$style.wrapper">
+    <div :class="$style.panelShell">
+      <div :class="$style.tabBar">
+        <ButtonTabs v-model="currentActive" :options="pageListOptions" />
+      </div>
+      <div :class="$style.panelContent">
+        <template v-if="currentActive === 'layer'">
+          <CanvasLayerPanel embedded />
+        </template>
+        <template v-else-if="currentActive === 'page'">
+          <PageSettingPanel embedded />
+        </template>
+        <el-scrollbar
+          v-else
+          :class="[$style.contentScrollbar, currentActive === 'animate' ? 'animate-scrollbar' : '']"
+        >
+          <template v-if="hasCurrentBlock">
+            <AttrEditor v-if="currentActive === 'attr'" />
+            <Animate v-else-if="currentActive === 'animate'" />
+            <FormRule v-else-if="currentActive === 'form-rule'" />
+            <EventAction v-else-if="currentActive === 'event'" />
           </template>
-          <template v-else-if="currentActive === 'page'">
-            <PageSettingPanel embedded />
-          </template>
-          <el-scrollbar v-else :class="currentActive === 'animate' ? 'animate-scrollbar' : ''" class="p-3">
-            <template v-if="hasCurrentBlock">
-              <AttrEditor v-if="currentActive === 'attr'" />
-              <Animate v-else-if="currentActive === 'animate'" />
-              <FormRule v-else-if="currentActive === 'form-rule'" />
-              <EventAction v-else-if="currentActive === 'event'" />
-            </template>
-            <div v-else :class="$style.emptyState">
-              <div :class="$style.emptyIcon">
-                ⚙️
-              </div>
-              <p>请先选择一个组件</p>
-              <span>然后在这里配置属性、动画或事件</span>
+          <div v-else :class="$style.emptyState">
+            <div :class="$style.emptyIcon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M12 3.5a2.2 2.2 0 0 1 2.17 1.85l.06.35h1.02a2.25 2.25 0 0 1 2.25 2.25v1.02l.35.06A2.2 2.2 0 0 1 19.7 11.2a2.2 2.2 0 0 1-1.85 2.17l-.35.06v1.02a2.25 2.25 0 0 1-2.25 2.25h-1.02l-.06.35A2.2 2.2 0 0 1 12 18.9a2.2 2.2 0 0 1-2.17-1.85l-.06-.35H8.75a2.25 2.25 0 0 1-2.25-2.25v-1.02l-.35-.06A2.2 2.2 0 0 1 4.3 11.2a2.2 2.2 0 0 1 1.85-2.17l.35-.06V7.95A2.25 2.25 0 0 1 8.75 5.7h1.02l.06-.35A2.2 2.2 0 0 1 12 3.5Z" stroke="currentColor" stroke-width="1.5" />
+                <circle cx="12" cy="11.2" r="2.4" stroke="currentColor" stroke-width="1.5" />
+              </svg>
             </div>
-          </el-scrollbar>
-        </div>
+            <p>请先选择一个组件</p>
+            <span>然后在这里配置属性、动画或事件</span>
+          </div>
+        </el-scrollbar>
       </div>
     </div>
   </div>
 </template>
 
 <style lang="scss" module>
-// $boxShadow: -2px 0 4px 0 rgb(0 0 0 / 10%);
-
 .wrapper {
   width: 100%;
   height: 100%;
-  transition: width 0.5s;
-
-  // &.open-wrapper {
-  //   width: 350px;
-  // }
-}
-
-.drawer {
-  position: relative;
-  height: 100%;
-  width: 100%;
-  background-color: transparent;
-  transform: translateX(100%);
-  transition: transform 0.5s ease-in-out;
-  contain: layout;
-
-  &.is-open {
-    transform: translateX(0);
-
-    /* .floating-action-btn {
-      transform: translateX(0);
-    } */
-  }
-
-  /* &:hover {
-    .floating-action-btn {
-      transform: translateX(-20px);
-    }
-  } */
-}
-
-.floating-action-btn {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  display: flex;
-  width: 30px;
-  height: 30px;
-  z-index: 99;
-  border: var(--el-border);
-  border-radius: 50%;
-  cursor: pointer;
-  background: var(--el-bg-color);
-  transform: translateX(-50%);
-  // box-shadow: $boxShadow;
-  transition: transform 0.5s ease-in-out;
-  justify-content: center;
-  align-items: center;
-}
-
-.attrs {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  overflow-y: hidden;
-  background-color: var(--el-bg-color);
 }
 
 .panelShell {
@@ -203,24 +152,119 @@ watch(
   height: 100%;
   width: 100%;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.panelContent {
+  display: flex;
+  height: 0;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.contentScrollbar {
+  width: 100%;
+  height: 100%;
+  padding: 12px 14px 16px;
+  box-sizing: border-box;
+
+  :global(.el-scrollbar__view) {
+    min-height: 100%;
+  }
+
+  :global(.el-scrollbar__bar.is-vertical) {
+    right: 3px;
+  }
 }
 
 .tabBar {
   display: flex;
-  flex-wrap: wrap;
-  min-height: 40px;
+  min-height: 46px;
+  height: 46px;
   align-items: center;
-  gap: 2px;
-  padding-bottom: 10px;
-  margin-bottom: 8px;
+  gap: 4px;
+  padding: 0 12px;
+  margin: 0;
   border-bottom: 1px solid rgba(82, 124, 181, 0.13);
+  background: rgba(255, 255, 255, 0.34);
   flex-shrink: 0;
 
-  :deep(.el-button) {
-    height: 26px;
+  :global(.flex.items-center) {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  :global(.el-button) {
+    min-width: 0;
     padding: 0 10px;
-    border-radius: 999px;
+    border-radius: 7px;
+    color: #6f829d;
     font-size: 12px;
+    font-weight: 600;
+    line-height: 30px;
+    transition:
+      color 0.3s ease,
+      background 0.3s ease;
+
+    &:hover {
+      color: var(--el-color-primary);
+      background: rgba(37, 99, 235, 0.06);
+    }
+  }
+
+  :global(.el-button.active),
+  :global(.el-button--primary) {
+    color: var(--el-color-primary) !important;
+  }
+}
+
+:global(html.dark) {
+  .tabBar {
+    border-bottom-color: rgba(148, 163, 184, 0.16);
+    background: rgba(15, 23, 42, 0.32);
+
+    :global(.el-button) {
+      color: #94a3b8;
+
+      &:hover {
+        color: #93c5fd;
+        background: rgba(96, 165, 250, 0.1);
+      }
+    }
+
+    :global(.el-button.active),
+    :global(.el-button--primary) {
+      background: rgba(96, 165, 250, 0.14) !important;
+      color: #93c5fd !important;
+    }
+  }
+
+  .emptyState {
+    color: #94a3b8;
+
+    p {
+      color: #dbeafe;
+    }
+
+    span {
+      color: #94a3b8;
+    }
+  }
+
+  .emptyIcon {
+    border-color: rgba(96, 165, 250, 0.2);
+    background: rgba(96, 165, 250, 0.1);
+    color: #93c5fd;
   }
 }
 
@@ -230,6 +274,8 @@ watch(
   align-items: center;
   justify-content: center;
   flex-direction: column;
+  padding: 40px 20px;
+  box-sizing: border-box;
   text-align: center;
   color: #7a8aa3;
 
@@ -247,9 +293,15 @@ watch(
 }
 
 .emptyIcon {
-  margin-bottom: 12px;
-  font-size: 30px;
-  line-height: 1;
-  filter: grayscale(1) opacity(0.5);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  border-radius: 14px;
+  background: rgba(37, 99, 235, 0.06);
+  color: #5b8fe3;
 }
 </style>

@@ -1,1 +1,0 @@
-export { default as AttrSettingsToolbar } from './AttrSettingsToolbar.vue'

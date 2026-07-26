@@ -1,8 +1,7 @@
 <script lang="tsx" setup>
-import { onUnmounted, useTemplateRef } from 'vue'
+import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
+import { ref, useTemplateRef } from 'vue'
 import { SvgIcon } from '@/components/svg-icon'
-import { useControlStore } from '@/stores/controlStore'
-import { useWorkspaceStore } from '@/stores/workspaceStore'
 import RightAttributePanel from '@/visual-editor/ui/workbench/right-attribute-panel/RightAttributePanel.vue'
 import { ComponentList } from '../../workbench/component-list-new'
 import PcWrapper from './PcWrapper.vue'
@@ -12,20 +11,14 @@ defineOptions({
   name: 'SimulatorGridEditor',
 })
 
-const workspaceStore = useWorkspaceStore()
-const controlStore = useControlStore()
-
 const wrapperRef = useTemplateRef('wrapperRef')
-
-onUnmounted(() => {
-  workspaceStore.setCurrentApp(null)
-  controlStore.floatingSettingVisible = false
-})
+const leftDrawerOpen = ref(true)
+const rightDrawerOpen = ref(true)
 </script>
 
 <template>
   <div class="simulator-container visual-editor">
-    <aside class="simulator-rail">
+    <aside class="simulator-rail" :class="{ 'is-collapsed': !leftDrawerOpen }">
       <ComponentList
         @drag-start="() => wrapperRef?.drag()"
         @drag="() => wrapperRef?.drag()"
@@ -33,6 +26,17 @@ onUnmounted(() => {
         @dblclick-add="(block) => wrapperRef?.addBlock(block)"
       />
     </aside>
+
+    <button
+      class="drawer-toggle drawer-toggle--left"
+      :class="{ 'is-drawer-collapsed': !leftDrawerOpen }"
+      type="button"
+      :aria-label="leftDrawerOpen ? '收起组件库' : '展开组件库'"
+      :title="leftDrawerOpen ? '收起组件库' : '展开组件库'"
+      @click="leftDrawerOpen = !leftDrawerOpen"
+    >
+      <el-icon><ArrowLeft v-if="leftDrawerOpen" /><ArrowRight v-else /></el-icon>
+    </button>
 
     <main class="simulator-canvas-wrapper">
       <div class="simulator-canvas-toolbar">
@@ -48,7 +52,7 @@ onUnmounted(() => {
       </div>
     </main>
 
-    <aside class="simulator-setting-rail">
+    <aside class="simulator-setting-rail" :class="{ 'is-collapsed': !rightDrawerOpen }">
       <div class="simulator-setting-panel__header">
         <span class="simulator-setting-panel__icon">
           <SvgIcon :size="15" name="page-setting" />
@@ -59,6 +63,17 @@ onUnmounted(() => {
         <RightAttributePanel />
       </div>
     </aside>
+
+    <button
+      class="drawer-toggle drawer-toggle--right"
+      :class="{ 'is-drawer-collapsed': !rightDrawerOpen }"
+      type="button"
+      :aria-label="rightDrawerOpen ? '收起属性配置' : '展开属性配置'"
+      :title="rightDrawerOpen ? '收起属性配置' : '展开属性配置'"
+      @click="rightDrawerOpen = !rightDrawerOpen"
+    >
+      <el-icon><ArrowRight v-if="rightDrawerOpen" /><ArrowLeft v-else /></el-icon>
+    </button>
   </div>
 </template>
 
@@ -91,19 +106,99 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.simulator-rail {
+.simulator-rail,
+.simulator-setting-rail {
+  position: relative;
+  z-index: 5;
   width: 300px;
   min-width: 300px;
   flex-shrink: 0;
-  height: 100%;
-  overflow: hidden;
+  overflow: visible;
   border-radius: 16px;
   border: 1px solid rgba(82, 124, 181, 0.16);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 251, 255, 0.9)), var(--el-bg-color);
   box-shadow: 0 18px 40px rgba(31, 58, 112, 0.08);
+  transition:
+    width 0.3s ease,
+    min-width 0.3s ease,
+    border-color 0.3s ease,
+    background 0.3s ease,
+    box-shadow 0.3s ease;
+
+  &.is-collapsed {
+    width: 0;
+    min-width: 0;
+    overflow: visible;
+    border-color: transparent;
+    box-shadow: none;
+  }
+}
+
+.simulator-rail.is-collapsed > :not(.drawer-toggle),
+.simulator-setting-rail.is-collapsed > :not(.drawer-toggle) {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.drawer-toggle {
+  position: absolute;
+  top: 50%;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 56px;
+  min-width: 28px;
+  padding: 0;
+  border: 1px solid rgba(82, 124, 181, 0.28);
+  background: var(--el-bg-color);
+  color: var(--el-text-color-secondary);
+  box-shadow: 0 4px 12px rgba(31, 58, 112, 0.12);
+  pointer-events: auto;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color 0.3s ease,
+    background 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--el-color-primary);
+    border-color: var(--el-color-primary-light-5);
+    background: var(--el-color-primary-light-9);
+    box-shadow: 0 6px 16px rgba(31, 58, 112, 0.16);
+    outline: none;
+  }
+}
+
+.drawer-toggle--left {
+  left: 300px;
+  right: auto;
+  border-left: 0;
+  border-radius: 0 8px 8px 0;
+
+  &.is-drawer-collapsed {
+    left: 0;
+  }
+}
+
+.drawer-toggle--right {
+  right: 300px;
+  left: auto;
+  border-right: 0;
+  border-radius: 8px 0 0 8px;
+
+  &.is-drawer-collapsed {
+    right: 0;
+  }
 }
 
 .simulator-canvas-wrapper {
+  position: relative;
+  z-index: 1;
   flex: 1;
   min-width: 0;
   height: 100%;
@@ -167,17 +262,8 @@ onUnmounted(() => {
 }
 
 .simulator-setting-rail {
-  width: 300px;
-  min-width: 300px;
-  flex-shrink: 0;
-  height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  border-radius: 16px;
-  border: 1px solid rgba(82, 124, 181, 0.16);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 251, 255, 0.9)), var(--el-bg-color);
-  box-shadow: 0 18px 40px rgba(31, 58, 112, 0.08);
 }
 
 .simulator-setting-panel__header {
@@ -212,7 +298,7 @@ onUnmounted(() => {
 .simulator-setting-panel__body {
   flex: 1;
   min-height: 0;
-  padding: 4px 16px 12px;
+  padding: 4px 0 12px;
 }
 
 :global(html.dark) .simulator-rail,
