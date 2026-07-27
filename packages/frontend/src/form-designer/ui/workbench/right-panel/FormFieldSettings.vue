@@ -19,6 +19,15 @@ const emit = defineEmits<{
   (e: 'update', vid: string, patch: Partial<FormField>): void
 }>()
 
+function resolveDatasetFieldId(fieldIdOrName: string, fields: ApiDatasetField[]) {
+  if (!fieldIdOrName)
+    return ''
+  if (fields.some(field => field.id === fieldIdOrName))
+    return fieldIdOrName
+  const matched = fields.find(field => field.name === fieldIdOrName)
+  return matched?.id ?? fieldIdOrName
+}
+
 /** 本地编辑缓存 */
 const local = ref<FormField | null>(null)
 
@@ -107,6 +116,8 @@ function syncImmediate(path: string, value: any) {
   emit('update', local.value._vid, patch)
 }
 
+const activeTab = ref<'properties' | 'binding'>('properties')
+
 /** 组件定义 */
 const componentDef = computed(() => {
   if (!local.value)
@@ -194,7 +205,7 @@ const colSpanOptions = Array.from({ length: 24 }, (_, index) => {
 const datasets = ref<ApiDatasetListItem[]>([])
 const datasetLoading = ref(false)
 const boundDatasetId = ref('')
-const boundFieldName = ref('')
+const boundFieldId = ref('')
 
 /** 选定数据集的字段列表 */
 const datasetFields = ref<ApiDatasetField[]>([])
@@ -219,7 +230,7 @@ async function loadDatasets() {
 async function onDatasetSelect(datasetId: string, options?: { preserveField?: boolean }) {
   boundDatasetId.value = datasetId
   if (!options?.preserveField) {
-    boundFieldName.value = ''
+    boundFieldId.value = ''
   }
   datasetFields.value = []
 
@@ -234,6 +245,10 @@ async function onDatasetSelect(datasetId: string, options?: { preserveField?: bo
   try {
     const detail = await fetchDatasetDetail(datasetId)
     datasetFields.value = detail.fields || []
+    if (options?.preserveField && local.value?.datasetBinding) {
+      const binding = local.value.datasetBinding as { datasetFieldId?: string, field?: string } | null
+      boundFieldId.value = resolveDatasetFieldId(binding?.datasetFieldId || binding?.field || '', datasetFields.value)
+    }
   }
   catch {
     ElMessage.error('加载数据集字段失败')
@@ -244,12 +259,12 @@ async function onDatasetSelect(datasetId: string, options?: { preserveField?: bo
 }
 
 /** 选择绑定字段 */
-function onFieldBind(fieldName: string) {
-  boundFieldName.value = fieldName
-  if (fieldName && boundDatasetId.value) {
+function onFieldBind(fieldId: string) {
+  boundFieldId.value = fieldId
+  if (fieldId && boundDatasetId.value) {
     syncImmediate('datasetBinding', {
       datasetId: boundDatasetId.value,
-      field: fieldName,
+      datasetFieldId: fieldId,
     })
   }
   else {
@@ -260,7 +275,7 @@ function onFieldBind(fieldName: string) {
 /** 清除绑定 */
 function clearBinding() {
   boundDatasetId.value = ''
-  boundFieldName.value = ''
+  boundFieldId.value = ''
   datasetFields.value = []
   if (local.value) {
     syncImmediate('datasetBinding', null)
@@ -269,16 +284,16 @@ function clearBinding() {
 
 /** 同步本地绑定状态 */
 function syncBindingFromField(field: FormField) {
-  const binding = field.datasetBinding as { datasetId?: string, field?: string } | undefined
+  const binding = field.datasetBinding as { datasetId?: string, datasetFieldId?: string, field?: string } | undefined
   if (binding?.datasetId) {
     boundDatasetId.value = binding.datasetId
-    boundFieldName.value = binding.field || ''
+    boundFieldId.value = resolveDatasetFieldId(binding.datasetFieldId || binding.field || '', datasetFields.value)
     // 异步加载对应数据集的字段，同时保留已绑定字段回显
     onDatasetSelect(binding.datasetId, { preserveField: true })
   }
   else {
     boundDatasetId.value = ''
-    boundFieldName.value = ''
+    boundFieldId.value = ''
     datasetFields.value = []
   }
 }
@@ -318,277 +333,287 @@ onBeforeUnmount(() => {
     <!-- 属性表单 -->
     <el-scrollbar v-else class="flex-1">
       <div class="p-3">
-        <div class="mb-3 flex items-center justify-between">
-          <span class="form-section-title">基础属性</span>
-          <el-tag v-if="componentDef" type="info" effect="plain">
-            {{ componentDef.label }}
-          </el-tag>
-        </div>
-
-        <el-form label-position="top">
-          <el-form-item label="标签名">
-            <el-input
-              :model-value="local.label"
-              placeholder="请输入标签名"
-              @input="syncToParent('label', $event)"
-            />
-          </el-form-item>
-
-          <el-form-item label="字段标识">
-            <el-input
-              :model-value="local.field"
-              placeholder="数据字段名"
-              @input="syncToParent('field', $event)"
-            />
-          </el-form-item>
-
-          <el-form-item label="占位提示">
-            <el-input
-              :model-value="local.placeholder"
-              placeholder="请输入占位提示"
-              @input="syncToParent('placeholder', $event)"
-            />
-          </el-form-item>
-
-          <el-form-item label="默认值">
-            <el-input
-              :model-value="local.defaultValue"
-              placeholder="请输入默认值"
-              @input="syncToParent('defaultValue', $event)"
-            />
-          </el-form-item>
-
-          <div class="form-section-title mb-2 mt-4">
-            布局属性
-          </div>
-
-          <el-form-item label="栅格宽度">
-            <el-select :model-value="local.colSpan" @change="syncImmediate('colSpan', $event)">
-              <el-option
-                v-for="opt in colSpanOptions"
-                :key="opt.value"
-                :label="opt.label"
-                :value="opt.value"
-              />
-            </el-select>
-          </el-form-item>
-
-          <div class="form-section-title mb-2 mt-4">
-            功能属性
-          </div>
-
-          <div class="mb-3 flex items-center justify-between">
-            <span class="text-xs text-[var(--el-text-color-regular)]">必填</span>
-            <el-switch
-              :model-value="local.required"
-              @change="syncImmediate('required', $event)"
-            />
-          </div>
-
-          <div class="mb-3 flex items-center justify-between">
-            <span class="text-xs text-[var(--el-text-color-regular)]">禁用</span>
-            <el-switch
-              :model-value="local.disabled"
-              @change="syncImmediate('disabled', $event)"
-            />
-          </div>
-
-          <div class="mb-3 flex items-center justify-between">
-            <span class="text-xs text-[var(--el-text-color-regular)]">隐藏</span>
-            <el-switch
-              :model-value="local.hidden"
-              @change="syncImmediate('hidden', $event)"
-            />
-          </div>
-
-          <div class="mb-3 flex items-center justify-between">
-            <span class="text-xs text-[var(--el-text-color-regular)]">只读</span>
-            <el-switch
-              :model-value="local.readonly"
-              @change="syncImmediate('readonly', $event)"
-            />
-          </div>
-
-          <div class="form-section-title mb-2 mt-4">
-            表单项扩展（ElFormItem）
-          </div>
-
-          <el-form-item label="标签宽度 (px)">
-            <el-input-number
-              :model-value="local.labelWidth"
-              :min="0"
-              :max="300"
-              :step="10"
-              placeholder="0 表示继承全局"
-              @change="syncImmediate('labelWidth', $event || undefined)"
-            />
-            <div class="mt-1 text-xs text-[var(--el-text-color-placeholder)]">
-              留空或 0 表示使用表单全局标签宽度
+        <el-tabs v-model="activeTab">
+          <el-tab-pane label="字段属性" name="properties">
+            <div class="mb-3 flex items-center justify-between">
+              <span class="form-section-title">基础属性</span>
+              <el-tag v-if="componentDef" type="info" effect="plain">
+                {{ componentDef.label }}
+              </el-tag>
             </div>
-          </el-form-item>
 
-          <el-form-item label="尺寸">
-            <el-select
-              :model-value="local.size || ''"
-              placeholder="继承全局"
-              clearable
-              @change="syncImmediate('size', $event || undefined)"
-            >
-              <el-option label="大" value="large" />
-              <el-option label="默认" value="default" />
-              <el-option label="小" value="small" />
-            </el-select>
-            <div class="mt-1 text-xs text-[var(--el-text-color-placeholder)]">
-              不选则继承表单全局尺寸
-            </div>
-          </el-form-item>
-
-          <div class="mb-3 flex items-center justify-between">
-            <span class="text-xs text-[var(--el-text-color-regular)]">显示校验信息</span>
-            <el-switch
-              :model-value="local.showMessage"
-              @change="syncImmediate('showMessage', $event ?? undefined)"
-            />
-          </div>
-
-          <el-form-item label="自定义错误信息">
-            <el-input
-              :model-value="local.error"
-              placeholder="留空则使用校验规则中的提示"
-              @input="syncToParent('error', $event || undefined)"
-            />
-          </el-form-item>
-
-          <div class="form-section-title mb-2 mt-4">
-            数据绑定
-          </div>
-
-          <el-form-item label="绑定数据集">
-            <div class="flex items-center gap-1">
-              <el-select
-                :model-value="boundDatasetId"
-                placeholder="选择数据集"
-                clearable
-                filterable
-                class="flex-1 w-[155px]"
-                :loading="datasetLoading"
-                @change="onDatasetSelect"
-              >
-                <el-option v-for="ds in datasets" :key="ds.id" :label="ds.name" :value="ds.id" />
-              </el-select>
-              <el-button
-                text
-                :icon="Refresh"
-                :loading="datasetLoading"
-                @click="loadDatasets"
-              />
-            </div>
-          </el-form-item>
-
-          <el-form-item v-if="boundDatasetId" label="绑定字段">
-            <div class="flex items-center gap-1">
-              <el-select
-                :model-value="boundFieldName"
-                placeholder="选择字段"
-                clearable
-                class="flex-1"
-                :loading="fieldsLoading"
-                @change="onFieldBind"
-              >
-                <el-option
-                  v-for="f in datasetFields"
-                  :key="f.name"
-                  :label="`${f.name} (${f.field_type})`"
-                  :value="f.name"
-                />
-              </el-select>
-              <el-button text :icon="Delete" type="danger" @click="clearBinding" />
-            </div>
-            <div class="mt-1 text-xs text-[var(--el-text-color-placeholder)]">
-              将字段值与数据集{{ boundFieldName ? `的"${boundFieldName}"字段` : "" }}关联
-            </div>
-          </el-form-item>
-
-          <!-- 选项编辑（select/radio/checkbox） -->
-          <template v-if="showOptionsEditor">
-            <div class="form-section-title mb-2 mt-4 flex items-center justify-between">
-              <span>选项列表</span>
-              <el-button text :icon="Plus" type="primary" @click="addOption">
-                添加
-              </el-button>
-            </div>
-            <div class="mb-2 space-y-1">
-              <div v-for="(opt, idx) in local.options" :key="idx" class="flex items-center gap-1">
+            <el-form label-position="top">
+              <el-form-item label="标签名">
                 <el-input
-                  :model-value="opt.label"
-                  placeholder="标签"
-                  class="flex-1"
-                  @input="onOptionChange(idx, 'label', $event)"
+                  :model-value="local.label"
+                  placeholder="请输入标签名"
+                  @input="syncToParent('label', $event)"
                 />
+              </el-form-item>
+
+              <el-form-item label="字段标识">
                 <el-input
-                  :model-value="opt.value"
-                  placeholder="值"
-                  class="w-20"
-                  @input="onOptionChange(idx, 'value', $event)"
+                  :model-value="local.field"
+                  placeholder="数据字段名"
+                  @input="syncToParent('field', $event)"
                 />
-                <el-button
-                  text
-                  :icon="Delete"
-                  type="danger"
-                  @click="removeOption(idx)"
+              </el-form-item>
+
+              <el-form-item label="占位提示">
+                <el-input
+                  :model-value="local.placeholder"
+                  placeholder="请输入占位提示"
+                  @input="syncToParent('placeholder', $event)"
                 />
+              </el-form-item>
+
+              <el-form-item label="默认值">
+                <el-input
+                  :model-value="local.defaultValue"
+                  placeholder="请输入默认值"
+                  @input="syncToParent('defaultValue', $event)"
+                />
+              </el-form-item>
+
+              <div class="form-section-title mb-2 mt-4">
+                布局属性
               </div>
-            </div>
-          </template>
 
-          <!-- 校验规则 -->
-          <div class="form-section-title mb-2 mt-4 flex items-center justify-between">
-            <span>校验规则</span>
-            <el-button text :icon="Plus" type="primary" @click="addRule">
-              添加
-            </el-button>
-          </div>
-          <div class="space-y-2">
-            <div
-              v-for="(rule, idx) in local.rules"
-              :key="idx"
-              class="rounded border border-[var(--el-border-color-light)] p-2"
-            >
-              <div class="mb-1 flex items-center justify-between">
-                <el-select
-                  :model-value="rule.type"
-                  class="flex-1"
-                  @change="onRuleChange(idx, 'type', $event)"
-                >
+              <el-form-item label="栅格宽度">
+                <el-select :model-value="local.colSpan" @change="syncImmediate('colSpan', $event)">
                   <el-option
-                    v-for="rt in ruleTypes"
-                    :key="rt.value"
-                    :label="rt.label"
-                    :value="rt.value"
+                    v-for="opt in colSpanOptions"
+                    :key="opt.value"
+                    :label="opt.label"
+                    :value="opt.value"
                   />
                 </el-select>
-                <el-button
-                  text
-                  :icon="Delete"
-                  type="danger"
-                  @click="removeRule(idx)"
+              </el-form-item>
+
+              <div class="form-section-title mb-2 mt-4">
+                功能属性
+              </div>
+
+              <div class="mb-3 flex items-center justify-between">
+                <span class="text-xs text-[var(--el-text-color-regular)]">必填</span>
+                <el-switch
+                  :model-value="local.required"
+                  @change="syncImmediate('required', $event)"
                 />
               </div>
-              <el-input
-                :model-value="rule.message"
-                placeholder="错误提示信息"
-                class="mb-1"
-                @input="onRuleChange(idx, 'message', $event)"
-              />
-              <el-input
-                v-if="!['required', 'email', 'url', 'integer', 'float'].includes(rule.type)"
-                :model-value="rule.value"
-                placeholder="校验值"
-                @input="onRuleChange(idx, 'value', $event)"
-              />
+
+              <div class="mb-3 flex items-center justify-between">
+                <span class="text-xs text-[var(--el-text-color-regular)]">禁用</span>
+                <el-switch
+                  :model-value="local.disabled"
+                  @change="syncImmediate('disabled', $event)"
+                />
+              </div>
+
+              <div class="mb-3 flex items-center justify-between">
+                <span class="text-xs text-[var(--el-text-color-regular)]">隐藏</span>
+                <el-switch
+                  :model-value="local.hidden"
+                  @change="syncImmediate('hidden', $event)"
+                />
+              </div>
+
+              <div class="mb-3 flex items-center justify-between">
+                <span class="text-xs text-[var(--el-text-color-regular)]">只读</span>
+                <el-switch
+                  :model-value="local.readonly"
+                  @change="syncImmediate('readonly', $event)"
+                />
+              </div>
+
+              <div class="form-section-title mb-2 mt-4">
+                表单项扩展（ElFormItem）
+              </div>
+
+              <el-form-item label="标签宽度 (px)">
+                <el-input-number
+                  :model-value="local.labelWidth"
+                  :min="0"
+                  :max="300"
+                  :step="10"
+                  placeholder="0 表示继承全局"
+                  @change="syncImmediate('labelWidth', $event || undefined)"
+                />
+                <div class="mt-1 text-xs text-[var(--el-text-color-placeholder)]">
+                  留空或 0 表示使用表单全局标签宽度
+                </div>
+              </el-form-item>
+
+              <el-form-item label="尺寸">
+                <el-select
+                  :model-value="local.size || ''"
+                  placeholder="继承全局"
+                  clearable
+                  @change="syncImmediate('size', $event || undefined)"
+                >
+                  <el-option label="大" value="large" />
+                  <el-option label="默认" value="default" />
+                  <el-option label="小" value="small" />
+                </el-select>
+                <div class="mt-1 text-xs text-[var(--el-text-color-placeholder)]">
+                  不选则继承表单全局尺寸
+                </div>
+              </el-form-item>
+
+              <div class="mb-3 flex items-center justify-between">
+                <span class="text-xs text-[var(--el-text-color-regular)]">显示校验信息</span>
+                <el-switch
+                  :model-value="local.showMessage"
+                  @change="syncImmediate('showMessage', $event ?? undefined)"
+                />
+              </div>
+
+              <el-form-item label="自定义错误信息">
+                <el-input
+                  :model-value="local.error"
+                  placeholder="留空则使用校验规则中的提示"
+                  @input="syncToParent('error', $event || undefined)"
+                />
+              </el-form-item>
+
+              <!-- 选项编辑（select/radio/checkbox） -->
+              <template v-if="showOptionsEditor">
+                <div class="form-section-title mb-2 mt-4 flex items-center justify-between">
+                  <span>选项列表</span>
+                  <el-button text :icon="Plus" type="primary" @click="addOption">
+                    添加
+                  </el-button>
+                </div>
+                <div class="mb-2 space-y-1">
+                  <div v-for="(opt, idx) in local.options" :key="idx" class="flex items-center gap-1">
+                    <el-input
+                      :model-value="opt.label"
+                      placeholder="标签"
+                      class="flex-1"
+                      @input="onOptionChange(idx, 'label', $event)"
+                    />
+                    <el-input
+                      :model-value="opt.value"
+                      placeholder="值"
+                      class="w-20"
+                      @input="onOptionChange(idx, 'value', $event)"
+                    />
+                    <el-button
+                      text
+                      :icon="Delete"
+                      type="danger"
+                      @click="removeOption(idx)"
+                    />
+                  </div>
+                </div>
+              </template>
+
+              <!-- 校验规则 -->
+              <div class="form-section-title mb-2 mt-4 flex items-center justify-between">
+                <span>校验规则</span>
+                <el-button text :icon="Plus" type="primary" @click="addRule">
+                  添加
+                </el-button>
+              </div>
+              <div class="space-y-2">
+                <div
+                  v-for="(rule, idx) in local.rules"
+                  :key="idx"
+                  class="rounded border border-[var(--el-border-color-light)] p-2"
+                >
+                  <div class="mb-1 flex items-center justify-between">
+                    <el-select
+                      :model-value="rule.type"
+                      class="flex-1"
+                      @change="onRuleChange(idx, 'type', $event)"
+                    >
+                      <el-option
+                        v-for="rt in ruleTypes"
+                        :key="rt.value"
+                        :label="rt.label"
+                        :value="rt.value"
+                      />
+                    </el-select>
+                    <el-button
+                      text
+                      :icon="Delete"
+                      type="danger"
+                      @click="removeRule(idx)"
+                    />
+                  </div>
+                  <el-input
+                    :model-value="rule.message"
+                    placeholder="错误提示信息"
+                    class="mb-1"
+                    @input="onRuleChange(idx, 'message', $event)"
+                  />
+                  <el-input
+                    v-if="!['required', 'email', 'url', 'integer', 'float'].includes(rule.type)"
+                    :model-value="rule.value"
+                    placeholder="校验值"
+                    @input="onRuleChange(idx, 'value', $event)"
+                  />
+                </div>
+              </div>
+            </el-form>
+          </el-tab-pane>
+
+          <el-tab-pane label="数据绑定" name="binding">
+            <div class="space-y-4 pt-2">
+              <div class="text-xs text-[var(--el-text-color-placeholder)]">
+                将表单字段绑定到数据集字段，字段绑定会在保存时一并持久化。
+              </div>
+
+              <el-form label-position="top">
+                <el-form-item label="绑定数据集">
+                  <div class="flex items-center gap-1">
+                    <el-select
+                      :model-value="boundDatasetId"
+                      placeholder="选择数据集"
+                      clearable
+                      filterable
+                      class="flex-1 w-[155px]"
+                      :loading="datasetLoading"
+                      @change="onDatasetSelect"
+                    >
+                      <el-option v-for="ds in datasets" :key="ds.id" :label="ds.name" :value="ds.id" />
+                    </el-select>
+                    <el-button
+                      text
+                      :icon="Refresh"
+                      :loading="datasetLoading"
+                      @click="loadDatasets"
+                    />
+                  </div>
+                </el-form-item>
+
+                <el-form-item v-if="boundDatasetId" label="绑定字段">
+                  <div class="flex items-center gap-1">
+                    <el-select
+                      :model-value="boundFieldId"
+                      placeholder="选择字段"
+                      clearable
+                      class="flex-1"
+                      :loading="fieldsLoading"
+                      @change="onFieldBind"
+                    >
+                      <el-option
+                        v-for="f in datasetFields"
+                        :key="f.id"
+                        :label="`${f.name} (${f.field_type})`"
+                        :value="f.id"
+                      />
+                    </el-select>
+                    <el-button text :icon="Delete" type="danger" @click="clearBinding" />
+                  </div>
+                  <div class="mt-1 text-xs text-[var(--el-text-color-placeholder)]">
+                    将字段值与数据集{{ boundFieldId ? `的字段ID(${boundFieldId})` : "" }}关联
+                  </div>
+                </el-form-item>
+              </el-form>
             </div>
-          </div>
-        </el-form>
+          </el-tab-pane>
+        </el-tabs>
       </div>
     </el-scrollbar>
   </div>

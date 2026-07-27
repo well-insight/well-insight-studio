@@ -3,6 +3,20 @@ import { generateSnowflakeId } from "../utils/snowflake";
 
 export type PageType = "visualization" | "form" | "report";
 export type PageStatus = "draft" | "published";
+export type PageDatasetBindingMode = "create" | "edit" | "detail" | "list";
+
+export interface PageDatasetFieldMapItem {
+  formFieldId: string;
+  datasetFieldId: string;
+}
+
+export interface PageDatasetBinding {
+  datasetId: string;
+  mode: PageDatasetBindingMode;
+  fieldMap: PageDatasetFieldMapItem[];
+}
+
+export type PageDatasetBindings = PageDatasetBinding[];
 
 export interface Page {
   id: string;
@@ -24,7 +38,7 @@ export interface PagePublic {
   name: string;
   type: PageType;
   dsl: Record<string, unknown>;
-  dataset_bindings?: Record<string, unknown> | null;
+  dataset_bindings?: PageDatasetBindings | null;
   preview_url?: string | null;
   status: PageStatus;
   created_by: string;
@@ -40,30 +54,88 @@ export const PAGE_TYPE_LABELS: Record<PageType, string> = {
   report: "报表",
 };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function parseJsonField(raw: string): unknown {
+  try {
+    return JSON.parse(raw);
+  }
+  catch {
+    return {};
+  }
+}
+
+function normalizeFieldMapItem(value: unknown): PageDatasetFieldMapItem | null {
+  if (!isRecord(value))
+    return null;
+  const formFieldId = typeof value.formFieldId === "string" ? value.formFieldId.trim() : "";
+  const datasetFieldId = typeof value.datasetFieldId === "string" ? value.datasetFieldId.trim() : "";
+  if (!formFieldId || !datasetFieldId)
+    return null;
+  return { formFieldId, datasetFieldId };
+}
+
+export function normalizePageDatasetBindings(value: unknown): PageDatasetBindings | null {
+  if (value == null)
+    return null;
+  if (Array.isArray(value)) {
+    const items = value
+      .map((item) => {
+        if (!isRecord(item))
+          return null;
+        const datasetId = typeof item.datasetId === "string" ? item.datasetId.trim() : "";
+        const mode = item.mode;
+        const fieldMapValue = Array.isArray(item.fieldMap) ? item.fieldMap : [];
+        if (!datasetId || (mode !== "create" && mode !== "edit" && mode !== "detail" && mode !== "list"))
+          return null;
+        return {
+          datasetId,
+          mode,
+          fieldMap: fieldMapValue.map(normalizeFieldMapItem).filter((entry): entry is PageDatasetFieldMapItem => Boolean(entry)),
+        };
+      })
+      .filter((item): item is PageDatasetBinding => Boolean(item));
+    return items.length > 0 ? items : null;
+  }
+  if (isRecord(value)) {
+    const datasetId = typeof value.datasetId === "string" ? value.datasetId.trim() : "";
+    const mode = value.mode;
+    const fieldMapValue = Array.isArray(value.fieldMap) ? value.fieldMap : [];
+    if (!datasetId || (mode !== "create" && mode !== "edit" && mode !== "detail" && mode !== "list"))
+      return null;
+    const binding: PageDatasetBinding = {
+      datasetId,
+      mode,
+      fieldMap: fieldMapValue.map(normalizeFieldMapItem).filter((entry): entry is PageDatasetFieldMapItem => Boolean(entry)),
+    };
+    return [binding];
+  }
+  return null;
+}
+
 function parseRow(row: Record<string, unknown>): PagePublic {
+  const datasetBindings = normalizePageDatasetBindings(
+    row.dataset_bindings ? parseJsonField(String(row.dataset_bindings)) : null,
+  );
   return {
     id: String(row.id),
     folder_id: row.folder_id ? String(row.folder_id) : null,
     name: String(row.name),
     type: row.type as PageType,
-    dsl: parseJsonField(String(row.dsl || "{}")),
-    dataset_bindings: row.dataset_bindings
-      ? parseJsonField(String(row.dataset_bindings))
-      : null,
+    dsl: isRecord(parseJsonField(String(row.dsl || "{}"))) ? parseJsonField(String(row.dsl || "{}")) : {},
+    dataset_bindings: datasetBindings,
     preview_url: row.preview_url ? String(row.preview_url) : null,
     status: row.status as PageStatus,
     created_by: String(row.created_by),
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
   };
-}
-
-function parseJsonField(raw: string): Record<string, unknown> {
-  try {
-    return JSON.parse(raw) as Record<string, unknown>;
-  } catch {
-    return {};
-  }
 }
 
 export class PageModel {
@@ -73,13 +145,14 @@ export class PageModel {
     name: string;
     type: PageType;
     dsl?: Record<string, unknown>;
-    dataset_bindings?: Record<string, unknown>;
+    dataset_bindings?: PageDatasetBindings | Record<string, unknown> | null;
     preview_url?: string;
     status?: PageStatus;
     created_by: string;
   }): PagePublic {
     const id = generateSnowflakeId();
     const now = new Date().toISOString();
+    const datasetBindings = normalizePageDatasetBindings(data.dataset_bindings);
 
     db.prepare(
       `INSERT INTO pages (id, folder_id, name, type, dsl, dataset_bindings, preview_url, status, created_by, created_at, updated_at)
@@ -90,7 +163,7 @@ export class PageModel {
       data.name,
       data.type,
       JSON.stringify(data.dsl ?? {}),
-      data.dataset_bindings ? JSON.stringify(data.dataset_bindings) : null,
+      datasetBindings !== null ? JSON.stringify(datasetBindings) : null,
       data.preview_url ?? null,
       data.status ?? "draft",
       data.created_by,
@@ -178,7 +251,7 @@ export class PageModel {
       type?: PageType;
       folder_id?: string | null;
       dsl?: Record<string, unknown>;
-      dataset_bindings?: Record<string, unknown>;
+      dataset_bindings?: PageDatasetBindings | Record<string, unknown> | null;
       preview_url?: string | null;
       status?: PageStatus;
     },
@@ -195,9 +268,9 @@ export class PageModel {
     const dsl = data.dsl !== undefined ? JSON.stringify(data.dsl) : String(existing.dsl);
     const datasetBindings =
       data.dataset_bindings !== undefined
-        ? JSON.stringify(data.dataset_bindings)
+        ? normalizePageDatasetBindings(data.dataset_bindings)
         : existing.dataset_bindings
-          ? String(existing.dataset_bindings)
+          ? normalizePageDatasetBindings(parseJsonField(String(existing.dataset_bindings)))
           : null;
     const previewUrl =
       data.preview_url !== undefined ? data.preview_url : existing.preview_url ?? null;
@@ -205,7 +278,7 @@ export class PageModel {
 
     db.prepare(
       `UPDATE pages SET folder_id = ?, name = ?, type = ?, dsl = ?, dataset_bindings = ?, preview_url = ?, status = ?, updated_at = ? WHERE id = ?`,
-    ).run(folderId, name, type, dsl, datasetBindings, previewUrl, status, now, id);
+    ).run(folderId, name, type, dsl, datasetBindings !== null ? JSON.stringify(datasetBindings) : null, previewUrl, status, now, id);
 
     const row = db.prepare("SELECT * FROM pages WHERE id = ?").get(id) as Record<string, unknown>;
     return parseRow(row);

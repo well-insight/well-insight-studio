@@ -1,4 +1,4 @@
-import type { PageType, PageStatus, ApiPageDetail, ApiPageListItem } from '@/api/pages'
+import type { PageType, PageStatus, ApiPageDetail, ApiPageListItem, PageDatasetBindings } from '@/api/pages'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { fetchPage, fetchPageList, createPage, updatePage, deletePage } from '@/api/pages'
@@ -18,7 +18,7 @@ export const usePageStore = defineStore('page', () => {
     name: string
     type: PageType
     dsl?: Record<string, unknown>
-    dataset_bindings?: Record<string, unknown>
+    dataset_bindings?: PageDatasetBindings
     preview_url?: string
     status?: PageStatus
   }): Promise<ApiPageDetail> {
@@ -29,7 +29,10 @@ export const usePageStore = defineStore('page', () => {
       return data
     }
     else {
-      const data = await createPage(params)
+      const data = await createPage({
+        ...params,
+        dataset_bindings: params.dataset_bindings ?? currentPage.value?.dataset_bindings ?? undefined,
+      })
       currentPage.value = data
       return data
     }

@@ -138,7 +138,7 @@ skill 通常会规定：
 
 | Skill           | 作用和适用场景                                                                                                                                                                                           |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `claude-api`    | Claude/Anthropic API 与 SDK 参考，包括模型、参数、流式输出、工具调用、缓存、MCP 和 token。涉及 Claude 时应优先加载。                                                                                     |
+| `claude-api`    | Claude/Anthropic API 与 SDK 参考：模型、参数、流式输出、工具调用、缓存、MCP 和 token。涉及 Claude 时应优先加载。                                                                                         |
 | `vite-docs`     | Vite 官方文档优先 skill。只要用户提到 Vite、vite.config、vite dev/build/preview、server/build/preview、插件、迁移、优化、部署、SSR、alias、base 或代理，就先联网读取最新官方文档再回答；不要凭记忆回答。 |
 | `mcp-builder`   | 使用 FastMCP 或 Node/TypeScript MCP SDK 构建 MCP 服务和高质量工具。                                                                                                                                      |
 | `skill-creator` | 创建、修改、评测和优化 Agent Skill，包括触发描述、工作流和性能对比。                                                                                                                                     |

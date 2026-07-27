@@ -4,6 +4,20 @@ const noGetCache = { cacheFor: 0 as const }
 
 export type PageType = 'visualization' | 'form' | 'report'
 export type PageStatus = 'draft' | 'published'
+export type PageDatasetBindingMode = 'create' | 'edit' | 'detail' | 'list'
+
+export interface PageDatasetFieldMapItem {
+  formFieldId: string
+  datasetFieldId: string
+}
+
+export interface PageDatasetBinding {
+  datasetId: string
+  mode: PageDatasetBindingMode
+  fieldMap: PageDatasetFieldMapItem[]
+}
+
+export type PageDatasetBindings = PageDatasetBinding[]
 
 export interface ApiPageDetail {
   id: string
@@ -11,7 +25,7 @@ export interface ApiPageDetail {
   name: string
   type: PageType
   dsl: Record<string, unknown>
-  dataset_bindings?: Record<string, unknown> | null
+  dataset_bindings?: PageDatasetBindings | null
   preview_url?: string | null
   status: PageStatus
   created_by: string
@@ -78,7 +92,7 @@ export function createPage(body: {
   name: string
   type: PageType
   dsl?: Record<string, unknown>
-  dataset_bindings?: Record<string, unknown>
+  dataset_bindings?: PageDatasetBindings
   preview_url?: string
   status?: PageStatus
 }) {
@@ -90,7 +104,7 @@ export function updatePage(id: string, body: {
   name?: string
   type?: PageType
   dsl?: Record<string, unknown>
-  dataset_bindings?: Record<string, unknown>
+  dataset_bindings?: PageDatasetBindings
   preview_url?: string | null
   status?: PageStatus
 }) {

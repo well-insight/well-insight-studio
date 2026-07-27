@@ -146,17 +146,26 @@ export function normalizeFormSchema(schema: FormSchema): FormSchema {
         ...(schema.config?.resetBtn ?? {}),
       },
     },
-    fields: (schema.fields ?? []).map((field, index) => ({
-      ...createFormField(field.componentKey || 'input'),
-      ...field,
-      props: {
-        ...cloneDeep(getFormComponent(field.componentKey)?.defaultProps ?? {}),
-        ...(field.props ?? {}),
-      },
-      options: field.options ? cloneDeep(field.options) : getDefaultOptions(field.componentKey),
-      rules: field.rules ?? [],
-      sort: typeof field.sort === 'number' ? field.sort : index,
-    })),
+    fields: (schema.fields ?? []).map((field, index) => {
+      const normalizedBinding = field.datasetBinding
+        ? {
+            datasetId: field.datasetBinding.datasetId,
+            datasetFieldId: field.datasetBinding.datasetFieldId ?? field.datasetBinding.field ?? '',
+          }
+        : null
+      return {
+        ...createFormField(field.componentKey || 'input'),
+        ...field,
+        datasetBinding: normalizedBinding,
+        props: {
+          ...cloneDeep(getFormComponent(field.componentKey)?.defaultProps ?? {}),
+          ...(field.props ?? {}),
+        },
+        options: field.options ? cloneDeep(field.options) : getDefaultOptions(field.componentKey),
+        rules: field.rules ?? [],
+        sort: typeof field.sort === 'number' ? field.sort : index,
+      }
+    }),
   }
 }
 

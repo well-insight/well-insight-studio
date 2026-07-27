@@ -135,7 +135,9 @@ export interface FormField {
   /** 数据集绑定 */
   datasetBinding?: {
     datasetId: string
-    field: string
+    datasetFieldId: string
+    /** 兼容旧数据：历史上用字段名存储 */
+    field?: string
   } | null
   /** ===== ElFormItem 扩展属性 ===== */
   /** 单独设置标签宽度（px）— 对应 ElFormItem label-width */

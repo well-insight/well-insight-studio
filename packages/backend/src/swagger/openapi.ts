@@ -188,32 +188,25 @@ export function getOpenApiSpec(port: number) {
             details: { type: "array", items: { type: "object" } },
           },
         },
-        NewPage: {
+        PageDatasetFieldMapItem: {
           type: "object",
           properties: {
-            id: { type: "string", description: "页面 ID" },
-            name: { type: "string", description: "页面名称" },
-            type: {
-              type: "string",
-              enum: ["visualization", "form", "report"],
-              description: "页面类型：可视化/表单/报表",
-            },
-            dsl: { type: "object", description: "页面 DSL 内容" },
-            dataset_bindings: {
-              type: "object",
-              nullable: true,
-              description: "数据集绑定配置",
-            },
-            preview_url: { type: "string", nullable: true },
-            status: {
-              type: "string",
-              enum: ["draft", "published"],
-              description: "页面状态",
-            },
-            created_by: { type: "string" },
-            created_at: { type: "string" },
-            updated_at: { type: "string" },
+            formFieldId: { type: "string" },
+            datasetFieldId: { type: "string" },
           },
+          required: ["formFieldId", "datasetFieldId"],
+        },
+        PageDatasetBinding: {
+          type: "object",
+          properties: {
+            datasetId: { type: "string" },
+            mode: { type: "string", enum: ["create", "edit", "detail", "list"] },
+            fieldMap: {
+              type: "array",
+              items: { $ref: "#/components/schemas/PageDatasetFieldMapItem" },
+            },
+          },
+          required: ["datasetId", "mode", "fieldMap"],
         },
         PageListItem: {
           type: "object",
