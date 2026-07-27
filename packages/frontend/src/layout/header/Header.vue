@@ -1,7 +1,4 @@
 <script lang="ts" setup>
-import type { Component } from 'vue'
-import { computed } from 'vue'
-import { DataLine, EditPen, Monitor } from '@element-plus/icons-vue'
 import { storeToRefs } from 'pinia'
 import SvgIcon from '@/components/svg-icon/SvgIcon.vue'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
@@ -9,53 +6,13 @@ import { useWorkspaceStore } from '@/stores/workspaceStore'
 const workspaceStore = useWorkspaceStore()
 
 const { currentMenu, currentApp } = storeToRefs(workspaceStore)
-
-type MenuAccentKey = 'visualization' | 'form' | 'report' | 'default'
-
-const menuAccentMap: Record<string, MenuAccentKey> = {
-  '/project/pages/visual': 'visualization',
-  '/project/pages/form': 'form',
-  '/project/pages/report': 'report',
-}
-
-const menuIconMap: Record<MenuAccentKey, Component> = {
-  visualization: Monitor,
-  form: EditPen,
-  report: DataLine,
-  default: Monitor,
-}
-
-function getMenuAccent(path: string): MenuAccentKey {
-  return menuAccentMap[path] ?? 'default'
-}
-
-const isChildMenu = computed(() => {
-  const path = currentMenu.value?.path
-  return path ? menuAccentMap[path] !== undefined : false
-})
-
-const headerIconComponent = computed(() => {
-  if (!currentMenu.value?.path) return null
-  return menuIconMap[getMenuAccent(currentMenu.value.path)]
-})
-
-const headerAccentClass = computed(() => {
-  if (!currentMenu.value?.path) return ''
-  const accent = getMenuAccent(currentMenu.value.path)
-  return accent !== 'default' ? `header-icon--${accent}` : ''
-})
 </script>
 
 <template>
   <div class="app-header">
     <div class="app-header__context">
-      <div v-if="isChildMenu" class="app-header__icon" :class="headerAccentClass">
-        <el-icon :size="16">
-          <component :is="headerIconComponent" />
-        </el-icon>
-      </div>
-      <div v-else class="app-header__icon">
-        <SvgIcon :name="currentMenu?.meta?.icon" />
+      <div v-if="currentMenu?.meta?.icon" class="app-header__icon">
+        <SvgIcon :name="currentMenu?.meta?.icon" :size="16" />
       </div>
       <div class="app-header__titles">
         <div class="app-header__eyebrow">
@@ -177,8 +134,7 @@ const headerAccentClass = computed(() => {
   border-color: rgba(64, 158, 255, 0.2);
   background:
     radial-gradient(circle at 30% 25%, rgba(64, 158, 255, 0.22), transparent 52%),
-    linear-gradient(180deg, rgba(64, 158, 255, 0.16), rgba(64, 158, 255, 0.06)),
-    rgba(255, 255, 255, 0.78);
+    linear-gradient(180deg, rgba(64, 158, 255, 0.16), rgba(64, 158, 255, 0.06)), rgba(255, 255, 255, 0.78);
   color: #2d7ff9;
 }
 
@@ -186,8 +142,7 @@ const headerAccentClass = computed(() => {
   border-color: rgba(103, 194, 58, 0.2);
   background:
     radial-gradient(circle at 28% 26%, rgba(103, 194, 58, 0.22), transparent 48%),
-    linear-gradient(180deg, rgba(103, 194, 58, 0.16), rgba(103, 194, 58, 0.06)),
-    rgba(255, 255, 255, 0.78);
+    linear-gradient(180deg, rgba(103, 194, 58, 0.16), rgba(103, 194, 58, 0.06)), rgba(255, 255, 255, 0.78);
   color: #3c9c41;
 }
 
@@ -195,8 +150,7 @@ const headerAccentClass = computed(() => {
   border-color: rgba(230, 162, 60, 0.22);
   background:
     radial-gradient(circle at 28% 26%, rgba(230, 162, 60, 0.22), transparent 48%),
-    linear-gradient(180deg, rgba(230, 162, 60, 0.16), rgba(230, 162, 60, 0.06)),
-    rgba(255, 255, 255, 0.78);
+    linear-gradient(180deg, rgba(230, 162, 60, 0.16), rgba(230, 162, 60, 0.06)), rgba(255, 255, 255, 0.78);
   color: #c77e12;
 }
 
@@ -204,8 +158,7 @@ const headerAccentClass = computed(() => {
   border-color: rgba(94, 178, 255, 0.24);
   background:
     radial-gradient(circle at 30% 25%, rgba(64, 158, 255, 0.24), transparent 52%),
-    linear-gradient(180deg, rgba(64, 158, 255, 0.2), rgba(64, 158, 255, 0.08)),
-    rgba(8, 28, 48, 0.78);
+    linear-gradient(180deg, rgba(64, 158, 255, 0.2), rgba(64, 158, 255, 0.08)), rgba(8, 28, 48, 0.78);
   color: #5ab2ff;
 }
 
@@ -213,8 +166,7 @@ const headerAccentClass = computed(() => {
   border-color: rgba(130, 210, 80, 0.24);
   background:
     radial-gradient(circle at 28% 26%, rgba(103, 194, 58, 0.24), transparent 48%),
-    linear-gradient(180deg, rgba(103, 194, 58, 0.2), rgba(103, 194, 58, 0.08)),
-    rgba(8, 28, 48, 0.78);
+    linear-gradient(180deg, rgba(103, 194, 58, 0.2), rgba(103, 194, 58, 0.08)), rgba(8, 28, 48, 0.78);
   color: #5cd15a;
 }
 
@@ -222,8 +174,7 @@ const headerAccentClass = computed(() => {
   border-color: rgba(245, 180, 70, 0.24);
   background:
     radial-gradient(circle at 28% 26%, rgba(230, 162, 60, 0.24), transparent 48%),
-    linear-gradient(180deg, rgba(230, 162, 60, 0.2), rgba(230, 162, 60, 0.08)),
-    rgba(8, 28, 48, 0.78);
+    linear-gradient(180deg, rgba(230, 162, 60, 0.2), rgba(230, 162, 60, 0.08)), rgba(8, 28, 48, 0.78);
   color: #f0a830;
 }
 </style>

@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import type { Component } from 'vue'
-import { DataLine, EditPen, Monitor } from '@element-plus/icons-vue'
 import { storeToRefs } from 'pinia'
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -33,16 +31,9 @@ const editorMenuMap: Record<string, string> = {
 }
 
 const menuAccentMap: Record<string, MenuAccentKey> = {
-  '/project/pages/visual': 'default',
+  '/project/pages/visual': 'visualization',
   '/project/pages/form': 'form',
   '/project/pages/report': 'report',
-}
-
-const menuIconMap: Record<MenuAccentKey, Component> = {
-  visualization: Monitor,
-  form: EditPen,
-  report: DataLine,
-  default: Monitor,
 }
 
 const menuToneMap: Record<MenuAccentKey, string> = {
@@ -79,13 +70,6 @@ function findMenuByPath(path: string): string | undefined {
     return getPageEditorMenuPath()
 
   for (const item of menuList.value ?? []) {
-    if (item.children?.length) {
-      const child = [...item.children]
-        .sort((a, b) => b.path.length - a.path.length)
-        .find(c => isSameMenuPath(path, c.path))
-      if (child)
-        return child.path
-    }
     if (isSameMenuPath(path, item.path))
       return item.path
   }
@@ -104,21 +88,12 @@ function changeMenu(index: string) {
 
 function updateCurrentMenu() {
   const found = findMenuByPath(route?.path)
-  if (found) {
-    for (const item of menuList.value ?? []) {
-      if (item.path === found) {
-        workspaceStore.setCurrentMenu(item)
-        return
-      }
-      if (item.children?.length) {
-        const child = item.children.find(c => c.path === found)
-        if (child) {
-          workspaceStore.setCurrentMenu(child)
-          return
-        }
-      }
-    }
-  }
+  if (!found)
+    return
+
+  const item = (menuList.value ?? []).find(menu => menu.path === found)
+  if (item)
+    workspaceStore.setCurrentMenu(item)
 }
 
 watch(
@@ -140,37 +115,8 @@ watch(
       @select="changeMenu"
     >
       <template v-for="item in menuList" :key="item?.path">
-        <el-sub-menu v-if="item?.children?.length" :index="item.path">
-          <template #title>
-            <span class="menu-icon menu-icon--default" :class="{ 'is-collapse': collapse }">
-              <SvgIcon :name="item?.meta?.icon" size="18px" />
-            </span>
-            <span>{{ item?.title }}</span>
-          </template>
-          <el-menu-item
-            v-for="child in item.children"
-            :key="child.path"
-            :index="child.path"
-          >
-            <span
-              class="menu-icon"
-              :class="[menuToneMap[getMenuAccent(child.path)], { 'is-collapse': collapse }]"
-            >
-              <el-icon :size="16">
-                <component :is="menuIconMap[getMenuAccent(child.path)]" />
-              </el-icon>
-            </span>
-            <template #title>
-              <span>{{ child?.title }}</span>
-            </template>
-          </el-menu-item>
-        </el-sub-menu>
-
-        <el-menu-item v-else :index="item?.path">
-          <span
-            class="menu-icon"
-            :class="[menuToneMap[getMenuAccent(item.path)], { 'is-collapse': collapse }]"
-          >
+        <el-menu-item :index="item?.path">
+          <span class="menu-icon" :class="[menuToneMap[getMenuAccent(item.path)], { 'is-collapse': collapse }]">
             <SvgIcon :name="item?.meta?.icon" size="18px" />
           </span>
           <template #title>
@@ -233,17 +179,6 @@ watch(
   box-shadow:
     0 8px 22px rgba(37, 99, 235, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.62);
-}
-
-:deep(.custom-menu-wrapper .el-menu-item.is-active::before) {
-  position: absolute;
-  top: 10px;
-  bottom: 10px;
-  left: 5px;
-  width: 3px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #2563eb, #14b8a6);
-  content: '';
 }
 
 .menu-icon {

@@ -46,32 +46,6 @@ function formatTime(iso: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-function formatRelativeTime(iso: string): string {
-  if (!iso) {
-    return '-'
-  }
-  const now = Date.now()
-  const diff = now - new Date(iso).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) {
-    return '刚刚'
-  }
-  if (mins < 60) {
-    return `${mins}分钟前`
-  }
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) {
-    return `${hours}小时前`
-  }
-  const days = Math.floor(hours / 24)
-  if (days < 7) {
-    return `${days}天前`
-  }
-  const d = new Date(iso)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}`
-}
-
 /** 拆分为「数字值 + 单位」，用于卡片大数字展示 */
 function relativeTimeParts(iso: string): { value: string, unit: string } {
   if (!iso) {
@@ -262,7 +236,7 @@ async function batchDelete() {
             VISUAL CANVAS
           </div>
           <h1 class="visual-home__title">
-            可视化设计工作台
+            可视化工作台
           </h1>
           <p class="visual-home__summary">
             管理大屏草稿、发布状态和最近更新，快速进入画布继续设计。

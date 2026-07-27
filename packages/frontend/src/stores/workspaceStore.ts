@@ -19,34 +19,25 @@ export const useWorkspaceStore = defineStore('useWorkspaceStore', {
     currentApp: undefined,
     menuList: [
       {
-        path: '/project/pages',
-        title: '页面设计',
+        path: '/project/pages/visual',
+        title: '可视化',
         meta: {
-          icon: 'page-setting',
+          icon: 'chart',
         },
-        children: [
-          {
-            path: '/project/pages/visual',
-            title: '可视化设计',
-            meta: {
-              icon: 'dashboard',
-            },
-          },
-          {
-            path: '/project/pages/form',
-            title: '表单设计',
-            meta: {
-              icon: 'form',
-            },
-          },
-          {
-            path: '/project/pages/report',
-            title: '报表设计',
-            meta: {
-              icon: 'chart',
-            },
-          },
-        ],
+      },
+      {
+        path: '/project/pages/form',
+        title: '表单',
+        meta: {
+          icon: 'component-form',
+        },
+      },
+      {
+        path: '/project/pages/report',
+        title: '报表',
+        meta: {
+          icon: 'component-chart',
+        },
       },
       {
         path: '/project/app-assembly',

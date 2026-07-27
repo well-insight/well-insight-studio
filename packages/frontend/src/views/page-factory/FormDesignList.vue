@@ -638,7 +638,7 @@ onActivated(() => {
       <div class="form-page-shell__header">
         <div class="min-w-0">
           <h2 class="form-page-shell__title">
-            {{ selectedPageDetail?.name || '表单设计' }}
+            {{ selectedPageDetail?.name || '表单' }}
           </h2>
           <p class="form-page-shell__subtitle">
             {{ selectedPageDetail ? `字段 ${formFields.length}，记录 ${total} 条` : '请选择一个表单进入记录表' }}
@@ -646,7 +646,7 @@ onActivated(() => {
         </div>
         <div class="form-page-shell__actions">
           <el-button :icon="Plus" type="primary" @click="openCreatePage()">
-            新增表单设计
+            新增表单
           </el-button>
           <el-button :icon="Plus" type="primary" :disabled="!selectedPageId || formFields.length === 0" @click="openCreateRecord">
             新增记录
@@ -765,7 +765,7 @@ onActivated(() => {
       </template>
     </AdaptiveDialog>
 
-    <AdaptiveDialog v-model="pageDialogVisible" title="新建表单设计" width="440px">
+    <AdaptiveDialog v-model="pageDialogVisible" title="新建表单" width="440px">
       <el-form label-position="top">
         <el-form-item label="表单名称">
           <el-input v-model="pageForm.name" maxlength="200" show-word-limit />

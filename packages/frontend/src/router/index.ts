@@ -63,21 +63,21 @@ const routes2: RouteRecordRaw[] = [
         path: 'project/pages/visual',
         name: 'VisualDesign',
         component: () => import('@/views/page-factory/VisualDesignList.vue'),
-        meta: { title: '可视化设计' },
+        meta: { title: '可视化' },
       },
       // 页面设计 - 表单
       {
         path: 'project/pages/form',
         name: 'PageListForm',
         component: () => import('@/views/page-factory/FormDesignList.vue'),
-        meta: { title: '表单设计' },
+        meta: { title: '表单' },
       },
       // 页面设计 - 报表
       {
         path: 'project/pages/report',
         name: 'PageListReport',
         component: () => import('@/views/page-factory/ReportDesignList.vue'),
-        meta: { title: '报表设计' },
+        meta: { title: '报表' },
       },
       // 页面编辑 - 新建
       {

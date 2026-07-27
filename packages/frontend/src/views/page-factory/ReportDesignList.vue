@@ -128,11 +128,11 @@ async function removePage(row: ApiPageListItem) {
     <!-- 顶部工具栏 -->
     <div class="border-bottom-1 flex h-[54px] items-center justify-between px-3 shrink-0">
       <h2 class="text-lg font-semibold">
-        报表设计
+        报表
       </h2>
       <div class="flex items-center gap-2">
         <el-button round type="primary" :icon="Plus" @click="createNewPage">
-          新建报表页面
+          新建报表
         </el-button>
         <el-input
           v-model="searchKeyword"
