@@ -92,10 +92,7 @@ export default ({ mode }: ConfigEnv): UserConfig => {
       chunkSizeWarningLimit: 550, // 单位kb  打包后文件大小警告的限制 (文件大于此此值会出现警告)
       assetsInlineLimit: 4096, // 单位字节（1024等于1kb） 小于此阈值的导入或引用资源将内联为 base64 编码，以避免额外的 http 请求。设置为 0 可以完全禁用此项。
       minify: 'esbuild', // 当前项目体量较大，使用 esbuild 可避免 terser 压缩阶段过慢
-      rollupOptions: {
-        input: {
-          main: resolve(__dirname, 'index.html'),
-        },
+      rolldownOptions: {
         output: {
           manualChunks(id) {
             if (id.includes(`${prefix}/language/json/json.worker`)) {
@@ -123,8 +120,8 @@ export default ({ mode }: ConfigEnv): UserConfig => {
     server: {
       host: '0.0.0.0',
       port: 5188, // 设置服务启动端口号
+      strictPort: true,
       open: false, // 设置服务启动时是否自动打开浏览器
-      cors: true, // 允许跨域
 
       // 设置代理，根据项目实际情况配置
       proxy: {
@@ -140,6 +137,11 @@ export default ({ mode }: ConfigEnv): UserConfig => {
           changeOrigin: true,
         },
       },
+    },
+    preview: {
+      host: '0.0.0.0',
+      port: 5188,
+      strictPort: true,
     },
   }
 }
