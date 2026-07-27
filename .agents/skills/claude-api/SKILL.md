@@ -1,24 +1,31 @@
 ---
 name: claude-api
-description: Claude/Anthropic SDK 与 API 参考。涉及 Claude、模型选择、流式、工具调用、缓存、MCP 或迁移时使用。
+description: Claude/Anthropic API 与 SDK 参考：模型、参数、流式、工具调用、缓存、MCP、token 和迁移。仅在涉及 Claude/Anthropic、相关 SDK/API、模型选择或 LLM 工作流时使用。
 license: Complete terms in LICENSE.txt
 ---
 
 ---
 
-# Building with Claude
+# Building LLM-Powered Applications with Claude
 
-Use this skill for Claude/Anthropic API work: model choice, messages, streaming, tool use, caching, MCP, tokens, and migration.
+This skill helps you build LLM-powered applications with Claude. Choose the right surface based on your needs, detect the project language, then read the relevant language-specific documentation.
 
 ## Before You Start
 
-Check the target file or prompt for non-Anthropic provider markers such as `import openai`, `from openai`, `langchain_openai`, `OpenAI(`, `gpt-4`, `gpt-5`, or explicit provider-neutral instructions. If you find any, pause and ask whether to switch to Claude or keep a non-Claude implementation.
+Scan the target file (or, if no target file, the prompt and project) for non-Anthropic provider markers — `import openai`, `from openai`, `langchain_openai`, `OpenAI(`, `gpt-4`, `gpt-5`, file names like `agent-openai.py` or `*-generic.py`, or any explicit instruction to keep the code provider-neutral. If you find any, stop and tell the user that this skill produces Claude/Anthropic SDK code; ask whether they want to switch the file to Claude or want a non-Claude implementation. Do not edit a non-Anthropic file with Anthropic SDK calls.
 
 ## Output Requirement
 
-When implementing Claude features, use the official Anthropic SDK for the project language by default. Use raw HTTP only when the user explicitly asks for it, the project is shell/cURL-based, or the language has no official SDK.
+When the user asks you to add, modify, or implement a Claude feature, your code must call Claude through one of:
 
-Never mix SDK styles, and never guess API surface details that are not documented in this skill or the linked live sources.
+1. **The official Anthropic SDK** for the project's language (`anthropic`, `@anthropic-ai/sdk`, `com.anthropic.*`, etc.). This is the default whenever a supported SDK exists for the project.
+2. **Raw HTTP** (`curl`, `requests`, `fetch`, `httpx`, etc.) — only when the user explicitly asks for cURL/REST/raw HTTP, the project is a shell/cURL project, or the language has no official SDK.
+
+Never mix the two — don't reach for `requests`/`fetch` in a Python or TypeScript project just because it feels lighter. Never fall back to OpenAI-compatible shims.
+
+**Never guess SDK usage.** Function names, class names, namespaces, method signatures, and import paths must come from explicit documentation — either the `{lang}/` files in this skill or the official SDK repositories or documentation links listed in `shared/live-sources.md`. If the binding you need is not explicitly documented in the skill files, WebFetch the relevant SDK repo from `shared/live-sources.md` before writing code. Do not infer Ruby/Java/Go/PHP/C# APIs from cURL shapes or from another language's SDK.
+
+**If WebFetch or repository access fails** (network restricted, timeouts, clone blocked): do not keep retrying — write code from the patterns and namespace/package tables in the `{lang}/` file, run the compiler or interpreter on it, and iterate on the error output. For statically-typed SDKs (C#, Java, Go) a compile-fix loop against local errors reaches working code faster than blocked network research.
 
 ## Defaults
 

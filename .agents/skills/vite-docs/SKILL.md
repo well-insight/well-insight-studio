@@ -1,15 +1,15 @@
 ---
 name: vite-docs
-description: Vite 文档优先 skill。用户提到 Vite、vite.config、vite dev/build/preview、server/build/preview、插件、迁移、优化、部署、SSR、alias、base 或代理时，先按最新线上文档回答，不凭记忆。
+description: Vite 官方文档优先 skill。只要用户提到 Vite、vite.config、vite dev/build/preview、server/build/preview、插件、迁移、优化、部署、SSR、alias、base 或代理，就先拉取最新官方文档再回答；不要凭记忆回答。
 ---
 
 # Vite Docs
 
-Use this skill when the user asks about Vite configuration, dev server, build, preview, plugins, SSR, deployment, migration, aliases, base paths, or dependency optimization.
+Use this skill when the user asks about Vite or Vite-related configuration, APIs, migration, plugins, dev server, build, preview, dependency optimization, SSR, or deployment.
 
 ## Core rule
 
-Treat the online Vite docs as the source of truth. Fetch the latest docs before answering, then read the local project files only to apply the documented option to this repo.
+Always check the latest official Vite docs before answering. Prefer the Vite docs site as the source of truth, and only use the local project files after you know which Vite feature or option the user is working on.
 
 Do not answer Vite config or API questions from memory when the docs may have changed.
 
@@ -26,8 +26,8 @@ Do not answer Vite config or API questions from memory when the docs may have ch
 
 2. Fetch the latest official docs.
    - Primary source: `https://vite.dev/`
-   - Most topics live under `https://vite.dev/config/` and `https://vite.dev/guide/`
-   - Fallback source: `https://github.com/vitejs/vite/tree/main/docs`
+   - Topic pages usually live under `https://vite.dev/config/` and `https://vite.dev/guide/`
+   - If needed, cross-check the Vite repository docs at `https://github.com/vitejs/vite/tree/main/docs`
    - Prefer the most specific page for the topic first, then cross-check the config index if needed.
    - Useful pages often include:
      - `https://vite.dev/config/`

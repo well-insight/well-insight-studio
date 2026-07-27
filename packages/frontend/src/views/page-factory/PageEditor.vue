@@ -268,7 +268,6 @@ async function performAutoSave(): Promise<boolean> {
       name,
       type: pageType.value,
       dsl,
-      dataset_bindings: pageStore.currentPage?.dataset_bindings ?? undefined,
       status: 'draft',
     })
 
@@ -335,7 +334,6 @@ async function _savePageDraft() {
       name,
       type: pageType.value,
       dsl,
-      dataset_bindings: pageStore.currentPage?.dataset_bindings ?? undefined,
       status: 'draft',
     })
     ElMessage.success('保存成功')
@@ -378,7 +376,6 @@ async function _publishPage() {
       name,
       type: pageType.value,
       dsl,
-      dataset_bindings: pageStore.currentPage?.dataset_bindings ?? undefined,
       status: 'published',
     })
     ElMessage.success('发布成功')
