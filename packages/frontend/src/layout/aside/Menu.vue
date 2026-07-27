@@ -24,6 +24,7 @@ type MenuAccentKey = 'visualization' | 'form' | 'report' | 'default'
 
 const editorMenuMap: Record<string, string> = {
   '/project/pages/visual/edit': '/project/pages/visual',
+  '/workspace/form-editor/': '/project/pages/form',
   '/project/pages/form/edit': '/project/pages/form',
   '/project/pages/report/': '/project/pages/report',
   '/project/pages/edit': '/project/pages/visual',

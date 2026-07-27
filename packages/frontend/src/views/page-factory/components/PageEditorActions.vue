@@ -11,6 +11,8 @@ const pageStore = usePageStore()
 function getPageTypeFromPath(path: string) {
   if (path.startsWith('/workspace/visual-editor'))
     return 'visualization'
+  if (path.startsWith('/workspace/form-editor'))
+    return 'form'
   if (path.startsWith('/project/pages/visual/edit'))
     return 'visualization'
   if (path.startsWith('/project/pages/report/'))

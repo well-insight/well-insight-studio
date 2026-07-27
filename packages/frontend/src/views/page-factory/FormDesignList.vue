@@ -105,14 +105,14 @@ const formCount = computed(() => pageItems.value.length)
 
 const treeData = computed<PageTreeNode[]>(() => {
   const buildFolders = (items: ApiPageFolder[]): PageTreeNode[] =>
-    items.map(folder => ({
+    items.map((folder): PageTreeNode => ({
       id: `folder:${folder.id}`,
       label: folder.name,
       kind: 'folder',
       folder,
       children: [
         ...buildFolders(folder.children ?? []),
-        ...pageItems.value.filter(page => page.folder_id === folder.id).map(page => ({
+        ...pageItems.value.filter(page => page.folder_id === folder.id).map((page): PageTreeNode => ({
           id: `page:${page.id}`,
           label: page.name,
           kind: 'page',
@@ -128,7 +128,7 @@ const treeData = computed<PageTreeNode[]>(() => {
       kind: 'folder',
       children: [
         ...buildFolders(folders.value),
-        ...pageItems.value.filter(page => !page.folder_id).map(page => ({
+        ...pageItems.value.filter(page => !page.folder_id).map((page): PageTreeNode => ({
           id: `page:${page.id}`,
           label: page.name,
           kind: 'page',
@@ -551,7 +551,7 @@ onActivated(() => {
 </script>
 
 <template>
-  <div class="form-page-shell h-full w-full flex overflow-hidden bg-[var(--el-bg-color-page)]">
+  <div class="form-page-shell h-full w-full flex overflow-hidden" style="background: var(--el-bg-color-page)">
     <aside class="form-page-shell__sidebar w-[300px] shrink-0">
       <div class="form-page-shell__sidebar-head">
         <div class="min-w-0">
@@ -645,6 +645,9 @@ onActivated(() => {
           </p>
         </div>
         <div class="form-page-shell__actions">
+          <el-button :icon="Plus" type="primary" @click="openCreatePage()">
+            新增表单设计
+          </el-button>
           <el-button :icon="Plus" type="primary" :disabled="!selectedPageId || formFields.length === 0" @click="openCreateRecord">
             新增记录
           </el-button>
@@ -762,7 +765,7 @@ onActivated(() => {
       </template>
     </AdaptiveDialog>
 
-    <AdaptiveDialog v-model="pageDialogVisible" title="新建表单" width="440px">
+    <AdaptiveDialog v-model="pageDialogVisible" title="新建表单设计" width="440px">
       <el-form label-position="top">
         <el-form-item label="表单名称">
           <el-input v-model="pageForm.name" maxlength="200" show-word-limit />

@@ -37,6 +37,16 @@ const routes2: RouteRecordRaw[] = [
     component: () => import('@/views/page-factory/VisualEditorStandalone.vue'),
     meta: { title: '可视化编辑器' },
   },
+  {
+    path: '/workspace/form-editor/:id',
+    name: 'FormPageEditor',
+    component: () => import('@/views/page-factory/FormEditorStandalone.vue'),
+    meta: { title: '表单编辑' },
+  },
+  {
+    path: '/project/pages/form/edit/:id',
+    redirect: to => ({ name: 'FormPageEditor', params: { id: to.params.id } }),
+  },
   // 带 Layout 的主应用
   {
     path: '/',
@@ -89,17 +99,6 @@ const routes2: RouteRecordRaw[] = [
           headerActions: () => import('@/views/page-factory/components/PageEditorActions.vue'),
         },
         meta: { title: '可视化编辑' },
-      },
-      // 页面编辑 - 表单
-      {
-        path: 'project/pages/form/edit/:id',
-        name: 'FormPageEditor',
-        components: {
-          default: () => import('@/views/page-factory/PageEditor.vue'),
-          headerCenter: () => import('@/views/page-factory/components/PageTitle.vue'),
-          headerActions: () => import('@/views/page-factory/components/PageEditorActions.vue'),
-        },
-        meta: { title: '表单编辑' },
       },
       // 页面编辑 - 报表
       {
