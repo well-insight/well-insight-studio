@@ -35,19 +35,21 @@
 
 先根据任务类型选择最相关的 skill。例如：
 
-| 任务 | 推荐 skill |
-| --- | --- |
-| 优化已有页面 UI | `frontend-design`、`baseline-ui`、`improve-ui` |
-| 无障碍检查 | `fixing-accessibility` |
-| 动画卡顿或滚动性能问题 | `fixing-motion-performance` |
-| 页面 SEO 或社交分享信息 | `fixing-metadata` |
-| 测试本地 Web 页面、截图、验证交互 | `webapp-testing` |
-| 生成 Word 文档 | `docx` |
-| 处理 PDF | `pdf` |
-| 处理 Excel、CSV、TSV | `xlsx` |
-| 制作 PPT 或演示文稿 | `pptx` |
-| 创建复杂 React/Web artifact | `web-artifacts-builder` |
-| 调用 Claude/Anthropic API | `claude-api` |
+| 任务                              | 推荐 skill                                     |
+| --------------------------------- | ---------------------------------------------- |
+| 优化已有页面 UI                   | `frontend-design`、`baseline-ui`、`improve-ui` |
+| 无障碍检查                        | `fixing-accessibility`                         |
+| 动画卡顿或滚动性能问题            | `fixing-motion-performance`                    |
+| 页面 SEO 或社交分享信息           | `fixing-metadata`                              |
+| 测试本地 Web 页面、截图、验证交互 | `webapp-testing`                               |
+| 生成 Word 文档                    | `docx`                                         |
+| 处理 PDF                          | `pdf`                                          |
+| 处理 Excel、CSV、TSV              | `xlsx`                                         |
+| 制作 PPT 或演示文稿               | `pptx`                                         |
+| 创建复杂 React/Web artifact       | `web-artifacts-builder`                        |
+| 调用 Claude/Anthropic API         | `claude-api`                                   |
+
+如果你判断某个任务可能需要 skill，先询问用户是否要使用，再继续。除非用户明确指定，否则不要自行加载 skill。
 
 ### 2. 加载 skill
 
@@ -98,48 +100,48 @@ skill 通常会规定：
 
 ### UI、设计和前端
 
-| Skill | 作用和适用场景 |
-| --- | --- |
-| `baseline-ui` | 快速清理 UI 中的间距、层级、排版和常见界面问题；适合做克制的 UI polish。 |
-| `brand-guidelines` | 将 Anthropic 官方品牌色彩和字体规范应用到视觉或文档产物中。仅在确实需要 Anthropic 品牌风格时使用。 |
-| `create-design-md` | 从已有项目或网站提取设计语言、设计 token 和界面规范，创建或更新 `DESIGN.md`；只读产品源代码。 |
-| `fixing-accessibility` | 检查和修复 HTML 无障碍问题，包括 ARIA、键盘导航、焦点管理、颜色对比度和表单错误。 |
-| `fixing-metadata` | 检查和修复页面标题、描述、canonical、Open Graph、Twitter Card、favicon、JSON-LD 和 robots 等元信息。 |
-| `fixing-motion-performance` | 排查动画卡顿、布局抖动、滚动关联动画、模糊和合成层等性能问题。 |
-| `frontend-design` | 创建或重塑有明确视觉方向的前端界面，关注布局、字体、配色、层级和独特性。 |
-| `improve-ui` | 对现有页面进行只读 UI 审计，基于项目实际设计证据发现问题并输出可执行的实现计划。 |
-| `theme-factory` | 为网页、文档、报告、幻灯片等产物生成或应用统一主题，包括颜色、字体和视觉风格。 |
-| `ui-skills-root` | UI 相关任务的入口 skill，用于通过 ui-skills CLI 选择最小必要的 UI 上下文。 |
+| Skill                       | 作用和适用场景                                                                                       |
+| --------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `baseline-ui`               | 快速清理 UI 中的间距、层级、排版和常见界面问题；适合做克制的 UI polish。                             |
+| `brand-guidelines`          | 将 Anthropic 官方品牌色彩和字体规范应用到视觉或文档产物中。仅在确实需要 Anthropic 品牌风格时使用。   |
+| `create-design-md`          | 从已有项目或网站提取设计语言、设计 token 和界面规范，创建或更新 `DESIGN.md`；只读产品源代码。        |
+| `fixing-accessibility`      | 检查和修复 HTML 无障碍问题，包括 ARIA、键盘导航、焦点管理、颜色对比度和表单错误。                    |
+| `fixing-metadata`           | 检查和修复页面标题、描述、canonical、Open Graph、Twitter Card、favicon、JSON-LD 和 robots 等元信息。 |
+| `fixing-motion-performance` | 排查动画卡顿、布局抖动、滚动关联动画、模糊和合成层等性能问题。                                       |
+| `frontend-design`           | 创建或重塑有明确视觉方向的前端界面，关注布局、字体、配色、层级和独特性。                             |
+| `improve-ui`                | 对现有页面进行只读 UI 审计，基于项目实际设计证据发现问题并输出可执行的实现计划。                     |
+| `theme-factory`             | 为网页、文档、报告、幻灯片等产物生成或应用统一主题，包括颜色、字体和视觉风格。                       |
+| `ui-skills-root`            | UI 相关任务的入口 skill，用于通过 ui-skills CLI 选择最小必要的 UI 上下文。                           |
 
 ### Web 和交互产物
 
-| Skill | 作用和适用场景 |
-| --- | --- |
-| `algorithmic-art` | 使用 p5.js、随机种子、粒子系统或 flow field 创建原创算法艺术。 |
-| `canvas-design` | 创建海报、封面、静态视觉设计、PNG 或 PDF 视觉作品；要求原创设计。 |
-| `slack-gif-creator` | 创建符合 Slack 尺寸、体积和播放约束的 GIF 动图。 |
+| Skill                   | 作用和适用场景                                                                    |
+| ----------------------- | --------------------------------------------------------------------------------- |
+| `algorithmic-art`       | 使用 p5.js、随机种子、粒子系统或 flow field 创建原创算法艺术。                    |
+| `canvas-design`         | 创建海报、封面、静态视觉设计、PNG 或 PDF 视觉作品；要求原创设计。                 |
+| `slack-gif-creator`     | 创建符合 Slack 尺寸、体积和播放约束的 GIF 动图。                                  |
 | `web-artifacts-builder` | 创建复杂的 React/Tailwind/shadcn Web artifact，适用于多组件、状态管理或路由场景。 |
-| `webapp-testing` | 使用 Playwright 测试本地 Web 应用，验证交互、截图、查看浏览器日志和排查前端问题。 |
+| `webapp-testing`        | 使用 Playwright 测试本地 Web 应用，验证交互、截图、查看浏览器日志和排查前端问题。 |
 
 ### 文档和办公文件
 
-| Skill | 作用和适用场景 |
-| --- | --- |
-| `doc-coauthoring` | 按结构化流程协作撰写技术方案、规格说明、提案、决策记录等文档。 |
-| `docx` | 创建、读取、编辑和整理 Word 文档，包括目录、表格、页码、信函和正式报告。 |
-| `internal-comms` | 编写项目进展、状态更新、事故复盘、FAQ、团队公告等内部沟通材料。 |
-| `pdf` | 读取、提取、合并、拆分、OCR、加水印、填写或生成 PDF。 |
-| `pptx` | 创建、读取、编辑、整理和生成 PowerPoint 演示文稿、deck 或 slides。 |
-| `xlsx` | 读取、清洗、编辑、计算、格式化、图表化或转换 Excel、CSV、TSV 等表格数据。 |
+| Skill             | 作用和适用场景                                                            |
+| ----------------- | ------------------------------------------------------------------------- |
+| `doc-coauthoring` | 按结构化流程协作撰写技术方案、规格说明、提案、决策记录等文档。            |
+| `docx`            | 创建、读取、编辑和整理 Word 文档，包括目录、表格、页码、信函和正式报告。  |
+| `internal-comms`  | 编写项目进展、状态更新、事故复盘、FAQ、团队公告等内部沟通材料。           |
+| `pdf`             | 读取、提取、合并、拆分、OCR、加水印、填写或生成 PDF。                     |
+| `pptx`            | 创建、读取、编辑、整理和生成 PowerPoint 演示文稿、deck 或 slides。        |
+| `xlsx`            | 读取、清洗、编辑、计算、格式化、图表化或转换 Excel、CSV、TSV 等表格数据。 |
 
 ### API、工具和技能开发
 
-| Skill | 作用和适用场景 |
-| --- | --- |
-| `claude-api` | Claude/Anthropic API 与 SDK 参考，包括模型、参数、流式输出、工具调用、缓存、MCP 和 token。涉及 Claude 时应优先加载。 |
-| `mcp-builder` | 使用 FastMCP 或 Node/TypeScript MCP SDK 构建 MCP 服务和高质量工具。 |
-| `skill-creator` | 创建、修改、评测和优化 Agent Skill，包括触发描述、工作流和性能对比。 |
-| `template` | skill 占位模板，仅用于示例；正式使用前必须替换为真实名称和描述。 |
+| Skill           | 作用和适用场景                                                                                                       |
+| --------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `claude-api`    | Claude/Anthropic API 与 SDK 参考，包括模型、参数、流式输出、工具调用、缓存、MCP 和 token。涉及 Claude 时应优先加载。 |
+| `mcp-builder`   | 使用 FastMCP 或 Node/TypeScript MCP SDK 构建 MCP 服务和高质量工具。                                                  |
+| `skill-creator` | 创建、修改、评测和优化 Agent Skill，包括触发描述、工作流和性能对比。                                                 |
+| `template`      | skill 占位模板，仅用于示例；正式使用前必须替换为真实名称和描述。                                                     |
 
 ## 新增或修改 Skill
 

@@ -1,10 +1,9 @@
 ---
 name: claude-api
-description: |-
-  Reference for the Claude API / Anthropic SDK — model ids, pricing, params, streaming, tool use, MCP, agents, caching, token counting, model migration.
-  TRIGGER — read BEFORE opening the target file; don't skip because it "looks like a one-liner" — whenever: the prompt names Claude/Anthropic in any form (Claude, Anthropic, Fable, Opus, Sonnet, Haiku, `anthropic`, `@anthropic-ai`, `claude-*`, `us.anthropic.*`, `[1m]`); the user asks about an LLM (pricing/model choice/limits/caching) — never answer from memory; OR the task is LLM-shaped with provider unstated (agent/MCP/tool-definition/multi-agent/RAG/LLM-judge/computer-use; generate/summarize/extract/classify/rewrite/converse over NL; debugging refusals/cutoffs/streaming/tool-calls/tokens).
-  SKIP only when another provider is being worked on (overrides all triggers): OpenAI/GPT/Gemini/Llama/Mistral/Cohere/Ollama named in the query; OR `grep -rE 'openai|langchain_openai|google.generativeai|genai|mistralai|cohere|ollama'` over the project hits (run this grep FIRST if no provider named — don't Read the file).
+description: Claude/Anthropic API 与 SDK 参考：模型、参数、流式、工具调用、缓存、MCP、token 和迁移。仅在涉及 Claude/Anthropic、相关 SDK/API、模型选择或 LLM 工作流时使用。
 license: Complete terms in LICENSE.txt
+---
+
 ---
 
 # Building LLM-Powered Applications with Claude
@@ -38,11 +37,11 @@ For the Claude model version, please use Claude Opus 4.8, which you can access v
 
 Several common Claude API shapes changed in 2025–2026. If you recall a pattern from training, verify it against the `{lang}/` files in this skill before writing — the rows below are the most frequent drift points:
 
-| Area | Stale prior | Current API |
-|---|---|---|
-| Extended thinking | `thinking: {type: "enabled", budget_tokens: N}` | On Claude 4.6+ models: `thinking: {type: "adaptive"}`. `budget_tokens` is deprecated on Opus 4.6 / Sonnet 4.6 and **rejected with a 400** on Fable 5 / Sonnet 5 / Opus 4.8 / 4.7. Pre-4.6 models still use `budget_tokens`. |
-| Web search / web fetch tool type | `web_search_20250305`, `web_fetch_20250910` | `web_search_20260209`, `web_fetch_20260209` (dynamic filtering) on Opus 4.8/4.7/4.6, Sonnet 5, and Sonnet 4.6. Older models keep the basic variants; on Vertex AI only basic `web_search_20250305` is available (web fetch is not on Vertex) — see the Server Tools QR below. |
-| PHP parameter names | snake_case wire names as named args (`max_tokens`) | Top-level named args are camelCase (`maxTokens`). Nested array keys vary by feature (e.g. `'taskBudget'`, `'skillID'`, `'mcp_server_name'`) — copy the exact key from the documented example; do not bulk-convert. |
+| Area                             | Stale prior                                        | Current API                                                                                                                                                                                                                                                                   |
+| -------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Extended thinking                | `thinking: {type: "enabled", budget_tokens: N}`    | On Claude 4.6+ models: `thinking: {type: "adaptive"}`. `budget_tokens` is deprecated on Opus 4.6 / Sonnet 4.6 and **rejected with a 400** on Fable 5 / Sonnet 5 / Opus 4.8 / 4.7. Pre-4.6 models still use `budget_tokens`.                                                   |
+| Web search / web fetch tool type | `web_search_20250305`, `web_fetch_20250910`        | `web_search_20260209`, `web_fetch_20260209` (dynamic filtering) on Opus 4.8/4.7/4.6, Sonnet 5, and Sonnet 4.6. Older models keep the basic variants; on Vertex AI only basic `web_search_20250305` is available (web fetch is not on Vertex) — see the Server Tools QR below. |
+| PHP parameter names              | snake_case wire names as named args (`max_tokens`) | Top-level named args are camelCase (`maxTokens`). Nested array keys vary by feature (e.g. `'taskBudget'`, `'skillID'`, `'mcp_server_name'`) — copy the exact key from the documented example; do not bulk-convert.                                                            |
 
 The `{lang}/` files in this skill are authoritative over recalled patterns.
 
@@ -52,9 +51,9 @@ The `{lang}/` files in this skill are authoritative over recalled patterns.
 
 If the User Request at the bottom of this prompt is a bare subcommand string (no prose), search every **Subcommands** table in this document — including any in sections appended below — and follow the matching Action column directly. This lets users invoke specific flows via `/claude-api <subcommand>`. If no table in the document matches, treat the request as normal prose.
 
-| Subcommand | Action |
-|---|---|
-| `migrate` | Migrate existing Claude API code to a newer model. **Read `shared/model-migration.md` immediately** and follow it in order: Step 0 (confirm scope — ask which files/directories before any edit), Step 1 (classify each file), then the per-target breaking-changes section. Do not summarize the guide — execute it. If the user did not name a target model, ask which model to migrate to in the same turn as the scope question. |
+| Subcommand | Action                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `migrate`  | Migrate existing Claude API code to a newer model. **Read `shared/model-migration.md` immediately** and follow it in order: Step 0 (confirm scope — ask which files/directories before any edit), Step 1 (classify each file), then the per-target breaking-changes section. Do not summarize the guide — execute it. If the user did not name a target model, ask which model to migrate to in the same turn as the scope question. |
 
 ---
 
@@ -123,7 +122,7 @@ Before reading code examples, determine which language the user is working in:
 | Persisted, versioned agent configs              | Agent           | **Managed Agents**        | Agents are stored objects; sessions pin to a version         |
 | Long-running multi-turn agent with file mounts  | Agent           | **Managed Agents**        | Per-session containers, SSE event stream, Skills + MCP       |
 
-> **Note:** Managed Agents is the right choice when you want Anthropic to run the agent loop *and* host the container where tools execute — file ops, bash, code execution all run in the per-session workspace. If you want to host the compute yourself or run your own custom tool runtime, Claude API + tool use is the right choice — use the tool runner for automatic loop handling, or the manual loop for fine-grained control (approval gates, custom logging, conditional execution).
+> **Note:** Managed Agents is the right choice when you want Anthropic to run the agent loop _and_ host the container where tools execute — file ops, bash, code execution all run in the per-session workspace. If you want to host the compute yourself or run your own custom tool runtime, Claude API + tool use is the right choice — use the tool runner for automatic loop handling, or the manual loop for fine-grained control (approval gates, custom logging, conditional execution).
 
 > **Cloud-provider access.** **Claude Platform on AWS** is Anthropic-operated with same-day API parity — see `shared/claude-platform-on-aws.md` for client setup. For per-feature availability on **Claude Platform on AWS**, **Amazon Bedrock**, **Google Vertex AI**, and **Microsoft Foundry**, see `shared/platform-availability.md` — that table is the single source of truth in this skill; do not infer availability from anywhere else.
 
@@ -183,16 +182,16 @@ Everything goes through `POST /v1/messages`. Tools and output constraints are fe
 
 ## Current Models (cached: 2026-06-24)
 
-| Model             | Model ID            | Context        | Input $/1M | Output $/1M |
-| ----------------- | ------------------- | -------------- | ---------- | ----------- |
-| Claude Fable 5    | `claude-fable-5`      | 1M             | $10.00     | $50.00      |
-| Claude Mythos 5 (Project Glasswing only) | `claude-mythos-5` | 1M | $10.00     | $50.00      |
-| Claude Opus 4.8   | `claude-opus-4-8`   | 1M             | $5.00      | $25.00      |
-| Claude Opus 4.7   | `claude-opus-4-7`   | 1M             | $5.00      | $25.00      |
-| Claude Opus 4.6   | `claude-opus-4-6`   | 1M             | $5.00      | $25.00      |
-| Claude Sonnet 5   | `claude-sonnet-5`   | 1M             | $3.00 ($2.00 intro through 2026-08-31) | $15.00 ($10.00 intro) |
-| Claude Sonnet 4.6 | `claude-sonnet-4-6` | 1M             | $3.00      | $15.00      |
-| Claude Haiku 4.5  | `claude-haiku-4-5`  | 200K           | $1.00      | $5.00       |
+| Model                                    | Model ID            | Context | Input $/1M                             | Output $/1M           |
+| ---------------------------------------- | ------------------- | ------- | -------------------------------------- | --------------------- |
+| Claude Fable 5                           | `claude-fable-5`    | 1M      | $10.00                                 | $50.00                |
+| Claude Mythos 5 (Project Glasswing only) | `claude-mythos-5`   | 1M      | $10.00                                 | $50.00                |
+| Claude Opus 4.8                          | `claude-opus-4-8`   | 1M      | $5.00                                  | $25.00                |
+| Claude Opus 4.7                          | `claude-opus-4-7`   | 1M      | $5.00                                  | $25.00                |
+| Claude Opus 4.6                          | `claude-opus-4-6`   | 1M      | $5.00                                  | $25.00                |
+| Claude Sonnet 5                          | `claude-sonnet-5`   | 1M      | $3.00 ($2.00 intro through 2026-08-31) | $15.00 ($10.00 intro) |
+| Claude Sonnet 4.6                        | `claude-sonnet-4-6` | 1M      | $3.00                                  | $15.00                |
+| Claude Haiku 4.5                         | `claude-haiku-4-5`  | 200K    | $1.00                                  | $5.00                 |
 
 **ALWAYS use `claude-opus-4-8` unless the user explicitly names a different model.** This is non-negotiable. Do not use `claude-sonnet-5`, `claude-sonnet-4-6`, or any other model unless the user literally says "use sonnet" or "use haiku". Never downgrade for cost — that's the user's decision, not yours. Use `claude-fable-5` only when the user explicitly asks for Claude Fable 5, "fable", or Anthropic's most capable model — it has different API behavior than the Opus family (see below) and pricing that exceeds Opus-tier.
 
@@ -201,7 +200,7 @@ Everything goes through `POST /v1/messages`. Tools and output constraints are fe
 Claude Fable 5 is Anthropic's most capable widely released model, for the most demanding reasoning and long-horizon agentic work. **Claude Mythos 5** (`claude-mythos-5`) offers the same capabilities, pricing, and API surface through Project Glasswing (participation is the only way to access it), succeeding the invitation-only Claude Mythos Preview (`claude-mythos-preview`) — everything below applies to both models. 1M context window (the maximum is also the default), 128K max output. Key API differences from Opus-tier — see `shared/model-migration.md` → Migrating to Claude Fable 5 for details:
 
 - **Thinking is always on** — omit the `thinking` parameter entirely (or send `{type: "adaptive"}`). Any other explicit configuration is rejected: `{type: "disabled"}` and `{type: "enabled", budget_tokens: N}` both return a 400. Control depth with `output_config.effort` (supports `low` through `xhigh` and `max`).
-- **The raw chain of thought is never returned** — responses carry regular `thinking` blocks (not `redacted_thinking`): `display: "summarized"` returns a readable summary, `"omitted"` (the default) leaves the `thinking` field as an empty string. Replay rules: pass thinking blocks back exactly as received on the same model (including empty-text blocks — the API rejects *modified* blocks, not read ones); a **different** model **drops** them from the prompt (typically silently — not an error; the drop happens before pricing, so dropped blocks aren't billed and there's nothing to strip). Regular thinking blocks from other models replay across models freely.
+- **The raw chain of thought is never returned** — responses carry regular `thinking` blocks (not `redacted_thinking`): `display: "summarized"` returns a readable summary, `"omitted"` (the default) leaves the `thinking` field as an empty string. Replay rules: pass thinking blocks back exactly as received on the same model (including empty-text blocks — the API rejects _modified_ blocks, not read ones); a **different** model **drops** them from the prompt (typically silently — not an error; the drop happens before pricing, so dropped blocks aren't billed and there's nothing to strip). Regular thinking blocks from other models replay across models freely.
 - **Tokenizer** — same tokenizer as Opus 4.8 (introduced with Opus 4.7). Token counts are roughly unchanged when migrating from Opus 4.7/4.8; per-token pricing differs. Coming from Opus 4.6, Sonnet, Haiku, or older, re-baseline with `count_tokens`.
 - **`refusal` stop reason — handle it, and opt into fallbacks by default** — safety classifiers may decline a request (HTTP 200, `stop_reason: "refusal"`, with a `stop_details` category). A pre-output refusal has an empty `content` array and is not billed at all; a mid-stream refusal bills the already-streamed output — discard the partial output. Always check `stop_reason` before reading `content`. Recovery is **opt-in on the API**: most Claude consumer surfaces ship with built-in Claude Opus 4.8 fallbacks, but an API request that doesn't opt in simply stops on a refusal — and false positives on benign adjacent work (security tooling, life-sciences tasks) do happen. **When you write `claude-fable-5` code, include the server-side `fallbacks` parameter by default** (`betas: ["server-side-fallback-2026-06-01"]` + `fallbacks: [{"model": "claude-opus-4-8"}]`; Claude API and Claude Platform on AWS): a declined request is transparently re-served by the fallback model inside the same call, with credit-style repricing applied automatically (a decline before any output isn't billed; the rescue bills at the fallback model's own rates). Tell the user you've enabled it; drop it only if they decline. The GA SDKs' client-side `BetaRefusalFallbackMiddleware` + `BetaFallbackState` handle retry everywhere server-side fallbacks aren't supported (incl. Amazon Bedrock, Vertex AI, Microsoft Foundry); fallback credit refunds the cache-switch cost of client-side retries. Code examples: the Refusal Fallbacks section of your language's claude-api doc; full semantics in the migration guide's refusal section.
 - **No assistant prefill** — same as the rest of the 4.6+ family.
@@ -234,7 +233,7 @@ Full auth details (named profiles, scopes, the API-key-shadows-profile trap, ref
 ## Thinking & Effort (Quick Reference)
 
 **Fable 5 / Opus 4.8 / 4.7 / Sonnet 5 — Adaptive thinking only:** Use `thinking: {type: "adaptive"}`. `thinking: {type: "enabled", budget_tokens: N}` returns a 400 — adaptive is the only on-mode. On Opus 4.8, Opus 4.7, and Sonnet 5, `{type: "disabled"}` and omitting `thinking` both work (on Sonnet 5, omitting runs adaptive; on Opus 4.7/4.8, omitting runs without thinking — set `{type: "adaptive"}` explicitly); on Fable 5, an explicit `{type: "disabled"}` returns a 400 — omit the `thinking` param entirely instead. Sampling parameters (`temperature`, `top_p`, `top_k`) are also removed and will 400. Opus 4.8 keeps the same request surface as 4.7 (no new breaking changes) — see `shared/model-migration.md` → Migrating to Opus 4.8 for the behavioral re-tuning, and → Migrating to Opus 4.7 for the full breaking-change list when coming from 4.6 or earlier. Note: with `thinking` disabled, Opus 4.8 may write longer reasoning into the visible response — leave adaptive thinking on, or add a final-answer-only instruction (see the migration guide).
-**Opus 4.6 — Adaptive thinking (recommended):** Use `thinking: {type: "adaptive"}`. Claude dynamically decides when and how much to think. No `budget_tokens` needed — `budget_tokens` is deprecated on Opus 4.6 and Sonnet 4.6 and should not be used for new code. Adaptive thinking also automatically enables interleaved thinking (no beta header needed). **When the user asks for "extended thinking", a "thinking budget", or `budget_tokens`: always use Fable 5, Opus 4.8, 4.7, or 4.6 with `thinking: {type: "adaptive"}`. The concept of a fixed token budget for thinking is deprecated — adaptive thinking replaces it. Do NOT use `budget_tokens` for new 4.6/4.7/4.8 code and do NOT switch to an older model.** *Gradual-migration carve-out:* `budget_tokens` is still functional on Opus 4.6 and Sonnet 4.6 as a transitional escape hatch — if you're migrating existing code and need a hard token ceiling before you've tuned `effort`, see `shared/model-migration.md` → Transitional escape hatch. Note: this carve-out does **not** apply to Fable 5, Opus 4.7 or 4.8 — `budget_tokens` is fully removed there.
+**Opus 4.6 — Adaptive thinking (recommended):** Use `thinking: {type: "adaptive"}`. Claude dynamically decides when and how much to think. No `budget_tokens` needed — `budget_tokens` is deprecated on Opus 4.6 and Sonnet 4.6 and should not be used for new code. Adaptive thinking also automatically enables interleaved thinking (no beta header needed). **When the user asks for "extended thinking", a "thinking budget", or `budget_tokens`: always use Fable 5, Opus 4.8, 4.7, or 4.6 with `thinking: {type: "adaptive"}`. The concept of a fixed token budget for thinking is deprecated — adaptive thinking replaces it. Do NOT use `budget_tokens` for new 4.6/4.7/4.8 code and do NOT switch to an older model.** _Gradual-migration carve-out:_ `budget_tokens` is still functional on Opus 4.6 and Sonnet 4.6 as a transitional escape hatch — if you're migrating existing code and need a hard token ceiling before you've tuned `effort`, see `shared/model-migration.md` → Transitional escape hatch. Note: this carve-out does **not** apply to Fable 5, Opus 4.7 or 4.8 — `budget_tokens` is fully removed there.
 **Effort parameter (GA, no beta header):** Controls thinking depth and overall token spend via `output_config: {effort: "low"|"medium"|"high"|"max"}` (inside `output_config`, not top-level). Default is `high` (equivalent to omitting it). `max` is supported on Fable 5, Opus 4.6 and later, Sonnet 5, and Sonnet 4.6 (not Haiku or earlier Sonnets). Opus 4.7 added `"xhigh"` (between `high` and `max`) — the best setting for most coding and agentic use cases on Fable 5 / Opus 4.7/4.8 / Sonnet 5, and the default in Claude Code; use a minimum of `high` for most intelligence-sensitive work. Works on Fable 5, Opus 4.5, Opus 4.6, Opus 4.7, Opus 4.8, Sonnet 5, and Sonnet 4.6. Will error on Sonnet 4.5 / Haiku 4.5. On Fable 5, Opus 4.7/4.8, and Sonnet 5, effort matters more than on any prior model in their tier — re-tune it when migrating, and run long-horizon/agentic tasks at `high`/`xhigh` with the full task spec given up front. Combine with adaptive thinking for the best cost-quality tradeoffs. Lower effort means fewer and more-consolidated tool calls, less preamble, and terser confirmations — `high` is often the sweet spot balancing quality and token efficiency; use `max` when correctness matters more than cost; use `low` for subagents or simple tasks.
 
 **Thinking display — `"omitted"` by default on Fable 5 / Mythos 5 / Opus 4.8 / 4.7 / Sonnet 5:** `display: "summarized"` returns a readable summary of the reasoning; `"omitted"` (the default on all five — a silent change from Opus 4.6 and Sonnet 4.6, where it was `"summarized"`) streams `thinking` blocks with empty text. `display` controls visibility only — thinking happens and is billed the same under every setting; the raw chain of thought is never exposed on any model. If you stream reasoning to users, the default looks like a long pause before output — set `thinking: {type: "adaptive", display: "summarized"}` explicitly. (Independent of display, echo thinking blocks back unchanged when continuing on the same model; other models silently ignore them — see the migration guide.)
@@ -283,15 +282,15 @@ client.beta.messages.create(
 )
 ```
 
-| Language | Beta flag | Speed parameter |
-|---|---|---|
-| Python | `betas=["fast-mode-2026-02-01"]` | `speed="fast"` |
-| TypeScript / Ruby | `betas: ["fast-mode-2026-02-01"]` | `speed: "fast"` |
-| Go | `[]anthropic.AnthropicBeta{anthropic.AnthropicBetaFastMode2026_02_01}` | `Speed: anthropic.BetaMessageNewParamsSpeedFast` |
-| Java | `.addBeta(AnthropicBeta.FAST_MODE_2026_02_01)` | `.speed(MessageCreateParams.Speed.FAST)` |
-| C# | `Betas = ["fast-mode-2026-02-01"]` | `Speed = Speed.Fast` (`Anthropic.Models.Beta.Messages`) |
-| PHP | `betas: ['fast-mode-2026-02-01']` | `speed: 'fast'` |
-| cURL | `anthropic-beta: fast-mode-2026-02-01` header | `"speed": "fast"` in body |
+| Language          | Beta flag                                                              | Speed parameter                                         |
+| ----------------- | ---------------------------------------------------------------------- | ------------------------------------------------------- |
+| Python            | `betas=["fast-mode-2026-02-01"]`                                       | `speed="fast"`                                          |
+| TypeScript / Ruby | `betas: ["fast-mode-2026-02-01"]`                                      | `speed: "fast"`                                         |
+| Go                | `[]anthropic.AnthropicBeta{anthropic.AnthropicBetaFastMode2026_02_01}` | `Speed: anthropic.BetaMessageNewParamsSpeedFast`        |
+| Java              | `.addBeta(AnthropicBeta.FAST_MODE_2026_02_01)`                         | `.speed(MessageCreateParams.Speed.FAST)`                |
+| C#                | `Betas = ["fast-mode-2026-02-01"]`                                     | `Speed = Speed.Fast` (`Anthropic.Models.Beta.Messages`) |
+| PHP               | `betas: ['fast-mode-2026-02-01']`                                      | `speed: 'fast'`                                         |
+| cURL              | `anthropic-beta: fast-mode-2026-02-01` header                          | `"speed": "fast"` in body                               |
 
 `response.usage.speed` reports which speed was used. Fast mode has its own rate limit separate from standard Opus; on 429, either retry after the `retry-after` delay or drop `speed` and fall back to standard (note: switching speed invalidates prompt cache). Not available with Batch API, Priority Tier, Claude Platform on AWS, or third-party platforms.
 
@@ -325,27 +324,27 @@ When targeting Claude on a third-party platform, use that platform's dedicated c
 
 Use the **Mantle** client (Messages-API Bedrock endpoint). Bedrock model IDs take an `anthropic.` prefix (e.g. `"anthropic.claude-opus-4-8"`). Region is required.
 
-| Language | Client |
-|---|---|
-| Python | `from anthropic import AnthropicBedrockMantle` → `AnthropicBedrockMantle(aws_region="…")` |
-| TypeScript | `import { AnthropicBedrockMantle } from "@anthropic-ai/bedrock-sdk"` → `new AnthropicBedrockMantle({ awsRegion: "…" })` |
-| Go | `bedrock.NewMantleClient(ctx, bedrock.MantleClientConfig{ AWSRegion: "…" })` |
-| Java | `AnthropicOkHttpClient.builder().backend(BedrockMantleBackend.fromEnv()).build()` (from `com.anthropic.bedrock.backends`) |
-| C# | `new AnthropicBedrockMantleClient(new() { AwsRegion = "…" })` (package `Anthropic.Bedrock`) |
-| PHP | `use Anthropic\Bedrock\MantleClient;` → `new MantleClient(awsRegion: '…')` |
-| Ruby | `Anthropic::BedrockMantleClient.new(aws_region: "…")` |
+| Language   | Client                                                                                                                    |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Python     | `from anthropic import AnthropicBedrockMantle` → `AnthropicBedrockMantle(aws_region="…")`                                 |
+| TypeScript | `import { AnthropicBedrockMantle } from "@anthropic-ai/bedrock-sdk"` → `new AnthropicBedrockMantle({ awsRegion: "…" })`   |
+| Go         | `bedrock.NewMantleClient(ctx, bedrock.MantleClientConfig{ AWSRegion: "…" })`                                              |
+| Java       | `AnthropicOkHttpClient.builder().backend(BedrockMantleBackend.fromEnv()).build()` (from `com.anthropic.bedrock.backends`) |
+| C#         | `new AnthropicBedrockMantleClient(new() { AwsRegion = "…" })` (package `Anthropic.Bedrock`)                               |
+| PHP        | `use Anthropic\Bedrock\MantleClient;` → `new MantleClient(awsRegion: '…')`                                                |
+| Ruby       | `Anthropic::BedrockMantleClient.new(aws_region: "…")`                                                                     |
 
 `AnthropicBedrock` / `BedrockClient` / `BedrockBackend` (without `Mantle`) are the legacy `bedrock-runtime` InvokeModel path — prefer the Mantle client for new code.
 
 ### Microsoft Foundry
 
-| Language | Client |
-|---|---|
-| Python | `from anthropic import AnthropicFoundry` → `AnthropicFoundry(api_key=…, resource="…")` |
-| TypeScript | `import AnthropicFoundry from "@anthropic-ai/foundry-sdk"` → `new AnthropicFoundry({ … })` |
-| Java | `AnthropicOkHttpClient.builder().backend(FoundryBackend.fromEnv()).build()` (from `com.anthropic.foundry.backends`) |
-| C# | `new AnthropicFoundryClient(new AnthropicFoundryApiKeyCredentials(…))` (package `Anthropic.Foundry`) |
-| PHP | `Foundry\Client::withCredentials(…)` |
+| Language   | Client                                                                                                              |
+| ---------- | ------------------------------------------------------------------------------------------------------------------- |
+| Python     | `from anthropic import AnthropicFoundry` → `AnthropicFoundry(api_key=…, resource="…")`                              |
+| TypeScript | `import AnthropicFoundry from "@anthropic-ai/foundry-sdk"` → `new AnthropicFoundry({ … })`                          |
+| Java       | `AnthropicOkHttpClient.builder().backend(FoundryBackend.fromEnv()).build()` (from `com.anthropic.foundry.backends`) |
+| C#         | `new AnthropicFoundryClient(new AnthropicFoundryApiKeyCredentials(…))` (package `Anthropic.Foundry`)                |
+| PHP        | `Foundry\Client::withCredentials(…)`                                                                                |
 
 The Go and Ruby SDKs do not currently support Foundry. For Ruby, use the standard `Anthropic::Client.new(base_url: "<foundry endpoint>")` as a fallback (Entra ID auth is not built in). For Claude Platform on AWS, see `shared/claude-platform-on-aws.md`.
 
@@ -353,15 +352,15 @@ The Go and Ruby SDKs do not currently support Foundry. For Ruby, use the standar
 
 Two required constructor args: GCP `project_id` and `region`. Vertex model IDs take **no prefix** — current-generation models (Opus 4.8/4.7/4.6, Sonnet 5, Sonnet 4.6) use the bare first-party ID (e.g. `"claude-opus-4-8"`); dated-snapshot models use an `@` version separator (e.g. `claude-opus-4-5@20251101`, **not** `claude-opus-4-5-20251101`). Auth is GCP ADC (`gcloud auth application-default login`); no Anthropic API key. `region` can be `"global"` (recommended), a multi-region (`"us"`/`"eu"`), or a specific region. After construction, use the same `messages.create` / `.stream` surface.
 
-| Language | Client |
-|---|---|
-| Python | `from anthropic import AnthropicVertex` → `AnthropicVertex(project_id="…", region="…")` (install `"anthropic[vertex]"`) |
-| TypeScript | `import { AnthropicVertex } from "@anthropic-ai/vertex-sdk"` → `new AnthropicVertex({ projectId, region })` |
-| Go | `import "github.com/anthropics/anthropic-sdk-go/vertex"` → `anthropic.NewClient(vertex.WithGoogleAuth(ctx, region, projectID))` |
-| Java | `AnthropicOkHttpClient.builder().backend(VertexBackend.builder().region("…").project("…").build()).build()` (from `com.anthropic.vertex.backends`) |
-| C# | `new AnthropicClient { Backend = new VertexBackend(projectId, region) }` (package `Anthropic.Vertex`) |
-| PHP | `use Anthropic\Vertex;` → `Vertex\Client::fromEnvironment(location: '…', projectId: '…')` — note `location`, not `region` |
-| Ruby | `Anthropic::VertexClient.new(region: "…", project_id: "…")` |
+| Language   | Client                                                                                                                                             |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Python     | `from anthropic import AnthropicVertex` → `AnthropicVertex(project_id="…", region="…")` (install `"anthropic[vertex]"`)                            |
+| TypeScript | `import { AnthropicVertex } from "@anthropic-ai/vertex-sdk"` → `new AnthropicVertex({ projectId, region })`                                        |
+| Go         | `import "github.com/anthropics/anthropic-sdk-go/vertex"` → `anthropic.NewClient(vertex.WithGoogleAuth(ctx, region, projectID))`                    |
+| Java       | `AnthropicOkHttpClient.builder().backend(VertexBackend.builder().region("…").project("…").build()).build()` (from `com.anthropic.vertex.backends`) |
+| C#         | `new AnthropicClient { Backend = new VertexBackend(projectId, region) }` (package `Anthropic.Vertex`)                                              |
+| PHP        | `use Anthropic\Vertex;` → `Vertex\Client::fromEnvironment(location: '…', projectId: '…')` — note `location`, not `region`                          |
+| Ruby       | `Anthropic::VertexClient.new(region: "…", project_id: "…")`                                                                                        |
 
 ---
 
@@ -400,8 +399,8 @@ Availability: `shared/platform-availability.md`. For agents on Bedrock / Vertex 
 
 **Subcommands** — invoke directly with `/claude-api <subcommand>`:
 
-| Subcommand | Action |
-|---|---|
+| Subcommand               | Action                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `managed-agents-onboard` | Walk the user through setting up a Managed Agent from scratch. **Read `shared/managed-agents-onboarding.md` immediately** and follow its interview script: **describe → configure the agent (propose, don't interrogate) → environment → session** (same arc as the Console quickstart, auth deferred to the session step) — defaults and inline suggestions do the work, with a silent viability gate (job vs tools/credentials/data) before any code is emitted. Do not summarize — run the interview. |
 
 **Reading guide:** Start with `shared/managed-agents-overview.md`, then the topical `shared/managed-agents-*.md` files (core, environments, tools, events, outcomes, multiagent, webhooks, memory, scheduled-deployments, client-patterns, onboarding, api-reference). For Python, TypeScript, Go, Ruby, PHP, and Java, read `{lang}/managed-agents/README.md` for code examples. For cURL, read `curl/managed-agents.md`. **Agents are persistent — create once, reference by ID.** Store the agent ID returned by `agents.create` and pass it to every subsequent `sessions.create`; do not call `agents.create` in the request path. The Anthropic CLI (`ant`) is one convenient way to create agents and environments from version-controlled YAML — see `shared/anthropic-cli.md`. If a binding you need isn't shown in the language README, WebFetch the relevant entry from `shared/live-sources.md` rather than guess. C# has beta Managed Agents support via `client.Beta.Agents` and related namespaces.
@@ -418,13 +417,13 @@ Availability: `shared/platform-availability.md`. For agents on Bedrock / Vertex 
 
 Server-side tools run on Anthropic's infrastructure — no client-side execution loop. Declare in `tools`; results arrive as content blocks in the same response. **No beta header** unless noted. **Prefer the latest type variant your model supports.** The `_20260209` web search / web fetch variants below (dynamic filtering) require Opus 4.8/4.7/4.6, Sonnet 5, or Sonnet 4.6; the basic variants for older models are listed after the table.
 
-| Tool | `type` | `name` | Key optional params | Result block type |
-|---|---|---|---|---|
-| Web search | `web_search_20260209` | `web_search` | `max_uses`, `allowed_domains`/`blocked_domains`, `user_location` | `web_search_tool_result` → `.content` is a list of `web_search_result` |
-| Web fetch | `web_fetch_20260209` | `web_fetch` | `max_uses`, `allowed_domains`/`blocked_domains`, `citations`, `max_content_tokens` | `web_fetch_tool_result` → `.content` is a `web_fetch_result` with a `document` block |
-| Code execution | `code_execution_20260521` | `code_execution` | none | `bash_code_execution_tool_result` → `.content.stdout` / `.stderr` / `.return_code` |
-| Tool search (regex) | `tool_search_tool_regex_20251119` | `tool_search_tool_regex` | mark other tools `defer_loading: true` | `tool_search_tool_result` |
-| Tool search (BM25) | `tool_search_tool_bm25_20251119` | `tool_search_tool_bm25` | mark other tools `defer_loading: true` | `tool_search_tool_result` |
+| Tool                | `type`                            | `name`                   | Key optional params                                                                | Result block type                                                                    |
+| ------------------- | --------------------------------- | ------------------------ | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Web search          | `web_search_20260209`             | `web_search`             | `max_uses`, `allowed_domains`/`blocked_domains`, `user_location`                   | `web_search_tool_result` → `.content` is a list of `web_search_result`               |
+| Web fetch           | `web_fetch_20260209`              | `web_fetch`              | `max_uses`, `allowed_domains`/`blocked_domains`, `citations`, `max_content_tokens` | `web_fetch_tool_result` → `.content` is a `web_fetch_result` with a `document` block |
+| Code execution      | `code_execution_20260521`         | `code_execution`         | none                                                                               | `bash_code_execution_tool_result` → `.content.stdout` / `.stderr` / `.return_code`   |
+| Tool search (regex) | `tool_search_tool_regex_20251119` | `tool_search_tool_regex` | mark other tools `defer_loading: true`                                             | `tool_search_tool_result`                                                            |
+| Tool search (BM25)  | `tool_search_tool_bm25_20251119`  | `tool_search_tool_bm25`  | mark other tools `defer_loading: true`                                             | `tool_search_tool_result`                                                            |
 
 `web_search_20260209` / `web_fetch_20260209` have built-in dynamic filtering — code execution runs under the hood, so do **not** separately declare `code_execution` in `tools` (a second execution environment confuses the model). For models older than Opus 4.6 / Sonnet 4.6, use the basic variants `web_search_20250305` / `web_fetch_20250910` instead; on Vertex AI only basic `web_search_20250305` is available. `code_execution_20260120` (REPL persistence + programmatic tool calling) runs on Opus 4.5+ / Sonnet 4.5+. **Go SDK only**: `code_execution_20260521` lives under `client.Beta.Messages.New` with `Betas: []anthropic.AnthropicBeta{"code-execution-2025-08-25"}` (other languages use plain `client.messages.create`); `code_execution_20260120` uses the non-beta `client.Messages.New` in Go like everywhere else. Web fetch only fetches URLs already present in the conversation. Provider availability varies by tool — see `shared/platform-availability.md`. See `shared/tool-use-concepts.md` for `pause_turn` handling.
 
@@ -557,7 +556,7 @@ Live documentation URLs are in `shared/live-sources.md`.
 - **Advisor tool model pairing.** The advisor tool's `model` must be at least as capable as the request's top-level `model` — e.g. executor `claude-sonnet-5` → advisor `claude-opus-4-8` or `claude-opus-4-7`. An invalid pair returns 400. Pairing table in `shared/tool-use-concepts.md` § Advisor. Availability: `shared/platform-availability.md`.
 - **Agent Skills ≠ Managed Agents.** To have Claude generate a `.pptx`/`.xlsx`/etc. via Agent Skills, call `client.beta.messages.create` with `container={"skills": [...]}`, the `code_execution_20260521` tool, and both `code-execution-2025-08-25` + `skills-2025-10-02` betas. Do not use `client.beta.agents` / `sessions` / `environments` here — those are the Managed Agents surface, not Agent Skills.
 - **MCP connector needs both halves.** `mcp_servers=[{type:"url", url, name}]` alone is rejected as a validation error — also add `tools=[{type:"mcp_toolset", mcp_server_name:<same name>}]` with beta `mcp-client-2025-11-20`. Availability: `shared/platform-availability.md`.
-- **Context editing ≠ compaction.** Context editing *clears* tool results and thinking blocks; compaction *summarizes* history. For context editing, use `context_management.edits` with type `clear_tool_uses_20250919` (or `clear_thinking_20251015`) on `client.beta.messages.*` with beta `context-management-2025-06-27` — not the `compact_20260112` type or `compact-2026-01-12` beta, which are compaction.
+- **Context editing ≠ compaction.** Context editing _clears_ tool results and thinking blocks; compaction _summarizes_ history. For context editing, use `context_management.edits` with type `clear_tool_uses_20250919` (or `clear_thinking_20251015`) on `client.beta.messages.*` with beta `context-management-2025-06-27` — not the `compact_20260112` type or `compact-2026-01-12` beta, which are compaction.
 - **`inference_geo` is a direct top-level request parameter** — `client.messages.create(..., inference_geo="us")` / `.inferenceGeo("us")`. Do not put it in `extra_body` / `putAdditionalBodyProperty`. Supported on Opus 4.6 / Sonnet 4.6 and later; availability: `shared/platform-availability.md`. `response.usage.inference_geo` reports where inference ran.
 - **Fine-grained tool streaming is not a beta feature.** Set `eager_input_streaming: true` on the tool definition and call the regular `client.messages.stream(...)`. There is no beta header and no `client.beta.*` path.
 - **Cache diagnostics is beta.** Use `client.beta.messages.*` with beta `cache-diagnosis-2026-04-07`. Pass `diagnostics: {previous_message_id: null}` on the first turn and `diagnostics: {previous_message_id: <previous response id>}` on subsequent turns; the result is on `response.diagnostics`. Availability: `shared/platform-availability.md`.
@@ -566,7 +565,7 @@ Live documentation URLs are in `shared/live-sources.md`.
 - **Bedrock / Foundry: use the platform client class.** For Bedrock use the `…BedrockMantle…` client (e.g. Python `AnthropicBedrockMantle`, Java `BedrockMantleBackend`) with `anthropic.`-prefixed model IDs; `AnthropicBedrock`/`BedrockBackend` without `Mantle` is the legacy path. For Foundry use `AnthropicFoundry` / `FoundryBackend` / `AnthropicFoundryClient` where the SDK supports it (C#, Java, PHP, Python, TypeScript); Go and Ruby have no Foundry client — Ruby's documented fallback is the first-party client with a custom `base_url`. Per-language table above.
 - **Don't define custom types for SDK data structures:** The SDK exports types for all API objects. Use `Anthropic.MessageParam` for messages, `Anthropic.Tool` for tool definitions, `Anthropic.ToolUseBlock` / `Anthropic.ToolResultBlockParam` for tool results, `Anthropic.Message` for responses. Defining your own `interface ChatMessage { role: string; content: unknown }` duplicates what the SDK already provides and loses type safety.
 - **Report and document output:** For tasks that produce reports, documents, or visualizations, the code execution sandbox has `python-docx`, `python-pptx`, `matplotlib`, `pillow`, and `pypdf` pre-installed. Claude can generate formatted files (DOCX, PDF, charts) and return them via the Files API — consider this for "report" or "document" type requests instead of plain stdout text.
-- **Server-tool errors don't raise.** Web search and web fetch errors return HTTP 200 with a `web_search_tool_result` / `web_fetch_tool_result` block whose `content` is a single error object (e.g. `{error_code: "max_uses_exceeded"}`) — not a raised exception. For web search, a success `content` is a *list*; an error `content` is an *object* — branch on that before indexing.
+- **Server-tool errors don't raise.** Web search and web fetch errors return HTTP 200 with a `web_search_tool_result` / `web_fetch_tool_result` block whose `content` is a single error object (e.g. `{error_code: "max_uses_exceeded"}`) — not a raised exception. For web search, a success `content` is a _list_; an error `content` is an _object_ — branch on that before indexing.
 - **Code execution output block type:** `code_execution_20260521` returns `bash_code_execution_tool_result` (with `.content.stdout`), **not** the legacy bare `code_execution_tool_result`. Iterate `response.content` and match on the correct type.
 - **Tool search: never defer everything.** The search tool itself must not have `defer_loading: true`, and at least one tool in `tools` must be non-deferred, or the API returns 400 `All tools have defer_loading set`.
 - **`strict: true` goes on the tool, not `tool_choice`.** Putting `strict` on `tool_choice` does nothing; it's a sibling of `name`/`description`/`input_schema` on the tool definition itself.

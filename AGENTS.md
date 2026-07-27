@@ -12,10 +12,11 @@
 
 ## 使用规则
 
-1. 开始任务前，判断是否有匹配的 skill 可以提高完成质量。
-2. 只加载当前任务所需的最小 skill 集合，不要一次性加载所有 skill。
-3. 支持自动发现的 Agent 会从 `.agents/skills` 读取项目级 skill。
-4. 需要手动加载时，使用：
+1. 开始任务前，先判断是否存在匹配的 skill。
+2. 除非用户明确指定要使用某个 skill，否则不要自行加载或调用 skill。
+3. 如果你判断某个任务可能需要 skill，先向用户确认是否使用，再继续。
+4. 支持自动发现的 Agent 会从 `.agents/skills` 读取项目级 skill。
+5. 需要手动加载时，使用：
 
    ```bash
    npx openskills read <skill-name>
@@ -27,10 +28,10 @@
    npx openskills read frontend-design,fixing-accessibility
    ```
 
-5. 不要重复加载当前上下文中已经加载的 skill。
-6. skill 中引用的 `references/`、`scripts/`、`assets/` 等路径，均相对于对应 skill 目录解析。
-7. 项目规则、用户明确要求和安全约束优先于 skill 中的通用建议。
-8. 新增或修改 skill 时，只允许使用 `.agents/skills`，不要再创建 `.claude/skills` 或其他项目级 skill 目录。
+6. 不要重复加载当前上下文中已经加载的 skill。
+7. skill 中引用的 `references/`、`scripts/`、`assets/` 等路径，均相对于对应 skill 目录解析。
+8. 项目规则、用户明确要求和安全约束优先于 skill 中的通用建议。
+9. 新增或修改 skill 时，只允许使用 `.agents/skills`，不要再创建 `.claude/skills` 或其他项目级 skill 目录。
 
 ## 常用选择
 
