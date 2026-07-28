@@ -19,6 +19,8 @@ import './styles/form-designer.scss'
 const props = defineProps<{
   /** 外部传入的初始 Schema（用于加载已有页面） */
   initialSchema?: FormSchema | null
+  /** 新增字段的默认栅格占宽；未指定时使用组件自身默认值 */
+  defaultFieldColSpan?: number
 }>()
 
 const emit = defineEmits<{
@@ -70,7 +72,10 @@ const rightTabOptions = [
 ]
 
 function handleAddField(field: FormField, index?: number) {
-  formData.addField(field, index)
+  formData.addField({
+    ...field,
+    colSpan: props.defaultFieldColSpan ?? field.colSpan,
+  }, index)
   rightTab.value = 'field'
 }
 

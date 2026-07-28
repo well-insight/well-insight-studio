@@ -30,6 +30,7 @@ export interface Dataset {
   id: string;
   name: string;
   description: string | null;
+  form_schema: string | null;
   file_path: string | null;
   file_size: number | null;
   owner_id: string;
@@ -197,17 +198,19 @@ export class DatasetEntityModel {
     owner_id: string;
     project_id?: string | null;
     folder_id?: string | null;
+    form_schema?: string | null;
   }): string {
     const id = generateSnowflakeId();
     db
       .prepare(
-        `INSERT INTO datasets (id, name, description, owner_id, project_id, folder_id)
-         VALUES (@id, @name, @description, @owner_id, @project_id, @folder_id)`,
+        `INSERT INTO datasets (id, name, description, form_schema, owner_id, project_id, folder_id)
+         VALUES (@id, @name, @description, @form_schema, @owner_id, @project_id, @folder_id)`,
       )
       .run({
         id,
         name: data.name,
         description: data.description ?? null,
+        form_schema: data.form_schema ?? null,
         owner_id: data.owner_id,
         project_id: data.project_id ?? null,
         folder_id: data.folder_id ?? null,
@@ -217,7 +220,7 @@ export class DatasetEntityModel {
 
   static update(
     id: string,
-    data: Partial<Pick<Dataset, "name" | "description" | "project_id" | "folder_id">>,
+    data: Partial<Pick<Dataset, "name" | "description" | "form_schema" | "project_id" | "folder_id">>,
   ): boolean {
     const entries = Object.entries(data).filter(([, v]) => v !== undefined);
     if (entries.length === 0) return true;

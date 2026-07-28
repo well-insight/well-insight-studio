@@ -27,12 +27,13 @@ const editorMenuMap: Record<string, string> = {
   '/project/pages/report/': '/project/pages/report',
   '/project/pages/edit': '/project/pages/visual',
   '/project/app-assembly/': '/project/app-assembly',
+  '/workspace/dataset-form-editor/': '/project/dataset',
   '/project/dataset/edit': '/project/dataset',
 }
 
 const menuAccentMap: Record<string, MenuAccentKey> = {
   '/project/pages/visual': 'visualization',
-  '/project/pages/form': 'form',
+  '/project/dataset': 'form',
   '/project/pages/report': 'report',
 }
 

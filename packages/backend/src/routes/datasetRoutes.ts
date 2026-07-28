@@ -38,6 +38,7 @@ const CreateDatasetSchema = z.object({
   description: z.string().max(5000).optional().nullable(),
   project_id: IdSchema.optional().nullable(),
   folder_id: IdSchema.optional().nullable(),
+  form_schema: z.record(z.any()).nullable().optional(),
   fields: z.array(FieldInputSchema).default([]),
 });
 
@@ -46,6 +47,7 @@ const UpdateDatasetSchema = z.object({
   description: z.string().max(5000).optional().nullable(),
   project_id: IdSchema.optional().nullable(),
   folder_id: IdSchema.optional().nullable(),
+  form_schema: z.record(z.any()).nullable().optional(),
   fields: z.array(FieldInputSchema).optional(),
 });
 
@@ -90,6 +92,17 @@ async function canAccessOwnerResource(req: Request, resourceOwnerId: string): Pr
   if (uid === resourceOwnerId) return true;
   const u = await UserModel.findById(uid);
   return u?.role === "admin";
+}
+
+function serializeDataset(dataset: ReturnType<typeof DatasetEntityModel.findById>) {
+  if (!dataset) return dataset;
+  let form_schema: Record<string, unknown> | null = null;
+  try {
+    form_schema = dataset.form_schema ? (JSON.parse(dataset.form_schema) as Record<string, unknown>) : null;
+  } catch {
+    form_schema = null;
+  }
+  return { ...dataset, form_schema };
 }
 
 function normalizeFields(
@@ -316,7 +329,7 @@ router.get("/", async (req: Request, res: Response) => {
     const enriched = rows.map((d) => {
       const fields = DatasetFieldModel.listByDataset(d.id);
       return {
-        ...d,
+        ...serializeDataset(d),
         field_count: fields.length,
         row_count: DatasetEntityModel.rowCount(d.id),
         fields,
@@ -350,6 +363,7 @@ router.post("/", async (req: Request, res: Response) => {
       owner_id: req.userId!,
       project_id: body.project_id,
       folder_id: body.folder_id,
+      form_schema: body.form_schema ? JSON.stringify(body.form_schema) : null,
     });
     const normalized = normalizeFields(body.fields);
     if (normalized.length > 0) {
@@ -359,7 +373,7 @@ router.post("/", async (req: Request, res: Response) => {
     const fields = DatasetFieldModel.listByDataset(id);
     res.status(201).json({
       success: true,
-      data: { ...ds, fields, row_count: 0 },
+      data: { ...serializeDataset(ds), fields, row_count: 0 },
       message: "数据集已创建",
     });
   } catch (error) {
@@ -532,7 +546,7 @@ router.get("/:id", async (req: Request, res: Response) => {
     const row_count = DatasetEntityModel.rowCount(id);
     res.json({
       success: true,
-      data: { ...ds, fields, row_count },
+      data: { ...serializeDataset(ds), fields, row_count },
       message: "数据集详情",
     });
   } catch (e) {
@@ -563,6 +577,7 @@ router.put("/:id", async (req: Request, res: Response) => {
         return res.status(400).json({ success: false, error: "folder_id 与 project_id 不一致" });
       }
     }
+    let formSchema = body.form_schema;
     if (body.fields !== undefined) {
       const rc = DatasetEntityModel.rowCount(id);
       if (rc > 0) {
@@ -572,19 +587,30 @@ router.put("/:id", async (req: Request, res: Response) => {
         });
       }
       DatasetFieldModel.replaceForDataset(id, normalizeFields(body.fields));
+      if (formSchema && Array.isArray(formSchema.fields)) {
+        const fields = DatasetFieldModel.listByDataset(id);
+        formSchema = {
+          ...formSchema,
+          fields: formSchema.fields.map((field: Record<string, unknown>, index: number) => ({
+            ...field,
+            field: fields[index]?.id ?? field.field,
+          })),
+        };
+      }
     }
     DatasetEntityModel.update(id, {
       ...(body.name !== undefined ? { name: body.name } : {}),
       ...(body.description !== undefined ? { description: body.description } : {}),
       ...(body.project_id !== undefined ? { project_id: body.project_id } : {}),
       ...(body.folder_id !== undefined ? { folder_id: body.folder_id } : {}),
+      ...(formSchema !== undefined ? { form_schema: formSchema ? JSON.stringify(formSchema) : null } : {}),
     });
     const updated = DatasetEntityModel.findById(id)!;
     const fields = DatasetFieldModel.listByDataset(id);
     const row_count = DatasetEntityModel.rowCount(id);
     res.json({
       success: true,
-      data: { ...updated, fields, row_count },
+      data: { ...serializeDataset(updated), fields, row_count },
       message: "数据集已更新",
     });
   } catch (error) {

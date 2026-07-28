@@ -38,14 +38,14 @@ const routes2: RouteRecordRaw[] = [
     meta: { title: '可视化编辑器' },
   },
   {
-    path: '/workspace/form-editor/:id',
-    name: 'FormPageEditor',
-    component: () => import('@/views/page-factory/FormEditorStandalone.vue'),
-    meta: { title: '表单编辑' },
+    path: '/workspace/dataset-form-editor/:id',
+    name: 'DatasetFormEditor',
+    component: () => import('@/views/dataset/DatasetFormDesigner.vue'),
+    meta: { title: '数据集表单设计' },
   },
   {
     path: '/project/pages/form/edit/:id',
-    redirect: to => ({ name: 'FormPageEditor', params: { id: to.params.id } }),
+    redirect: '/project/dataset',
   },
   // 带 Layout 的主应用
   {
@@ -65,12 +65,9 @@ const routes2: RouteRecordRaw[] = [
         component: () => import('@/views/page-factory/VisualDesignList.vue'),
         meta: { title: '可视化' },
       },
-      // 页面设计 - 表单
       {
-        path: 'project/pages/form',
-        name: 'PageListForm',
-        component: () => import('@/views/page-factory/FormDesignList.vue'),
-        meta: { title: '表单' },
+        path: 'project/pages/form/:pathMatch(.*)*',
+        redirect: '/project/dataset',
       },
       // 页面设计 - 报表
       {

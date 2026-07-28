@@ -26,10 +26,10 @@ export const useWorkspaceStore = defineStore('useWorkspaceStore', {
         },
       },
       {
-        path: '/project/pages/form',
-        title: '表单',
+        path: '/project/dataset',
+        title: '数据集',
         meta: {
-          icon: 'component-form',
+          icon: 'dataset',
         },
       },
       {
@@ -44,13 +44,6 @@ export const useWorkspaceStore = defineStore('useWorkspaceStore', {
         title: '应用集',
         meta: {
           icon: 'component-base',
-        },
-      },
-      {
-        path: '/project/dataset',
-        title: '数据集',
-        meta: {
-          icon: 'dataset',
         },
       },
       {

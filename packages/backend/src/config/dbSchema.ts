@@ -245,6 +245,7 @@ function createTables() {
       owner_id TEXT NOT NULL,
       project_id TEXT,
       folder_id TEXT,
+      form_schema TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (owner_id) REFERENCES users(id),
@@ -313,7 +314,7 @@ export function initializeDatabaseSchema() {
   }
 
   createTables();
-  ensureColumn("pages", "folder_id TEXT", "folder_id");
+  ensureColumn("datasets", "form_schema TEXT", "form_schema");
   initializeDefaultRoles();
 
   console.log("[DATABASE] 数据库表结构初始化完成");

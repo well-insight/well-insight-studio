@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ApiDatasetListItem } from '@/api/dataset'
-import { ArrowLeft, Plus } from '@element-plus/icons-vue'
+import { ArrowLeft, EditPen, Plus } from '@element-plus/icons-vue'
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fetchDatasetDetail } from '@/api/dataset'
@@ -48,6 +48,12 @@ async function refreshTitle() {
 
 watch(datasetId, () => void refreshTitle(), { immediate: true })
 
+function openFormDesigner() {
+  if (!datasetId.value)
+    return
+  router.push({ name: 'DatasetFormEditor', params: { id: datasetId.value } })
+}
+
 function goBack() {
   router.push({ name: 'Dataset' })
 }
@@ -69,6 +75,9 @@ onUnmounted(() => {
         </h1>
       </div>
       <div :class="$style.headerRight">
+        <el-button :icon="EditPen" :disabled="!datasetId" @click="openFormDesigner">
+          设计表单
+        </el-button>
         <el-button type="primary" :icon="Plus" @click="triggerAddRow">
           新增行
         </el-button>

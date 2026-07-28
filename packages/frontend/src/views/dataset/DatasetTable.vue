@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ColumnDefine, ListTableConstructorOptions } from '@visactor/vtable'
-import type { ApiDatasetField } from '@/api/dataset'
+import type { ApiDatasetDetail, ApiDatasetField } from '@/api/dataset'
+import type { FormField, FormSchema } from '@/form-designer/types'
 import dayjs from 'dayjs'
 import { ElButton, ElMessage, ElMessageBox } from 'element-plus'
 import { h, reactive, ref, watch } from 'vue'
@@ -11,9 +12,11 @@ import {
   fetchDatasetRowsPage,
   updateDatasetRow,
 } from '@/api/dataset'
-import ColumnField from '@/components/column-field/ColumnField.vue'
 import { AdaptiveDialog } from '@/components/adaptive-dialog'
+import ColumnField from '@/components/column-field/ColumnField.vue'
 import ElListTable from '@/components/el-vtable/ElListTable.vue'
+import { FormRenderer } from '@/form-designer'
+import { createFormField, getEmptyFormSchema, isValidFormSchema, normalizeFormSchema } from '@/form-designer/form-designer.utils'
 
 import { vueGroupCustomLayout } from '@/utils/vtableVueCustomLayout'
 
@@ -50,8 +53,105 @@ const tableOptions = reactive<ListTableConstructorOptions>({
 const rowDialogVisible = ref(false)
 const rowDialogMode = ref<'create' | 'edit'>('create')
 const editingRowId = ref<string | null>(null)
-const rowForm = ref<Record<string, string>>({})
+const rowForm = ref<Record<string, unknown>>({})
+const rowFormSchema = ref<FormSchema | null>(null)
+const rowRendererRef = ref<InstanceType<typeof FormRenderer> | null>(null)
 const rowSubmitting = ref(false)
+
+function componentForFieldType(type: ApiDatasetField['field_type']) {
+  if (type === 'number')
+    return 'number'
+  if (type === 'datetime')
+    return 'datePicker'
+  return 'input'
+}
+
+function createFallbackFormField(field: ApiDatasetField, index: number): FormField {
+  return createFormField(componentForFieldType(field.field_type), {
+    _vid: `dataset_${field.id}`,
+    field: field.id,
+    label: field.name,
+    placeholder: field.field_type === 'number' ? '请输入数字' : field.field_type === 'datetime' ? '请选择日期' : '请输入',
+    colSpan: 12,
+    sort: index,
+  })
+}
+
+function createRowFormSchema(dataset: ApiDatasetDetail): FormSchema {
+  const sourceFields = [...dataset.fields].sort((a, b) => a.sort_order - b.sort_order)
+  const baseSchema = isValidFormSchema(dataset.form_schema)
+    ? normalizeFormSchema(dataset.form_schema as FormSchema)
+    : getEmptyFormSchema()
+  const usedFieldIds = new Set<string>()
+  const mappedFields = baseSchema.fields.flatMap((field, index) => {
+    const sourceField = sourceFields.find(item => item.id === field.field && !usedFieldIds.has(item.id))
+      ?? sourceFields[index]
+    if (!sourceField || usedFieldIds.has(sourceField.id))
+      return []
+    usedFieldIds.add(sourceField.id)
+    return [{
+      ...field,
+      field: sourceField.id,
+      label: field.label || sourceField.name,
+      sort: index,
+    }]
+  })
+  const missingFields = sourceFields
+    .filter(field => !usedFieldIds.has(field.id))
+    .map((field, index) => createFallbackFormField(field, mappedFields.length + index))
+  return {
+    ...baseSchema,
+    config: {
+      ...baseSchema.config,
+      submitBtn: { ...baseSchema.config.submitBtn, show: false },
+      resetBtn: { ...baseSchema.config.resetBtn, show: false },
+    },
+    fields: [...mappedFields, ...missingFields],
+  }
+}
+
+function normalizeRendererValue(field: ApiDatasetField, value: unknown): string | number | null {
+  if (value === undefined || value === null || value === '')
+    return null
+  if (field.field_type === 'number') {
+    const numberValue = typeof value === 'number' ? value : Number(value)
+    if (!Number.isFinite(numberValue))
+      throw new Error(`「${field.name}」须为有效数字`)
+    return numberValue
+  }
+  if (field.field_type === 'datetime') {
+    if (typeof value === 'string' && !Number.isNaN(Date.parse(value)))
+      return value
+    const parsed = dayjs(value as string | number | Date)
+    if (!parsed.isValid())
+      throw new Error(`「${field.name}」须为有效日期`)
+    return parsed.format('YYYY-MM-DD HH:mm:ss')
+  }
+  return typeof value === 'string' ? value : JSON.stringify(value)
+}
+
+function restoreRendererValue(field: FormField | undefined, value: unknown): unknown {
+  if (typeof value !== 'string' || !field)
+    return value
+  if (['checkbox', 'cascader', 'transfer'].includes(field.componentKey)) {
+    try {
+      return JSON.parse(value)
+    }
+    catch {
+      return value
+    }
+  }
+  if (field.componentKey === 'switch')
+    return value === 'true' ? true : value === 'false' ? false : value
+  const option = field.options?.find(item => String(item.value) === value)
+  if (option)
+    return option.value
+  if (['number', 'rate', 'slider'].includes(field.componentKey)) {
+    const numberValue = Number(value)
+    return Number.isFinite(numberValue) ? numberValue : value
+  }
+  return value
+}
 
 function formatCell(v: unknown): string {
   if (v === null || v === undefined)
@@ -59,15 +159,6 @@ function formatCell(v: unknown): string {
   if (typeof v === 'number')
     return Number.isFinite(v) ? String(v) : ''
   return String(v)
-}
-
-/** 与 el-date-picker value-format 一致，便于编辑已保存的 ISO/时间字符串 */
-function formatDatetimeForPicker(v: unknown): string {
-  const s = formatCell(v)
-  if (!s)
-    return ''
-  const d = dayjs(s)
-  return d.isValid() ? d.format('YYYY-MM-DD HH:mm:ss') : s
 }
 
 function syncTableFrozen(editable: boolean) {
@@ -162,6 +253,7 @@ function buildRecords(
   return rows.map((r, index) => {
     const rec: Record<string, unknown> = {
       __row_id: r.id,
+      __row_values: r.values,
       __row_seq: startSeq + index,
     }
     for (const col of f) {
@@ -197,6 +289,7 @@ async function loadDetailAndRows() {
   const id = props.datasetId
   if (id == null) {
     fields.value = []
+    rowFormSchema.value = null
     tableOptions.columns = []
     tableOptions.records = []
     total.value = 0
@@ -210,6 +303,7 @@ async function loadDetailAndRows() {
   try {
     const detail = await fetchDatasetDetail(id)
     fields.value = [...detail.fields].sort((a, b) => a.sort_order - b.sort_order)
+    rowFormSchema.value = createRowFormSchema(detail)
     if (fields.value.length === 0) {
       tableOptions.columns = []
       tableOptions.records = []
@@ -227,6 +321,7 @@ async function loadDetailAndRows() {
     const msg = e instanceof Error ? e.message : '加载数据失败'
     ElMessage.error(msg)
     fields.value = []
+    rowFormSchema.value = null
     tableOptions.columns = []
     tableOptions.records = []
     syncTableFrozen(false)
@@ -285,8 +380,8 @@ function openCreateRow() {
     return
   rowDialogMode.value = 'create'
   editingRowId.value = null
-  const next: Record<string, string> = {}
-  for (const f of fields.value) next[String(f.id)] = ''
+  const next: Record<string, unknown> = {}
+  for (const f of fields.value) next[String(f.id)] = undefined
   rowForm.value = next
   rowDialogVisible.value = true
 }
@@ -294,42 +389,32 @@ function openCreateRow() {
 function openEditRow(row: Record<string, unknown>) {
   rowDialogMode.value = 'edit'
   editingRowId.value = String(row.__row_id ?? '')
-  const next: Record<string, string> = {}
+  const next: Record<string, unknown> = {}
+  const schemaFields = new Map(rowFormSchema.value?.fields.map(field => [field.field, field]) ?? [])
+  const recordValues = row.__row_values as Record<string, unknown> | undefined
   for (const f of fields.value) {
-    const v = row[`c_${f.id}`]
-    next[String(f.id)] = f.field_type === 'datetime' ? formatDatetimeForPicker(v) : formatCell(v)
+    next[String(f.id)] = restoreRendererValue(
+      schemaFields.get(String(f.id)),
+      recordValues?.[String(f.id)] ?? row[`c_${f.id}`],
+    )
   }
   rowForm.value = next
   rowDialogVisible.value = true
 }
 
 function buildValuesFromForm(): Record<string, string | number | null> | null {
+  const rendererValues = rowRendererRef.value?.getFormValues() ?? rowForm.value
   const values: Record<string, string | number | null> = {}
-  for (const f of fields.value) {
-    const k = String(f.id)
-    const raw = rowForm.value[k] ?? ''
-    const trimmed = typeof raw === 'string' ? raw.trim() : ''
-    if (f.field_type === 'text') {
-      values[k] = trimmed === '' ? null : trimmed
+  try {
+    for (const field of fields.value) {
+      values[String(field.id)] = normalizeRendererValue(field, rendererValues[String(field.id)])
     }
-    else if (f.field_type === 'number') {
-      if (trimmed === '') {
-        values[k] = null
-      }
-      else {
-        const n = Number(trimmed)
-        if (!Number.isFinite(n)) {
-          ElMessage.warning(`「${f.name}」须为有效数字`)
-          return null
-        }
-        values[k] = n
-      }
-    }
-    else {
-      values[k] = trimmed === '' ? null : trimmed
-    }
+    return values
   }
-  return values
+  catch (error) {
+    ElMessage.warning((error as Error).message)
+    return null
+  }
 }
 
 async function submitRowDialog() {
@@ -430,38 +515,18 @@ defineExpose({ openCreateRow })
         <AdaptiveDialog
           v-model="rowDialogVisible"
           :title="rowDialogMode === 'create' ? '新增行' : '编辑行'"
+          width="960px"
           destroy-on-close
           append-to-body
           @closed="editingRowId = null"
         >
           <el-scrollbar max-height="60vh">
-            <el-form label-position="top">
-              <el-form-item v-for="f in fields" :key="f.id">
-                <template #label>
-                  <ColumnField :field="f" />
-                </template>
-                <el-input
-                  v-if="f.field_type === 'text'"
-                  v-model="rowForm[String(f.id)]"
-                  type="textarea"
-                  :rows="2"
-                  placeholder="请输入文本"
-                />
-                <el-input
-                  v-else-if="f.field_type === 'number'"
-                  v-model="rowForm[String(f.id)]"
-                  placeholder="请输入数字"
-                />
-                <el-date-picker
-                  v-else
-                  v-model="rowForm[String(f.id)]"
-                  type="datetime"
-                  placeholder="请选择日期时间"
-                  style="width: 100%"
-                  value-format="YYYY-MM-DD HH:mm:ss"
-                />
-              </el-form-item>
-            </el-form>
+            <FormRenderer
+              v-if="rowFormSchema"
+              ref="rowRendererRef"
+              :schema="rowFormSchema"
+              :initial-values="rowForm"
+            />
           </el-scrollbar>
 
           <template #footer>

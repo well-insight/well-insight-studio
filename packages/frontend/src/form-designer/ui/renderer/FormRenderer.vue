@@ -124,7 +124,18 @@ function buildRules(field: FormField): any[] {
 function fieldStyle(field: FormField): Record<string, string> {
   const cols = props.schema.config?.gridColumns || 24
   const span = Math.max(1, Math.min(cols, field.colSpan || 12))
-  return { width: `${(span / cols) * 100}%` }
+  const x = Math.max(0, Math.min(cols - span, field.layout?.x ?? 0))
+  const style: Record<string, string> = {
+    gridColumn: `${x + 1} / span ${span}`,
+  }
+  if (field.layout?.y !== undefined)
+    style.gridRow = String(field.layout.y + 1)
+  return style
+}
+
+function gridStyle(): Record<string, string> {
+  const cols = Math.max(1, props.schema.config?.gridColumns || 24)
+  return { gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }
 }
 
 function fieldLabel(field: FormField): string {
@@ -198,9 +209,9 @@ defineExpose({
       :inline="schema.config.inline"
       :validate-on-rule-change="schema.config.validateOnRuleChange"
     >
-      <div class="flex flex-wrap items-start">
+      <div class="form-renderer__grid" :style="gridStyle()">
         <template v-for="field in schema.fields" :key="field._vid">
-          <div v-if="!field.hidden" class="mb-4 px-2" :style="fieldStyle(field)">
+          <div v-if="!field.hidden" class="form-renderer__field" :style="fieldStyle(field)">
             <template v-if="field.componentKey === 'input'">
               <el-form-item
                 :label="fieldLabel(field)"
@@ -628,9 +639,16 @@ defineExpose({
 </template>
 
 <style scoped>
-.form-renderer {
+.form-renderer__grid {
+  display: grid;
+  grid-auto-flow: row;
+  gap: 0;
+}
+
+.form-renderer__field {
   box-sizing: border-box;
-  width: 100%;
-  min-height: 0;
+  min-width: 0;
+  margin-bottom: 16px;
+  padding: 0 8px;
 }
 </style>

@@ -27,6 +27,7 @@ export interface ApiDatasetListItem {
   updated_at: string
   field_count: number
   row_count: number
+  form_schema?: Record<string, unknown> | null
   fields?: ApiDatasetField[]
 }
 
@@ -40,6 +41,7 @@ export interface ApiDatasetField {
 }
 
 export interface ApiDatasetDetail extends Omit<ApiDatasetListItem, 'field_count'> {
+  form_schema?: Record<string, unknown> | null
   fields: ApiDatasetField[]
   row_count: number
 }
@@ -165,6 +167,7 @@ export function createDataset(body: {
   description?: string | null
   project_id?: string | null
   folder_id?: string | null
+  form_schema?: Record<string, unknown> | null
   fields: { name: string, field_type: DatasetFieldType, sort_order?: number }[]
 }) {
   return request.post<ApiDatasetDetail>('/datasets', body)
@@ -177,6 +180,8 @@ export function updateDataset(
     description?: string | null
     project_id?: string | null
     folder_id?: string | null
+    form_schema?: Record<string, unknown> | null
+    fields?: { name: string, field_type: DatasetFieldType, sort_order?: number }[]
   },
 ) {
   return request.put<ApiDatasetDetail>(`/datasets/${id}`, body)
