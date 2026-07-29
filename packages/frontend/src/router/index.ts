@@ -129,10 +129,8 @@ const routes2: RouteRecordRaw[] = [
         meta: { title: '数据集' },
       },
       {
-        path: 'project/dataset/edit/:id(.*)*',
-        name: 'DatasetEdit',
-        component: () => import('@/views/dataset/DatasetEdit.vue'),
-        meta: { title: '数据集编辑' },
+        path: 'project/dataset/edit/:pathMatch(.*)*',
+        redirect: '/project/dataset',
       },
       // 数据连接
       {

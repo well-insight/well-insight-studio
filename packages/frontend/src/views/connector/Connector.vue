@@ -102,8 +102,8 @@ const dbForm = ref({
   password: '',
 })
 
-function handleExcelSuccess(datasetId: string, datasetName: string) {
-  router.push(`/project/dataset/edit/${datasetId}`)
+function handleExcelSuccess(_datasetId: string, datasetName: string) {
+  router.push({ name: 'Dataset' })
   ElMessage.success(`数据集「${datasetName}」已创建成功`)
   excelDialogVisible.value = false
 }

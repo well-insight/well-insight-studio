@@ -53,14 +53,20 @@ function buildDefaultSchema(fields: Array<{ id: string, name: string, field_type
 }
 
 function datasetFieldsFromSchema(formSchema: FormSchema) {
-  const seen = new Set<string>()
+  const seenNames = new Set<string>()
+  const seenKeys = new Set<string>()
   return formSchema.fields.map((field, index) => {
-    const name = field.label.trim() || `字段${index + 1}`
+    const baseName = field.label.trim() || `字段${index + 1}`
+    let name = baseName
+    let nameSuffix = 2
+    while (seenNames.has(name)) name = `${baseName}_${nameSuffix++}`
+    seenNames.add(name)
+
     const baseField = field.field.trim() || `field_${index + 1}`
     let key = baseField
-    let suffix = 2
-    while (seen.has(key)) key = `${baseField}_${suffix++}`
-    seen.add(key)
+    let keySuffix = 2
+    while (seenKeys.has(key)) key = `${baseField}_${keySuffix++}`
+    seenKeys.add(key)
     return { name, field_type: fieldTypeForComponent(field.componentKey), sort_order: index, field: key }
   })
 }
@@ -124,7 +130,10 @@ async function saveSchema() {
 }
 
 function goBack() {
-  router.push({ name: 'DatasetEdit', params: { id: datasetId.value } })
+  router.push({
+    name: 'Dataset',
+    query: { selectedDatasetId: datasetId.value },
+  })
 }
 
 watch(datasetId, () => void loadDataset(), { immediate: true })

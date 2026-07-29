@@ -5,6 +5,7 @@ import type {
   ApiFolderTreeNode,
 } from '@/api/dataset'
 import {
+  ArrowDown,
   Edit,
   EditPen,
   Folder,
@@ -15,7 +16,7 @@ import {
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, nextTick, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import {
   createDataset,
   createDatasetFolder,
@@ -41,6 +42,7 @@ interface DatasetTreeNode {
   children?: DatasetTreeNode[]
 }
 
+const route = useRoute()
 const router = useRouter()
 
 const treeProps = { children: 'children', label: 'label' }
@@ -55,6 +57,7 @@ const allDatasets = ref<ApiDatasetListItem[]>([])
 /** 当前选中的目录：全部，或某个 folder id */
 const selectedFolderId = ref<string | 'all'>('all')
 const selectedDatasetId = ref<string | null>(null)
+const hasInitializedSelection = ref(false)
 const canAddDatasetRow = ref(false)
 
 const contextFolderId = ref<string | null>(null)
@@ -226,7 +229,25 @@ async function loadData() {
     ])
     folderRoots.value = Array.isArray(trees) ? trees : []
     allDatasets.value = Array.isArray(datasets) ? datasets : []
-    if (selectedDatasetId.value != null && !allDatasets.value.some(dataset => dataset.id === selectedDatasetId.value)) {
+    if (!hasInitializedSelection.value) {
+      const requestedDatasetId = typeof route.query.selectedDatasetId === 'string'
+        ? route.query.selectedDatasetId
+        : null
+      const initialDataset = allDatasets.value.find(dataset => dataset.id === requestedDatasetId)
+        ?? allDatasets.value[0]
+      if (initialDataset != null) {
+        selectedDatasetId.value = initialDataset.id
+        selectedFolderId.value = initialDataset.folder_id ?? 'all'
+        contextFolderId.value = initialDataset.folder_id ?? null
+      }
+      else {
+        selectedDatasetId.value = null
+        selectedFolderId.value = 'all'
+        contextFolderId.value = null
+      }
+      hasInitializedSelection.value = true
+    }
+    else if (selectedDatasetId.value != null && !allDatasets.value.some(dataset => dataset.id === selectedDatasetId.value)) {
       selectedDatasetId.value = null
     }
     treeRenderKey.value += 1
@@ -284,6 +305,13 @@ function handleFolderTreeClick(data: DatasetTreeNode) {
     selectedFolderId.value = data.folderId!
     contextFolderId.value = data.folderId ?? null
   }
+}
+
+function onCreateMenuCommand(command: string) {
+  if (command === 'folder')
+    openFolderDialog()
+  else if (command === 'dataset')
+    openDatasetDialog()
 }
 
 function openFolderDialog() {
@@ -531,9 +559,24 @@ onMounted(async () => {
         <h3 :class="$style.sidebarTitle">
           目录
         </h3>
-        <el-button :icon="Plus" plain type="primary" @click="openFolderDialog">
-          新建目录
-        </el-button>
+        <el-dropdown trigger="hover" @command="onCreateMenuCommand">
+          <el-button :icon="Plus" plain type="primary">
+            新建
+            <el-icon class="el-icon--right">
+              <ArrowDown />
+            </el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="folder">
+                新建目录
+              </el-dropdown-item>
+              <el-dropdown-item command="dataset">
+                新建数据集
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
       <div v-loading="treeLoading" :class="$style.treeWrap">
         <el-tree
@@ -620,9 +663,6 @@ onMounted(async () => {
           </p>
         </div>
         <div :class="$style.pageActions">
-          <el-button type="primary" :icon="Plus" @click="openDatasetDialog">
-            新增数据集
-          </el-button>
           <el-button type="primary" :icon="Plus" :disabled="!canAddDatasetRow" @click="openDatasetRowCreator">
             新增记录
           </el-button>
