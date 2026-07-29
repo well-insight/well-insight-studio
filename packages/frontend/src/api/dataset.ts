@@ -188,7 +188,13 @@ export function updateDataset(
     project_id?: string | null
     folder_id?: string | null
     form_schema?: Record<string, unknown> | null
-    fields?: { name: string, field_type: DatasetFieldType, sort_order?: number }[]
+    fields?: {
+      id?: string
+      client_id?: string
+      name: string
+      field_type: DatasetFieldType
+      sort_order?: number
+    }[]
   },
 ) {
   return request.put<ApiDatasetDetail>(`/datasets/${id}`, body)

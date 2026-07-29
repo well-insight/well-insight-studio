@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { FormField, FormSchema } from '../../types'
 import type { Layout, LayoutItem } from '@/components/grid-layout-plus'
-import { Delete, Link, Operation } from '@element-plus/icons-vue'
+import { Delete, Operation } from '@element-plus/icons-vue'
 import { throttle } from '@vexip-ui/utils'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { GridLayout } from '@/components/grid-layout-plus'
@@ -447,12 +447,6 @@ function onCanvasPointerDown(event: MouseEvent) {
                       <template #label>
                         <span class="form-field-card__label">
                           {{ fieldMap.get(String(item.i))?.label }}{{ formConfig.labelSuffix || '' }}
-                          <el-icon
-                            v-if="fieldMap.get(String(item.i))?.datasetBinding"
-                            :size="12"
-                            class="ml-1 inline-block align-[-2px] text-[var(--el-color-success)]"
-                            title="已绑定数据集"
-                          ><Link /></el-icon>
                         </span>
                       </template>
                       <div class="form-field-card__control">

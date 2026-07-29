@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { ApiDatasetField, DatasetFieldType } from '@/api/dataset'
-import type { FormField, FormSchema } from '@/form-designer/types'
+import type { FormSchema } from '@/form-designer/types'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { computed, ref, watch } from 'vue'
@@ -53,8 +53,8 @@ function buildDefaultSchema(fields: Array<{ id: string, name: string, field_type
 }
 
 function datasetFieldsFromSchema(formSchema: FormSchema) {
+  const sourceFieldIds = new Set(sourceFields.value.map(field => field.id))
   const seenNames = new Set<string>()
-  const seenKeys = new Set<string>()
   return formSchema.fields.map((field, index) => {
     const baseName = field.label.trim() || `字段${index + 1}`
     let name = baseName
@@ -62,12 +62,13 @@ function datasetFieldsFromSchema(formSchema: FormSchema) {
     while (seenNames.has(name)) name = `${baseName}_${nameSuffix++}`
     seenNames.add(name)
 
-    const baseField = field.field.trim() || `field_${index + 1}`
-    let key = baseField
-    let keySuffix = 2
-    while (seenKeys.has(key)) key = `${baseField}_${keySuffix++}`
-    seenKeys.add(key)
-    return { name, field_type: fieldTypeForComponent(field.componentKey), sort_order: index, field: key }
+    return {
+      id: sourceFieldIds.has(field.field) ? field.field : undefined,
+      client_id: field._vid,
+      name,
+      field_type: fieldTypeForComponent(field.componentKey),
+      sort_order: index,
+    }
   })
 }
 
@@ -100,20 +101,9 @@ async function saveSchema() {
   saving.value = true
   try {
     const normalizedSchema = normalizeFormSchema(schema.value)
-    normalizedSchema.fields = normalizedSchema.fields.map((field: FormField, index) => ({
-      ...field,
-      field: fields[index].field,
-      label: fields[index].name,
-      sort: index,
-    }))
-    const fieldDefinitionChanged = fields.length !== sourceFields.value.length
-      || fields.some((field, index) => field.name !== sourceFields.value[index]?.name
-        || field.field_type !== sourceFields.value[index]?.field_type)
     const result = await updateDataset(datasetId.value, {
       form_schema: normalizedSchema as unknown as Record<string, unknown>,
-      ...(fieldDefinitionChanged
-        ? { fields: fields.map(({ field: _field, ...field }) => field) }
-        : {}),
+      fields,
     })
     schema.value = result.form_schema
       ? normalizeFormSchema(result.form_schema as unknown as FormSchema)
@@ -158,6 +148,8 @@ watch(datasetId, () => void loadDataset(), { immediate: true })
         v-if="!loading"
         :initial-schema="schema"
         :default-field-col-span="12"
+        field-id-readonly
+        :json-editor-enabled="false"
         @update:schema="schema = $event"
       />
     </main>

@@ -2,17 +2,16 @@
 import type { FormField } from '../../../types'
 /**
  * 字段属性编辑面板
- * 选中字段后显示其可编辑属性，含数据绑定
+ * 选中字段后显示其可编辑属性
  */
-import type { ApiDatasetField, ApiDatasetListItem } from '@/api/dataset'
-import { Delete, Plus, Refresh } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { fetchAllDatasets, fetchDatasetDetail } from '@/api/dataset'
+import { Delete, Plus } from '@element-plus/icons-vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { getFormComponent } from '../../../form-component-registry'
 
 const props = defineProps<{
   field: FormField | null
+  /** 字段标识由外部系统管理时，禁止在属性面板中修改。 */
+  fieldIdReadonly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -190,113 +189,6 @@ const colSpanOptions = Array.from({ length: 24 }, (_, index) => {
   return { label: `${value}/24`, value }
 })
 
-/* ========== 数据绑定 ========== */
-const datasets = ref<ApiDatasetListItem[]>([])
-const datasetLoading = ref(false)
-const boundDatasetId = ref('')
-const boundFieldName = ref('')
-
-/** 选定数据集的字段列表 */
-const datasetFields = ref<ApiDatasetField[]>([])
-const fieldsLoading = ref(false)
-
-/** 加载数据集列表 */
-async function loadDatasets() {
-  datasetLoading.value = true
-  try {
-    const list = await fetchAllDatasets()
-    datasets.value = list
-  }
-  catch {
-    // 静默失败
-  }
-  finally {
-    datasetLoading.value = false
-  }
-}
-
-/** 选择数据集后加载字段 */
-async function onDatasetSelect(datasetId: string, options?: { preserveField?: boolean }) {
-  boundDatasetId.value = datasetId
-  if (!options?.preserveField) {
-    boundFieldName.value = ''
-  }
-  datasetFields.value = []
-
-  if (!datasetId) {
-    if (local.value) {
-      syncImmediate('datasetBinding', null)
-    }
-    return
-  }
-
-  fieldsLoading.value = true
-  try {
-    const detail = await fetchDatasetDetail(datasetId)
-    datasetFields.value = detail.fields || []
-  }
-  catch {
-    ElMessage.error('加载数据集字段失败')
-  }
-  finally {
-    fieldsLoading.value = false
-  }
-}
-
-/** 选择绑定字段 */
-function onFieldBind(fieldName: string) {
-  boundFieldName.value = fieldName
-  if (fieldName && boundDatasetId.value) {
-    syncImmediate('datasetBinding', {
-      datasetId: boundDatasetId.value,
-      field: fieldName,
-    })
-  }
-  else {
-    syncImmediate('datasetBinding', null)
-  }
-}
-
-/** 清除绑定 */
-function clearBinding() {
-  boundDatasetId.value = ''
-  boundFieldName.value = ''
-  datasetFields.value = []
-  if (local.value) {
-    syncImmediate('datasetBinding', null)
-  }
-}
-
-/** 同步本地绑定状态 */
-function syncBindingFromField(field: FormField) {
-  const binding = field.datasetBinding as { datasetId?: string, field?: string } | undefined
-  if (binding?.datasetId) {
-    boundDatasetId.value = binding.datasetId
-    boundFieldName.value = binding.field || ''
-    // 异步加载对应数据集的字段，同时保留已绑定字段回显
-    onDatasetSelect(binding.datasetId, { preserveField: true })
-  }
-  else {
-    boundDatasetId.value = ''
-    boundFieldName.value = ''
-    datasetFields.value = []
-  }
-}
-
-watch(
-  () => props.field,
-  (val) => {
-    if (val) {
-      syncBindingFromField(val)
-    }
-  },
-  { immediate: true },
-)
-
-onMounted(() => {
-  loadDatasets()
-})
-
 onBeforeUnmount(() => {
   if (syncTimer) {
     clearTimeout(syncTimer)
@@ -338,8 +230,12 @@ onBeforeUnmount(() => {
             <el-input
               :model-value="local.field"
               placeholder="数据字段名"
-              @input="syncToParent('field', $event)"
+              :disabled="fieldIdReadonly"
+              @input="!fieldIdReadonly && syncToParent('field', $event)"
             />
+            <div v-if="fieldIdReadonly" class="mt-1 text-xs text-[var(--el-text-color-placeholder)]">
+              字段标识由数据集自动生成，保存后不可修改
+            </div>
           </el-form-item>
 
           <el-form-item label="占位提示">
@@ -457,56 +353,6 @@ onBeforeUnmount(() => {
               placeholder="留空则使用校验规则中的提示"
               @input="syncToParent('error', $event || undefined)"
             />
-          </el-form-item>
-
-          <div class="form-section-title mb-2 mt-4">
-            数据绑定
-          </div>
-
-          <el-form-item label="绑定数据集">
-            <div class="flex items-center gap-1">
-              <el-select
-                :model-value="boundDatasetId"
-                placeholder="选择数据集"
-                clearable
-                filterable
-                class="flex-1 w-[155px]"
-                :loading="datasetLoading"
-                @change="onDatasetSelect"
-              >
-                <el-option v-for="ds in datasets" :key="ds.id" :label="ds.name" :value="ds.id" />
-              </el-select>
-              <el-button
-                text
-                :icon="Refresh"
-                :loading="datasetLoading"
-                @click="loadDatasets"
-              />
-            </div>
-          </el-form-item>
-
-          <el-form-item v-if="boundDatasetId" label="绑定字段">
-            <div class="flex items-center gap-1">
-              <el-select
-                :model-value="boundFieldName"
-                placeholder="选择字段"
-                clearable
-                class="flex-1"
-                :loading="fieldsLoading"
-                @change="onFieldBind"
-              >
-                <el-option
-                  v-for="f in datasetFields"
-                  :key="f.name"
-                  :label="`${f.name} (${f.field_type})`"
-                  :value="f.name"
-                />
-              </el-select>
-              <el-button text :icon="Delete" type="danger" @click="clearBinding" />
-            </div>
-            <div class="mt-1 text-xs text-[var(--el-text-color-placeholder)]">
-              将字段值与数据集{{ boundFieldName ? `的"${boundFieldName}"字段` : "" }}关联
-            </div>
           </el-form-item>
 
           <!-- 选项编辑（select/radio/checkbox） -->

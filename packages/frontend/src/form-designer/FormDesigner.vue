@@ -21,6 +21,10 @@ const props = defineProps<{
   initialSchema?: FormSchema | null
   /** 新增字段的默认栅格占宽；未指定时使用组件自身默认值 */
   defaultFieldColSpan?: number
+  /** 数据集等外部资源管理字段 ID 时，锁定字段标识编辑。 */
+  fieldIdReadonly?: boolean
+  /** 禁用 JSON 编辑，避免绕过受控字段属性。 */
+  jsonEditorEnabled?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -68,7 +72,7 @@ const rightTab = ref('field')
 const rightTabOptions = [
   { label: '字段属性', value: 'field' },
   { label: '表单设置', value: 'form' },
-  { label: 'JSON', value: 'json' },
+  ...(props.jsonEditorEnabled !== false ? [{ label: 'JSON', value: 'json' }] : []),
 ]
 
 function handleAddField(field: FormField, index?: number) {
@@ -149,6 +153,7 @@ defineExpose({
           <FormFieldSettings
             v-if="rightTab === 'field'"
             :field="formData.activeField.value"
+            :field-id-readonly="fieldIdReadonly"
             @update="handleUpdateField"
           />
           <FormSettings
@@ -157,7 +162,7 @@ defineExpose({
             @update="handleUpdateFormConfig"
           />
           <JsonEditor
-            v-else
+            v-else-if="jsonEditorEnabled !== false"
             :schema="formData.formSchema"
             @update="handleReplaceSchema"
           />

@@ -132,11 +132,6 @@ export interface FormField {
   props: Record<string, any>
   /** 排序序号 */
   sort: number
-  /** 数据集绑定 */
-  datasetBinding?: {
-    datasetId: string
-    field: string
-  } | null
   /** ===== ElFormItem 扩展属性 ===== */
   /** 单独设置标签宽度（px）— 对应 ElFormItem label-width */
   labelWidth?: number

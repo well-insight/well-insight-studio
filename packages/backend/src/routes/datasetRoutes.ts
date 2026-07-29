@@ -6,6 +6,7 @@ import { UserModel } from "../models/User";
 import {
   DatasetEntityModel,
   DatasetFieldModel,
+  DatasetFieldSyncError,
   DatasetFieldType,
   DatasetFolderModel,
   DatasetRowModel,
@@ -19,6 +20,11 @@ const FieldInputSchema = z.object({
   name: z.string().min(1).max(200),
   field_type: FieldTypeEnum,
   sort_order: z.number().int().optional(),
+});
+
+const FieldUpdateInputSchema = FieldInputSchema.extend({
+  id: z.string().min(1).optional(),
+  client_id: z.string().min(1).max(200).optional(),
 });
 
 const IdSchema = z.string().min(1);
@@ -48,7 +54,7 @@ const UpdateDatasetSchema = z.object({
   project_id: IdSchema.optional().nullable(),
   folder_id: IdSchema.optional().nullable(),
   form_schema: z.record(z.any()).nullable().optional(),
-  fields: z.array(FieldInputSchema).optional(),
+  fields: z.array(FieldUpdateInputSchema).optional(),
 });
 
 const RowValuesSchema = z.object({
@@ -129,6 +135,23 @@ function validateRowValues(
       return `字段 ${f.id} 时间格式无效`;
   }
   return null;
+}
+
+function formatDateTime(value: string): string {
+  const date = new Date(value);
+  const pad = (part: number) => String(part).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+function normalizeRowDateTimes(
+  fields: { id: string; field_type: DatasetFieldType }[],
+  values: Record<string, string | number | null>,
+): Record<string, string | number | null> {
+  const dateTimeFieldIds = new Set(fields.filter((field) => field.field_type === "datetime").map((field) => field.id));
+  return Object.fromEntries(Object.entries(values).map(([key, value]) => [
+    key,
+    value !== null && typeof value === "string" && dateTimeFieldIds.has(key) ? formatDateTime(value) : value,
+  ]));
 }
 
 router.use(authenticateToken);
@@ -435,7 +458,7 @@ router.post("/:datasetId/rows/batch", async (req: Request, res: Response) => {
     await DatasetRowModel.createMany(
       datasetId,
       body.rows.map((values, index) => ({
-        valuesJson: JSON.stringify(values),
+        valuesJson: JSON.stringify(normalizeRowDateTimes(fields, values)),
         sortOrder: currentCount + index + 1,
       })),
     );
@@ -464,7 +487,7 @@ router.post("/:datasetId/rows", async (req: Request, res: Response) => {
     }
     const err = validateRowValues(fields, body.values);
     if (err) return res.status(400).json({ success: false, error: err });
-    const id = await DatasetRowModel.create(datasetId, JSON.stringify(body.values), body.sort_order);
+    const id = await DatasetRowModel.create(datasetId, JSON.stringify(normalizeRowDateTimes(fields, body.values)), body.sort_order);
     const row = (await queryOne("SELECT * FROM dataset_rows WHERE id = ?", [id])) as {
       id: string;
       dataset_id: string;
@@ -518,7 +541,7 @@ router.put("/:datasetId/rows/:rowId", async (req: Request, res: Response) => {
     }
     const err = validateRowValues(fields, merged);
     if (err) return res.status(400).json({ success: false, error: err });
-    const ok = await DatasetRowModel.update(rowId, datasetId, JSON.stringify(merged), body.sort_order);
+    const ok = await DatasetRowModel.update(rowId, datasetId, JSON.stringify(normalizeRowDateTimes(fields, merged)), body.sort_order);
     if (!ok) return res.status(404).json({ success: false, error: "行不存在" });
     const row = (await queryOne("SELECT * FROM dataset_rows WHERE id = ?", [rowId])) as {
       id: string;
@@ -609,22 +632,25 @@ router.put("/:id", async (req: Request, res: Response) => {
     }
     let formSchema = body.form_schema;
     if (body.fields !== undefined) {
-      const rc = await DatasetEntityModel.rowCount(id);
-      if (rc > 0) {
-        return res.status(409).json({
-          success: false,
-          error: "已有数据行时不允许修改字段定义，请先清空数据行",
-        });
-      }
-      await DatasetFieldModel.replaceForDataset(id, normalizeFields(body.fields));
+      const synced = await DatasetFieldModel.syncForDataset(
+        id,
+        body.fields.map((field, index) => ({
+          ...field,
+          sort_order: field.sort_order ?? index,
+        })),
+      );
       if (formSchema && Array.isArray(formSchema.fields)) {
-        const fields = await DatasetFieldModel.listByDataset(id);
         formSchema = {
           ...formSchema,
-          fields: formSchema.fields.map((field: Record<string, unknown>, index: number) => ({
-            ...field,
-            field: fields[index]?.id ?? field.field,
-          })),
+          fields: formSchema.fields.map((field: Record<string, unknown>) => {
+            const clientId = typeof field._vid === "string" ? field._vid : undefined;
+            return {
+              ...field,
+              ...(clientId && synced.fieldIdsByClientId[clientId]
+                ? { field: synced.fieldIdsByClientId[clientId] }
+                : {}),
+            };
+          }),
         };
       }
     }
@@ -646,6 +672,9 @@ router.put("/:id", async (req: Request, res: Response) => {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ success: false, error: "数据验证失败", details: error.errors });
+    }
+    if (error instanceof DatasetFieldSyncError) {
+      return res.status(409).json({ success: false, error: error.message });
     }
     console.error(error);
     res.status(500).json({ success: false, error: "服务器内部错误" });

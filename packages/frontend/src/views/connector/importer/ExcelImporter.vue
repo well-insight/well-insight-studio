@@ -102,8 +102,11 @@ watch(headerRowIndex, rebuildFieldConfigs)
 const rawTableData = computed(() =>
   previewMatrix.value.map((row, rowIdx) => {
     const obj: Record<string, unknown> = { _rowIndex: rowIdx };
-    (row as unknown[]).forEach((v, ci) => {
-      obj[`c${ci}`] = v ?? ''
+    (row as unknown[]).forEach((value, ci) => {
+      const field = fieldConfigs.value.find(item => item.colIndex === ci)
+      obj[`c${ci}`] = field?.type === 'datetime' && value !== null && value !== undefined && String(value).trim() !== ''
+        ? formatPreviewDateTime(value)
+        : value ?? ''
     })
     return obj
   }),
@@ -119,6 +122,14 @@ const rawTableColumns = computed(() => {
 })
 
 // ─── 数据预览表格数据（el-table） ────────────────────────────────────
+function formatPreviewDateTime(value: unknown): string {
+  const date = new Date(String(value))
+  if (Number.isNaN(date.getTime()))
+    return String(value)
+  const pad = (part: number) => String(part).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+}
+
 /** 预览表格的数据行 */
 const previewTableData = computed(() => {
   const included = fieldConfigs.value.filter(f => f.include)
@@ -130,7 +141,10 @@ const previewTableData = computed(() => {
   return dataRows.map((row) => {
     const rec: Record<string, unknown> = {}
     included.forEach((f) => {
-      rec[`c${f.colIndex}`] = (row as unknown[])[f.colIndex] ?? ''
+      const value = (row as unknown[])[f.colIndex]
+      rec[`c${f.colIndex}`] = f.type === 'datetime' && value !== null && value !== undefined && String(value).trim() !== ''
+        ? formatPreviewDateTime(value)
+        : value ?? ''
     })
     return rec
   })
@@ -151,6 +165,7 @@ const previewTableColumns = computed(() => {
 
 // ─── Step 4：数据集信息 ───────────────────────────────────────────────
 const datasetName = ref('')
+const sourceDatasetName = ref('')
 const datasetDesc = ref('')
 const datasetFolderId = ref<string | null>(null)
 const folderTree = ref<ApiFolderTreeNode[]>([])
@@ -202,6 +217,7 @@ async function handleFileChange(uploadFile: UploadFile) {
   try {
     const data = await apiParseFile(file, pct => (uploadProgress.value = pct))
     sessionId.value = data.sessionId
+    sourceDatasetName.value = file.name.replace(/\.[^.]+$/, '').trim() || '未命名数据集'
     totalRows.value = data.totalRows
     previewMatrix.value = data.previewMatrix ?? []
     colCount.value = data.colCount ?? 0
@@ -237,7 +253,7 @@ function goToPreviewStep() {
 }
 
 function goToCreateStep() {
-  datasetName.value = ''
+  datasetName.value = sourceDatasetName.value
   datasetDesc.value = ''
   datasetFolderId.value = null
   step.value = 3

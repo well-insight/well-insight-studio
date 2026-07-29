@@ -25,13 +25,82 @@ export class DatasetEntityModel {
  static async delete(id: string): Promise<boolean> { return (await execute("DELETE FROM datasets WHERE id = ?", [id])).affectedRows > 0; }
  static async rowCount(datasetId: string): Promise<number> { return count(await queryOne<{ c: number | string }>("SELECT COUNT(1) AS c FROM dataset_rows WHERE dataset_id = ?", [datasetId])); }
 }
+export class DatasetFieldSyncError extends Error {}
+
 export class DatasetFieldModel {
  static async listByDataset(datasetId: string): Promise<DatasetField[]> { return query<DatasetField[]>("SELECT * FROM dataset_fields WHERE dataset_id = ? ORDER BY sort_order ASC, created_at ASC", [datasetId]); }
- static async replaceForDataset(datasetId: string, fields: { name: string; field_type: DatasetFieldType; sort_order: number }[]): Promise<void> { await withTransaction(async connection => { await connection.execute("DELETE FROM dataset_fields WHERE dataset_id = ?", [datasetId]); for (const field of fields) await connection.execute("INSERT INTO dataset_fields (id, dataset_id, name, field_type, sort_order) VALUES (?, ?, ?, ?, ?)", [generateSnowflakeId(), datasetId, field.name, field.field_type, field.sort_order]); }); }
+ static async syncForDataset(
+  datasetId: string,
+  fields: { id?: string; client_id?: string; name: string; field_type: DatasetFieldType; sort_order: number }[],
+ ): Promise<{ fields: DatasetField[]; fieldIdsByClientId: Record<string, string> }> {
+  const names = new Set<string>();
+  for (const field of fields) {
+   if (names.has(field.name)) throw new DatasetFieldSyncError(`字段名称重复: ${field.name}`);
+   names.add(field.name);
+  }
+
+  return withTransaction(async (connection) => {
+   const [currentRows] = await connection.execute("SELECT * FROM dataset_fields WHERE dataset_id = ? ORDER BY sort_order ASC, created_at ASC", [datasetId]);
+   const currentFields = currentRows as DatasetField[];
+   const currentIds = new Set(currentFields.map((field) => field.id));
+   const suppliedIds = new Set(fields.filter((field) => field.id).map((field) => field.id!));
+   if (suppliedIds.size !== fields.filter((field) => field.id).length) {
+    throw new DatasetFieldSyncError("字段标识重复");
+   }
+   for (const fieldId of suppliedIds) {
+    if (!currentIds.has(fieldId)) throw new DatasetFieldSyncError("字段标识无效，不能修改或自定义");
+   }
+
+   const removedIds = currentFields.filter((field) => !suppliedIds.has(field.id)).map((field) => field.id);
+   if (removedIds.length > 0) {
+    const [rowCountRows] = await connection.execute("SELECT COUNT(1) AS c FROM dataset_rows WHERE dataset_id = ?", [datasetId]);
+    const rowCount = Number((rowCountRows as { c: number | string }[])[0]?.c ?? 0);
+    if (rowCount > 0) {
+     throw new DatasetFieldSyncError("已有数据行时不能删除字段；可编辑、排序或新增字段");
+    }
+    await connection.execute(
+     `DELETE FROM dataset_fields WHERE dataset_id = ? AND id IN (${removedIds.map(() => "?").join(", ")})`,
+     [datasetId, ...removedIds],
+    );
+   }
+
+   const fieldIdsByClientId: Record<string, string> = {};
+
+   for (const field of fields) {
+    if (field.id) {
+     await connection.execute(
+      "UPDATE dataset_fields SET name = ?, field_type = ?, sort_order = ? WHERE id = ? AND dataset_id = ?",
+      [field.name, field.field_type, field.sort_order, field.id, datasetId],
+     );
+     if (field.client_id) fieldIdsByClientId[field.client_id] = field.id;
+    } else {
+     const id = generateSnowflakeId();
+     await connection.execute(
+      "INSERT INTO dataset_fields (id, dataset_id, name, field_type, sort_order) VALUES (?, ?, ?, ?, ?)",
+      [id, datasetId, field.name, field.field_type, field.sort_order],
+     );
+     if (field.client_id) fieldIdsByClientId[field.client_id] = id;
+    }
+   }
+
+   const [updatedRows] = await connection.execute("SELECT * FROM dataset_fields WHERE dataset_id = ? ORDER BY sort_order ASC, created_at ASC", [datasetId]);
+   return { fields: updatedRows as DatasetField[], fieldIdsByClientId };
+  });
+ }
  static async createMany(datasetId: string, fields: { name: string; field_type: DatasetFieldType; sort_order: number }[]): Promise<void> { await withTransaction(async connection => { for (const field of fields) await connection.execute("INSERT INTO dataset_fields (id, dataset_id, name, field_type, sort_order) VALUES (?, ?, ?, ?, ?)", [generateSnowflakeId(), datasetId, field.name, field.field_type, field.sort_order]); }); }
 }
 export class DatasetRowModel {
- static async listPage(datasetId: string, page: number, pageSize: number): Promise<{ rows: DatasetRow[]; total: number }> { const [total, rows] = await Promise.all([queryOne<{ c: number | string }>("SELECT COUNT(1) AS c FROM dataset_rows WHERE dataset_id = ?", [datasetId]), query<DatasetRow[]>("SELECT * FROM dataset_rows WHERE dataset_id = ? ORDER BY sort_order ASC, created_at ASC LIMIT ? OFFSET ?", [datasetId, pageSize, (page - 1) * pageSize])]); return { rows, total: count(total) }; }
+ static async listPage(datasetId: string, page: number, pageSize: number): Promise<{ rows: DatasetRow[]; total: number }> {
+  const normalizedPage = Number.isInteger(page) && page > 0 ? page : 1;
+  const normalizedPageSize = Number.isInteger(pageSize) && pageSize > 0 ? Math.min(pageSize, 200) : 20;
+  const offset = (normalizedPage - 1) * normalizedPageSize;
+  const [total, rows] = await Promise.all([
+   queryOne<{ c: number | string }>("SELECT COUNT(1) AS c FROM dataset_rows WHERE dataset_id = ?", [datasetId]),
+   // This MySQL host rejects prepared-statement placeholders in LIMIT/OFFSET. These values are normalized before interpolation.
+   query<DatasetRow[]>(`SELECT * FROM dataset_rows WHERE dataset_id = ? ORDER BY sort_order ASC, created_at ASC LIMIT ${normalizedPageSize} OFFSET ${offset}`, [datasetId]),
+  ]);
+  return { rows, total: count(total) };
+ }
  static async create(datasetId: string, valuesJson: string, sortOrder?: number): Promise<string> { const order = sortOrder ?? Number((await queryOne<{ n: number | string }>("SELECT COALESCE(MAX(sort_order), 0) + 1 AS n FROM dataset_rows WHERE dataset_id = ?", [datasetId]))?.n ?? 1); const id = generateSnowflakeId(); await execute("INSERT INTO dataset_rows (id, dataset_id, sort_order, values_json) VALUES (?, ?, ?, ?)", [id, datasetId, order, valuesJson]); return id; }
  static async findById(rowId: string, datasetId: string): Promise<DatasetRow | undefined> { return queryOne<DatasetRow>("SELECT * FROM dataset_rows WHERE id = ? AND dataset_id = ?", [rowId, datasetId]); }
  static async update(rowId: string, datasetId: string, valuesJson: string, sortOrder?: number): Promise<boolean> { const result = sortOrder === undefined ? await execute("UPDATE dataset_rows SET values_json = ? WHERE id = ? AND dataset_id = ?", [valuesJson, rowId, datasetId]) : await execute("UPDATE dataset_rows SET values_json = ?, sort_order = ? WHERE id = ? AND dataset_id = ?", [valuesJson, sortOrder, rowId, datasetId]); return result.affectedRows > 0; }

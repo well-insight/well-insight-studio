@@ -9,7 +9,7 @@ export type ConnectorFieldType = 'text' | 'number' | 'datetime'
 export interface ParseFileResult {
   sessionId: string
   totalRows: number
-  /** 前 10 行原始数据（每行为 unknown[]），供表头选择和预览使用 */
+  /** 前 50 行原始数据（每行为 unknown[]），供表头选择和预览使用 */
   previewMatrix: unknown[][]
   colCount: number
 }

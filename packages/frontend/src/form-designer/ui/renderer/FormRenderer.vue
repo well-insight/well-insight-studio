@@ -139,7 +139,7 @@ function gridStyle(): Record<string, string> {
 }
 
 function fieldLabel(field: FormField): string {
-  return field.datasetBinding ? `${field.label} [link]` : field.label
+  return field.label
 }
 
 /** 构建 el-form-item 的 v-bind 对象（ElFormItem 扩展属性） */

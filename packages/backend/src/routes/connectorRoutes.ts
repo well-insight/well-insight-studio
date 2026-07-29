@@ -36,6 +36,38 @@ interface ParseSession {
 
 const sessions = new Map<string, ParseSession>();
 
+function buildImportedFormSchema(fields: Awaited<ReturnType<typeof DatasetFieldModel.listByDataset>>) {
+  return {
+    config: {
+      gridColumns: 24,
+      submitBtn: { show: false },
+      resetBtn: { show: false },
+    },
+    fields: fields.map((field, index) => ({
+      _vid: `dataset_${field.id}`,
+      componentKey: field.field_type === "number" ? "number" : field.field_type === "datetime" ? "datePicker" : "input",
+      label: field.name,
+      field: field.id,
+      placeholder: field.field_type === "number" ? "请输入数字" : field.field_type === "datetime" ? "请选择日期" : "请输入",
+      required: false,
+      disabled: false,
+      hidden: false,
+      readonly: false,
+      colSpan: 12,
+      layout: { x: (index % 2) * 12, y: Math.floor(index / 2) },
+      rules: [],
+      options: [],
+      props: {},
+      sort: index,
+    })),
+  };
+}
+
+function formatDateTime(value: Date): string {
+  const pad = (part: number) => String(part).padStart(2, "0");
+  return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())} ${pad(value.getHours())}:${pad(value.getMinutes())}:${pad(value.getSeconds())}`;
+}
+
 setInterval(() => {
   const now = Date.now();
   for (const [id, s] of sessions) {
@@ -94,8 +126,8 @@ router.post(
         data: {
           sessionId,
           totalRows: rawMatrix.length,
-          // 前 10 行供前端做表头选择 & 预览
-          previewMatrix: rawMatrix.slice(0, 10),
+          // 前 50 行供前端做表头选择 & 预览
+          previewMatrix: rawMatrix.slice(0, 50),
           colCount,
         },
         message: "文件解析成功",
@@ -175,6 +207,9 @@ router.post("/import", authenticateToken, async (req: Request, res: Response) =>
 
     // 获取字段 ID（name → id）
     const createdFields = await DatasetFieldModel.listByDataset(datasetId);
+    await DatasetEntityModel.update(datasetId, {
+      form_schema: JSON.stringify(buildImportedFormSchema(createdFields)),
+    });
     // colIndex → fieldId
     const colIndexToFieldId = new Map<number, string>();
     includedFields.forEach((f) => {
@@ -196,7 +231,7 @@ router.post("/import", authenticateToken, async (req: Request, res: Response) =>
           values[fieldId] = isFinite(n) ? n : null;
         } else if (f.type === "datetime") {
           const d = new Date(String(raw));
-          values[fieldId] = isNaN(d.getTime()) ? String(raw) : d.toISOString();
+          values[fieldId] = Number.isNaN(d.getTime()) ? String(raw) : formatDateTime(d);
         } else {
           values[fieldId] = String(raw);
         }
