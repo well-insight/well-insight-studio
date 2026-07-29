@@ -6,5 +6,5 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import '@/styles/element/index.scss'
 
 export function setupElementPlus(app: App) {
-  app.use(ElementPlus, { locale: zhCn, dialog: { transition: 'dialog-bounce', draggable: true, appendTo: 'body' } as DialogConfigContext })
+  app.use(ElementPlus, { locale: zhCn, dialog: { transition: 'dialog-scale', draggable: true, appendTo: 'body' } as DialogConfigContext })
 }

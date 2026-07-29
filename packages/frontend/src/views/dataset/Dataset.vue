@@ -639,9 +639,18 @@ onMounted(async () => {
         <el-empty
           v-if="!selectedDatasetId"
           :class="$style.empty"
-          description="请从左侧选择一个数据集"
+          :description="allDatasets.length === 0 ? '暂无数据集' : '请从左侧选择一个数据集'"
           :image-size="96"
-        />
+        >
+          <el-button
+            v-if="allDatasets.length === 0"
+            type="primary"
+            :icon="Plus"
+            @click="openDatasetDialog"
+          >
+            添加数据集
+          </el-button>
+        </el-empty>
         <DatasetTable
           v-else
           ref="datasetTableRef"

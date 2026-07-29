@@ -99,7 +99,7 @@ type FormLayoutItem = LayoutItem & {
 }
 
 function toLayoutItem(field: FormField, index: number): FormLayoutItem {
-  const h = isStackField(field) ? 2 : 1
+  const h = 1
   return {
     i: field._vid,
     x: Math.min(cols - 1, Math.max(0, field.layout?.x ?? 0)),
@@ -109,6 +109,7 @@ function toLayoutItem(field: FormField, index: number): FormLayoutItem {
     minW: 1,
     maxW: cols,
     minH: h,
+    maxH: h,
     dragAllowFrom: '.drag-handle',
     resizeIgnoreFrom: '.field-actions,button',
   }
