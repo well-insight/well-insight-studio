@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { db } from "../config/database";
+import { query } from "../config/database";
 
 export const ResourceType = {
   PROJECT: "project",
@@ -135,7 +135,7 @@ export class PermissionModel {
         AND (pr.resource_id IS NULL OR pr.resource_id = '*')
       ORDER BY pr.priority DESC
     `;
-    const rows = db.prepare(sql).all(userId, resourceType) as PermissionRow[];
+    const rows = await query<PermissionRow[]>(sql, [userId, resourceType]);
 
     return rows.map((row) => ({
       resource_type: row.resource_type,
@@ -166,7 +166,7 @@ export class PermissionModel {
         AND pr.resource_id = ?
       ORDER BY pr.priority DESC
     `;
-    const instanceRows = db.prepare(sql).all(userId, resourceType, resourceId) as Array<{ actions: string }>;
+    const instanceRows = await query<Array<{ actions: string }>>(sql, [userId, resourceType, resourceId]);
 
     for (const row of instanceRows) {
       (JSON.parse(row.actions) as ActionType[]).forEach((action) => allActions.add(action));

@@ -25,6 +25,7 @@ const editForm = ref({ name: '' })
 const editSaving = ref(false)
 const selectedIds = ref<string[]>([])
 const tableRef = ref()
+let isFirstActivation = true
 
 const publishedCount = computed(() => pageItems.value.filter(item => item.status === 'published').length)
 const draftCount = computed(() => pageItems.value.filter(item => item.status !== 'published').length)
@@ -99,6 +100,10 @@ onMounted(() => {
 })
 
 onActivated(() => {
+  if (isFirstActivation) {
+    isFirstActivation = false
+    return
+  }
   loadList()
 })
 

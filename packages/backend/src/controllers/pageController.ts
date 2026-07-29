@@ -36,7 +36,7 @@ const ListQuerySchema = z.object({
 export async function createPage(req: Request, res: Response): Promise<void> {
   try {
     const body = CreatePageSchema.parse(req.body);
-    const page = PageModel.create({
+    const page = await PageModel.create({
       name: body.name,
       type: body.type,
       dsl: body.dsl,
@@ -63,7 +63,7 @@ export async function createPage(req: Request, res: Response): Promise<void> {
 export async function listPages(req: Request, res: Response): Promise<void> {
   try {
     const query = ListQuerySchema.parse(req.query);
-    const result = PageModel.findAll({
+    const result = await PageModel.findAll({
       type: query.type,
       status: query.status,
       keyword: query.keyword,
@@ -95,7 +95,7 @@ export async function listPages(req: Request, res: Response): Promise<void> {
 export async function getPage(req: Request, res: Response): Promise<void> {
   try {
     const id = IdParamSchema.parse(req.params.id);
-    const page = PageModel.findById(id);
+    const page = await PageModel.findById(id);
 
     if (!page) {
       res.status(404).json({ success: false, error: "页面不存在" });
@@ -122,7 +122,7 @@ export async function updatePage(req: Request, res: Response): Promise<void> {
     console.log("[pageController] updatePage id:", id, "body:", JSON.stringify(req.body));
     const body = UpdatePageSchema.parse(req.body);
 
-    const updated = PageModel.update(id, body);
+    const updated = await PageModel.update(id, body);
     if (!updated) {
       res.status(404).json({ success: false, error: "页面不存在" });
       return;
@@ -145,7 +145,7 @@ export async function updatePage(req: Request, res: Response): Promise<void> {
 export async function deletePage(req: Request, res: Response): Promise<void> {
   try {
     const id = IdParamSchema.parse(req.params.id);
-    const deleted = PageModel.delete(id);
+    const deleted = await PageModel.delete(id);
 
     if (!deleted) {
       res.status(404).json({ success: false, error: "页面不存在" });

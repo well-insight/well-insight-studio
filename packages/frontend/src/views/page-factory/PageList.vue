@@ -35,6 +35,7 @@ const editDialogVisible = ref(false)
 const editingPage = ref<ApiPageListItem | null>(null)
 const editForm = ref({ name: '', type: '' as PageType })
 const editSaving = ref(false)
+let isFirstActivation = true
 
 const tabOptions = [
   { label: '全部', value: 'all' },
@@ -108,6 +109,10 @@ onMounted(() => {
 })
 
 onActivated(() => {
+  if (isFirstActivation) {
+    isFirstActivation = false
+    return
+  }
   loadList()
 })
 

@@ -20,6 +20,7 @@ const editDialogVisible = ref(false)
 const editingPage = ref<ApiPageListItem | null>(null)
 const editForm = ref({ name: '' })
 const editSaving = ref(false)
+let isFirstActivation = true
 
 function formatTime(iso: string): string {
   if (!iso)
@@ -55,6 +56,10 @@ onMounted(() => {
 })
 
 onActivated(() => {
+  if (isFirstActivation) {
+    isFirstActivation = false
+    return
+  }
   loadList()
 })
 

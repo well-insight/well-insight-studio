@@ -14,7 +14,7 @@ export function createFieldId(): string {
 /** 获取默认表单配置 */
 export function getDefaultFormConfig(): FormConfig {
   return {
-    labelWidth: 100,
+    labelWidth: 60,
     labelPosition: 'right',
     size: 'default',
     disabled: false,

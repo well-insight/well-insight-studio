@@ -1,363 +1,40 @@
-import { db } from "../config/database";
+import { execute, query, queryOne, withTransaction } from "../config/database";
 import { generateSnowflakeId } from "../utils/snowflake";
-
 export type DatasetFieldType = "text" | "number" | "datetime";
-
-export interface DatasetFolder {
-  id: string;
-  parent_id: string | null;
-  project_id: string | null;
-  name: string;
-  description: string | null;
-  owner_id: string;
-  sort_order: number;
-  created_at: string;
-  updated_at: string;
-}
-
+export interface DatasetFolder { id: string; parent_id: string | null; project_id: string | null; name: string; description: string | null; owner_id: string; sort_order: number; created_at: string; updated_at: string; }
 export type DatasetFolderTreeNode = DatasetFolder & { children: DatasetFolderTreeNode[] };
-
-export interface DatasetField {
-  id: string;
-  dataset_id: string;
-  name: string;
-  field_type: DatasetFieldType;
-  sort_order: number;
-  created_at: string;
-}
-
-export interface Dataset {
-  id: string;
-  name: string;
-  description: string | null;
-  form_schema: string | null;
-  file_path: string | null;
-  file_size: number | null;
-  owner_id: string;
-  project_id: string | null;
-  folder_id: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface DatasetRow {
-  id: string;
-  dataset_id: string;
-  sort_order: number;
-  values_json: string;
-  created_at: string;
-}
-
+export interface DatasetField { id: string; dataset_id: string; name: string; field_type: DatasetFieldType; sort_order: number; created_at: string; }
+export interface Dataset { id: string; name: string; description: string | null; form_schema: string | null; file_path: string | null; file_size: number | null; owner_id: string; project_id: string | null; folder_id: string | null; created_at: string; updated_at: string; }
+export interface DatasetRow { id: string; dataset_id: string; sort_order: number; values_json: string; created_at: string; }
+function count(row: { c: number | string } | undefined): number { return Number(row?.c ?? 0); }
 export class DatasetFolderModel {
-  static findById(id: string): DatasetFolder | undefined {
-    return db.prepare("SELECT * FROM dataset_folders WHERE id = ?").get(id) as DatasetFolder | undefined;
-  }
-
-  /** 列出当前用户在某父级下的子文件夹（parentId 省略表示不限；null 表示根） */
-  static listChildren(
-    ownerId: string,
-    opts: { projectId?: string | null; parentId?: string | null },
-  ): DatasetFolder[] {
-    const conditions: string[] = ["owner_id = ?"];
-    const params: unknown[] = [ownerId];
-    if (opts.projectId !== undefined) {
-      if (opts.projectId === null) {
-        conditions.push("project_id IS NULL");
-      } else {
-        conditions.push("project_id = ?");
-        params.push(opts.projectId);
-      }
-    }
-    if (opts.parentId === undefined) {
-      // no parent filter
-    } else if (opts.parentId === null) {
-      conditions.push("parent_id IS NULL");
-    } else {
-      conditions.push("parent_id = ?");
-      params.push(opts.parentId);
-    }
-    const sql = `SELECT * FROM dataset_folders WHERE ${conditions.join(" AND ")} ORDER BY sort_order ASC, created_at ASC`;
-    return db.prepare(sql).all(...params) as DatasetFolder[];
-  }
-
-  static listAllForOwner(ownerId: string, projectId?: string | null): DatasetFolder[] {
-    const conditions = ["owner_id = ?"];
-    const params: unknown[] = [ownerId];
-    if (projectId !== undefined) {
-      if (projectId === null) {
-        conditions.push("project_id IS NULL");
-      } else {
-        conditions.push("project_id = ?");
-        params.push(projectId);
-      }
-    }
-    return db
-      .prepare(
-        `SELECT * FROM dataset_folders WHERE ${conditions.join(" AND ")} ORDER BY sort_order ASC, created_at ASC`,
-      )
-      .all(...params) as DatasetFolder[];
-  }
-
-  static buildTree(folders: DatasetFolder[], parentId: string | null): DatasetFolderTreeNode[] {
-    return folders
-      .filter((f) => (f.parent_id ?? null) === (parentId ?? null))
-      .map((f) => ({
-        ...f,
-        children: DatasetFolderModel.buildTree(folders, f.id),
-      }));
-  }
-
-  static create(data: {
-    parent_id: string | null;
-    project_id: string | null;
-    name: string;
-    description?: string | null;
-    owner_id: string;
-    sort_order?: number;
-  }): string {
-    const id = generateSnowflakeId();
-    db
-      .prepare(
-        `INSERT INTO dataset_folders (id, parent_id, project_id, name, description, owner_id, sort_order)
-         VALUES (@id, @parent_id, @project_id, @name, @description, @owner_id, @sort_order)`,
-      )
-      .run({
-        id,
-        parent_id: data.parent_id,
-        project_id: data.project_id,
-        name: data.name,
-        description: data.description ?? null,
-        owner_id: data.owner_id,
-        sort_order: data.sort_order ?? 0,
-      });
-    return id;
-  }
-
-  static update(
-    id: string,
-    data: Partial<Pick<DatasetFolder, "name" | "description" | "parent_id" | "sort_order" | "project_id">>,
-  ): boolean {
-    const entries = Object.entries(data).filter(([, v]) => v !== undefined);
-    if (entries.length === 0) return true;
-    const sets = entries.map(([k]) => `${k} = @${k}`).join(", ");
-    const row = Object.fromEntries(entries) as Record<string, unknown>;
-    const r = db
-      .prepare(`UPDATE dataset_folders SET ${sets}, updated_at = CURRENT_TIMESTAMP WHERE id = @id`)
-      .run({ ...row, id });
-    return r.changes > 0;
-  }
-
-  static delete(id: string): boolean {
-    const r = db.prepare("DELETE FROM dataset_folders WHERE id = ?").run(id);
-    return r.changes > 0;
-  }
-
-  static countChildren(folderId: string): { subfolders: number; datasets: number } {
-    const sub = db.prepare("SELECT COUNT(1) as c FROM dataset_folders WHERE parent_id = ?").get(folderId) as {
-      c: number;
-    };
-    const ds = db.prepare("SELECT COUNT(1) as c FROM datasets WHERE folder_id = ?").get(folderId) as { c: number };
-    return { subfolders: sub.c, datasets: ds.c };
-  }
+ static async findById(id: string): Promise<DatasetFolder | undefined> { return queryOne<DatasetFolder>("SELECT * FROM dataset_folders WHERE id = ?", [id]); }
+ static async listChildren(ownerId: string, opts: { projectId?: string | null; parentId?: string | null }): Promise<DatasetFolder[]> { const conditions = ["owner_id = ?"], params: unknown[] = [ownerId]; if (opts.projectId !== undefined) { if (opts.projectId === null) conditions.push("project_id IS NULL"); else { conditions.push("project_id = ?"); params.push(opts.projectId); } } if (opts.parentId !== undefined) { if (opts.parentId === null) conditions.push("parent_id IS NULL"); else { conditions.push("parent_id = ?"); params.push(opts.parentId); } } return query<DatasetFolder[]>(`SELECT * FROM dataset_folders WHERE ${conditions.join(" AND ")} ORDER BY sort_order ASC, created_at ASC`, params); }
+ static async listAllForOwner(ownerId: string, projectId?: string | null): Promise<DatasetFolder[]> { return this.listChildren(ownerId, { projectId }); }
+ static buildTree(folders: DatasetFolder[], parentId: string | null): DatasetFolderTreeNode[] { return folders.filter(f => (f.parent_id ?? null) === (parentId ?? null)).map(f => ({ ...f, children: this.buildTree(folders, f.id) })); }
+ static async create(data: { parent_id: string | null; project_id: string | null; name: string; description?: string | null; owner_id: string; sort_order?: number; }): Promise<string> { const id = generateSnowflakeId(); await execute("INSERT INTO dataset_folders (id, parent_id, project_id, name, description, owner_id, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)", [id, data.parent_id, data.project_id, data.name, data.description ?? null, data.owner_id, data.sort_order ?? 0]); return id; }
+ static async update(id: string, data: Partial<Pick<DatasetFolder, "name" | "description" | "parent_id" | "sort_order" | "project_id">>): Promise<boolean> { const entries = Object.entries(data).filter(([, value]) => value !== undefined); if (!entries.length) return true; const allowed = new Set(["name", "description", "parent_id", "sort_order", "project_id"]); const valid = entries.filter(([key]) => allowed.has(key)); const values = valid.map(([, value]) => value); const sets = valid.map(([key]) => `${key} = ?`).join(", "); return (await execute(`UPDATE dataset_folders SET ${sets}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, [...values, id])).affectedRows > 0; }
+ static async delete(id: string): Promise<boolean> { return (await execute("DELETE FROM dataset_folders WHERE id = ?", [id])).affectedRows > 0; }
+ static async countChildren(folderId: string): Promise<{ subfolders: number; datasets: number }> { const [subfolders, datasets] = await Promise.all([queryOne<{ c: number | string }>("SELECT COUNT(1) AS c FROM dataset_folders WHERE parent_id = ?", [folderId]), queryOne<{ c: number | string }>("SELECT COUNT(1) AS c FROM datasets WHERE folder_id = ?", [folderId])]); return { subfolders: count(subfolders), datasets: count(datasets) }; }
 }
-
 export class DatasetEntityModel {
-  static findById(id: string): Dataset | undefined {
-    return db.prepare("SELECT * FROM datasets WHERE id = ?").get(id) as Dataset | undefined;
-  }
-
-  static list(
-    ownerId: string,
-    opts: { projectId?: string | null; folderId?: string | null },
-  ): Dataset[] {
-    const conditions: string[] = ["owner_id = ?"];
-    const params: unknown[] = [ownerId];
-    if (opts.projectId !== undefined) {
-      if (opts.projectId === null) {
-        conditions.push("project_id IS NULL");
-      } else {
-        conditions.push("project_id = ?");
-        params.push(opts.projectId);
-      }
-    }
-    if (opts.folderId !== undefined) {
-      if (opts.folderId === null) {
-        conditions.push("folder_id IS NULL");
-      } else {
-        conditions.push("folder_id = ?");
-        params.push(opts.folderId);
-      }
-    }
-    const sql = `SELECT * FROM datasets WHERE ${conditions.join(" AND ")} ORDER BY updated_at DESC, created_at DESC`;
-    return db.prepare(sql).all(...params) as Dataset[];
-  }
-
-  static create(data: {
-    name: string;
-    description?: string | null;
-    owner_id: string;
-    project_id?: string | null;
-    folder_id?: string | null;
-    form_schema?: string | null;
-  }): string {
-    const id = generateSnowflakeId();
-    db
-      .prepare(
-        `INSERT INTO datasets (id, name, description, form_schema, owner_id, project_id, folder_id)
-         VALUES (@id, @name, @description, @form_schema, @owner_id, @project_id, @folder_id)`,
-      )
-      .run({
-        id,
-        name: data.name,
-        description: data.description ?? null,
-        form_schema: data.form_schema ?? null,
-        owner_id: data.owner_id,
-        project_id: data.project_id ?? null,
-        folder_id: data.folder_id ?? null,
-      });
-    return id;
-  }
-
-  static update(
-    id: string,
-    data: Partial<Pick<Dataset, "name" | "description" | "form_schema" | "project_id" | "folder_id">>,
-  ): boolean {
-    const entries = Object.entries(data).filter(([, v]) => v !== undefined);
-    if (entries.length === 0) return true;
-    const sets = entries.map(([k]) => `${k} = @${k}`).join(", ");
-    const row = Object.fromEntries(entries) as Record<string, unknown>;
-    const r = db
-      .prepare(`UPDATE datasets SET ${sets}, updated_at = CURRENT_TIMESTAMP WHERE id = @id`)
-      .run({ ...row, id });
-    return r.changes > 0;
-  }
-
-  static delete(id: string): boolean {
-    const r = db.prepare("DELETE FROM datasets WHERE id = ?").run(id);
-    return r.changes > 0;
-  }
-
-  static rowCount(datasetId: string): number {
-    const row = db.prepare("SELECT COUNT(1) as c FROM dataset_rows WHERE dataset_id = ?").get(datasetId) as {
-      c: number;
-    };
-    return row.c;
-  }
+ static async findById(id: string): Promise<Dataset | undefined> { return queryOne<Dataset>("SELECT * FROM datasets WHERE id = ?", [id]); }
+ static async list(ownerId: string, opts: { projectId?: string | null; folderId?: string | null }): Promise<Dataset[]> { const conditions = ["owner_id = ?"], params: unknown[] = [ownerId]; for (const [field, value] of [["project_id", opts.projectId], ["folder_id", opts.folderId]] as const) { if (value !== undefined) { if (value === null) conditions.push(`${field} IS NULL`); else { conditions.push(`${field} = ?`); params.push(value); } } } return query<Dataset[]>(`SELECT * FROM datasets WHERE ${conditions.join(" AND ")} ORDER BY updated_at DESC, created_at DESC`, params); }
+ static async create(data: { name: string; description?: string | null; owner_id: string; project_id?: string | null; folder_id?: string | null; form_schema?: string | null; }): Promise<string> { const id = generateSnowflakeId(); await execute("INSERT INTO datasets (id, name, description, form_schema, owner_id, project_id, folder_id) VALUES (?, ?, ?, ?, ?, ?, ?)", [id, data.name, data.description ?? null, data.form_schema ?? null, data.owner_id, data.project_id ?? null, data.folder_id ?? null]); return id; }
+ static async update(id: string, data: Partial<Pick<Dataset, "name" | "description" | "form_schema" | "project_id" | "folder_id">>): Promise<boolean> { const entries = Object.entries(data).filter(([, value]) => value !== undefined); if (!entries.length) return true; const allowed = new Set(["name", "description", "form_schema", "project_id", "folder_id"]), valid = entries.filter(([key]) => allowed.has(key)); return (await execute(`UPDATE datasets SET ${valid.map(([key]) => `${key} = ?`).join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, [...valid.map(([, value]) => value), id])).affectedRows > 0; }
+ static async delete(id: string): Promise<boolean> { return (await execute("DELETE FROM datasets WHERE id = ?", [id])).affectedRows > 0; }
+ static async rowCount(datasetId: string): Promise<number> { return count(await queryOne<{ c: number | string }>("SELECT COUNT(1) AS c FROM dataset_rows WHERE dataset_id = ?", [datasetId])); }
 }
-
 export class DatasetFieldModel {
-  static listByDataset(datasetId: string): DatasetField[] {
-    return db
-      .prepare(
-        "SELECT * FROM dataset_fields WHERE dataset_id = ? ORDER BY sort_order ASC, created_at ASC",
-      )
-      .all(datasetId) as DatasetField[];
-  }
-
-  static replaceForDataset(datasetId: string, fields: { name: string; field_type: DatasetFieldType; sort_order: number }[]) {
-    const del = db.prepare("DELETE FROM dataset_fields WHERE dataset_id = ?");
-    const ins = db.prepare(
-      `INSERT INTO dataset_fields (id, dataset_id, name, field_type, sort_order) VALUES (?, ?, ?, ?, ?)`,
-    );
-    const tx = db.transaction(() => {
-      del.run(datasetId);
-      for (const f of fields) {
-        ins.run(generateSnowflakeId(), datasetId, f.name, f.field_type, f.sort_order);
-      }
-    });
-    tx();
-  }
-
-  static createMany(
-    datasetId: string,
-    fields: { name: string; field_type: DatasetFieldType; sort_order: number }[],
-  ) {
-    const ins = db.prepare(
-      `INSERT INTO dataset_fields (id, dataset_id, name, field_type, sort_order) VALUES (?, ?, ?, ?, ?)`,
-    );
-    const tx = db.transaction(() => {
-      for (const f of fields) {
-        ins.run(generateSnowflakeId(), datasetId, f.name, f.field_type, f.sort_order);
-      }
-    });
-    tx();
-  }
+ static async listByDataset(datasetId: string): Promise<DatasetField[]> { return query<DatasetField[]>("SELECT * FROM dataset_fields WHERE dataset_id = ? ORDER BY sort_order ASC, created_at ASC", [datasetId]); }
+ static async replaceForDataset(datasetId: string, fields: { name: string; field_type: DatasetFieldType; sort_order: number }[]): Promise<void> { await withTransaction(async connection => { await connection.execute("DELETE FROM dataset_fields WHERE dataset_id = ?", [datasetId]); for (const field of fields) await connection.execute("INSERT INTO dataset_fields (id, dataset_id, name, field_type, sort_order) VALUES (?, ?, ?, ?, ?)", [generateSnowflakeId(), datasetId, field.name, field.field_type, field.sort_order]); }); }
+ static async createMany(datasetId: string, fields: { name: string; field_type: DatasetFieldType; sort_order: number }[]): Promise<void> { await withTransaction(async connection => { for (const field of fields) await connection.execute("INSERT INTO dataset_fields (id, dataset_id, name, field_type, sort_order) VALUES (?, ?, ?, ?, ?)", [generateSnowflakeId(), datasetId, field.name, field.field_type, field.sort_order]); }); }
 }
-
 export class DatasetRowModel {
-  static listPage(
-    datasetId: string,
-    page: number,
-    pageSize: number,
-  ): { rows: DatasetRow[]; total: number } {
-    const total = db.prepare("SELECT COUNT(1) as c FROM dataset_rows WHERE dataset_id = ?").get(datasetId) as {
-      c: number;
-    };
-    const offset = (page - 1) * pageSize;
-    const rows = db
-      .prepare(
-        `SELECT * FROM dataset_rows WHERE dataset_id = ? ORDER BY sort_order ASC, created_at ASC LIMIT ? OFFSET ?`,
-      )
-      .all(datasetId, pageSize, offset) as DatasetRow[];
-    return { rows, total: total.c };
-  }
-
-  static create(datasetId: string, valuesJson: string, sortOrder?: number): string {
-    let order = sortOrder;
-    if (order === undefined) {
-      const row = db
-        .prepare("SELECT COALESCE(MAX(sort_order), 0) + 1 AS n FROM dataset_rows WHERE dataset_id = ?")
-        .get(datasetId) as { n: number };
-      order = row.n;
-    }
-    const id = generateSnowflakeId();
-    db.prepare(`INSERT INTO dataset_rows (id, dataset_id, sort_order, values_json) VALUES (?, ?, ?, ?)`).run(
-      id,
-      datasetId,
-      order,
-      valuesJson,
-    );
-    return id;
-  }
-
-  static findById(rowId: string, datasetId: string): DatasetRow | undefined {
-    return db
-      .prepare("SELECT * FROM dataset_rows WHERE id = ? AND dataset_id = ?")
-      .get(rowId, datasetId) as DatasetRow | undefined;
-  }
-
-  static update(rowId: string, datasetId: string, valuesJson: string, sortOrder?: number): boolean {
-    if (sortOrder !== undefined) {
-      const r = db
-        .prepare(
-          "UPDATE dataset_rows SET values_json = ?, sort_order = ? WHERE id = ? AND dataset_id = ?",
-        )
-        .run(valuesJson, sortOrder, rowId, datasetId);
-      return r.changes > 0;
-    }
-    const r = db
-      .prepare("UPDATE dataset_rows SET values_json = ? WHERE id = ? AND dataset_id = ?")
-      .run(valuesJson, rowId, datasetId);
-    return r.changes > 0;
-  }
-
-  static delete(rowId: string, datasetId: string): boolean {
-    const r = db.prepare("DELETE FROM dataset_rows WHERE id = ? AND dataset_id = ?").run(rowId, datasetId);
-    return r.changes > 0;
-  }
-
-  static createMany(
-    datasetId: string,
-    rows: { valuesJson: string; sortOrder: number }[],
-  ): void {
-    const ins = db.prepare(
-      `INSERT INTO dataset_rows (id, dataset_id, sort_order, values_json) VALUES (?, ?, ?, ?)`,
-    );
-    const tx = db.transaction(() => {
-      for (const r of rows) {
-        ins.run(generateSnowflakeId(), datasetId, r.sortOrder, r.valuesJson);
-      }
-    });
-    tx();
-  }
+ static async listPage(datasetId: string, page: number, pageSize: number): Promise<{ rows: DatasetRow[]; total: number }> { const [total, rows] = await Promise.all([queryOne<{ c: number | string }>("SELECT COUNT(1) AS c FROM dataset_rows WHERE dataset_id = ?", [datasetId]), query<DatasetRow[]>("SELECT * FROM dataset_rows WHERE dataset_id = ? ORDER BY sort_order ASC, created_at ASC LIMIT ? OFFSET ?", [datasetId, pageSize, (page - 1) * pageSize])]); return { rows, total: count(total) }; }
+ static async create(datasetId: string, valuesJson: string, sortOrder?: number): Promise<string> { const order = sortOrder ?? Number((await queryOne<{ n: number | string }>("SELECT COALESCE(MAX(sort_order), 0) + 1 AS n FROM dataset_rows WHERE dataset_id = ?", [datasetId]))?.n ?? 1); const id = generateSnowflakeId(); await execute("INSERT INTO dataset_rows (id, dataset_id, sort_order, values_json) VALUES (?, ?, ?, ?)", [id, datasetId, order, valuesJson]); return id; }
+ static async findById(rowId: string, datasetId: string): Promise<DatasetRow | undefined> { return queryOne<DatasetRow>("SELECT * FROM dataset_rows WHERE id = ? AND dataset_id = ?", [rowId, datasetId]); }
+ static async update(rowId: string, datasetId: string, valuesJson: string, sortOrder?: number): Promise<boolean> { const result = sortOrder === undefined ? await execute("UPDATE dataset_rows SET values_json = ? WHERE id = ? AND dataset_id = ?", [valuesJson, rowId, datasetId]) : await execute("UPDATE dataset_rows SET values_json = ?, sort_order = ? WHERE id = ? AND dataset_id = ?", [valuesJson, sortOrder, rowId, datasetId]); return result.affectedRows > 0; }
+ static async delete(rowId: string, datasetId: string): Promise<boolean> { return (await execute("DELETE FROM dataset_rows WHERE id = ? AND dataset_id = ?", [rowId, datasetId])).affectedRows > 0; }
+ static async createMany(datasetId: string, rows: { valuesJson: string; sortOrder: number }[]): Promise<void> { await withTransaction(async connection => { for (const row of rows) await connection.execute("INSERT INTO dataset_rows (id, dataset_id, sort_order, values_json) VALUES (?, ?, ?, ?)", [generateSnowflakeId(), datasetId, row.sortOrder, row.valuesJson]); }); }
 }

@@ -478,7 +478,10 @@ async function confirmDeleteRow(row: Record<string, unknown>) {
   }
 }
 
-defineExpose({ openCreateRow })
+defineExpose({
+  openCreateRow,
+  reload: loadDetailAndRows,
+})
 </script>
 
 <template>

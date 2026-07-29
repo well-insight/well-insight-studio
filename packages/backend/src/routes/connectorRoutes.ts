@@ -155,7 +155,7 @@ router.post("/import", authenticateToken, async (req: Request, res: Response) =>
     );
 
     // 创建数据集
-    const datasetId = DatasetEntityModel.create({
+    const datasetId = await DatasetEntityModel.create({
       name: body.dataset.name,
       description: body.dataset.description ?? null,
       owner_id: req.userId!,
@@ -164,7 +164,7 @@ router.post("/import", authenticateToken, async (req: Request, res: Response) =>
     });
 
     // 创建字段
-    DatasetFieldModel.createMany(
+    await DatasetFieldModel.createMany(
       datasetId,
       includedFields.map((f, i) => ({
         name: f.name,
@@ -174,7 +174,7 @@ router.post("/import", authenticateToken, async (req: Request, res: Response) =>
     );
 
     // 获取字段 ID（name → id）
-    const createdFields = DatasetFieldModel.listByDataset(datasetId);
+    const createdFields = await DatasetFieldModel.listByDataset(datasetId);
     // colIndex → fieldId
     const colIndexToFieldId = new Map<number, string>();
     includedFields.forEach((f) => {
@@ -204,7 +204,7 @@ router.post("/import", authenticateToken, async (req: Request, res: Response) =>
       return { valuesJson: JSON.stringify(values), sortOrder: idx + 1 };
     });
 
-    DatasetRowModel.createMany(datasetId, rowsToInsert);
+    await DatasetRowModel.createMany(datasetId, rowsToInsert);
 
     sessions.delete(body.sessionId);
 

@@ -19,6 +19,7 @@ const loading = ref(false)
 const createVisible = ref(false)
 const createTitle = ref('')
 const createClientType = ref<1 | 2>(1)
+let isFirstActivation = true
 
 async function loadList() {
   loading.value = true
@@ -46,7 +47,13 @@ function toWorkspaceApp(row: ApiApplicationListItem): WorkspaceApp {
 }
 
 onMounted(() => { loadList() })
-onActivated(() => { loadList() })
+onActivated(() => {
+  if (isFirstActivation) {
+    isFirstActivation = false
+    return
+  }
+  loadList()
+})
 
 function openCreate() {
   createTitle.value = ''

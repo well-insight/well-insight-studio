@@ -123,6 +123,13 @@ export function createDatasetRow(
   return request.post<ApiDatasetRow>(`/datasets/${datasetId}/rows`, body)
 }
 
+export function createDatasetRows(
+  datasetId: string,
+  rows: Record<string, string | number | null>[],
+) {
+  return request.post<{ count: number }>(`/datasets/${datasetId}/rows/batch`, { rows })
+}
+
 export function updateDatasetRow(
   datasetId: string,
   rowId: string,

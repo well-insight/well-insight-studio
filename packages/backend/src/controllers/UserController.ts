@@ -3,9 +3,9 @@ import bcrypt from "bcryptjs";
 import { UserModel } from "../models/User";
 
 export class UserController {
-  static list(_req: Request, res: Response): void {
+  static async list(_req: Request, res: Response): Promise<void> {
     try {
-      const users = UserModel.findAll();
+      const users = await UserModel.findAll();
       res.json({
         success: true,
         data: users,
@@ -39,14 +39,14 @@ export class UserController {
         return;
       }
 
-      const target = UserModel.findByPk(id);
+      const target = await UserModel.findByPk(id);
       if (!target) {
         res.status(404).json({ success: false, error: "用户不存在" });
         return;
       }
 
       const passwordHash = await bcrypt.hash(password, 10);
-      const ok = UserModel.updatePasswordHash(id, passwordHash);
+      const ok = await UserModel.updatePasswordHash(id, passwordHash);
       if (!ok) {
         res.status(500).json({ success: false, error: "更新密码失败" });
         return;

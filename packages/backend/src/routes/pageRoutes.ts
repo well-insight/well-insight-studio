@@ -59,8 +59,8 @@ const UpdateRecordSchema = z.object({
   sort_order: z.number().int().optional(),
 });
 
-function assertFormPage(pageId: string, userId: string) {
-  const page = PageModel.findById(pageId);
+async function assertFormPage(pageId: string, userId: string) {
+  const page = await PageModel.findById(pageId);
   if (!page || page.created_by !== userId)
     return null;
   if (page.type !== "form")
@@ -68,8 +68,8 @@ function assertFormPage(pageId: string, userId: string) {
   return page;
 }
 
-function assertFolderOwner(folderId: string, userId: string) {
-  const folder = PageFolderModel.findById(folderId);
+async function assertFolderOwner(folderId: string, userId: string) {
+  const folder = await PageFolderModel.findById(folderId);
   if (!folder || folder.owner_id !== userId)
     return null;
   return folder;
@@ -86,102 +86,102 @@ function isDescendant(folders: Array<{ id: string; parent_id: string | null }>, 
   return false;
 }
 
-router.get("/folders/tree", (req: Request, res: Response) => {
+router.get("/folders/tree", async (req: Request, res: Response) => {
   try {
-    const folders = PageFolderModel.listByOwner(req.userId!);
+    const folders = await PageFolderModel.listByOwner(req.userId!);
     res.json({ success: true, data: PageFolderModel.buildTree(folders, null) });
   }
   catch (error) {
     console.error("page folders tree error:", error);
-    res.status(500).json({ success: false, error: "鑾峰彇鐩綍鏍戝け璐?" });
+    res.status(500).json({ success: false, error: "获取目录树失败" });
   }
 });
 
-router.post("/folders", (req: Request, res: Response) => {
+router.post("/folders", async (req: Request, res: Response) => {
   try {
     const body = FolderCreateSchema.parse(req.body);
     if (body.parent_id != null) {
-      const parent = assertFolderOwner(body.parent_id, req.userId!);
+      const parent = await assertFolderOwner(body.parent_id, req.userId!);
       if (!parent)
-        return res.status(400).json({ success: false, error: "鐖剁洰褰曚笉瀛樺湪鎴栨棤鏉冮檺" });
+        return res.status(400).json({ success: false, error: "父目录不存在或无权限" });
     }
-    const folder = PageFolderModel.create({
+    const folder = await PageFolderModel.create({
       parent_id: body.parent_id ?? null,
       name: body.name,
       description: body.description ?? null,
       owner_id: req.userId!,
       sort_order: body.sort_order,
     });
-    res.status(201).json({ success: true, data: folder, message: "鐩綍宸插垱寤?" });
+    res.status(201).json({ success: true, data: folder, message: "目录已创建" });
   }
   catch (error) {
     if (error instanceof z.ZodError)
-      return res.status(400).json({ success: false, error: "鍙傛暟鏍￠獙澶辫触", details: error.errors });
+      return res.status(400).json({ success: false, error: "参数校验失败", details: error.errors });
     console.error("page folders create error:", error);
-    res.status(500).json({ success: false, error: "鍒涘缓鐩綍澶辫触" });
+    res.status(500).json({ success: false, error: "创建目录失败" });
   }
 });
 
-router.put("/folders/:folderId", (req: Request, res: Response) => {
+router.put("/folders/:folderId", async (req: Request, res: Response) => {
   try {
     const folderId = IdParamSchema.parse(req.params.folderId);
-    const existing = assertFolderOwner(folderId, req.userId!);
+    const existing = await assertFolderOwner(folderId, req.userId!);
     if (!existing)
-      return res.status(404).json({ success: false, error: "鐩綍涓嶅瓨鍦?" });
+      return res.status(404).json({ success: false, error: "目录不存在" });
     const body = FolderUpdateSchema.parse(req.body);
     if (body.parent_id != null) {
-      const parent = assertFolderOwner(body.parent_id, req.userId!);
+      const parent = await assertFolderOwner(body.parent_id, req.userId!);
       if (!parent)
-        return res.status(400).json({ success: false, error: "鐖剁洰褰曚笉瀛樺湪鎴栨棤鏉冮檺" });
-      const folders = PageFolderModel.listByOwner(req.userId!);
+        return res.status(400).json({ success: false, error: "父目录不存在或无权限" });
+      const folders = await PageFolderModel.listByOwner(req.userId!);
       if (body.parent_id === folderId || isDescendant(folders, folderId, body.parent_id))
-        return res.status(400).json({ success: false, error: "涓嶈兘褰㈡垚寰幆鐩綍" });
+        return res.status(400).json({ success: false, error: "不能形成循环目录" });
     }
-    const updated = PageFolderModel.update(folderId, {
+    const updated = await PageFolderModel.update(folderId, {
       parent_id: body.parent_id ?? existing.parent_id,
       name: body.name ?? existing.name,
       description: body.description ?? existing.description,
       sort_order: body.sort_order ?? existing.sort_order,
     });
-    res.json({ success: true, data: updated, message: "鐩綍宸叉洿鏂?" });
+    res.json({ success: true, data: updated, message: "目录已更新" });
   }
   catch (error) {
     if (error instanceof z.ZodError)
-      return res.status(400).json({ success: false, error: "鍙傛暟鏍￠獙澶辫触", details: error.errors });
+      return res.status(400).json({ success: false, error: "参数校验失败", details: error.errors });
     console.error("page folders update error:", error);
-    res.status(500).json({ success: false, error: "鏇存柊鐩綍澶辫触" });
+    res.status(500).json({ success: false, error: "更新目录失败" });
   }
 });
 
-router.delete("/folders/:folderId", (req: Request, res: Response) => {
+router.delete("/folders/:folderId", async (req: Request, res: Response) => {
   try {
     const folderId = IdParamSchema.parse(req.params.folderId);
-    const existing = assertFolderOwner(folderId, req.userId!);
+    const existing = await assertFolderOwner(folderId, req.userId!);
     if (!existing)
-      return res.status(404).json({ success: false, error: "鐩綍涓嶅瓨鍦?" });
-    const folders = PageFolderModel.listByOwner(req.userId!);
+      return res.status(404).json({ success: false, error: "目录不存在" });
+    const folders = await PageFolderModel.listByOwner(req.userId!);
     const hasChildren = folders.some(folder => folder.parent_id === folderId);
-    const hasPages = PageModel.findAll({ created_by: req.userId!, folder_id: folderId, page: 1, pageSize: 1 }).total > 0;
+    const hasPages = (await PageModel.findAll({ created_by: req.userId!, folder_id: folderId, page: 1, pageSize: 1 })).total > 0;
     if (hasChildren || hasPages)
-      return res.status(409).json({ success: false, error: "鐩綍闈炵┖锛岃鍏堝垹闄ゅ瓙椤甸潰鎴栧瓙鐩綍" });
-    PageFolderModel.delete(folderId);
-    res.json({ success: true, message: "鐩綍宸插垹闄?" });
+      return res.status(409).json({ success: false, error: "目录非空，请先删除子页面或子目录" });
+    await PageFolderModel.delete(folderId);
+    res.json({ success: true, message: "目录已删除" });
   }
   catch (error) {
     console.error("page folders delete error:", error);
-    res.status(500).json({ success: false, error: "鍒犻櫎鐩綍澶辫触" });
+    res.status(500).json({ success: false, error: "删除目录失败" });
   }
 });
 
-router.post("/", (req: Request, res: Response) => {
+router.post("/", async (req: Request, res: Response) => {
   try {
     const body = CreatePageSchema.parse(req.body);
     if (body.folder_id != null) {
-      const folder = assertFolderOwner(body.folder_id, req.userId!);
+      const folder = await assertFolderOwner(body.folder_id, req.userId!);
       if (!folder)
-        return res.status(400).json({ success: false, error: "鎵€灞炵洰褰曚笉瀛樺湪鎴栨棤鏉冮檺" });
+        return res.status(400).json({ success: false, error: "所属目录不存在或无权限" });
     }
-    const page = PageModel.create({
+    const page = await PageModel.create({
       folder_id: body.folder_id ?? null,
       name: body.name,
       type: body.type,
@@ -191,62 +191,62 @@ router.post("/", (req: Request, res: Response) => {
       status: body.status,
       created_by: req.userId!,
     });
-    res.status(201).json({ success: true, data: page, message: "椤甸潰鍒涘缓鎴愬姛" });
+    res.status(201).json({ success: true, data: page, message: "页面创建成功" });
   }
   catch (error) {
     if (error instanceof z.ZodError)
-      return res.status(400).json({ success: false, error: "鏁版嵁楠岃瘉澶辫触", details: error.errors });
+      return res.status(400).json({ success: false, error: "数据验证失败", details: error.errors });
     console.error("pages create error:", error);
-    res.status(500).json({ success: false, error: "鍒涘缓椤甸潰澶辫触" });
+    res.status(500).json({ success: false, error: "创建页面失败" });
   }
 });
 
-router.get("/", (req: Request, res: Response) => {
+router.get("/", async (req: Request, res: Response) => {
   try {
     const query = ListQuerySchema.parse(req.query);
-    const result = PageModel.findAll({
+    const result = await PageModel.findAll({
       ...query,
       created_by: req.userId!,
     });
-    res.json({ success: true, data: { items: result.items, total: result.total }, message: "鑾峰彇椤甸潰鍒楄〃鎴愬姛" });
+    res.json({ success: true, data: { items: result.items, total: result.total }, message: "获取页面列表成功" });
   }
   catch (error) {
     if (error instanceof z.ZodError)
-      return res.status(400).json({ success: false, error: "鍙傛暟楠岃瘉澶辫触", details: error.errors });
+      return res.status(400).json({ success: false, error: "参数验证失败", details: error.errors });
     console.error("pages list error:", error);
-    res.status(500).json({ success: false, error: "鑾峰彇椤甸潰鍒楄〃澶辫触" });
+    res.status(500).json({ success: false, error: "获取页面列表失败" });
   }
 });
 
-router.get("/:id", (req: Request, res: Response) => {
+router.get("/:id", async (req: Request, res: Response) => {
   try {
     const id = IdParamSchema.parse(req.params.id);
-    const page = PageModel.findById(id);
+    const page = await PageModel.findById(id);
     if (!page || page.created_by !== req.userId!)
-      return res.status(404).json({ success: false, error: "椤甸潰涓嶅瓨鍦?" });
-    res.json({ success: true, data: page, message: "鑾峰彇椤甸潰鎴愬姛" });
+      return res.status(404).json({ success: false, error: "页面不存在" });
+    res.json({ success: true, data: page, message: "获取页面成功" });
   }
   catch (error) {
     if (error instanceof z.ZodError)
-      return res.status(400).json({ success: false, error: "鍙傛暟鏍￠獙澶辫触", details: error.errors });
+      return res.status(400).json({ success: false, error: "参数校验失败", details: error.errors });
     console.error("pages get error:", error);
-    res.status(500).json({ success: false, error: "鑾峰彇椤甸潰澶辫触" });
+    res.status(500).json({ success: false, error: "获取页面失败" });
   }
 });
 
-router.put("/:id", (req: Request, res: Response) => {
+router.put("/:id", async (req: Request, res: Response) => {
   try {
     const id = IdParamSchema.parse(req.params.id);
-    const existing = PageModel.findById(id);
+    const existing = await PageModel.findById(id);
     if (!existing || existing.created_by !== req.userId!)
-      return res.status(404).json({ success: false, error: "椤甸潰涓嶅瓨鍦?" });
+      return res.status(404).json({ success: false, error: "页面不存在" });
     const body = UpdatePageSchema.parse(req.body);
     if (body.folder_id != null) {
-      const folder = assertFolderOwner(body.folder_id, req.userId!);
+      const folder = await assertFolderOwner(body.folder_id, req.userId!);
       if (!folder)
-        return res.status(400).json({ success: false, error: "鎵€灞炵洰褰曚笉瀛樺湪鎴栨棤鏉冮檺" });
+        return res.status(400).json({ success: false, error: "所属目录不存在或无权限" });
     }
-    const page = PageModel.update(id, {
+    const page = await PageModel.update(id, {
       folder_id: body.folder_id ?? existing.folder_id ?? null,
       name: body.name,
       type: body.type,
@@ -255,116 +255,116 @@ router.put("/:id", (req: Request, res: Response) => {
       preview_url: body.preview_url,
       status: body.status,
     });
-    res.json({ success: true, data: page, message: "椤甸潰鏇存柊鎴愬姛" });
+    res.json({ success: true, data: page, message: "页面更新成功" });
   }
   catch (error) {
     if (error instanceof z.ZodError)
-      return res.status(400).json({ success: false, error: "鏁版嵁楠岃瘉澶辫触", details: error.errors });
+      return res.status(400).json({ success: false, error: "数据验证失败", details: error.errors });
     console.error("pages update error:", error);
-    res.status(500).json({ success: false, error: "鏇存柊椤甸潰澶辫触" });
+    res.status(500).json({ success: false, error: "更新页面失败" });
   }
 });
 
-router.delete("/:id", (req: Request, res: Response) => {
+router.delete("/:id", async (req: Request, res: Response) => {
   try {
     const id = IdParamSchema.parse(req.params.id);
-    const page = PageModel.findById(id);
+    const page = await PageModel.findById(id);
     if (!page || page.created_by !== req.userId!)
-      return res.status(404).json({ success: false, error: "椤甸潰涓嶅瓨鍦?" });
-    PageModel.delete(id);
-    res.json({ success: true, data: null, message: "椤甸潰鍒犻櫎鎴愬姛" });
+      return res.status(404).json({ success: false, error: "页面不存在" });
+    await PageModel.delete(id);
+    res.json({ success: true, data: null, message: "页面删除成功" });
   }
   catch (error) {
     if (error instanceof z.ZodError)
-      return res.status(400).json({ success: false, error: "鍙傛暟楠岃瘉澶辫触", details: error.errors });
+      return res.status(400).json({ success: false, error: "参数验证失败", details: error.errors });
     console.error("pages delete error:", error);
-    res.status(500).json({ success: false, error: "鍒犻櫎椤甸潰澶辫触" });
+    res.status(500).json({ success: false, error: "删除页面失败" });
   }
 });
 
-router.get("/:id/records", (req: Request, res: Response) => {
+router.get("/:id/records", async (req: Request, res: Response) => {
   try {
     const pageId = IdParamSchema.parse(req.params.id);
-    const page = assertFormPage(pageId, req.userId!);
+    const page = await assertFormPage(pageId, req.userId!);
     if (!page)
-      return res.status(404).json({ success: false, error: "椤甸潰涓嶅瓨鍦?" });
+      return res.status(404).json({ success: false, error: "页面不存在" });
     const queryPage = z.coerce.number().int().positive().optional().default(1).parse(req.query.page);
     const pageSize = z.coerce.number().int().positive().max(100).optional().default(20).parse(req.query.pageSize);
-    const result = FormRecordModel.listByPage(pageId, { page: queryPage, pageSize });
+    const result = await FormRecordModel.listByPage(pageId, { page: queryPage, pageSize });
     res.json({ success: true, data: { items: result.items, total: result.total, page: queryPage, pageSize } });
   }
   catch (error) {
     if (error instanceof z.ZodError)
-      return res.status(400).json({ success: false, error: "鍙傛暟楠岃瘉澶辫触", details: error.errors });
+      return res.status(400).json({ success: false, error: "参数验证失败", details: error.errors });
     if ((error as Error).message === "NOT_FORM_PAGE")
-      return res.status(400).json({ success: false, error: "鍙兘鍦ㄨ〃鍗曢〉闈㈡煡鐪嬭褰?" });
+      return res.status(400).json({ success: false, error: "只能在表单页面查看记录" });
     console.error("pages record list error:", error);
-    res.status(500).json({ success: false, error: "鑾峰彇琛ㄥ崟璁板綍澶辫触" });
+    res.status(500).json({ success: false, error: "获取表单记录失败" });
   }
 });
 
-router.post("/:id/records", (req: Request, res: Response) => {
+router.post("/:id/records", async (req: Request, res: Response) => {
   try {
     const pageId = IdParamSchema.parse(req.params.id);
-    const page = assertFormPage(pageId, req.userId!);
+    const page = await assertFormPage(pageId, req.userId!);
     if (!page)
-      return res.status(404).json({ success: false, error: "椤甸潰涓嶅瓨鍦?" });
+      return res.status(404).json({ success: false, error: "页面不存在" });
     const body = CreateRecordSchema.parse(req.body);
-    const record = FormRecordModel.create({ page_id: pageId, values: body.values, created_by: req.userId!, sort_order: body.sort_order });
-    res.status(201).json({ success: true, data: record, message: "璁板綍宸叉坊鍔?" });
+    const record = await FormRecordModel.create({ page_id: pageId, values: body.values, created_by: req.userId!, sort_order: body.sort_order });
+    res.status(201).json({ success: true, data: record, message: "记录已添加" });
   }
   catch (error) {
     if (error instanceof z.ZodError)
-      return res.status(400).json({ success: false, error: "鍙傛暟楠岃瘉澶辫触", details: error.errors });
+      return res.status(400).json({ success: false, error: "参数验证失败", details: error.errors });
     if ((error as Error).message === "NOT_FORM_PAGE")
-      return res.status(400).json({ success: false, error: "鍙兘鍦ㄨ〃鍗曢〉闈㈡坊鍔犺褰?" });
+      return res.status(400).json({ success: false, error: "只能在表单页面添加记录" });
     console.error("pages record create error:", error);
-    res.status(500).json({ success: false, error: "鏂板璁板綍澶辫触" });
+    res.status(500).json({ success: false, error: "新增记录失败" });
   }
 });
 
-router.put("/:id/records/:recordId", (req: Request, res: Response) => {
+router.put("/:id/records/:recordId", async (req: Request, res: Response) => {
   try {
     const pageId = IdParamSchema.parse(req.params.id);
     const recordId = IdParamSchema.parse(req.params.recordId);
-    const page = assertFormPage(pageId, req.userId!);
+    const page = await assertFormPage(pageId, req.userId!);
     if (!page)
-      return res.status(404).json({ success: false, error: "椤甸潰涓嶅瓨鍦?" });
+      return res.status(404).json({ success: false, error: "页面不存在" });
     const body = UpdateRecordSchema.parse(req.body);
-    const record = FormRecordModel.update(recordId, pageId, body);
+    const record = await FormRecordModel.update(recordId, pageId, body);
     if (!record)
-      return res.status(404).json({ success: false, error: "璁板綍涓嶅瓨鍦?" });
-    res.json({ success: true, data: record, message: "璁板綍宸叉洿鏂?" });
+      return res.status(404).json({ success: false, error: "记录不存在" });
+    res.json({ success: true, data: record, message: "记录已更新" });
   }
   catch (error) {
     if (error instanceof z.ZodError)
-      return res.status(400).json({ success: false, error: "鍙傛暟楠岃瘉澶辫触", details: error.errors });
+      return res.status(400).json({ success: false, error: "参数验证失败", details: error.errors });
     if ((error as Error).message === "NOT_FORM_PAGE")
-      return res.status(400).json({ success: false, error: "鍙兘鍦ㄨ〃鍗曢〉闈㈢紪杈戣褰?" });
+      return res.status(400).json({ success: false, error: "只能在表单页面编辑记录" });
     console.error("pages record update error:", error);
-    res.status(500).json({ success: false, error: "鏇存柊璁板綍澶辫触" });
+    res.status(500).json({ success: false, error: "更新记录失败" });
   }
 });
 
-router.delete("/:id/records/:recordId", (req: Request, res: Response) => {
+router.delete("/:id/records/:recordId", async (req: Request, res: Response) => {
   try {
     const pageId = IdParamSchema.parse(req.params.id);
     const recordId = IdParamSchema.parse(req.params.recordId);
-    const page = assertFormPage(pageId, req.userId!);
+    const page = await assertFormPage(pageId, req.userId!);
     if (!page)
-      return res.status(404).json({ success: false, error: "椤甸潰涓嶅瓨鍦?" });
-    const deleted = FormRecordModel.delete(recordId, pageId);
+      return res.status(404).json({ success: false, error: "页面不存在" });
+    const deleted = await FormRecordModel.delete(recordId, pageId);
     if (!deleted)
-      return res.status(404).json({ success: false, error: "璁板綍涓嶅瓨鍦?" });
-    res.json({ success: true, message: "璁板綍宸插垹闄?" });
+      return res.status(404).json({ success: false, error: "记录不存在" });
+    res.json({ success: true, message: "记录已删除" });
   }
   catch (error) {
     if (error instanceof z.ZodError)
-      return res.status(400).json({ success: false, error: "鍙傛暟楠岃瘉澶辫触", details: error.errors });
+      return res.status(400).json({ success: false, error: "参数验证失败", details: error.errors });
     if ((error as Error).message === "NOT_FORM_PAGE")
-      return res.status(400).json({ success: false, error: "鍙兘鍦ㄨ〃鍗曢〉闈㈠垹闄よ褰?" });
+      return res.status(400).json({ success: false, error: "只能在表单页面删除记录" });
     console.error("pages record delete error:", error);
-    res.status(500).json({ success: false, error: "鍒犻櫎璁板綍澶辫触" });
+    res.status(500).json({ success: false, error: "删除记录失败" });
   }
 });
 

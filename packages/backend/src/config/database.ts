@@ -1,72 +1,63 @@
-import Database from "better-sqlite3";
 import dotenv from "dotenv";
-import fs from "fs";
+import mysql, { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import path from "path";
 
-// 须在读取 DB_PATH 之前加载（否则晚于本文件的 import 链拿不到 .env）
 const backendRoot = path.resolve(__dirname, "../..");
 dotenv.config({ path: path.join(backendRoot, ".env") });
 dotenv.config();
 
-const defaultDbFile = path.join(backendRoot, "data", "app.db");
-const DB_PATH = (process.env.DB_PATH && process.env.DB_PATH.trim()) || defaultDbFile;
-
-const dbDir = path.dirname(DB_PATH);
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
+function requiredEnv(name: string): string {
+  const value = process.env[name]?.trim();
+  if (!value) throw new Error(`[DATABASE] 缺少必填环境变量 ${name}`);
+  return value;
 }
 
-export const db = new Database(DB_PATH);
+export const pool = mysql.createPool({
+  host: requiredEnv("MYSQL_HOST"),
+  port: Number(process.env.MYSQL_PORT ?? 3306),
+  user: requiredEnv("MYSQL_USER"),
+  password: requiredEnv("MYSQL_PASSWORD"),
+  database: requiredEnv("MYSQL_DATABASE"),
+  waitForConnections: true,
+  connectionLimit: Number(process.env.MYSQL_CONNECTION_LIMIT ?? 10),
+  queueLimit: 0,
+  charset: "utf8mb4",
+  dateStrings: true,
+});
 
-db.pragma("foreign_keys = ON");
-db.pragma("journal_mode = WAL");
-db.pragma("synchronous = NORMAL");
-
-function ensureColumn(tableName: string, columnDef: string, columnName: string) {
-  const columns = db.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{ name: string }>;
-  if (!columns.some(column => column.name === columnName)) {
-    db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnDef}`);
-  }
+export async function query<T = unknown[]>(sql: string, params: unknown[] = []): Promise<T> {
+  const [rows] = await pool.execute(sql, params as any[]);
+  return rows as T;
 }
 
-try {
-  ensureColumn("pages", "folder_id TEXT", "folder_id");
-}
-catch (error) {
-  console.warn("[DATABASE] 迁移 pages.folder_id 失败:", error);
+export async function queryOne<T = unknown>(sql: string, params: unknown[] = []): Promise<T | undefined> {
+  const rows = await query<T[]>(sql, params);
+  return rows[0];
 }
 
-// 每5分钟自动 checkpoint，确保 WAL 数据合并到主库
-const walCheckpointTimer = setInterval(() => {
+export async function execute(sql: string, params: unknown[] = []): Promise<ResultSetHeader> {
+  const [result] = await pool.execute(sql, params as any[]);
+  return result as ResultSetHeader;
+}
+
+export async function withTransaction<T>(callback: (connection: PoolConnection) => Promise<T>): Promise<T> {
+  const connection = await pool.getConnection();
   try {
-    db.pragma("wal_checkpoint(PASSIVE)");
-  } catch (e) {
-    console.warn("[DATABASE] 定期 WAL checkpoint 失败:", e);
-  }
-}, 5 * 60 * 1000);
-walCheckpointTimer.unref(); // 不阻止进程正常退出
-
-console.log(`[DATABASE] SQLite 数据库已连接: ${DB_PATH}`);
-
-let dbClosed = false;
-
-export function closeDatabase(): void {
-  if (dbClosed) return;
-  dbClosed = true;
-  try {
-    db.pragma("wal_checkpoint(RESTART)");
-    db.pragma("wal_checkpoint(TRUNCATE)");
-  } catch (e) {
-    console.warn("[DATABASE] wal_checkpoint 失败:", e);
-  }
-  try {
-    db.close();
-    console.log("[DATABASE] 数据库连接已关闭，数据已落盘");
-  } catch (e) {
-    console.warn("[DATABASE] 关闭连接失败:", e);
+    await connection.beginTransaction();
+    const result = await callback(connection);
+    await connection.commit();
+    return result;
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
   }
 }
 
-export { DB_PATH };
+export async function closeDatabase(): Promise<void> {
+  await pool.end();
+  console.log("[DATABASE] MySQL 连接池已关闭");
+}
 
-export default db;
+export default pool;

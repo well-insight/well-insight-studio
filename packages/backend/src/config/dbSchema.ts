@@ -1,387 +1,184 @@
-import { db } from "./database";
+import { PoolConnection } from "mysql2/promise";
+import { execute, queryOne, withTransaction } from "./database";
 import { generateSnowflakeId } from "../utils/snowflake";
 
-const TABLES_IN_DROP_ORDER = [
-  "app_page_menus",
-  "form_records",
-  "page_folders",
-  "pages",
-  "role_permissions",
-  "user_roles",
-  "dataset_rows",
-  "dataset_fields",
-  "datasets",
-  "dataset_folders",
-  "applications",
-  "permission_rules",
-  "roles",
-  "projects",
-  "users",
-] as const;
+type SqlExecutor = Pick<PoolConnection, "execute">;
 
-function columnType(tableName: string, columnName: string): string | null {
-  const columns = db.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{
-    name: string;
-    type: string;
-  }>;
-  const match = columns.find((column) => column.name === columnName);
-  return match?.type?.toUpperCase() ?? null;
+const tableOptions = "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+
+async function ensureColumn(tableName: string, columnName: string, columnDefinition: string): Promise<void> {
+  const column = await queryOne(
+    `SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?`,
+    [tableName, columnName],
+  );
+  if (!column) await execute(`ALTER TABLE \`${tableName}\` ADD COLUMN ${columnDefinition}`);
 }
 
-function requiresSchemaReset(): boolean {
-  const usersIdType = columnType("users", "id");
-  const datasetsIdType = columnType("datasets", "id");
-  if (!usersIdType && !datasetsIdType) return false;
-  return usersIdType !== "TEXT" || datasetsIdType !== "TEXT";
+async function ensureIndex(tableName: string, indexName: string, definition: string): Promise<void> {
+  const index = await queryOne(
+    `SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?`,
+    [tableName, indexName],
+  );
+  if (!index) await execute(`CREATE INDEX \`${indexName}\` ON \`${tableName}\` ${definition}`);
 }
 
-function ensureColumn(tableName: string, columnDef: string, columnName: string) {
-  const columns = db.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{ name: string }>;
-  if (!columns.some(column => column.name === columnName))
-    db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnDef}`);
-}
-
-function resetLegacySchema() {
-  console.warn("[DATABASE] 检测到旧的数值 ID schema，按雪花 ID 方案重建数据库表");
-  db.pragma("foreign_keys = OFF");
-  try {
-    for (const tableName of TABLES_IN_DROP_ORDER) {
-      db.exec(`DROP TABLE IF EXISTS ${tableName}`);
-    }
-  } finally {
-    db.pragma("foreign_keys = ON");
-  }
-}
-
-function createTables() {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id TEXT PRIMARY KEY,
-      email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      username TEXT NOT NULL,
-      display_name TEXT,
-      role TEXT DEFAULT 'user',
-      is_active BOOLEAN DEFAULT 1,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      last_login_at DATETIME
-    )
-  `);
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS roles (
-      id TEXT PRIMARY KEY,
-      name TEXT UNIQUE NOT NULL,
-      description TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      created_by TEXT,
-      FOREIGN KEY (created_by) REFERENCES users(id)
-    )
-  `);
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS permission_rules (
-      id TEXT PRIMARY KEY,
-      resource_type TEXT NOT NULL,
-      resource_id TEXT,
-      actions TEXT NOT NULL,
-      conditions TEXT,
-      priority INTEGER DEFAULT 0,
-      is_active BOOLEAN DEFAULT 1,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS role_permissions (
-      id TEXT PRIMARY KEY,
-      role_id TEXT NOT NULL,
-      permission_rule_id TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
+async function createTables(): Promise<void> {
+  const statements = [
+    `CREATE TABLE IF NOT EXISTS users (
+      id VARCHAR(64) PRIMARY KEY, email VARCHAR(255) NOT NULL UNIQUE, password_hash VARCHAR(255) NOT NULL,
+      username VARCHAR(255) NOT NULL, display_name VARCHAR(255) NULL, role VARCHAR(64) DEFAULT 'user',
+      is_active BOOLEAN DEFAULT TRUE, created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, last_login_at DATETIME NULL
+    ) ${tableOptions}`,
+    `CREATE TABLE IF NOT EXISTS roles (
+      id VARCHAR(64) PRIMARY KEY, name VARCHAR(100) NOT NULL UNIQUE, description TEXT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      created_by VARCHAR(64) NULL, FOREIGN KEY (created_by) REFERENCES users(id)
+    ) ${tableOptions}`,
+    `CREATE TABLE IF NOT EXISTS projects (
+      id VARCHAR(64) PRIMARY KEY, name VARCHAR(255) NOT NULL, description TEXT NULL, owner_id VARCHAR(64) NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (owner_id) REFERENCES users(id)
+    ) ${tableOptions}`,
+    `CREATE TABLE IF NOT EXISTS permission_rules (
+      id VARCHAR(64) PRIMARY KEY, resource_type VARCHAR(64) NOT NULL, resource_id VARCHAR(64) NULL,
+      actions TEXT NOT NULL, conditions TEXT NULL, priority INTEGER DEFAULT 0, is_active BOOLEAN DEFAULT TRUE,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ${tableOptions}`,
+    `CREATE TABLE IF NOT EXISTS role_permissions (
+      id VARCHAR(64) PRIMARY KEY, role_id VARCHAR(64) NOT NULL, permission_rule_id VARCHAR(64) NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
       FOREIGN KEY (permission_rule_id) REFERENCES permission_rules(id) ON DELETE CASCADE,
-      UNIQUE(role_id, permission_rule_id)
-    )
-  `);
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS user_roles (
-      id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      role_id TEXT NOT NULL,
-      project_id TEXT,
-      assigned_by TEXT NOT NULL,
-      assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      expires_at DATETIME,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
-      FOREIGN KEY (assigned_by) REFERENCES users(id),
-      UNIQUE(user_id, role_id, project_id)
-    )
-  `);
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS projects (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      description TEXT,
-      owner_id TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (owner_id) REFERENCES users(id)
-    )
-  `);
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS applications (
-      id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
-      status INTEGER NOT NULL DEFAULT 1,
-      client_type INTEGER NOT NULL DEFAULT 1,
-      schema_json TEXT NOT NULL,
-      starred INTEGER NOT NULL DEFAULT 0,
-      owner_id TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (owner_id) REFERENCES users(id)
-    )
-  `);
-  db.exec("CREATE INDEX IF NOT EXISTS idx_applications_owner ON applications(owner_id)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_applications_updated ON applications(updated_at)");
-
-  // 独立页面表
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS pages (
-      id TEXT PRIMARY KEY,
-      folder_id TEXT,
-      name TEXT NOT NULL,
-      type TEXT NOT NULL CHECK(type IN ('visualization', 'form', 'report')),
-      dsl TEXT NOT NULL DEFAULT '{}',
-      dataset_bindings TEXT,
-      preview_url TEXT,
-      status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft', 'published')),
-      created_by TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (created_by) REFERENCES users(id)
-    )
-  `);
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS page_folders (
-      id TEXT PRIMARY KEY,
-      parent_id TEXT,
-      name TEXT NOT NULL,
-      description TEXT,
-      owner_id TEXT NOT NULL,
-      sort_order INTEGER NOT NULL DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uk_role_permission (role_id, permission_rule_id)
+    ) ${tableOptions}`,
+    `CREATE TABLE IF NOT EXISTS user_roles (
+      id VARCHAR(64) PRIMARY KEY, user_id VARCHAR(64) NOT NULL, role_id VARCHAR(64) NOT NULL, project_id VARCHAR(64) NULL,
+      assigned_by VARCHAR(64) NOT NULL, assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP, expires_at DATETIME NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE, FOREIGN KEY (project_id) REFERENCES projects(id),
+      FOREIGN KEY (assigned_by) REFERENCES users(id), UNIQUE KEY uk_user_role_project (user_id, role_id, project_id)
+    ) ${tableOptions}`,
+    `CREATE TABLE IF NOT EXISTS applications (
+      id VARCHAR(64) PRIMARY KEY, title VARCHAR(255) NOT NULL, status INTEGER NOT NULL DEFAULT 1,
+      client_type INTEGER NOT NULL DEFAULT 1, schema_json LONGTEXT NOT NULL, starred INTEGER NOT NULL DEFAULT 0,
+      owner_id VARCHAR(64) NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (owner_id) REFERENCES users(id)
+    ) ${tableOptions}`,
+    `CREATE TABLE IF NOT EXISTS page_folders (
+      id VARCHAR(64) PRIMARY KEY, parent_id VARCHAR(64) NULL, name VARCHAR(255) NOT NULL, description TEXT NULL,
+      owner_id VARCHAR(64) NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (parent_id) REFERENCES page_folders(id) ON DELETE CASCADE,
       FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
-    )
-  `);
-
-  // 应用菜单挂载表
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS app_page_menus (
-      id TEXT PRIMARY KEY,
-      application_id TEXT NOT NULL,
-      page_id TEXT,
-      parent_id TEXT,
-      menu_title TEXT NOT NULL,
-      menu_icon TEXT,
-      route_path TEXT,
-      permission TEXT,
-      sort_order INTEGER DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    ) ${tableOptions}`,
+    `CREATE TABLE IF NOT EXISTS pages (
+      id VARCHAR(64) PRIMARY KEY, folder_id VARCHAR(64) NULL, name VARCHAR(255) NOT NULL, type VARCHAR(32) NOT NULL,
+      dsl LONGTEXT NOT NULL, dataset_bindings LONGTEXT NULL, preview_url TEXT NULL, status VARCHAR(32) NOT NULL DEFAULT 'draft',
+      created_by VARCHAR(64) NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (folder_id) REFERENCES page_folders(id) ON DELETE SET NULL,
+      FOREIGN KEY (created_by) REFERENCES users(id)
+    ) ${tableOptions}`,
+    `CREATE TABLE IF NOT EXISTS app_page_menus (
+      id VARCHAR(64) PRIMARY KEY, application_id VARCHAR(64) NOT NULL, page_id VARCHAR(64) NULL, parent_id VARCHAR(64) NULL,
+      menu_title VARCHAR(255) NOT NULL, menu_icon VARCHAR(100) NULL, route_path VARCHAR(500) NULL, permission VARCHAR(100) NULL,
+      sort_order INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE CASCADE,
       FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
-    )
-  `);
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS form_records (
-      id TEXT PRIMARY KEY,
-      page_id TEXT NOT NULL,
-      values_json TEXT NOT NULL DEFAULT '{}',
-      sort_order INTEGER NOT NULL DEFAULT 0,
-      created_by TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE,
+    ) ${tableOptions}`,
+    `CREATE TABLE IF NOT EXISTS form_records (
+      id VARCHAR(64) PRIMARY KEY, page_id VARCHAR(64) NOT NULL, values_json LONGTEXT NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0,
+      created_by VARCHAR(64) NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE,
       FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
-    )
-  `);
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS dataset_folders (
-      id TEXT PRIMARY KEY,
-      parent_id TEXT,
-      project_id TEXT,
-      name TEXT NOT NULL,
-      description TEXT,
-      owner_id TEXT NOT NULL,
-      sort_order INTEGER NOT NULL DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    ) ${tableOptions}`,
+    `CREATE TABLE IF NOT EXISTS dataset_folders (
+      id VARCHAR(64) PRIMARY KEY, parent_id VARCHAR(64) NULL, project_id VARCHAR(64) NULL, name VARCHAR(255) NOT NULL,
+      description TEXT NULL, owner_id VARCHAR(64) NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (parent_id) REFERENCES dataset_folders(id) ON DELETE CASCADE,
-      FOREIGN KEY (project_id) REFERENCES projects(id),
-      FOREIGN KEY (owner_id) REFERENCES users(id)
-    )
-  `);
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS datasets (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      description TEXT,
-      file_path TEXT,
-      file_size INTEGER,
-      owner_id TEXT NOT NULL,
-      project_id TEXT,
-      folder_id TEXT,
-      form_schema TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (owner_id) REFERENCES users(id),
-      FOREIGN KEY (project_id) REFERENCES projects(id),
+      FOREIGN KEY (project_id) REFERENCES projects(id), FOREIGN KEY (owner_id) REFERENCES users(id)
+    ) ${tableOptions}`,
+    `CREATE TABLE IF NOT EXISTS datasets (
+      id VARCHAR(64) PRIMARY KEY, name VARCHAR(255) NOT NULL, description TEXT NULL, file_path TEXT NULL, file_size INTEGER NULL,
+      owner_id VARCHAR(64) NOT NULL, project_id VARCHAR(64) NULL, folder_id VARCHAR(64) NULL, form_schema LONGTEXT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (owner_id) REFERENCES users(id), FOREIGN KEY (project_id) REFERENCES projects(id),
       FOREIGN KEY (folder_id) REFERENCES dataset_folders(id) ON DELETE SET NULL
-    )
-  `);
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS dataset_fields (
-      id TEXT PRIMARY KEY,
-      dataset_id TEXT NOT NULL,
-      name TEXT NOT NULL,
-      field_type TEXT NOT NULL CHECK (field_type IN ('text', 'number', 'datetime')),
-      sort_order INTEGER NOT NULL DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (dataset_id) REFERENCES datasets(id) ON DELETE CASCADE,
-      UNIQUE (dataset_id, name)
-    )
-  `);
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS dataset_rows (
-      id TEXT PRIMARY KEY,
-      dataset_id TEXT NOT NULL,
-      sort_order INTEGER NOT NULL DEFAULT 0,
-      values_json TEXT NOT NULL DEFAULT '{}',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    ) ${tableOptions}`,
+    `CREATE TABLE IF NOT EXISTS dataset_fields (
+      id VARCHAR(64) PRIMARY KEY, dataset_id VARCHAR(64) NOT NULL, name VARCHAR(200) NOT NULL, field_type VARCHAR(32) NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (dataset_id) REFERENCES datasets(id) ON DELETE CASCADE, UNIQUE KEY uk_dataset_field_name (dataset_id, name)
+    ) ${tableOptions}`,
+    `CREATE TABLE IF NOT EXISTS dataset_rows (
+      id VARCHAR(64) PRIMARY KEY, dataset_id VARCHAR(64) NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0,
+      values_json LONGTEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (dataset_id) REFERENCES datasets(id) ON DELETE CASCADE
-    )
-  `);
+    ) ${tableOptions}`,
+    `CREATE TABLE IF NOT EXISTS lowcode_pages (
+      id VARCHAR(64) PRIMARY KEY, name VARCHAR(100) NOT NULL, components LONGTEXT NOT NULL,
+      settings LONGTEXT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL
+    ) ${tableOptions}`,
+  ];
+  for (const statement of statements) await execute(statement);
 
-  db.exec("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON user_roles(user_id)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_user_roles_project_id ON user_roles(project_id)");
-  db.exec(
-    "CREATE INDEX IF NOT EXISTS idx_permission_rules_resource ON permission_rules(resource_type, resource_id)",
-  );
-  db.exec("CREATE INDEX IF NOT EXISTS idx_projects_owner ON projects(owner_id)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_datasets_owner ON datasets(owner_id)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_datasets_project ON datasets(project_id)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_datasets_folder ON datasets(folder_id)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_dataset_folders_owner ON dataset_folders(owner_id)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_dataset_folders_parent ON dataset_folders(parent_id)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_dataset_folders_project ON dataset_folders(project_id)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_dataset_fields_dataset ON dataset_fields(dataset_id)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_dataset_rows_dataset ON dataset_rows(dataset_id)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_pages_created_by ON pages(created_by)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_pages_folder ON pages(folder_id)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_pages_type ON pages(type)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_pages_status ON pages(status)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_page_folders_owner ON page_folders(owner_id)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_page_folders_parent ON page_folders(parent_id)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_form_records_page ON form_records(page_id)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_form_records_created_by ON form_records(created_by)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_app_page_menus_app ON app_page_menus(application_id)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_app_page_menus_page ON app_page_menus(page_id)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_app_page_menus_parent ON app_page_menus(parent_id)");
+  const indexes: Array<[string, string, string]> = [
+    ["users", "idx_users_email", "(email)"], ["user_roles", "idx_user_roles_user_id", "(user_id)"],
+    ["user_roles", "idx_user_roles_project_id", "(project_id)"], ["permission_rules", "idx_permission_rules_resource", "(resource_type, resource_id)"],
+    ["projects", "idx_projects_owner", "(owner_id)"], ["applications", "idx_applications_owner", "(owner_id)"], ["applications", "idx_applications_updated", "(updated_at)"],
+    ["datasets", "idx_datasets_owner", "(owner_id)"], ["datasets", "idx_datasets_project", "(project_id)"], ["datasets", "idx_datasets_folder", "(folder_id)"],
+    ["dataset_folders", "idx_dataset_folders_owner", "(owner_id)"], ["dataset_folders", "idx_dataset_folders_parent", "(parent_id)"], ["dataset_folders", "idx_dataset_folders_project", "(project_id)"],
+    ["dataset_fields", "idx_dataset_fields_dataset", "(dataset_id)"], ["dataset_rows", "idx_dataset_rows_dataset", "(dataset_id)"],
+    ["pages", "idx_pages_created_by", "(created_by)"], ["pages", "idx_pages_folder", "(folder_id)"], ["pages", "idx_pages_type", "(type)"], ["pages", "idx_pages_status", "(status)"],
+    ["page_folders", "idx_page_folders_owner", "(owner_id)"], ["page_folders", "idx_page_folders_parent", "(parent_id)"],
+    ["form_records", "idx_form_records_page", "(page_id)"], ["form_records", "idx_form_records_created_by", "(created_by)"],
+    ["app_page_menus", "idx_app_page_menus_app", "(application_id)"], ["app_page_menus", "idx_app_page_menus_page", "(page_id)"], ["app_page_menus", "idx_app_page_menus_parent", "(parent_id)"],
+  ];
+  for (const [table, name, definition] of indexes) await ensureIndex(table, name, definition);
 }
 
-export function initializeDatabaseSchema() {
-  console.log("[DATABASE] 初始化数据库表结构...");
+async function initializeDefaultRoles(): Promise<void> {
+  await withTransaction(async (connection) => {
+    const [existing] = await connection.execute("SELECT 1 FROM roles WHERE name = ? LIMIT 1", ["admin"]);
+    if (Array.isArray(existing) && existing.length > 0) return;
 
-  if (requiresSchemaReset()) {
-    resetLegacySchema();
-  }
+    const systemUserId = generateSnowflakeId();
+    const defaultPasswordHash = "$2a$10$cSbztqHbBsIu4FDFi8zjIuG54VZVwhA0BRicTrjKTt3yD.QkDMtWy";
+    await connection.execute(
+      "INSERT INTO users (id, email, password_hash, username, display_name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [systemUserId, "admin@cube.com", defaultPasswordHash, "admin", "管理员", "admin", 1],
+    );
 
-  createTables();
-  ensureColumn("datasets", "form_schema TEXT", "form_schema");
-  initializeDefaultRoles();
-
-  console.log("[DATABASE] 数据库表结构初始化完成");
+    const roles = [
+      [generateSnowflakeId(), "admin", "系统管理员，拥有所有权限"],
+      [generateSnowflakeId(), "developer", "开发者，可以创建和编辑项目"],
+      [generateSnowflakeId(), "analyst", "分析师，可以查看和分析数据"],
+      [generateSnowflakeId(), "viewer", "查看者，只能查看项目"],
+    ];
+    for (const [id, name, description] of roles) {
+      await connection.execute("INSERT INTO roles (id, name, description, created_by) VALUES (?, ?, ?, ?)", [id, name, description, systemUserId]);
+    }
+    const roleIds = Object.fromEntries(roles.map(([id, name]) => [name, id])) as Record<string, string>;
+    const rules: Array<[string, string, string[], number]> = [
+      ["admin", "project", ["read", "write", "delete", "execute"], 100], ["admin", "dataset", ["read", "write", "delete", "import", "export"], 100], ["admin", "workflow", ["read", "write", "delete", "execute"], 100],
+      ["developer", "project", ["read", "write", "delete"], 50], ["developer", "dataset", ["read", "write", "import", "export"], 50], ["developer", "workflow", ["read", "write", "execute"], 50],
+      ["analyst", "project", ["read"], 30], ["analyst", "dataset", ["read", "export"], 30], ["analyst", "workflow", ["read"], 30],
+      ["viewer", "project", ["read"], 10], ["viewer", "dataset", ["read"], 10],
+    ];
+    for (const [roleName, resourceType, actions, priority] of rules) {
+      const permissionId = generateSnowflakeId();
+      await connection.execute("INSERT INTO permission_rules (id, resource_type, resource_id, actions, priority, is_active) VALUES (?, ?, ?, ?, ?, ?)", [permissionId, resourceType, "*", JSON.stringify(actions), priority, 1]);
+      await connection.execute("INSERT INTO role_permissions (id, role_id, permission_rule_id) VALUES (?, ?, ?)", [generateSnowflakeId(), roleIds[roleName], permissionId]);
+    }
+    console.log("[DATABASE] 默认管理员、角色和权限已初始化");
+  });
 }
 
-function initializeDefaultRoles() {
-  const adminRoleExists = db.prepare("SELECT 1 FROM roles WHERE name = ?").get("admin");
-  if (adminRoleExists) {
-    console.log("[DATABASE] 默认角色已存在，跳过初始化");
-    return;
-  }
-
-  const systemUserId = generateSnowflakeId();
-  const defaultPasswordHash = "$2a$10$cSbztqHbBsIu4FDFi8zjIuG54VZVwhA0BRicTrjKTt3yD.QkDMtWy";
-  db.prepare(
-    `
-      INSERT INTO users (id, email, password_hash, username, display_name, role, is_active)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `,
-  ).run(systemUserId, "admin@cube.com", defaultPasswordHash, "admin", "管理员", "admin", 1);
-
-  const createRole = db.prepare(`
-    INSERT INTO roles (id, name, description, created_by) VALUES (?, ?, ?, ?)
-  `);
-  const createPermissionRule = db.prepare(`
-    INSERT INTO permission_rules (id, resource_type, resource_id, actions, priority, is_active)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `);
-  const createRolePermission = db.prepare(`
-    INSERT INTO role_permissions (id, role_id, permission_rule_id) VALUES (?, ?, ?)
-  `);
-
-  const adminRoleId = generateSnowflakeId();
-  const developerRoleId = generateSnowflakeId();
-  const analystRoleId = generateSnowflakeId();
-  const viewerRoleId = generateSnowflakeId();
-
-  createRole.run(adminRoleId, "admin", "系统管理员，拥有所有权限", systemUserId);
-  createRole.run(developerRoleId, "developer", "开发者，可以创建和编辑项目", systemUserId);
-  createRole.run(analystRoleId, "analyst", "分析师，可以查看和分析数据", systemUserId);
-  createRole.run(viewerRoleId, "viewer", "查看者，只能查看项目", systemUserId);
-
-  const createRule = (
-    roleId: string,
-    resourceType: string,
-    actions: string[],
-    priority: number,
-  ) => {
-    const permissionRuleId = generateSnowflakeId();
-    createPermissionRule.run(permissionRuleId, resourceType, "*", JSON.stringify(actions), priority, 1);
-    createRolePermission.run(generateSnowflakeId(), roleId, permissionRuleId);
-  };
-
-  createRule(adminRoleId, "project", ["read", "write", "delete", "execute"], 100);
-  createRule(adminRoleId, "dataset", ["read", "write", "delete", "import", "export"], 100);
-  createRule(adminRoleId, "workflow", ["read", "write", "delete", "execute"], 100);
-
-  createRule(developerRoleId, "project", ["read", "write", "delete"], 50);
-  createRule(developerRoleId, "dataset", ["read", "write", "import", "export"], 50);
-  createRule(developerRoleId, "workflow", ["read", "write", "execute"], 50);
-
-  createRule(analystRoleId, "project", ["read"], 30);
-  createRule(analystRoleId, "dataset", ["read", "export"], 30);
-  createRule(analystRoleId, "workflow", ["read"], 30);
-
-  createRule(viewerRoleId, "project", ["read"], 10);
-  createRule(viewerRoleId, "dataset", ["read"], 10);
-
-  console.log("[DATABASE] 默认角色和权限已初始化");
+export async function initializeDatabaseSchema(): Promise<void> {
+  console.log("[DATABASE] 初始化 MySQL 数据库表结构...");
+  await createTables();
+  await ensureColumn("pages", "folder_id", "folder_id VARCHAR(64) NULL");
+  await ensureColumn("datasets", "form_schema", "form_schema LONGTEXT NULL");
+  await initializeDefaultRoles();
+  console.log("[DATABASE] MySQL 数据库表结构初始化完成");
 }

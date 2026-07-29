@@ -23,6 +23,7 @@ const emit = defineEmits<{
 
 const cols = 24
 const dropId = '__drop_placeholder__'
+const canvasModel: Record<string, never> = {}
 const isDragOver = ref(false)
 
 /** 鼠标全局位置追踪 */
@@ -113,10 +114,6 @@ function toLayoutItem(field: FormField, index: number): FormLayoutItem {
     dragAllowFrom: '.drag-handle',
     resizeIgnoreFrom: '.field-actions,button',
   }
-}
-
-function isStackField(field: FormField) {
-  return ['textarea', 'upload', 'transfer', 'slider', 'radio', 'checkbox'].includes(field.componentKey)
 }
 
 function syncCanvasLayoutFromFields() {
@@ -406,74 +403,81 @@ function onCanvasPointerDown(event: MouseEvent) {
             </p>
           </div>
 
-          <GridLayout
-            ref="gridLayout"
-            class="relative z-[1]"
-            :layout="layout"
-            :col-num="cols"
-            :row-height="80"
-            :margin="[8, 8]"
-            :is-draggable="true"
-            :is-resizable="true"
-            :vertical-compact="true"
-            :prevent-collision="false"
-            :use-css-transforms="true"
-            @layout-updated="onLayoutUpdated"
-            @update:layout="onLayoutUpdated"
+          <el-form
+            class="form-canvas__form"
+            :model="canvasModel"
+            :label-width="`${formConfig.labelWidth}px`"
+            :label-position="formConfig.labelPosition"
+            :size="formConfig.size"
+            :disabled="formConfig.disabled"
+            :hide-required-asterisk="!formConfig.requiredAsterisk"
           >
-            <template #item="{ item }">
-              <template v-if="fieldMap.get(String(item.i))">
-                <div
-                  class="form-field-card group"
-                  :class="{
-                    'selected-card': activeFieldId === String(item.i),
-                    'is-hidden-field': fieldMap.get(String(item.i))?.hidden,
-                    'is-stack': isStackField(fieldMap.get(String(item.i))!),
-                    'label-pos-top': formConfig.labelPosition === 'top',
-                    'label-pos-right': formConfig.labelPosition === 'right',
-                  }"
-                  @click.stop="emit('select', String(item.i))"
-                >
-                  <span class="drag-handle shrink-0 select-none text-[15px] leading-none text-[var(--fd-ink,var(--el-text-color-secondary))]">⠿</span>
-                  <div class="form-field-card__content">
-                    <label
-                      class="form-field-card__label shrink-0"
-                      :style="{
-                        width: `${resolveLabelWidth(fieldMap.get(String(item.i))!)}px`,
-                        maxWidth: `${resolveLabelWidth(fieldMap.get(String(item.i))!)}px`,
-                        textAlign: formConfig.labelPosition === 'right' ? 'right' : 'left',
+            <GridLayout
+              ref="gridLayout"
+              class="relative z-[1]"
+              :layout="layout"
+              :col-num="cols"
+              :row-height="80"
+              :margin="[8, 8]"
+              :is-draggable="true"
+              :is-resizable="true"
+              :vertical-compact="true"
+              :prevent-collision="false"
+              :use-css-transforms="true"
+              @layout-updated="onLayoutUpdated"
+              @update:layout="onLayoutUpdated"
+            >
+              <template #item="{ item }">
+                <template v-if="fieldMap.get(String(item.i))">
+                  <div
+                    class="form-field-card group"
+                    :class="{
+                      'selected-card': activeFieldId === String(item.i),
+                      'is-hidden-field': fieldMap.get(String(item.i))?.hidden,
+                    }"
+                    @click.stop="emit('select', String(item.i))"
+                  >
+                    <span class="drag-handle shrink-0 select-none text-[15px] leading-none text-[var(--fd-ink,var(--el-text-color-secondary))]">⠿</span>
+                    <el-form-item
+                      class="form-field-card__item"
+                      :prop="fieldMap.get(String(item.i))?.field"
+                      :label-width="`${resolveLabelWidth(fieldMap.get(String(item.i))!)}px`"
+                      :required="fieldMap.get(String(item.i))?.required"
+                    >
+                      <template #label>
+                        <span class="form-field-card__label">
+                          {{ fieldMap.get(String(item.i))?.label }}{{ formConfig.labelSuffix || '' }}
+                          <el-icon
+                            v-if="fieldMap.get(String(item.i))?.datasetBinding"
+                            :size="12"
+                            class="ml-1 inline-block align-[-2px] text-[var(--el-color-success)]"
+                            title="已绑定数据集"
+                          ><Link /></el-icon>
+                        </span>
+                      </template>
+                      <div class="form-field-card__control">
+                        <FormFieldPreview :field="fieldMap.get(String(item.i))!" :size="resolveSize(fieldMap.get(String(item.i))!)" />
+                      </div>
+                    </el-form-item>
+                    <div
+                      class="field-actions absolute right-1.5 top-1.5 z-[2] gap-0.5"
+                      :class="{
+                        'flex': activeFieldId === String(item.i),
+                        'hidden group-hover:flex': activeFieldId !== String(item.i),
                       }"
                     >
-                      {{ fieldMap.get(String(item.i))?.label }}<span v-if="fieldMap.get(String(item.i))?.required" class="text-[var(--el-color-danger)]">*</span>{{ formConfig.labelSuffix || '' }}
-                      <el-icon
-                        v-if="fieldMap.get(String(item.i))?.datasetBinding"
-                        :size="12"
-                        class="ml-1 inline-block align-[-2px] text-[var(--el-color-success)]"
-                        title="已绑定数据集"
-                      ><Link /></el-icon>
-                    </label>
-                    <div class="form-field-card__control">
-                      <FormFieldPreview :field="fieldMap.get(String(item.i))!" :size="resolveSize(fieldMap.get(String(item.i))!)" />
+                      <el-button
+                        text
+                        :icon="Delete"
+                        class="field-actions__delete"
+                        @click.stop="emit('remove', String(item.i))"
+                      />
                     </div>
                   </div>
-                  <div
-                    class="field-actions absolute right-1.5 top-1.5 z-[2] gap-0.5"
-                    :class="{
-                      'flex': activeFieldId === String(item.i),
-                      'hidden group-hover:flex': activeFieldId !== String(item.i),
-                    }"
-                  >
-                    <el-button
-                      text
-                      :icon="Delete"
-                      class="field-actions__delete"
-                      @click.stop="emit('remove', String(item.i))"
-                    />
-                  </div>
-                </div>
+                </template>
               </template>
-            </template>
-          </GridLayout>
+            </GridLayout>
+          </el-form>
         </div>
       </div>
     </el-scrollbar>
@@ -518,7 +522,7 @@ function onCanvasPointerDown(event: MouseEvent) {
   position: relative;
   box-sizing: border-box;
   width: 100%;
-  padding: 18px 18px 18px 22px;
+  padding: 12px;
   border-radius: 12px;
   border: 1px solid var(--fd-paper-edge, var(--el-border-color-light));
   background:
@@ -553,7 +557,7 @@ function onCanvasPointerDown(event: MouseEvent) {
   padding: 10px 36px 10px 12px;
   cursor: pointer;
   user-select: none;
-  border: 1px solid transparent;
+  border: 1px solid var(--el-border-color-light);
   border-radius: var(--fd-radius-sm, 6px);
   background: transparent;
   transition:
@@ -562,60 +566,35 @@ function onCanvasPointerDown(event: MouseEvent) {
     box-shadow 0.18s ease;
 }
 
-.form-field-card__content {
+.form-field-card__item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex: 1 1 auto;
-  min-width: 0;
+  box-sizing: border-box;
   width: 100%;
+  height: 100%;
+  margin-bottom: 0;
 }
 
-.form-field-card.is-stack .form-field-card__content {
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: center;
-  gap: 6px;
-}
-
-.form-field-card.is-stack .form-field-card__label {
-  max-width: 100%;
-}
-
-/* --- 标签位置：顶部 --- */
-.form-field-card.label-pos-top {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
-}
-
-.form-field-card.label-pos-top .form-field-card__content {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 4px;
-}
-
-.form-field-card.label-pos-top .form-field-card__label {
-  max-width: 100%;
-  width: 100%;
-}
-
-/* --- 标签位置：右侧对齐 --- */
-.form-field-card.label-pos-right .form-field-card__label {
-  text-align: right;
-  padding-right: 4px;
-}
-
-.form-field-card__label {
-  flex: 0 0 auto;
-  max-width: 88px;
+.form-field-card__item :deep(.el-form-item__label) {
+  box-sizing: border-box;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 12px;
   font-weight: 500;
-  line-height: 1.2;
   color: var(--el-text-color-primary);
+}
+
+.form-field-card__item :deep(.el-form-item__content) {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.form-field-card__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .form-field-card__control {

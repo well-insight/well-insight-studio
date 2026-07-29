@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { z } from "zod";
 import { AppPageMenuModel } from "../models/AppPageMenu";
-import { db } from "../config/database";
+import { execute, queryOne } from "../config/database";
 
 const IdParamSchema = z.string().min(1);
 
@@ -36,7 +36,7 @@ const SortMenusSchema = z.object({
 export async function getAppMenus(req: Request, res: Response): Promise<void> {
   try {
     const appId = IdParamSchema.parse(req.params.id);
-    const tree = AppPageMenuModel.getMenuTree(appId);
+    const tree = await AppPageMenuModel.getMenuTree(appId);
     res.json({ success: true, data: tree });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -56,7 +56,7 @@ export async function addMenu(req: Request, res: Response): Promise<void> {
     const appId = IdParamSchema.parse(req.params.id);
     const body = CreateMenuSchema.parse(req.body);
 
-    const menu = AppPageMenuModel.create({
+    const menu = await AppPageMenuModel.create({
       application_id: appId,
       page_id: body.page_id,
       parent_id: body.parent_id ?? null,
@@ -84,7 +84,7 @@ export async function updateMenu(req: Request, res: Response): Promise<void> {
     const menuId = IdParamSchema.parse(req.params.menuId);
     const body = UpdateMenuSchema.parse(req.body);
 
-    const updated = AppPageMenuModel.update(menuId, body);
+    const updated = await AppPageMenuModel.update(menuId, body);
     if (!updated) {
       res.status(404).json({ success: false, error: "菜单项不存在" });
       return;
@@ -109,9 +109,9 @@ export async function sortMenus(req: Request, res: Response): Promise<void> {
     const appId = IdParamSchema.parse(req.params.id);
     const body = SortMenusSchema.parse(req.body);
 
-    AppPageMenuModel.batchUpdateSort(body.menus);
+    await AppPageMenuModel.batchUpdateSort(body.menus);
 
-    const tree = AppPageMenuModel.getMenuTree(appId);
+    const tree = await AppPageMenuModel.getMenuTree(appId);
     res.json({ success: true, data: tree });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -129,7 +129,7 @@ export async function sortMenus(req: Request, res: Response): Promise<void> {
 export async function removeMenu(req: Request, res: Response): Promise<void> {
   try {
     const menuId = IdParamSchema.parse(req.params.menuId);
-    const deleted = AppPageMenuModel.delete(menuId);
+    const deleted = await AppPageMenuModel.delete(menuId);
 
     if (!deleted) {
       res.status(404).json({ success: false, error: "菜单项不存在" });
@@ -155,17 +155,15 @@ export async function publishApp(req: Request, res: Response): Promise<void> {
     const appId = IdParamSchema.parse(req.params.id);
 
     // 更新应用的 updated_at 时间戳作为发布标记
-    const result = db
-      .prepare("UPDATE applications SET updated_at = CURRENT_TIMESTAMP WHERE id = ?")
-      .run(appId);
+    const result = await execute("UPDATE applications SET updated_at = CURRENT_TIMESTAMP WHERE id = ?", [appId]);
 
-    if (result.changes === 0) {
+    if (result.affectedRows === 0) {
       res.status(404).json({ success: false, error: "应用不存在" });
       return;
     }
 
-    const tree = AppPageMenuModel.getMenuTree(appId);
-    const app = db.prepare("SELECT * FROM applications WHERE id = ?").get(appId) as Record<string, unknown>;
+    const tree = await AppPageMenuModel.getMenuTree(appId);
+    const app = await queryOne<Record<string, unknown>>("SELECT * FROM applications WHERE id = ?", [appId]);
 
     res.json({
       success: true,

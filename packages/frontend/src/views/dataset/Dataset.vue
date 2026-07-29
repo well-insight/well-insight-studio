@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ElTree } from 'element-plus'
 import type {
+  ApiDatasetField,
   ApiDatasetListItem,
   ApiFolderTreeNode,
 } from '@/api/dataset'
@@ -13,6 +14,7 @@ import {
   MoreFilled,
   Plus,
   Tickets,
+  Upload,
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, nextTick, onMounted, ref } from 'vue'
@@ -23,12 +25,14 @@ import {
   deleteDataset,
   deleteDatasetFolder,
   fetchAllDatasets,
+  fetchDatasetDetail,
   fetchDatasetFolderDetail,
   fetchDatasetFolderTree,
   updateDataset,
   updateDatasetFolder,
 } from '@/api/dataset'
 import { AdaptiveDialog } from '@/components/adaptive-dialog'
+import DatasetDataImportDialog from './DatasetDataImportDialog.vue'
 import DatasetTable from './DatasetTable.vue'
 
 interface DatasetTreeNode {
@@ -81,6 +85,9 @@ const datasetDialogVisible = ref(false)
 const datasetName = ref('')
 const datasetDesc = ref('')
 const datasetSubmitting = ref(false)
+
+const dataImportVisible = ref(false)
+const dataImportFields = ref<ApiDatasetField[]>([])
 
 const editVisible = ref(false)
 const editSubmitting = ref(false)
@@ -312,6 +319,8 @@ function onCreateMenuCommand(command: string) {
     openFolderDialog()
   else if (command === 'dataset')
     openDatasetDialog()
+  else if (command === 'import')
+    router.push({ name: 'Api' })
 }
 
 function openFolderDialog() {
@@ -469,6 +478,29 @@ async function submitDataset() {
   }
 }
 
+async function openDataImportDialog() {
+  const datasetId = selectedDatasetId.value
+  if (!datasetId)
+    return
+  try {
+    const detail = await fetchDatasetDetail(datasetId)
+    if (detail.fields.length === 0) {
+      ElMessage.warning('请先设计数据集字段，再导入数据')
+      return
+    }
+    dataImportFields.value = detail.fields
+    dataImportVisible.value = true
+  }
+  catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '加载数据集字段失败')
+  }
+}
+
+async function onDataImported() {
+  await datasetTableRef.value?.reload()
+  await loadData()
+}
+
 function designDatasetForm(id: string) {
   router.push({ name: 'DatasetFormEditor', params: { id } })
 }
@@ -574,6 +606,9 @@ onMounted(async () => {
               <el-dropdown-item command="dataset">
                 新建数据集
               </el-dropdown-item>
+              <el-dropdown-item command="import" divided>
+                导入数据集
+              </el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -669,6 +704,9 @@ onMounted(async () => {
           <el-button type="primary" :icon="EditPen" :disabled="!selectedDataset" @click="selectedDataset && designDatasetForm(selectedDataset.id)">
             设计表单
           </el-button>
+          <el-button type="primary" :icon="Upload" :disabled="!selectedDataset" @click="openDataImportDialog">
+            导入数据
+          </el-button>
           <el-button :icon="Edit" :disabled="!selectedDataset" @click="selectedDataset && openEdit(selectedDataset)">
             编辑信息
           </el-button>
@@ -701,6 +739,14 @@ onMounted(async () => {
         />
       </div>
     </main>
+
+    <DatasetDataImportDialog
+      v-model="dataImportVisible"
+      :dataset-id="selectedDatasetId"
+      :dataset-name="selectedDataset?.name ?? ''"
+      :fields="dataImportFields"
+      @imported="onDataImported"
+    />
 
     <AdaptiveDialog
       v-model="folderDialogVisible"

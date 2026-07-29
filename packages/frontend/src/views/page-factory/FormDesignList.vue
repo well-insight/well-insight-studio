@@ -535,6 +535,8 @@ async function refreshAll() {
     await loadRecords()
 }
 
+let isFirstActivation = true
+
 function openSelectedPageDesigner() {
   if (!selectedPageDetail.value)
     return
@@ -546,6 +548,10 @@ onMounted(() => {
 })
 
 onActivated(() => {
+  if (isFirstActivation) {
+    isFirstActivation = false
+    return
+  }
   void refreshAll()
 })
 </script>

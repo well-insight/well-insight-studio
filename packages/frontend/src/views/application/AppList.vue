@@ -28,6 +28,7 @@ const createClientType = ref<1 | 2>(1)
 const renameVisible = ref(false)
 const renameTitle = ref('')
 const renameTargetId = ref<string | null>(null)
+let isFirstActivation = true
 
 const statusOptions = [
   { label: '全部应用', value: 'all' },
@@ -70,6 +71,10 @@ onMounted(() => {
 })
 
 onActivated(() => {
+  if (isFirstActivation) {
+    isFirstActivation = false
+    return
+  }
   loadList()
 })
 
