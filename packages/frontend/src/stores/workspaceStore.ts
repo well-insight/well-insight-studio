@@ -19,6 +19,13 @@ export const useWorkspaceStore = defineStore('useWorkspaceStore', {
     currentApp: undefined,
     menuList: [
       {
+        path: '/project/workbench',
+        title: '工作台',
+        meta: {
+          icon: 'home',
+        },
+      },
+      {
         path: '/project/pages/visual',
         title: '可视化',
         meta: {

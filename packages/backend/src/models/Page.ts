@@ -11,8 +11,11 @@ function json(raw: string): Record<string, unknown> { try { return JSON.parse(ra
 function parseRow(row: Page): PagePublic { return { ...row, folder_id: row.folder_id ?? null, dsl: json(row.dsl || "{}"), dataset_bindings: row.dataset_bindings ? json(row.dataset_bindings) : null, preview_url: row.preview_url ?? null }; }
 export class PageModel {
   static async create(data: { folder_id?: string | null; name: string; type: PageType; dsl?: Record<string, unknown>; dataset_bindings?: Record<string, unknown>; preview_url?: string; status?: PageStatus; created_by: string; }): Promise<PagePublic> {
-    const id = generateSnowflakeId(), now = new Date().toISOString();
-    await execute("INSERT INTO pages (id, folder_id, name, type, dsl, dataset_bindings, preview_url, status, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [id, data.folder_id ?? null, data.name, data.type, JSON.stringify(data.dsl ?? {}), data.dataset_bindings ? JSON.stringify(data.dataset_bindings) : null, data.preview_url ?? null, data.status ?? "draft", data.created_by, now, now]);
+    const id = generateSnowflakeId();
+    await execute(
+      "INSERT INTO pages (id, folder_id, name, type, dsl, dataset_bindings, preview_url, status, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+      [id, data.folder_id ?? null, data.name, data.type, JSON.stringify(data.dsl ?? {}), data.dataset_bindings ? JSON.stringify(data.dataset_bindings) : null, data.preview_url ?? null, data.status ?? "draft", data.created_by],
+    );
     return parseRow((await queryOne<Page>("SELECT * FROM pages WHERE id = ?", [id]))!);
   }
   static async findById(id: string): Promise<PagePublic | undefined> { const row = await queryOne<Page>("SELECT * FROM pages WHERE id = ?", [id]); return row && parseRow(row); }
@@ -33,7 +36,10 @@ export class PageModel {
   }
   static async update(id: string, data: { name?: string; type?: PageType; folder_id?: string | null; dsl?: Record<string, unknown>; dataset_bindings?: Record<string, unknown>; preview_url?: string | null; status?: PageStatus; }): Promise<PagePublic | undefined> {
     const existing = await queryOne<Page>("SELECT * FROM pages WHERE id = ?", [id]); if (!existing) return undefined;
-    await execute("UPDATE pages SET folder_id = ?, name = ?, type = ?, dsl = ?, dataset_bindings = ?, preview_url = ?, status = ?, updated_at = ? WHERE id = ?", [data.folder_id !== undefined ? data.folder_id : existing.folder_id ?? null, data.name ?? existing.name, data.type ?? existing.type, data.dsl !== undefined ? JSON.stringify(data.dsl) : existing.dsl, data.dataset_bindings !== undefined ? JSON.stringify(data.dataset_bindings) : existing.dataset_bindings ?? null, data.preview_url !== undefined ? data.preview_url : existing.preview_url ?? null, data.status ?? existing.status, new Date().toISOString(), id]);
+    await execute(
+      "UPDATE pages SET folder_id = ?, name = ?, type = ?, dsl = ?, dataset_bindings = ?, preview_url = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      [data.folder_id !== undefined ? data.folder_id : existing.folder_id ?? null, data.name ?? existing.name, data.type ?? existing.type, data.dsl !== undefined ? JSON.stringify(data.dsl) : existing.dsl, data.dataset_bindings !== undefined ? JSON.stringify(data.dataset_bindings) : existing.dataset_bindings ?? null, data.preview_url !== undefined ? data.preview_url : existing.preview_url ?? null, data.status ?? existing.status, id],
+    );
     return parseRow((await queryOne<Page>("SELECT * FROM pages WHERE id = ?", [id]))!);
   }
   static async delete(id: string): Promise<boolean> { return (await execute("DELETE FROM pages WHERE id = ?", [id])).affectedRows > 0; }

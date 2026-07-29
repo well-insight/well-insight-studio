@@ -50,10 +50,16 @@ const routes2: RouteRecordRaw[] = [
   // 带 Layout 的主应用
   {
     path: '/',
-    redirect: '/project/pages/visual',
+    redirect: '/project/workbench',
     component: () => import('@/layout/index.vue'),
     meta: { title: '项目' },
     children: [
+      {
+        path: 'project/workbench',
+        name: 'Workbench',
+        component: () => import('@/views/workbench/Workbench.vue'),
+        meta: { title: '工作台' },
+      },
       {
         path: 'project/pages',
         redirect: '/project/pages/visual',
