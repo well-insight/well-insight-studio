@@ -22,7 +22,7 @@ export const useWorkspaceStore = defineStore('useWorkspaceStore', {
         path: '/project/workbench',
         title: '工作台',
         meta: {
-          icon: 'home',
+          icon: 'dashboard',
         },
       },
       {

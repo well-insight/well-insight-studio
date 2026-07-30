@@ -159,33 +159,21 @@ onActivated(() => {
 
 <template>
   <main v-loading="loading" class="visual-list">
-    <header class="visual-list__header">
-      <div>
-        <span class="visual-list__eyebrow">VISUALIZATION</span>
-        <h1>可视化页面</h1>
-        <p>查看、预览和继续编辑全部可视化页面。</p>
-      </div>
-      <div class="visual-list__toolbar">
-        <el-input
-          v-model="searchKeyword"
-          class="visual-list__search"
-          placeholder="搜索页面"
-          :prefix-icon="Search"
-          clearable
-          @input="loadList"
-        />
-        <el-button type="primary" :icon="Plus" @click="openCreateDialog">
-          新建可视化页面
-        </el-button>
-      </div>
-    </header>
+    <div class="visual-list__toolbar">
+      <el-button type="primary" :icon="Plus" @click="openCreateDialog">
+        新建可视化页面
+      </el-button>
+      <el-input
+        v-model="searchKeyword"
+        class="visual-list__search"
+        placeholder="搜索页面"
+        :prefix-icon="Search"
+        clearable
+        @input="loadList"
+      />
+    </div>
 
-    <section class="visual-list__content" aria-label="可视化页面列表">
-      <div class="visual-list__heading">
-        <h2>页面列表</h2>
-        <span>{{ searchKeyword ? `搜索结果 ${total} 个` : `共 ${total} 个页面` }}</span>
-      </div>
-
+    <el-scrollbar class="visual-list__scrollbar" wrap-style="padding: 0 24px">
       <div v-if="pageItems.length" class="page-grid">
         <article v-for="page in pageItems" :key="page.id" class="page-card">
           <button class="page-card__preview" type="button" :aria-label="`预览 ${page.name}`" @click="previewPage(page.id)">
@@ -225,7 +213,7 @@ onActivated(() => {
           新建可视化页面
         </el-button>
       </el-empty>
-    </section>
+    </el-scrollbar>
 
     <AdaptiveDialog v-model="editDialogVisible" title="编辑页面信息" width="480px" @close="editingPage = null">
       <el-form v-if="editingPage" :model="editForm" label-width="80px">
@@ -263,68 +251,26 @@ onActivated(() => {
 
 <style scoped>
 .visual-list {
-  min-height: 100%;
-  padding: 24px;
-  background: #f6f8fb;
-}
-.visual-list__header {
+  height: 100%;
+  /*padding: 24px;*/
+  background: var(--el-bg-color, #f7f8fa);
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 22px;
-}
-.visual-list__eyebrow {
-  display: block;
-  margin-bottom: 6px;
-  color: #6f7d91;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-}
-h1,
-h2,
-h3 {
-  margin: 0;
-  color: #1f2937;
-}
-h1 {
-  font-size: 28px;
-  line-height: 1.2;
-}
-.visual-list__header p {
-  margin: 8px 0 0;
-  color: #718096;
+  flex-direction: column;
 }
 .visual-list__toolbar {
   display: flex;
   gap: 10px;
   align-items: center;
+  margin-bottom: 18px;
+  padding: 24px 24px 0 24px;
 }
 .visual-list__search {
   width: 240px;
 }
-.visual-list__content {
-  min-height: 420px;
-  padding: 22px;
-  border: 1px solid #e9edf3;
-  border-radius: 14px;
-  background: #fff;
-}
-.visual-list__heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 18px;
-}
-.visual-list__heading h2 {
-  font-size: 18px;
-}
-.visual-list__heading span,
-.page-card time {
-  color: #8491a4;
-  font-size: 13px;
+.visual-list__scrollbar {
+  height: 100%;
+  flex: 1;
+  height: 0;
 }
 .page-grid {
   display: grid;
@@ -405,30 +351,20 @@ h1 {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+h3 {
+  margin: 0;
+  color: #1f2937;
+}
 .page-card time {
   display: block;
   margin-top: 8px;
+  color: #8491a4;
+  font-size: 13px;
 }
 .page-card__actions {
   display: flex;
   justify-content: flex-end;
   gap: 2px;
   margin-top: 8px;
-}
-@media (max-width: 680px) {
-  .visual-list {
-    padding: 14px;
-  }
-  .visual-list__header {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-  .visual-list__toolbar,
-  .visual-list__search {
-    width: 100%;
-  }
-  .visual-list__content {
-    padding: 16px;
-  }
 }
 </style>
