@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { ThemeMode, ThemeSize } from '@/styles/theme/tokens'
+import type { AppearanceStyle, AppearanceStyleId, ThemeMode, ThemeSize } from '@/styles/theme/tokens'
 import type { ThemeCategory, ThemePreset } from '@/styles/theme/presets'
 import { ArrowDown, Expand, Fold, Monitor, Moon, Setting as SettingIcon, Sunny, SwitchButton } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
@@ -11,7 +11,7 @@ import { AdaptiveDialog } from '@/components/adaptive-dialog'
 import { useAuthStore } from '@/stores/auth'
 import { useControlStore } from '@/stores/controlStore'
 import { useThemeStore } from '@/stores/themeStore'
-import { WELLCUBE_PRIMARY } from '@/styles/theme/tokens'
+import { APPEARANCE_STYLES, WELLCUBE_PRIMARY } from '@/styles/theme/tokens'
 import { CATEGORY_LABELS, THEME_PRESETS } from '@/styles/theme/presets'
 
 defineProps<{ collapse?: boolean }>()
@@ -20,17 +20,20 @@ const controlStore = useControlStore()
 const { asideCollapse } = storeToRefs(controlStore)
 
 const themeStore = useThemeStore()
-const { isDark, config, currentPresetId, presets } = storeToRefs(themeStore)
+const { isDark, config, currentPresetId, currentAppearance } = storeToRefs(themeStore)
 
 const themeDialogVisible = ref(false)
 const filterTag = ref<ThemeCategory | 'all'>('all')
 
-const borderRadius = ref(6)
+const borderRadius = computed({
+  get: () => config.value.borderRadius,
+  set: (val: number) => themeStore.setBorderRadius(val),
+})
 const borderRadiusOptions = [
   { value: 2, label: '直角' },
   { value: 4, label: '小圆角' },
-  { value: 6, label: '默认' },
-  { value: 10, label: '大圆角' },
+  { value: 8, label: '中圆角' },
+  { value: 12, label: '大圆角' },
   { value: 16, label: '超圆角' },
 ]
 
@@ -55,7 +58,8 @@ const currentPreset = computed(() => THEME_PRESETS.find(p => p.name === currentP
 
 const themeSummary = computed(() => {
   const modeLabel = modeOptions.find(o => o.value === config.value.mode)?.label ?? '主题'
-  return isDark.value ? `${modeLabel} · 暗色` : `${modeLabel} · 浅色`
+  const styleLabel = currentAppearance.value?.label ?? '样式'
+  return isDark.value ? `${styleLabel} · ${modeLabel}` : `${styleLabel} · ${modeLabel}`
 })
 
 function openThemeDialog() {
@@ -80,11 +84,14 @@ function onPresetClick(preset: ThemePreset) {
   themeStore.applyPreset(preset.name)
 }
 
-function onBorderRadiusChange(val: number) {
-  borderRadius.value = val
-  document.documentElement.style.setProperty('--el-border-radius-base', `${val}px`)
-  document.documentElement.style.setProperty('--el-border-radius-small', `${Math.max(1, val - 2)}px`)
-  document.documentElement.style.setProperty('--el-border-radius-round', `${val * 3}px`)
+function onAppearanceClick(style: AppearanceStyle) {
+  // 切换风格时套用该风格推荐默认（Cube → 冰山冷蓝/暗黑/小圆角）
+  themeStore.setAppearance(style.id as AppearanceStyleId, true)
+}
+
+function onBorderRadiusChange(val: number | string | boolean | undefined) {
+  if (typeof val === 'number')
+    themeStore.setBorderRadius(val)
 }
 
 function toggleAsideCollapse() {
@@ -219,6 +226,39 @@ async function confirmLogout() {
       :show-mode-switch="false"
     >
       <div class="theme-dialog__body">
+        <!-- 样式风格（壳层外观，与配色方案独立） -->
+        <section class="theme-dialog__section">
+          <div class="theme-dialog__label">
+            样式风格
+            <span class="theme-dialog__badge">{{ APPEARANCE_STYLES.length }} 套</span>
+          </div>
+          <p class="theme-dialog__hint">控制字体、圆角、Logo 形态、面板线框等结构气质；浅色/暗黑只换色，不改这些</p>
+          <div class="theme-dialog__style-grid">
+            <button
+              v-for="style in APPEARANCE_STYLES"
+              :key="style.id"
+              type="button"
+              class="theme-dialog__style-card"
+              :class="{ 'is-active': config.appearance === style.id }"
+              @click="onAppearanceClick(style)"
+            >
+              <div class="theme-dialog__style-header">
+                <span class="theme-dialog__style-name">{{ style.label }}</span>
+                <span class="theme-dialog__palette-badge">{{ style.id }}</span>
+              </div>
+              <p class="theme-dialog__style-desc">{{ style.description }}</p>
+              <div class="theme-dialog__palette-strip">
+                <span
+                  v-for="(c, ci) in style.colors"
+                  :key="ci"
+                  class="theme-dialog__palette-swatch"
+                  :style="{ background: c }"
+                />
+              </div>
+            </button>
+          </div>
+        </section>
+
         <!-- 配色方案库 -->
         <section class="theme-dialog__section">
           <div class="theme-dialog__label">
@@ -290,6 +330,7 @@ async function confirmLogout() {
         <!-- 外观模式 -->
         <section class="theme-dialog__section">
           <div class="theme-dialog__label">外观模式</div>
+          <p class="theme-dialog__hint">仅切换浅色 / 暗黑色值，不改变样式风格里的字体、圆角与结构</p>
           <el-segmented
             :model-value="config.mode"
             :options="modeOptions.map(o => ({ label: o.label, value: o.value }))"
@@ -400,7 +441,7 @@ async function confirmLogout() {
   display: flex;
   justify-content: center;
   padding-top: 4px;
-  border-top: 1px solid var(--el-border-color-lighter);
+  border-top: 1px solid var(--footer-divider, var(--el-border-color-lighter));
 }
 
 .user-footer__theme-btn--wide {
@@ -451,8 +492,9 @@ async function confirmLogout() {
 }
 
 .user-footer__avatar {
-  background: var(--el-color-primary-light-7);
-  color: var(--el-color-primary);
+  background: var(--footer-avatar-bg);
+  color: var(--footer-avatar-color);
+  border: 1px solid var(--footer-avatar-border);
   font-weight: 600;
 }
 
@@ -466,26 +508,28 @@ async function confirmLogout() {
 
 .user-footer__name {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.25;
-  color: var(--el-text-color-primary);
+  color: var(--footer-name-color, var(--type-title));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .user-footer__email {
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.2;
-  color: var(--el-text-color-secondary);
+  color: var(--footer-meta-color, var(--type-caption));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: var(--cube-font-mono, inherit);
+  letter-spacing: 0.02em;
 }
 
 .user-footer__caret {
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--footer-meta-color, var(--type-caption));
 }
 
 :deep(.user-footer__menu-head.is-disabled) {
@@ -547,6 +591,55 @@ async function confirmLogout() {
   margin: 0;
   font-size: 12px;
   line-height: 1.55;
+  color: var(--el-text-color-secondary);
+}
+
+.theme-dialog__style-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.theme-dialog__style-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  text-align: left;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: var(--el-border-radius-base);
+  background: var(--el-fill-color-blank);
+  cursor: pointer;
+  color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    border-color: var(--el-color-primary-light-5);
+  }
+
+  &.is-active {
+    border-color: var(--el-color-primary);
+    box-shadow: 0 0 0 1px var(--el-color-primary-light-7);
+  }
+}
+
+.theme-dialog__style-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.theme-dialog__style-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.theme-dialog__style-desc {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
   color: var(--el-text-color-secondary);
 }
 

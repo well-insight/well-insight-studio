@@ -1,56 +1,67 @@
 import type { ConfigProviderProps } from 'element-plus'
 import type { ThemePreset } from '@/styles/theme/presets'
-import type { ThemeConfig, ThemeMode, ThemeSize } from '@/styles/theme/tokens'
+import type { AppearanceStyleId, ThemeConfig, ThemeMode, ThemeSize } from '@/styles/theme/tokens'
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { ThemeEnum } from '@/enums/styleEnum'
+import { APPEARANCE_STYLES, findAppearance, normalizeAppearance } from '@/styles/theme/appearances'
 import { adjustColor, findPreset, THEME_PRESETS } from '@/styles/theme/presets'
 import {
   applyAppearanceVars,
+  applyBorderRadiusVars,
   applyPrimaryColor,
   DEFAULT_THEME_CONFIG,
   resolveIsDark,
-
   WELLCUBE_PRIMARY,
 } from '@/styles/theme/tokens'
 
 const STORAGE_KEY = 'wellcube-theme-config'
 const LEGACY_STORAGE_KEY = 'wellcube-theme'
 const STORAGE_VERSION_KEY = 'wellcube-theme-version'
-const CURRENT_STORAGE_VERSION = 3
+/** v9：Cube 统一圆角 4px */
+const CURRENT_STORAGE_VERSION = 9
+
+const ICEBERG_PRIMARY = findPreset('iceberg')?.primary ?? WELLCUBE_PRIMARY
 
 function loadConfig(): ThemeConfig {
   try {
     const storedVersion = Number(localStorage.getItem(STORAGE_VERSION_KEY)) || 0
     if (storedVersion < CURRENT_STORAGE_VERSION) {
-      // 存储版本过期，清理旧缓存，使用新默认值
       localStorage.removeItem(STORAGE_KEY)
       localStorage.removeItem(LEGACY_STORAGE_KEY)
       localStorage.setItem(STORAGE_VERSION_KEY, String(CURRENT_STORAGE_VERSION))
-      return { ...DEFAULT_THEME_CONFIG }
+      return { ...DEFAULT_THEME_CONFIG, primary: ICEBERG_PRIMARY }
     }
 
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<ThemeConfig>
+      const presetId = typeof parsed.presetId === 'string' && findPreset(parsed.presetId)
+        ? parsed.presetId
+        : DEFAULT_THEME_CONFIG.presetId
+      const preset = findPreset(presetId)
       return {
         mode: normalizeMode(parsed.mode),
-        primary: typeof parsed.primary === 'string' && parsed.primary ? parsed.primary : WELLCUBE_PRIMARY,
+        primary: typeof parsed.primary === 'string' && parsed.primary
+          ? parsed.primary
+          : (preset?.primary ?? ICEBERG_PRIMARY),
         size: normalizeSize(parsed.size),
+        appearance: normalizeAppearance(parsed.appearance),
+        presetId,
+        borderRadius: normalizeBorderRadius(parsed.borderRadius),
       }
     }
 
-    // 兼容旧版仅存 light/dark 的键
     const legacy = localStorage.getItem(LEGACY_STORAGE_KEY)
     if (legacy === ThemeEnum.DARK || legacy === 'dark')
-      return { ...DEFAULT_THEME_CONFIG, mode: 'dark' }
+      return { ...DEFAULT_THEME_CONFIG, primary: ICEBERG_PRIMARY, mode: 'dark' }
     if (legacy === ThemeEnum.LIGHT || legacy === 'light')
-      return { ...DEFAULT_THEME_CONFIG, mode: 'light' }
+      return { ...DEFAULT_THEME_CONFIG, primary: ICEBERG_PRIMARY, mode: 'light' }
   }
   catch {
     /* ignore */
   }
-  return { ...DEFAULT_THEME_CONFIG }
+  return { ...DEFAULT_THEME_CONFIG, primary: ICEBERG_PRIMARY }
 }
 
 function normalizeMode(mode: unknown): ThemeMode {
@@ -65,10 +76,15 @@ function normalizeSize(size: unknown): ThemeSize {
   return DEFAULT_THEME_CONFIG.size
 }
 
+function normalizeBorderRadius(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value))
+    return Math.max(0, Math.round(value))
+  return DEFAULT_THEME_CONFIG.borderRadius
+}
+
 function persist(config: ThemeConfig) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
-    // 同步旧键，便于其他读旧字段的代码
     localStorage.setItem(LEGACY_STORAGE_KEY, resolveIsDark(config.mode) ? ThemeEnum.DARK : ThemeEnum.LIGHT)
   }
   catch {
@@ -79,20 +95,18 @@ function persist(config: ThemeConfig) {
 export const useThemeStore = defineStore('theme', () => {
   const config = ref<ThemeConfig>(loadConfig())
   const isDark = ref(resolveIsDark(config.value.mode))
-  const currentPresetId = ref<string>('welldesign')
+  const currentPresetId = ref<string>(config.value.presetId)
 
-  /** 兼容旧字段：当前实际生效的明暗 */
   const theme = computed(() => (isDark.value ? ThemeEnum.DARK : ThemeEnum.LIGHT))
-
-  /** 所有可用预设列表 */
   const presets = computed<ThemePreset[]>(() => THEME_PRESETS)
+  const appearances = computed(() => APPEARANCE_STYLES)
 
-  /** 当前激活的预设 */
   const currentPreset = computed<ThemePreset>(() => {
-    return findPreset(currentPresetId.value) ?? THEME_PRESETS[0]
+    return findPreset(currentPresetId.value) ?? findPreset('iceberg') ?? THEME_PRESETS[0]
   })
 
-  /** 供 el-config-provider 绑定 */
+  const currentAppearance = computed(() => findAppearance(config.value.appearance))
+
   const epConfig = computed<Partial<ConfigProviderProps>>(() => ({
     size: config.value.size,
     zIndex: 3000,
@@ -101,53 +115,6 @@ export const useThemeStore = defineStore('theme', () => {
     },
   }))
 
-  function syncDom() {
-    isDark.value = resolveIsDark(config.value.mode)
-    applyAppearanceVars(isDark.value)
-    applyPrimaryColor(config.value.primary, isDark.value)
-    persist(config.value)
-  }
-
-  function setMode(mode: ThemeMode) {
-    config.value = { ...config.value, mode }
-    syncDom()
-  }
-
-  function setPrimary(primary: string) {
-    config.value = { ...config.value, primary: primary || WELLCUBE_PRIMARY }
-    syncDom()
-  }
-
-  function setSize(size: ThemeSize) {
-    config.value = { ...config.value, size }
-    persist(config.value)
-  }
-
-  function resetTheme() {
-    config.value = { ...DEFAULT_THEME_CONFIG }
-    syncDom()
-  }
-
-  /** @deprecated 使用 setMode；保留给旧入口快速切换 */
-  function applyTheme(val: ThemeEnum) {
-    setMode(val === ThemeEnum.DARK ? 'dark' : 'light')
-  }
-
-  function toggleTheme() {
-    setMode(isDark.value ? 'light' : 'dark')
-  }
-
-  /** 应用预设主题 */
-  function applyPreset(name: string) {
-    const preset = findPreset(name)
-    if (!preset)
-      return
-    currentPresetId.value = preset.name
-    setPrimary(preset.primary)
-    applyAuxColors(preset)
-  }
-
-  /** 将 success / warning / danger 及变体写入 CSS 变量 */
   function applyAuxColors(preset: ThemePreset) {
     const root = document.documentElement
     root.style.setProperty('--el-color-success', preset.success)
@@ -164,6 +131,94 @@ export const useThemeStore = defineStore('theme', () => {
     root.style.setProperty('--el-color-danger-dark-2', adjustColor(preset.danger, -20))
   }
 
+  function syncDom() {
+    isDark.value = resolveIsDark(config.value.mode)
+    applyAppearanceVars(isDark.value, config.value.appearance)
+    applyPrimaryColor(config.value.primary, isDark.value, config.value.appearance)
+    applyBorderRadiusVars(config.value.borderRadius)
+    const preset = findPreset(config.value.presetId)
+    if (preset)
+      applyAuxColors(preset)
+    persist(config.value)
+  }
+
+  function setMode(mode: ThemeMode) {
+    config.value = { ...config.value, mode }
+    syncDom()
+  }
+
+  function setPrimary(primary: string) {
+    config.value = { ...config.value, primary: primary || ICEBERG_PRIMARY }
+    syncDom()
+  }
+
+  function setSize(size: ThemeSize) {
+    config.value = { ...config.value, size }
+    persist(config.value)
+  }
+
+  function setBorderRadius(radiusPx: number) {
+    config.value = { ...config.value, borderRadius: normalizeBorderRadius(radiusPx) }
+    applyBorderRadiusVars(config.value.borderRadius)
+    persist(config.value)
+  }
+
+  function setAppearance(appearance: AppearanceStyleId, applyRecommended = false) {
+    const id = normalizeAppearance(appearance)
+    const style = findAppearance(id)
+    if (applyRecommended && style.recommended) {
+      const rec = style.recommended
+      const preset = findPreset(rec.presetId)
+      currentPresetId.value = rec.presetId
+      config.value = {
+        ...config.value,
+        appearance: id,
+        mode: rec.mode,
+        size: rec.size,
+        borderRadius: rec.borderRadius,
+        presetId: rec.presetId,
+        primary: preset?.primary ?? config.value.primary,
+      }
+    }
+    else {
+      config.value = { ...config.value, appearance: id }
+    }
+    syncDom()
+  }
+
+  function resetTheme() {
+    const preset = findPreset(DEFAULT_THEME_CONFIG.presetId)
+    currentPresetId.value = DEFAULT_THEME_CONFIG.presetId
+    config.value = {
+      ...DEFAULT_THEME_CONFIG,
+      primary: preset?.primary ?? ICEBERG_PRIMARY,
+    }
+    syncDom()
+  }
+
+  function applyTheme(val: ThemeEnum) {
+    setMode(val === ThemeEnum.DARK ? 'dark' : 'light')
+  }
+
+  function toggleTheme() {
+    setMode(isDark.value ? 'light' : 'dark')
+  }
+
+  function applyPreset(name: string) {
+    const preset = findPreset(name)
+    if (!preset)
+      return
+    currentPresetId.value = preset.name
+    config.value = {
+      ...config.value,
+      presetId: preset.name,
+      primary: preset.primary,
+    }
+    syncDom()
+  }
+
+  // 首次同步：含圆角与 iceberg 辅色
+  currentPresetId.value = config.value.presetId
   syncDom()
 
   const mediaQuery = window.matchMedia?.('(prefers-color-scheme: dark)')
@@ -176,8 +231,8 @@ export const useThemeStore = defineStore('theme', () => {
   }
 
   watch(
-    () => [config.value.primary, isDark.value] as const,
-    () => applyPrimaryColor(config.value.primary, isDark.value),
+    () => [config.value.primary, isDark.value, config.value.appearance] as const,
+    () => applyPrimaryColor(config.value.primary, isDark.value, config.value.appearance),
   )
 
   return {
@@ -187,10 +242,14 @@ export const useThemeStore = defineStore('theme', () => {
     epConfig,
     currentPresetId,
     presets,
+    appearances,
     currentPreset,
+    currentAppearance,
     setMode,
     setPrimary,
     setSize,
+    setBorderRadius,
+    setAppearance,
     resetTheme,
     applyTheme,
     toggleTheme,

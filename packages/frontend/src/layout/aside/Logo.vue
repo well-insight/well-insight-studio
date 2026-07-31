@@ -6,15 +6,16 @@ defineProps<{ collapse?: boolean }>()
 
 <template>
   <div class="logo-bar" :class="{ 'logo-bar--collapsed': collapse }">
-    <div class="logo-bar__mark">
-      <SvgIcon name="logo" />
+    <div class="logo-bar__mark" aria-hidden="true">
+      <span class="logo-bar__stamp">WC</span>
+      <SvgIcon name="logo" class="logo-bar__svg" />
     </div>
     <div v-show="!collapse" class="logo-bar__copy">
       <div class="logo-bar__title">
         WellCube
       </div>
       <div class="logo-bar__subtitle">
-        Design OS
+        Workspace
       </div>
     </div>
   </div>
@@ -26,8 +27,8 @@ defineProps<{ collapse?: boolean }>()
   align-items: center;
   width: 100%;
   height: 100%;
-  gap: 10px;
-  padding: 0 16px;
+  gap: 12px;
+  padding: 0 14px;
 }
 
 .logo-bar--collapsed {
@@ -36,26 +37,33 @@ defineProps<{ collapse?: boolean }>()
 }
 
 .logo-bar__mark {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 38px;
   height: 38px;
   flex-shrink: 0;
-  border: 1px solid rgba(37, 99, 235, 0.18);
-  border-radius: 12px;
-  background:
-    radial-gradient(circle at 30% 24%, rgba(45, 212, 191, 0.34), transparent 42%),
-    linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(255, 255, 255, 0.84));
-  color: var(--el-color-primary);
-  box-shadow:
-    0 8px 22px rgba(37, 99, 235, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--logo-mark-border);
+  border-radius: var(--logo-mark-radius, calc(var(--app-shell-radius, 16px) - 4px));
+  background: var(--logo-mark-bg);
+  color: var(--logo-mark-color);
+  box-shadow: inset 0 0 0 1px rgba(124, 242, 255, 0.04);
 }
 
-.logo-bar__mark :deep(svg) {
-  width: 24px;
-  height: 24px;
+.logo-bar__stamp {
+  display: var(--logo-stamp-display, none);
+  font-family: var(--cube-font-mono, Consolas, monospace);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: inherit;
+}
+
+.logo-bar__mark :deep(svg),
+.logo-bar__svg {
+  display: var(--logo-svg-display, block);
+  width: 22px;
+  height: 22px;
 }
 
 .logo-bar__copy {
@@ -63,30 +71,24 @@ defineProps<{ collapse?: boolean }>()
 }
 
 .logo-bar__title {
-  color: #14213d;
-  font-size: 18px;
-  font-weight: 900;
+  color: var(--logo-title-color, var(--type-title));
+  font-size: 16px;
+  font-weight: 600;
   line-height: 1.1;
+  letter-spacing: -0.02em;
   white-space: nowrap;
+  font-family: var(--cube-font-display, inherit);
 }
 
 .logo-bar__subtitle {
   margin-top: 3px;
-  color: var(--el-text-color-secondary);
-  font-size: 11px;
-  font-weight: 700;
+  color: var(--header-eyebrow-color, var(--type-eyebrow));
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
   line-height: 1;
   white-space: nowrap;
-}
-
-:global(html.dark) .logo-bar__mark {
-  border-color: rgba(140, 210, 255, 0.16);
-  background:
-    radial-gradient(circle at 30% 24%, rgba(45, 212, 191, 0.26), transparent 42%),
-    linear-gradient(135deg, rgba(67, 156, 255, 0.2), rgba(8, 28, 48, 0.82));
-}
-
-:global(html.dark) .logo-bar__title {
-  color: var(--el-text-color-primary);
+  font-family: var(--cube-font-mono, inherit);
 }
 </style>

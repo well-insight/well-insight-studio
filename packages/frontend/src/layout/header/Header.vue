@@ -1,22 +1,34 @@
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'
+import { computed } from 'vue'
+import { resolveMenuIcon } from '@/layout/aside/menuIcons'
 import SvgIcon from '@/components/svg-icon/SvgIcon.vue'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 
 const workspaceStore = useWorkspaceStore()
 
 const { currentMenu, currentApp } = storeToRefs(workspaceStore)
+
+const menuIcon = computed(() => resolveMenuIcon(currentMenu.value?.meta?.icon))
 </script>
 
 <template>
   <div class="app-header">
     <div class="app-header__context">
       <div v-if="currentMenu?.meta?.icon" class="app-header__icon">
-        <SvgIcon :name="currentMenu?.meta?.icon" :size="16" />
+        <SvgIcon
+          v-if="menuIcon.kind === 'svg'"
+          :name="menuIcon.name"
+          :size="16"
+          class="app-header__glyph"
+        />
+        <el-icon v-else :size="16">
+          <component :is="menuIcon.component" />
+        </el-icon>
       </div>
       <div class="app-header__titles">
         <div class="app-header__eyebrow">
-          WellCube Studio
+          WellCube workspace
         </div>
         <div class="app-header__title-row">
           <span class="app-header__title">{{ currentMenu?.title || '工作台' }}</span>
@@ -58,14 +70,39 @@ const { currentMenu, currentApp } = storeToRefs(workspaceStore)
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   flex-shrink: 0;
-  border: 1px solid rgba(37, 99, 235, 0.16);
-  border-radius: 10px;
-  background: linear-gradient(180deg, rgba(37, 99, 235, 0.14), rgba(20, 184, 166, 0.08)), rgba(255, 255, 255, 0.78);
-  color: var(--el-color-primary);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.68);
+  border: 1px solid var(--header-icon-border);
+  border-radius: var(--app-shell-radius, 4px);
+  background: var(--header-icon-bg);
+  color: var(--header-icon-color);
+  line-height: 0;
+}
+
+.app-header__icon :deep(.el-icon) {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.app-header__icon :deep(.el-icon svg),
+.app-header__icon :deep(.app-header__glyph.svg-icon) {
+  width: 16px;
+  height: 16px;
+  display: block;
+  shape-rendering: geometricPrecision;
+  cursor: inherit;
+  fill: currentColor;
+}
+
+.app-header__icon :deep(.app-header__glyph.svg-icon:hover) {
+  color: inherit;
 }
 
 .app-header__titles {
@@ -73,10 +110,13 @@ const { currentMenu, currentApp } = storeToRefs(workspaceStore)
 }
 
 .app-header__eyebrow {
-  color: var(--el-text-color-secondary);
-  font-size: 11px;
-  font-weight: 700;
+  color: var(--header-eyebrow-color, var(--type-eyebrow));
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
   line-height: 1.1;
+  font-family: var(--cube-font-mono, inherit);
 }
 
 .app-header__title-row {
@@ -89,17 +129,19 @@ const { currentMenu, currentApp } = storeToRefs(workspaceStore)
 
 .app-header__title {
   overflow: hidden;
-  color: var(--el-text-color-primary);
+  color: var(--header-title-color, var(--type-title));
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.2;
+  letter-spacing: -0.02em;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: var(--cube-font-display, inherit);
 }
 
 .app-header__divider,
 .app-header__app {
-  color: var(--el-text-color-secondary);
+  color: var(--header-meta-color, var(--type-caption));
   font-size: 13px;
   line-height: 1.2;
 }
@@ -122,59 +164,5 @@ const { currentMenu, currentApp } = storeToRefs(workspaceStore)
   align-items: center;
   justify-content: flex-end;
   min-width: 0;
-}
-
-:global(html.dark) .app-header__icon {
-  border-color: rgba(140, 210, 255, 0.14);
-  background: linear-gradient(180deg, rgba(67, 156, 255, 0.18), rgba(20, 184, 166, 0.1)), rgba(8, 28, 48, 0.78);
-}
-
-/* 子菜单图标配色 */
-.header-icon--visualization {
-  border-color: rgba(64, 158, 255, 0.2);
-  background:
-    radial-gradient(circle at 30% 25%, rgba(64, 158, 255, 0.22), transparent 52%),
-    linear-gradient(180deg, rgba(64, 158, 255, 0.16), rgba(64, 158, 255, 0.06)), rgba(255, 255, 255, 0.78);
-  color: #2d7ff9;
-}
-
-.header-icon--form {
-  border-color: rgba(103, 194, 58, 0.2);
-  background:
-    radial-gradient(circle at 28% 26%, rgba(103, 194, 58, 0.22), transparent 48%),
-    linear-gradient(180deg, rgba(103, 194, 58, 0.16), rgba(103, 194, 58, 0.06)), rgba(255, 255, 255, 0.78);
-  color: #3c9c41;
-}
-
-.header-icon--report {
-  border-color: rgba(230, 162, 60, 0.22);
-  background:
-    radial-gradient(circle at 28% 26%, rgba(230, 162, 60, 0.22), transparent 48%),
-    linear-gradient(180deg, rgba(230, 162, 60, 0.16), rgba(230, 162, 60, 0.06)), rgba(255, 255, 255, 0.78);
-  color: #c77e12;
-}
-
-:global(html.dark) .header-icon--visualization {
-  border-color: rgba(94, 178, 255, 0.24);
-  background:
-    radial-gradient(circle at 30% 25%, rgba(64, 158, 255, 0.24), transparent 52%),
-    linear-gradient(180deg, rgba(64, 158, 255, 0.2), rgba(64, 158, 255, 0.08)), rgba(8, 28, 48, 0.78);
-  color: #5ab2ff;
-}
-
-:global(html.dark) .header-icon--form {
-  border-color: rgba(130, 210, 80, 0.24);
-  background:
-    radial-gradient(circle at 28% 26%, rgba(103, 194, 58, 0.24), transparent 48%),
-    linear-gradient(180deg, rgba(103, 194, 58, 0.2), rgba(103, 194, 58, 0.08)), rgba(8, 28, 48, 0.78);
-  color: #5cd15a;
-}
-
-:global(html.dark) .header-icon--report {
-  border-color: rgba(245, 180, 70, 0.24);
-  background:
-    radial-gradient(circle at 28% 26%, rgba(230, 162, 60, 0.24), transparent 48%),
-    linear-gradient(180deg, rgba(230, 162, 60, 0.2), rgba(230, 162, 60, 0.08)), rgba(8, 28, 48, 0.78);
-  color: #f0a830;
 }
 </style>

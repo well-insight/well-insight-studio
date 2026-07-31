@@ -1,87 +1,155 @@
 /* ===========================================
-   WellCube 暗黑模式
-   与 LoginBusiness 深蓝科技风对齐，完整覆盖壳层 / 菜单 / 表格 / Tabs 等
+   Cube 暗色色值备份（结构在 appearance-cube.scss；
+   运行时以 appearances.ts 内联注入为准）
    =========================================== */
 
-html.dark {
+html.dark:not([data-appearance]),
+html.dark[data-appearance="cube"] {
     color-scheme: dark;
 
-    /* --- Element Plus 基础色板 --- */
-    --el-bg-color-page: #071420;
-    --el-bg-color: #0d2840;
-    --el-bg-color-overlay: #124066;
-    --el-text-color-primary: #e8f4ff;
-    --el-text-color-regular: #c8dff0;
-    --el-text-color-secondary: #8eacc8;
-    --el-text-color-placeholder: #6a8aa8;
-    --el-text-color-disabled: #587490;
-    --el-border-color: rgba(140, 210, 255, 0.2);
-    --el-border-color-light: rgba(140, 210, 255, 0.14);
-    --el-border-color-lighter: rgba(140, 210, 255, 0.1);
-    --el-border-color-extra-light: rgba(140, 210, 255, 0.07);
-    --el-border-color-dark: rgba(140, 210, 255, 0.3);
+    --cube-bg-0: #0c1016;
+    --cube-bg-1: #121923;
+    --cube-bg-2: #1a2433;
+    --cube-text: #eaf2ff;
+    --cube-text-muted: rgba(234, 242, 255, 0.72);
+    --cube-text-soft: rgba(234, 242, 255, 0.55);
+    --cube-signal: #7cf2ff;
+    --cube-brass: #c9a76a;
+    --cube-border: rgba(124, 242, 255, 0.14);
 
-    /* 设计规范语义 token 暗色版 */
-    --ds-accent-blue: #5ab2ff;
-    --ds-accent-blue-rgb: 90, 178, 255;
-    --ds-border-card: rgba(140, 210, 255, 0.14);
-    --ds-border-card-light: rgba(140, 210, 255, 0.12);
-    --ds-border-card-muted: rgba(140, 210, 255, 0.08);
-    --ds-shadow-card: 0 12px 32px rgba(4, 16, 30, 0.3);
-    --ds-shadow-card-lg: 0 18px 48px rgba(4, 16, 30, 0.35);
-    --el-fill-color: rgba(8, 28, 48, 0.55);
-    --el-fill-color-light: rgba(18, 52, 80, 0.55);
-    --el-fill-color-lighter: rgba(18, 52, 80, 0.35);
-    --el-fill-color-extra-light: rgba(18, 52, 80, 0.22);
+    --el-bg-color-page: #0c1016;
+    --el-bg-color: #121923;
+    --el-bg-color-overlay: #1a2433;
+    --el-text-color-primary: #eaf2ff;
+    --el-text-color-regular: rgba(234, 242, 255, 0.82);
+    --el-text-color-secondary: rgba(234, 242, 255, 0.55);
+    --el-text-color-placeholder: rgba(234, 242, 255, 0.4);
+    --el-text-color-disabled: rgba(234, 242, 255, 0.32);
+    --el-border-color: rgba(124, 242, 255, 0.2);
+    --el-border-color-light: rgba(124, 242, 255, 0.14);
+    --el-border-color-lighter: rgba(124, 242, 255, 0.1);
+    --el-border-color-extra-light: rgba(124, 242, 255, 0.07);
+    --el-border-color-dark: rgba(124, 242, 255, 0.3);
+
+    --ds-accent-blue: #7cf2ff;
+    --ds-accent-blue-rgb: 124, 242, 255;
+    --ds-border-card: rgba(124, 242, 255, 0.14);
+    --ds-border-card-light: rgba(124, 242, 255, 0.12);
+    --ds-border-card-muted: rgba(124, 242, 255, 0.08);
+    --ds-shadow-card: 0 12px 32px rgba(4, 8, 14, 0.3);
+    --ds-shadow-card-lg: 0 18px 48px rgba(4, 8, 14, 0.35);
+
+    --el-fill-color: rgba(14, 20, 30, 0.72);
+    --el-fill-color-light: rgba(26, 36, 51, 0.72);
+    --el-fill-color-lighter: rgba(26, 36, 51, 0.45);
+    --el-fill-color-extra-light: rgba(26, 36, 51, 0.28);
     --el-fill-color-blank: transparent;
-    --el-mask-color: rgba(4, 12, 22, 0.72);
-    --el-mask-color-extra-light: rgba(4, 12, 22, 0.4);
-    --el-disabled-bg-color: rgba(8, 28, 48, 0.45);
-    --el-disabled-text-color: #587490;
-    --el-disabled-border-color: rgba(140, 210, 255, 0.12);
-    --el-overlay-color: rgba(4, 12, 22, 0.8);
-    --el-overlay-color-light: rgba(4, 12, 22, 0.65);
-    --el-overlay-color-lighter: rgba(4, 12, 22, 0.45);
-    --el-box-shadow: 0 12px 32px rgba(4, 16, 30, 0.45);
-    --el-box-shadow-light: 0 0 12px rgba(4, 16, 30, 0.35);
-    --el-box-shadow-lighter: 0 0 6px rgba(4, 16, 30, 0.28);
+    --el-mask-color: rgba(4, 8, 14, 0.72);
+    --el-mask-color-extra-light: rgba(4, 8, 14, 0.4);
+    --el-disabled-bg-color: rgba(14, 20, 30, 0.45);
+    --el-disabled-text-color: rgba(234, 242, 255, 0.32);
+    --el-disabled-border-color: rgba(124, 242, 255, 0.12);
+    --el-overlay-color: rgba(4, 8, 14, 0.8);
+    --el-overlay-color-light: rgba(4, 8, 14, 0.65);
+    --el-overlay-color-lighter: rgba(4, 8, 14, 0.45);
+    --el-box-shadow: 0 12px 32px rgba(4, 8, 14, 0.5);
+    --el-box-shadow-light: 0 0 12px rgba(4, 8, 14, 0.35);
+    --el-box-shadow-lighter: 0 0 6px rgba(4, 8, 14, 0.28);
     --el-box-shadow-dark:
-        0 16px 48px 16px rgba(4, 16, 30, 0.4), 0 12px 32px rgba(4, 16, 30, 0.35);
+        0 16px 48px 16px rgba(4, 8, 14, 0.4), 0 12px 32px rgba(4, 8, 14, 0.35);
 
-    /* --- Menu --- */
     --el-menu-bg-color: transparent;
-    --el-menu-text-color: #c8dff0;
-    --el-menu-hover-bg-color: rgba(37, 99, 235, 0.18);
-    --el-menu-hover-text-color: #e8f4ff;
-    --el-menu-active-color: #5ab2ff;
+    --el-menu-text-color: rgba(234, 242, 255, 0.78);
+    --el-menu-hover-bg-color: rgba(124, 242, 255, 0.08);
+    --el-menu-hover-text-color: #eaf2ff;
+    --el-menu-active-color: #7cf2ff;
     --el-menu-border-color: transparent;
 
-    /* --- Table --- */
     --el-table-bg-color: transparent;
     --el-table-tr-bg-color: transparent;
-    --el-table-header-bg-color: rgba(8, 28, 48, 0.55);
-    --el-table-row-hover-bg-color: rgba(37, 99, 235, 0.14);
-    --el-table-border-color: rgba(140, 210, 255, 0.14);
-    --el-table-header-text-color: #c8dff0;
-    --el-table-text-color: #e8f4ff;
+    --el-table-header-bg-color: rgba(14, 20, 30, 0.72);
+    --el-table-row-hover-bg-color: rgba(124, 242, 255, 0.08);
+    --el-table-border-color: rgba(124, 242, 255, 0.12);
+    --el-table-header-text-color: rgba(234, 242, 255, 0.78);
+    --el-table-text-color: #eaf2ff;
 
-    /* --- Card / Dialog --- */
-    --el-card-bg-color: #0d2840;
-    --el-dialog-bg-color: #0d2840;
+    --el-card-bg-color: #121923;
+    --el-dialog-bg-color: #121923;
 
-    /* --- WellCube --- */
-    --wc-bg-color: #071420;
-    --wc-bg-color-secondary: #0d2840;
-    --wc-bg-color-tertiary: #124066;
-    --wc-text-color: #e8f4ff;
-    --wc-text-color-secondary: #8eacc8;
-    --wc-border-color: rgba(140, 210, 255, 0.2);
-    --wc-border-color-lighter: rgba(140, 210, 255, 0.12);
-    --wc-accent-cyan: #5ab2ff;
-    --wc-glass-bg: rgba(12, 28, 46, 0.42);
-    --wc-active-fill: rgba(37, 99, 235, 0.24);
+    --wc-bg-color: #0c1016;
+    --wc-bg-color-secondary: #121923;
+    --wc-bg-color-tertiary: #1a2433;
+    --wc-text-color: #eaf2ff;
+    --wc-text-color-secondary: rgba(234, 242, 255, 0.55);
+    --wc-border-color: rgba(124, 242, 255, 0.2);
+    --wc-border-color-lighter: rgba(124, 242, 255, 0.12);
+    --wc-accent-cyan: #7cf2ff;
+    --wc-glass-bg: rgba(12, 16, 22, 0.55);
+    --wc-active-fill: rgba(124, 242, 255, 0.12);
 
-    /* ========== 全局页面底板 ========== */
+    --app-shell-bg:
+        radial-gradient(circle at 16% 18%, rgba(124, 242, 255, 0.14), transparent 24%),
+        radial-gradient(circle at 78% 10%, rgba(201, 167, 106, 0.09), transparent 20%),
+        linear-gradient(135deg, #0c1016 0%, #121923 56%, #0f1824 100%);
+    --app-shell-panel-bg: rgba(14, 20, 30, 0.92);
+    --app-shell-panel-border: rgba(124, 242, 255, 0.12);
+    --app-shell-panel-shadow: inset 0 0 0 1px rgba(124, 242, 255, 0.04);
+    --app-shell-main-bg: rgba(14, 20, 30, 0.92);
+    --app-shell-main-border: rgba(124, 242, 255, 0.12);
+    --app-shell-main-shadow: inset 0 0 0 1px rgba(124, 242, 255, 0.04);
+    --app-shell-divider: rgba(124, 242, 255, 0.1);
+    --app-shell-setting-bg: transparent;
+    --app-shell-header-bg: rgba(8, 12, 18, 0.65);
+    --app-shell-header-border: rgba(124, 242, 255, 0.1);
+    --app-shell-content-bg: #0c1016;
+
+    --logo-mark-border: rgba(124, 242, 255, 0.38);
+    --logo-mark-bg: rgba(124, 242, 255, 0.06);
+    --logo-mark-color: #7cf2ff;
+    --logo-title-color: #eaf2ff;
+    --menu-icon-border: rgba(124, 242, 255, 0.22);
+    --menu-icon-bg: rgba(124, 242, 255, 0.06);
+    --menu-icon-color: #7cf2ff;
+    --menu-active-ring: rgba(124, 242, 255, 0.22);
+    --header-icon-border: rgba(124, 242, 255, 0.28);
+    --header-icon-bg: rgba(124, 242, 255, 0.06);
+    --header-icon-color: #7cf2ff;
+    --header-eyebrow-color: rgba(124, 242, 255, 0.78);
+    --header-title-color: #eaf2ff;
+    --header-meta-color: rgba(234, 242, 255, 0.55);
+    --footer-avatar-border: rgba(124, 242, 255, 0.28);
+    --footer-avatar-bg: rgba(124, 242, 255, 0.1);
+    --footer-avatar-color: #7cf2ff;
+    --footer-name-color: #eaf2ff;
+    --footer-meta-color: rgba(234, 242, 255, 0.55);
+    --footer-divider: rgba(124, 242, 255, 0.12);
+
+    /* 文字层级 */
+    --type-title: #eaf2ff;
+    --type-body: rgba(234, 242, 255, 0.82);
+    --type-caption: rgba(234, 242, 255, 0.55);
+    --type-eyebrow: rgba(124, 242, 255, 0.84);
+
+    --workbench-bg: #0c1016;
+    --workbench-hero-bg:
+        radial-gradient(circle at 18% 20%, rgba(124, 242, 255, 0.12), transparent 42%),
+        linear-gradient(135deg, #101820 0%, #121923 55%, #0c1016 100%);
+    --workbench-hero-border: rgba(124, 242, 255, 0.16);
+    --workbench-hero-title: #eaf2ff;
+    --workbench-hero-lead: rgba(234, 242, 255, 0.72);
+    --workbench-hero-eyebrow: rgba(124, 242, 255, 0.84);
+    --workbench-card-bg: rgba(14, 20, 30, 0.78);
+    --workbench-card-border: rgba(124, 242, 255, 0.12);
+    --workbench-card-title: #eaf2ff;
+    --workbench-card-label: rgba(234, 242, 255, 0.72);
+    --workbench-card-caption: rgba(234, 242, 255, 0.5);
+    --workbench-soft-bg: rgba(8, 12, 18, 0.55);
+    --workbench-soft-border: rgba(124, 242, 255, 0.1);
+    --workbench-shadow: none;
+    --workbench-muted: rgba(234, 242, 255, 0.55);
+    --workbench-hover-bg: rgba(124, 242, 255, 0.06);
+    --workbench-hover-border: rgba(124, 242, 255, 0.28);
+
     body,
     #app {
         background-color: var(--el-bg-color-page) !important;
@@ -90,19 +158,19 @@ html.dark {
 
     /* --- 滚动条 --- */
     ::-webkit-scrollbar-thumb {
-        background: rgba(100, 160, 210, 0.35) !important;
+        background: rgba(124, 242, 255, 0.22) !important;
     }
 
     ::-webkit-scrollbar-thumb:hover {
-        background: rgba(120, 190, 255, 0.5) !important;
+        background: rgba(124, 242, 255, 0.38) !important;
     }
 
     #app-loading {
-        background: #071420 !important;
+        background: #0c1016 !important;
     }
 
     .matrix-dot {
-        background-color: #2563eb !important;
+        background-color: #7cf2ff !important;
     }
 
     .placeholder {
@@ -123,12 +191,8 @@ html.dark {
     }
 
     .e-layout-sider {
-        background: linear-gradient(
-            180deg,
-            #0a1c2e 0%,
-            #0d2840 100%
-        ) !important;
-        border-color: var(--el-border-color-light) !important;
+        background: transparent !important;
+        border-color: transparent !important;
         color: var(--el-text-color-primary) !important;
     }
 
@@ -147,7 +211,7 @@ html.dark {
     }
 
     .e-layout-header {
-        background: rgba(13, 40, 64, 0.92) !important;
+        background: rgba(8, 12, 18, 0.92) !important;
         border-color: var(--el-border-color-light) !important;
         backdrop-filter: blur(12px);
         color: var(--el-text-color-primary);
@@ -190,6 +254,7 @@ html.dark {
         .el-menu-item.is-active {
             background-color: var(--wc-active-fill) !important;
             color: var(--el-menu-active-color) !important;
+            box-shadow: inset 0 0 0 1px var(--menu-active-ring);
         }
 
         .el-menu-item:hover:not(.is-active) {
@@ -223,11 +288,11 @@ html.dark {
 
     .el-tabs__item:hover,
     .el-tabs__item.is-active {
-        color: var(--el-color-primary) !important;
+        color: var(--cube-signal) !important;
     }
 
     .el-tabs__active-bar {
-        background-color: var(--el-color-primary) !important;
+        background-color: var(--cube-signal) !important;
     }
 
     /* ========== 表格 / 卡片 / 分页 ========== */
@@ -431,6 +496,49 @@ html.dark {
     }
 
     .user-footer__theme-wrap {
-        border-top-color: var(--el-border-color-lighter) !important;
+        border-top-color: var(--footer-divider) !important;
+    }
+
+    .workbench__hero {
+        color: var(--workbench-hero-title) !important;
+    }
+
+    .workbench__eyebrow {
+        color: var(--workbench-hero-eyebrow) !important;
+        opacity: 1 !important;
+    }
+
+    .workbench .panel__head > div > span {
+        color: var(--type-eyebrow) !important;
+        opacity: 1 !important;
+    }
+
+    .workbench h1 {
+        color: var(--workbench-hero-title) !important;
+    }
+
+    .workbench__hero p {
+        color: var(--workbench-hero-lead) !important;
+        opacity: 1 !important;
+    }
+
+    .workbench .panel__head h2,
+    .workbench .metric-card strong,
+    .workbench .activity-copy strong,
+    .workbench .progress-summary strong {
+        color: var(--workbench-card-title) !important;
+    }
+
+    .workbench .metric-card > span:not(.metric-card__icon),
+    .workbench .quick-actions button span {
+        color: var(--workbench-card-label) !important;
+    }
+
+    .workbench .metric-card small,
+    .workbench .activity-copy small,
+    .workbench .activity-list time,
+    .workbench .progress-summary span,
+    .workbench .panel__note {
+        color: var(--workbench-card-caption) !important;
     }
 }

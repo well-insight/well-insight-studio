@@ -1,0 +1,82 @@
+/* Cube 样式风格：结构覆盖（与明暗无关；颜色走 CSS 变量）
+   圆角统一 4px（--app-shell-radius） */
+
+html[data-appearance="cube"] {
+    --app-shell-radius: 4px;
+    --logo-mark-radius: 4px;
+
+    .menu-icon,
+    .menu-icon--default,
+    .menu-icon--visualization,
+    .menu-icon--form,
+    .menu-icon--report {
+        border-radius: var(--app-shell-radius) !important;
+        border-color: var(--menu-icon-border) !important;
+        background: var(--menu-icon-bg) !important;
+        color: var(--menu-icon-color) !important;
+        box-shadow: inset 0 0 0 1px var(--cube-border, rgba(124, 242, 255, 0.06)) !important;
+        transform: none !important;
+    }
+
+    .custom-menu-wrapper .el-menu-item,
+    .custom-menu-wrapper .el-sub-menu__title {
+        border-radius: var(--app-shell-radius) !important;
+    }
+
+    .logo-bar__mark,
+    .app-header__icon,
+    .user-footer__avatar {
+        border-radius: var(--app-shell-radius) !important;
+    }
+
+    .user-footer__theme-btn,
+    .user-footer__toggle-btn {
+        border-radius: var(--app-shell-radius) !important;
+    }
+
+    .workbench .metric-card__icon,
+    .workbench .quick-actions__icon,
+    .workbench .activity-icon {
+        border-radius: var(--app-shell-radius) !important;
+        border-color: var(--menu-icon-border) !important;
+        background: var(--menu-icon-bg) !important;
+        color: var(--menu-icon-color) !important;
+        box-shadow: inset 0 0 0 1px var(--cube-border, rgba(124, 242, 255, 0.06)) !important;
+    }
+
+    .workbench .metric-card,
+    .workbench .panel,
+    .workbench .progress-summary div,
+    .workbench .quick-actions button,
+    .workbench .activity-list button,
+    .workbench__hero {
+        border-radius: var(--app-shell-radius) !important;
+    }
+
+    .workbench__hero {
+        box-shadow: inset 0 0 0 1px var(--cube-border, rgba(124, 242, 255, 0.06)) !important;
+    }
+
+    .app-shell__sider,
+    .app-shell__main,
+    .app-shell__main-panel {
+        border-radius: var(--app-shell-radius);
+    }
+}
+
+/* 仅暗色下的 Cube 控件色（非结构） */
+html.dark[data-appearance="cube"] {
+    .user-footer__theme-btn,
+    .user-footer__toggle-btn {
+        --el-button-bg-color: rgba(124, 242, 255, 0.05);
+        --el-button-border-color: rgba(124, 242, 255, 0.18);
+        --el-button-text-color: rgba(234, 242, 255, 0.72);
+        --el-button-hover-bg-color: rgba(124, 242, 255, 0.1);
+        --el-button-hover-border-color: rgba(124, 242, 255, 0.36);
+        --el-button-hover-text-color: #7cf2ff;
+    }
+
+    .user-footer__trigger:hover {
+        background: rgba(124, 242, 255, 0.08) !important;
+    }
+}

@@ -1,112 +1,74 @@
-/** WellCube / 登录页对齐的系统主题色与 Element Plus 变量工具 */
+/** WellCube 主题工具；暗色壳层由「样式风格」appearances 驱动 */
 
-export const WELLCUBE_PRIMARY = '#2563eb'
+import {
+  APPEARANCE_INLINE_VAR_KEYS,
+  DEFAULT_APPEARANCE,
+  findAppearance,
+  normalizeAppearance,
+  type AppearanceStyleId,
+} from './appearances'
+
+export {
+  APPEARANCE_STYLES,
+  DEFAULT_APPEARANCE,
+  findAppearance,
+  normalizeAppearance,
+  type AppearanceRecommendedDefaults,
+  type AppearanceStyle,
+  type AppearanceStyleId,
+} from './appearances'
+
+export {
+  CUBE_APP_SHELL_CSS_VARS,
+  CUBE_COLORS,
+  CUBE_EP_CSS_VARS,
+  CUBE_FONTS,
+  CUBE_ROOT_CSS_VARS,
+  CUBE_WC_CSS_VARS,
+} from './cubeTokens'
+
+/** 交互主色兜底；默认主题以配色方案 iceberg 为准 */
+export const WELLCUBE_PRIMARY = '#5DADE2'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 export type ThemeSize = 'large' | 'default' | 'small'
 
 export interface ThemeConfig {
-  /** 外观模式 */
   mode: ThemeMode
-  /** 品牌主色（驱动 Element Plus --el-color-primary*） */
   primary: string
-  /** Element Plus 全局组件尺寸 */
   size: ThemeSize
+  /** 壳层样式风格（Cube / 经典…） */
+  appearance: AppearanceStyleId
+  /** 配色方案 id（THEME_PRESETS.name） */
+  presetId: string
+  /** Element Plus 基础圆角 px */
+  borderRadius: number
 }
+
+const cubeDefaults = findAppearance('cube').recommended!
 
 export const DEFAULT_THEME_CONFIG: ThemeConfig = {
-  mode: 'system',
+  mode: cubeDefaults.mode,
   primary: WELLCUBE_PRIMARY,
-  size: 'default',
+  size: cubeDefaults.size,
+  appearance: DEFAULT_APPEARANCE,
+  presetId: cubeDefaults.presetId,
+  borderRadius: cubeDefaults.borderRadius,
 }
 
-/** 与 LoginBusiness 一致的暗色蓝系（覆盖 EP dark css-vars） */
-export const DARK_EP_CSS_VARS: Record<string, string> = {
-  '--el-bg-color-page': '#071420',
-  '--el-bg-color': '#0d2840',
-  '--el-bg-color-overlay': '#124066',
-  '--el-text-color-primary': '#e8f4ff',
-  '--el-text-color-regular': '#c8dff0',
-  '--el-text-color-secondary': '#8eacc8',
-  '--el-text-color-placeholder': '#6a8aa8',
-  '--el-text-color-disabled': '#587490',
-  '--el-border-color': 'rgba(140, 210, 255, 0.2)',
-  '--el-border-color-light': 'rgba(140, 210, 255, 0.14)',
-  '--el-border-color-lighter': 'rgba(140, 210, 255, 0.1)',
-  '--el-border-color-extra-light': 'rgba(140, 210, 255, 0.07)',
-  '--el-border-color-dark': 'rgba(140, 210, 255, 0.3)',
-  '--el-fill-color': 'rgba(8, 28, 48, 0.55)',
-  '--el-fill-color-light': 'rgba(18, 52, 80, 0.55)',
-  '--el-fill-color-lighter': 'rgba(18, 52, 80, 0.35)',
-  '--el-fill-color-extra-light': 'rgba(18, 52, 80, 0.22)',
-  '--el-fill-color-blank': 'transparent',
-  '--el-mask-color': 'rgba(4, 12, 22, 0.72)',
-  '--el-mask-color-extra-light': 'rgba(4, 12, 22, 0.4)',
-  '--el-disabled-bg-color': 'rgba(8, 28, 48, 0.45)',
-  '--el-disabled-text-color': '#587490',
-  '--el-disabled-border-color': 'rgba(140, 210, 255, 0.12)',
-  '--el-overlay-color': 'rgba(4, 12, 22, 0.8)',
-  '--el-overlay-color-light': 'rgba(4, 12, 22, 0.65)',
-  '--el-overlay-color-lighter': 'rgba(4, 12, 22, 0.45)',
-  '--el-box-shadow': '0 12px 32px rgba(4, 16, 30, 0.45)',
-  '--el-box-shadow-light': '0 0 12px rgba(4, 16, 30, 0.35)',
-  '--el-box-shadow-lighter': '0 0 6px rgba(4, 16, 30, 0.28)',
-  '--el-box-shadow-dark':
-    '0 16px 48px 16px rgba(4, 16, 30, 0.4), 0 12px 32px rgba(4, 16, 30, 0.35)',
-
-  /* Menu */
-  '--el-menu-bg-color': 'transparent',
-  '--el-menu-text-color': '#c8dff0',
-  '--el-menu-hover-bg-color': 'rgba(37, 99, 235, 0.18)',
-  '--el-menu-hover-text-color': '#e8f4ff',
-  '--el-menu-active-color': '#5ab2ff',
-  '--el-menu-border-color': 'transparent',
-
-  /* Table */
-  '--el-table-bg-color': 'transparent',
-  '--el-table-tr-bg-color': 'transparent',
-  '--el-table-header-bg-color': 'rgba(8, 28, 48, 0.55)',
-  '--el-table-row-hover-bg-color': 'rgba(37, 99, 235, 0.14)',
-  '--el-table-border-color': 'rgba(140, 210, 255, 0.14)',
-  '--el-table-header-text-color': '#c8dff0',
-  '--el-table-text-color': '#e8f4ff',
-  '--el-table-fixed-box-shadow': '0 0 10px rgba(4, 16, 30, 0.45)',
-
-  /* Card / Dialog / Popover / Drawer */
-  '--el-card-bg-color': '#0d2840',
-  '--el-dialog-bg-color': '#0d2840',
-  '--el-popup-modal-bg-color': 'rgba(4, 12, 22, 0.72)',
-
-  /* Input / Button fills */
-  '--el-input-bg-color': 'rgba(8, 28, 48, 0.45)',
-  '--el-input-border-color': 'rgba(140, 210, 255, 0.2)',
-  '--el-input-hover-border-color': 'rgba(140, 210, 255, 0.4)',
-  '--el-input-focus-border-color': '#2563eb',
-  '--el-button-bg-color': 'rgba(18, 52, 80, 0.65)',
-  '--el-button-border-color': 'rgba(140, 210, 255, 0.22)',
-  '--el-button-text-color': '#e8f4ff',
-  '--el-button-hover-text-color': '#ffffff',
-  '--el-button-hover-bg-color': 'rgba(37, 99, 235, 0.28)',
-  '--el-button-hover-border-color': 'rgba(140, 210, 255, 0.4)',
-  '--el-button-active-bg-color': 'rgba(37, 99, 235, 0.36)',
-  '--el-button-active-border-color': 'rgba(140, 210, 255, 0.5)',
-
-  /* Tabs */
-  '--el-tabs-header-bg-color': 'transparent',
+export function applyBorderRadiusVars(radiusPx: number) {
+  const root = document.documentElement
+  const val = Number.isFinite(radiusPx) ? Math.max(0, Math.round(radiusPx)) : 4
+  root.style.setProperty('--el-border-radius-base', `${val}px`)
+  root.style.setProperty('--el-border-radius-small', `${Math.max(1, val - 2)}px`)
+  root.style.setProperty('--el-border-radius-round', `${val * 3}px`)
 }
 
-export const DARK_WC_CSS_VARS: Record<string, string> = {
-  '--wc-bg-color': '#071420',
-  '--wc-bg-color-secondary': '#0d2840',
-  '--wc-bg-color-tertiary': '#124066',
-  '--wc-text-color': '#e8f4ff',
-  '--wc-text-color-secondary': '#8eacc8',
-  '--wc-border-color': 'rgba(140, 210, 255, 0.2)',
-  '--wc-border-color-lighter': 'rgba(140, 210, 255, 0.12)',
-  '--wc-accent-cyan': '#5ab2ff',
-  '--wc-glass-bg': 'rgba(12, 28, 46, 0.42)',
-  '--wc-active-fill': 'rgba(37, 99, 235, 0.24)',
-}
+/** @deprecated 使用 findAppearance('cube').darkVars */
+export const DARK_EP_CSS_VARS = findAppearance('cube').darkVars
+
+/** @deprecated */
+export const DARK_WC_CSS_VARS: Record<string, string> = {}
 
 const PRIMARY_VAR_KEYS = [
   '--el-color-primary',
@@ -155,13 +117,17 @@ export function mixHex(color: string, other: string, weight: number) {
   )
 }
 
-export function buildPrimaryCssVars(primary: string, isDark = false): Record<string, string> {
+export function buildPrimaryCssVars(
+  primary: string,
+  isDark = false,
+  appearance: AppearanceStyleId = DEFAULT_APPEARANCE,
+): Record<string, string> {
   const base = parseHex(primary) ? primary : WELLCUBE_PRIMARY
+  const style = findAppearance(appearance)
   const vars: Record<string, string> = {
     '--el-color-primary': base,
   }
-  // 暗色下 light-* 向页面深蓝混合，避免菜单/ButtonTabs 选中态发白
-  const lightMixTarget = isDark ? '#071420' : '#ffffff'
+  const lightMixTarget = isDark ? style.primaryMixTarget : '#ffffff'
   for (let i = 1; i <= 9; i++) {
     const weight = isDark ? Math.min(0.92, 0.35 + i * 0.07) : i / 10
     vars[`--el-color-primary-light-${i}`] = mixHex(base, lightMixTarget, weight)
@@ -181,25 +147,31 @@ function clearVars(el: HTMLElement, keys: readonly string[] | string[]) {
 }
 
 /** 应用主色到 document（通过 CSS 变量驱动 Element Plus） */
-export function applyPrimaryColor(primary: string, isDark = false) {
+export function applyPrimaryColor(
+  primary: string,
+  isDark = false,
+  appearance: AppearanceStyleId = DEFAULT_APPEARANCE,
+) {
   const root = document.documentElement
-  setVars(root, buildPrimaryCssVars(primary, isDark))
+  setVars(root, buildPrimaryCssVars(primary, isDark, appearance))
 }
 
-/** 按明暗模式同步 EP / WellCube 深色变量 */
-export function applyAppearanceVars(isDark: boolean) {
+/** 按样式风格 + 明暗同步变量：chrome 始终生效，颜色随 isDark 切换 */
+export function applyAppearanceVars(
+  isDark: boolean,
+  appearance: AppearanceStyleId = DEFAULT_APPEARANCE,
+) {
   const root = document.documentElement
+  const styleId = normalizeAppearance(appearance)
+  const style = findAppearance(styleId)
+
   root.classList.toggle('dark', isDark)
+  root.dataset.appearance = styleId
   root.style.colorScheme = isDark ? 'dark' : 'light'
 
-  if (isDark) {
-    setVars(root, DARK_EP_CSS_VARS)
-    setVars(root, DARK_WC_CSS_VARS)
-  }
-  else {
-    clearVars(root, Object.keys(DARK_EP_CSS_VARS))
-    clearVars(root, Object.keys(DARK_WC_CSS_VARS))
-  }
+  clearVars(root, APPEARANCE_INLINE_VAR_KEYS)
+  setVars(root, style.chromeVars)
+  setVars(root, isDark ? style.darkVars : style.lightVars)
 }
 
 export function clearPrimaryColorOverrides() {

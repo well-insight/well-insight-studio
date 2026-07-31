@@ -1,11 +1,94 @@
 <script setup lang="ts">
 import { Key, Lock, User } from '@element-plus/icons-vue'
+import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { useAuthForm } from '@/hooks/useAuthForm'
+import { useThemeStore } from '@/stores/themeStore'
+import { CUBE_COLORS, CUBE_FONTS, mixHex } from '@/styles/theme/tokens'
 
 const { mode, form, loading, canvasRef, refreshCaptcha, onSubmit, setMode } = useAuthForm({ prefillDemo: true })
+const themeStore = useThemeStore()
+const { config, isDark, currentAppearance } = storeToRefs(themeStore)
 
 const cubeRef = ref<HTMLElement | null>(null)
+
+function primaryRgb(hex: string): string {
+  const raw = hex.trim().replace('#', '')
+  if (!/^[0-9a-f]{6}$/i.test(raw))
+    return '93, 173, 226'
+  return [
+    Number.parseInt(raw.slice(0, 2), 16),
+    Number.parseInt(raw.slice(2, 4), 16),
+    Number.parseInt(raw.slice(4, 6), 16),
+  ].join(', ')
+}
+
+/** 舞台保持 Cube 图纸气质；表单跟主题主色 / 明暗 */
+const cubeThemeStyle = computed(() => {
+  const primary = config.value.primary || '#5DADE2'
+  const rgb = primaryRgb(primary)
+  const radius = Math.max(4, config.value.borderRadius || 4)
+  const dark = isDark.value
+  const isCube = currentAppearance.value.id === 'cube'
+
+  return {
+    '--bg-0': CUBE_COLORS.bg0,
+    '--bg-1': CUBE_COLORS.bg1,
+    '--text-main': CUBE_COLORS.text,
+    '--text-muted': CUBE_COLORS.textMuted,
+    '--signal': CUBE_COLORS.signal,
+    '--signal-soft': 'rgba(124, 242, 255, 0.16)',
+    '--brass': CUBE_COLORS.brass,
+    '--cube-shadow': 'rgba(4, 10, 18, 0.42)',
+    '--cube-font-display': isCube ? CUBE_FONTS.display : 'inherit',
+    '--cube-font-mono': isCube ? CUBE_FONTS.mono : 'inherit',
+
+    '--theme-primary': primary,
+    '--theme-primary-rgb': rgb,
+    '--theme-primary-soft': `rgba(${rgb}, 0.14)`,
+    '--theme-primary-ring': `rgba(${rgb}, 0.28)`,
+    '--theme-primary-deep': mixHex(primary, '#000000', 0.22),
+    '--form-radius': `${radius + 8}px`,
+    '--form-radius-sm': `${radius + 4}px`,
+    '--form-control-radius': `${Math.max(radius, 6)}px`,
+
+    ...(dark
+      ? {
+          '--panel': 'rgba(14, 20, 30, 0.92)',
+          '--panel-line': `rgba(${rgb}, 0.16)`,
+          '--panel-border': `rgba(${rgb}, 0.28)`,
+          '--ink': CUBE_COLORS.text,
+          '--ink-soft': CUBE_COLORS.textSoft,
+          '--ink-muted': 'rgba(234, 242, 255, 0.62)',
+          '--form-field-bg': 'rgba(8, 12, 18, 0.72)',
+          '--form-field-border': `rgba(${rgb}, 0.22)`,
+          '--form-placeholder': 'rgba(234, 242, 255, 0.38)',
+          '--form-tab-track': 'rgba(8, 12, 18, 0.55)',
+          '--form-tab-idle': 'rgba(234, 242, 255, 0.55)',
+          '--form-tab-active-fg': '#0c1016',
+          '--form-submit-fg': '#0c1016',
+          '--form-captcha-bg': 'linear-gradient(180deg, rgba(26, 36, 51, 0.95), rgba(14, 20, 30, 0.98))',
+          '--form-shadow': `0 24px 64px rgba(4, 8, 14, 0.55), 0 0 0 1px rgba(${rgb}, 0.08)`,
+        }
+      : {
+          '--panel': mixHex('#f7f3e9', primary, 0.06),
+          '--panel-line': `rgba(${rgb}, 0.18)`,
+          '--panel-border': `rgba(${rgb}, 0.28)`,
+          '--ink': CUBE_COLORS.ink,
+          '--ink-soft': CUBE_COLORS.inkSoft,
+          '--ink-muted': 'rgba(23, 32, 45, 0.68)',
+          '--form-field-bg': 'rgba(255, 255, 255, 0.86)',
+          '--form-field-border': `rgba(${rgb}, 0.2)`,
+          '--form-placeholder': 'rgba(23, 32, 45, 0.4)',
+          '--form-tab-track': `rgba(${rgb}, 0.08)`,
+          '--form-tab-idle': 'rgba(23, 32, 45, 0.55)',
+          '--form-tab-active-fg': '#ffffff',
+          '--form-submit-fg': '#ffffff',
+          '--form-captcha-bg': `linear-gradient(180deg, #fffefb, ${mixHex('#e8f0f8', primary, 0.2)})`,
+          '--form-shadow': `0 24px 70px rgba(15, 40, 70, 0.16), 0 0 0 1px rgba(${rgb}, 0.06)`,
+        }),
+  }
+})
 
 const stageNotes = [
   '页面 · 数据 · 权限',
@@ -26,6 +109,11 @@ const authSubtitle = computed(() => (
     : '创建团队账号后即可开始搭建你的第一套业务应用。'
 ))
 
+const themeChip = computed(() => {
+  const preset = themeStore.currentPreset?.label ?? 'Theme'
+  return `${preset} · ${isDark.value ? 'Dark' : 'Light'}`
+})
+
 function pulseCube() {
   if (!cubeRef.value)
     return
@@ -39,7 +127,7 @@ function pulseCube() {
 </script>
 
 <template>
-  <div class="login-cube-container">
+  <div class="login-cube-container" :style="cubeThemeStyle">
     <section class="login-stage" aria-label="WellCube 登录引导">
       <div class="login-stage__wash" aria-hidden="true" />
       <div class="login-stage__grid" aria-hidden="true" />
@@ -122,8 +210,10 @@ function pulseCube() {
 
     <aside class="login-panel">
       <div class="login-card">
+        <div class="login-card__accent" aria-hidden="true" />
         <div class="login-card__topline">
-          Project access
+          <span>Project access</span>
+          <span class="login-card__theme-chip">{{ themeChip }}</span>
         </div>
         <div class="login-card__header">
           <h3 class="login-card__title">
@@ -302,19 +392,6 @@ function pulseCube() {
 
 <style lang="scss" scoped>
 .login-cube-container {
-  --bg-0: #0c1016;
-  --bg-1: #121923;
-  --panel: #f3efe4;
-  --panel-line: rgba(18, 25, 35, 0.12);
-  --text-main: #eaf2ff;
-  --text-muted: rgba(234, 242, 255, 0.72);
-  --ink: #17202d;
-  --ink-soft: rgba(23, 32, 45, 0.62);
-  --signal: #7cf2ff;
-  --signal-soft: rgba(124, 242, 255, 0.16);
-  --brass: #c9a76a;
-  --cube-face: #d6deee;
-  --cube-shadow: rgba(4, 10, 18, 0.42);
   min-height: 100vh;
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) 430px;
@@ -478,7 +555,7 @@ function pulseCube() {
 .login-stage__chip,
 .login-stage__signal,
 .artifact-caption {
-  font-family: 'Consolas', 'SFMono-Regular', monospace;
+  font-family: var(--cube-font-mono, 'Consolas', 'SFMono-Regular', monospace);
 }
 
 .login-stage__eyebrow {
@@ -775,8 +852,11 @@ function pulseCube() {
 }
 
 .login-panel {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)), rgba(8, 12, 18, 0.82);
-  border-left: 1px solid rgba(124, 242, 255, 0.12);
+  background:
+    linear-gradient(180deg, rgba(var(--theme-primary-rgb), 0.06), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
+    rgba(8, 12, 18, 0.82);
+  border-left: 1px solid rgba(var(--theme-primary-rgb), 0.18);
   padding: 28px;
   display: flex;
   flex-direction: column;
@@ -785,7 +865,7 @@ function pulseCube() {
 
   @media (max-width: 1100px) {
     border-left: none;
-    border-top: 1px solid rgba(124, 242, 255, 0.12);
+    border-top: 1px solid rgba(var(--theme-primary-rgb), 0.18);
     padding: 18px 18px 28px;
   }
 }
@@ -798,30 +878,68 @@ function pulseCube() {
   margin: 0 auto;
   padding: 28px 24px 22px;
   color: var(--ink);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.3)), var(--panel);
-  border: 1px solid rgba(124, 242, 255, 0.22);
-  border-radius: 28px;
-  box-shadow: 0 24px 70px rgba(5, 9, 14, 0.32);
+  background:
+    linear-gradient(165deg, rgba(var(--theme-primary-rgb), 0.1), transparent 38%),
+    var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--form-radius);
+  box-shadow: var(--form-shadow);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  backdrop-filter: blur(12px);
 
   &::before {
     content: '';
     position: absolute;
     inset: 12px;
     border: 1px solid var(--panel-line);
-    border-radius: 22px;
+    border-radius: calc(var(--form-radius) - 6px);
     pointer-events: none;
   }
 }
 
+.login-card__accent {
+  position: absolute;
+  top: 0;
+  left: 24px;
+  right: 24px;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--theme-primary),
+    var(--signal),
+    transparent
+  );
+  opacity: 0.9;
+  pointer-events: none;
+}
+
 .login-card__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   margin-bottom: 18px;
   color: var(--ink-soft);
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
+  font-family: var(--cube-font-mono, 'Consolas', monospace);
+}
+
+.login-card__theme-chip {
+  max-width: 52%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border: 1px solid rgba(var(--theme-primary-rgb), 0.28);
+  background: var(--theme-primary-soft);
+  color: var(--theme-primary);
+  letter-spacing: 0.08em;
+  font-size: 10px;
 }
 
 .login-card__header {
@@ -833,12 +951,13 @@ function pulseCube() {
   font-size: 30px;
   line-height: 1.04;
   letter-spacing: -0.05em;
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: var(--cube-font-display, 'Georgia', serif);
+  color: var(--ink);
 }
 
 .login-card__subtitle {
   margin: 10px 0 0;
-  color: rgba(23, 32, 45, 0.72);
+  color: var(--ink-muted);
   font-size: 14px;
   line-height: 1.7;
 }
@@ -849,8 +968,8 @@ function pulseCube() {
   gap: 8px;
   padding: 6px;
   margin-bottom: 18px;
-  background: rgba(23, 32, 45, 0.05);
-  border: 1px solid rgba(23, 32, 45, 0.08);
+  background: var(--form-tab-track);
+  border: 1px solid var(--panel-line);
   border-radius: 999px;
   flex-shrink: 0;
 }
@@ -859,18 +978,18 @@ function pulseCube() {
   height: 42px;
   border: none;
   background: transparent;
-  color: rgba(23, 32, 45, 0.58);
+  color: var(--form-tab-idle);
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.02em;
   cursor: pointer;
-  transition: all 0.24s ease;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
   border-radius: 999px;
 
   &.active {
-    background: var(--ink);
-    color: #f7f3e9;
-    box-shadow: 0 10px 22px rgba(23, 32, 45, 0.18);
+    background: var(--theme-primary);
+    color: var(--form-tab-active-fg);
+    box-shadow: 0 10px 22px var(--theme-primary-ring);
   }
 }
 
@@ -878,7 +997,7 @@ function pulseCube() {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: rgba(23, 32, 45, 0.62);
+  color: var(--ink-soft);
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -902,12 +1021,12 @@ function pulseCube() {
 }
 
 .login-card__body::-webkit-scrollbar-thumb {
-  background: rgba(23, 32, 45, 0.2);
+  background: rgba(var(--theme-primary-rgb), 0.28);
   border-radius: 999px;
 }
 
 .login-card__body::-webkit-scrollbar-thumb:hover {
-  background: rgba(23, 32, 45, 0.34);
+  background: rgba(var(--theme-primary-rgb), 0.42);
 }
 
 .login-form {
@@ -917,16 +1036,17 @@ function pulseCube() {
 
   :deep(.el-input__wrapper) {
     min-height: 48px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.78);
-    box-shadow: 0 0 0 1px rgba(23, 32, 45, 0.09) inset;
+    border-radius: var(--form-control-radius);
+    background: var(--form-field-bg);
+    box-shadow: 0 0 0 1px var(--form-field-border) inset;
     padding-inline: 14px;
+    transition: box-shadow 0.18s ease;
   }
 
   :deep(.el-input__wrapper.is-focus) {
     box-shadow:
-      0 0 0 1px rgba(124, 242, 255, 0.82) inset,
-      0 0 0 4px rgba(124, 242, 255, 0.16);
+      0 0 0 1px var(--theme-primary) inset,
+      0 0 0 4px var(--theme-primary-ring);
   }
 
   :deep(.el-input__inner) {
@@ -935,7 +1055,12 @@ function pulseCube() {
   }
 
   :deep(.el-input__inner::placeholder) {
-    color: rgba(23, 32, 45, 0.42);
+    color: var(--form-placeholder);
+  }
+
+  :deep(.el-input__suffix),
+  :deep(.el-input__prefix) {
+    color: var(--ink-soft);
   }
 }
 
@@ -950,27 +1075,36 @@ function pulseCube() {
   width: 112px;
   height: 40px;
   cursor: pointer;
-  background: linear-gradient(180deg, #fefcf7, #e7eefb);
-  border: 1px solid rgba(23, 32, 45, 0.1);
-  border-radius: 14px;
+  background: var(--form-captcha-bg);
+  border: 1px solid var(--form-field-border);
+  border-radius: var(--form-radius-sm);
 }
 
 .submit-btn {
   width: 100%;
   height: 50px;
   margin-top: 6px;
-  border: none;
-  border-radius: 16px;
-  background: linear-gradient(90deg, var(--ink), #233246) !important;
-  color: #f8f4ea !important;
+  border: none !important;
+  border-radius: var(--form-control-radius);
+  background: linear-gradient(
+    100deg,
+    var(--theme-primary) 0%,
+    var(--theme-primary-deep) 100%
+  ) !important;
+  color: var(--form-submit-fg) !important;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  box-shadow: 0 16px 30px rgba(23, 32, 45, 0.18);
+  box-shadow: 0 14px 28px var(--theme-primary-ring);
 
   &:hover,
   &:focus-visible {
-    background: linear-gradient(90deg, #0e1723, #1f3148) !important;
+    filter: brightness(1.06);
+    background: linear-gradient(
+      100deg,
+      var(--theme-primary) 0%,
+      var(--theme-primary-deep) 100%
+    ) !important;
   }
 }
 
@@ -981,7 +1115,7 @@ function pulseCube() {
   align-items: center;
   margin-top: 18px;
   font-size: 13px;
-  color: rgba(23, 32, 45, 0.64);
+  color: var(--ink-muted);
 
   @media (max-width: 480px) {
     flex-direction: column;
@@ -993,12 +1127,12 @@ function pulseCube() {
   padding: 0;
   border: none;
   background: none;
-  color: var(--ink);
+  color: var(--theme-primary);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   text-decoration: underline;
-  text-decoration-color: rgba(23, 32, 45, 0.24);
+  text-decoration-color: rgba(var(--theme-primary-rgb), 0.35);
   text-underline-offset: 3px;
 }
 

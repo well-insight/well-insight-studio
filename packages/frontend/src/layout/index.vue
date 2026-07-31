@@ -60,18 +60,16 @@ const { asideCollapse } = storeToRefs(controlStore)
 
   gap: 12px;
   padding: 12px;
-  background:
-    radial-gradient(circle at 12% 8%, rgba(37, 99, 235, 0.1), transparent 28%),
-    linear-gradient(135deg, #f8fbff 0%, #edf4ff 48%, #f6fffb 100%);
+  background: var(--app-shell-bg);
   color: var(--el-text-color-primary);
 }
 
 .app-shell__sider {
   overflow: visible;
-  border: 1px solid rgba(82, 124, 181, 0.18);
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 251, 255, 0.9)), var(--el-bg-color);
-  box-shadow: 0 18px 48px rgba(31, 58, 112, 0.1);
+  border: 1px solid var(--app-shell-panel-border);
+  border-radius: var(--app-shell-radius, 16px);
+  background: var(--app-shell-panel-bg);
+  box-shadow: var(--app-shell-panel-shadow);
 }
 
 .app-shell__sider-inner {
@@ -80,13 +78,13 @@ const { asideCollapse } = storeToRefs(controlStore)
   width: 100%;
   height: 100%;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: inherit;
 }
 
 .app-shell__logo {
   flex-shrink: 0;
   height: var(--app-shell-header-height);
-  border-bottom: 1px solid rgba(82, 124, 181, 0.12);
+  border-bottom: 1px solid var(--app-shell-divider);
 }
 
 .app-shell__menu {
@@ -97,8 +95,8 @@ const { asideCollapse } = storeToRefs(controlStore)
 
 .app-shell__setting {
   flex-shrink: 0;
-  border-top: 1px solid rgba(82, 124, 181, 0.12);
-  background: rgba(255, 255, 255, 0.42);
+  border-top: 1px solid var(--app-shell-divider);
+  background: var(--app-shell-setting-bg);
 }
 
 .app-shell__main {
@@ -109,48 +107,34 @@ const { asideCollapse } = storeToRefs(controlStore)
 
 .app-shell__main-panel {
   overflow: hidden;
-  border: 1px solid rgba(82, 124, 181, 0.16);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.62);
-  box-shadow: 0 18px 48px rgba(31, 58, 112, 0.08);
+  border: 1px solid var(--app-shell-main-border);
+  border-radius: var(--app-shell-radius, 16px);
+  background: var(--app-shell-main-bg);
+  box-shadow: var(--app-shell-main-shadow);
 }
 
 .app-shell__header {
   height: var(--app-shell-header-height);
   flex-shrink: 0;
   padding: 0;
-  border-bottom: 1px solid rgba(82, 124, 181, 0.13);
-  background: rgba(255, 255, 255, 0.82);
+  border-bottom: 1px solid var(--app-shell-header-border);
+  background: var(--app-shell-header-bg);
   backdrop-filter: blur(16px);
 }
 
 .app-shell__content {
+  display: flex;
+  flex-direction: column;
   min-height: 0;
-  overflow: hidden;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), transparent 220px), var(--el-bg-color-page);
+  /* 主区滚动容器；勿用 hidden，工作台等内容会被裁切无法滚动 */
+  overflow: auto;
+  background: var(--app-shell-content-bg);
 }
 
-:global(html.dark) .app-shell {
-  background:
-    radial-gradient(circle at 14% 8%, rgba(67, 156, 255, 0.18), transparent 30%),
-    linear-gradient(135deg, #06111c 0%, #071a2b 48%, #06211d 100%);
-}
-
-:global(html.dark) .app-shell__sider,
-:global(html.dark) .app-shell__main-panel {
-  border-color: rgba(140, 210, 255, 0.14);
-  background: linear-gradient(180deg, rgba(13, 40, 64, 0.92), rgba(8, 28, 48, 0.9)), var(--el-bg-color);
-  box-shadow: 0 18px 48px rgba(4, 16, 30, 0.34);
-}
-
-:global(html.dark) .app-shell__logo,
-:global(html.dark) .app-shell__setting,
-:global(html.dark) .app-shell__header {
-  border-color: rgba(140, 210, 255, 0.12);
-}
-
-:global(html.dark) .app-shell__setting,
-:global(html.dark) .app-shell__header {
-  background: rgba(13, 40, 64, 0.72);
+/* 让页面根节点能按主区高度撑满（工作台等一屏布局） */
+.app-shell__content > :deep(*) {
+  flex: 1 0 auto;
+  width: 100%;
+  min-height: 100%;
 }
 </style>

@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'
-import { nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { resolveMenuIcon } from '@/layout/aside/menuIcons'
 import SvgIcon from '@/components/svg-icon/SvgIcon.vue'
 import { usePageStore } from '@/stores/pageStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
@@ -19,6 +20,13 @@ const { menuList } = storeToRefs(workspaceStore)
 const currentMenuPath = ref(route?.path)
 
 type MenuAccentKey = 'visualization' | 'form' | 'report' | 'default'
+
+const menuItems = computed(() =>
+  (menuList.value ?? []).map(item => ({
+    ...item,
+    iconRef: resolveMenuIcon(item?.meta?.icon),
+  })),
+)
 
 const editorMenuMap: Record<string, string> = {
   '/project/pages/visual/edit': '/project/pages/visual',
@@ -114,10 +122,18 @@ watch(
       :default-active="currentMenuPath"
       @select="changeMenu"
     >
-      <template v-for="item in menuList" :key="item?.path">
+      <template v-for="item in menuItems" :key="item?.path">
         <el-menu-item :index="item?.path">
           <span class="menu-icon" :class="[menuToneMap[getMenuAccent(item.path)], { 'is-collapse': collapse }]">
-            <SvgIcon :name="item?.meta?.icon" size="18px" />
+            <SvgIcon
+              v-if="item.iconRef.kind === 'svg'"
+              :name="item.iconRef.name"
+              :size="16"
+              class="menu-icon__glyph"
+            />
+            <el-icon v-else :size="16">
+              <component :is="item.iconRef.component" />
+            </el-icon>
           </span>
           <template #title>
             <span>{{ item?.title }}</span>
@@ -154,18 +170,20 @@ watch(
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 44px;
-  padding: 0 12px !important;
-  border-radius: 12px;
-  font-weight: 700;
+  height: 42px;
+  padding: 0 10px !important;
+  border-radius: var(--app-shell-radius, 4px);
+  font-weight: 600;
 }
 
 :deep(.custom-menu-wrapper .el-menu-item) {
+  display: flex;
+  align-items: center;
   gap: 10px;
-  height: 44px;
-  padding: 0 12px !important;
-  border-radius: 12px;
-  font-weight: 700;
+  height: 42px;
+  padding: 0 10px !important;
+  border-radius: var(--app-shell-radius, 4px);
+  font-weight: 600;
 }
 
 :deep(.custom-menu-wrapper .el-sub-menu .el-menu-item) {
@@ -176,9 +194,7 @@ watch(
 
 :deep(.custom-menu-wrapper .el-menu-item.is-active) {
   position: relative;
-  box-shadow:
-    0 8px 22px rgba(37, 99, 235, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.62);
+  box-shadow: inset 0 0 0 1px var(--menu-active-ring, rgba(47, 111, 237, 0.16));
 }
 
 .menu-icon {
@@ -187,32 +203,45 @@ watch(
   justify-content: center;
   width: 28px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: var(--app-shell-radius, 4px);
   flex-shrink: 0;
   line-height: 0;
-  border: 1px solid transparent;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.2));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
-  color: var(--el-text-color-primary);
+  border: 1px solid var(--menu-icon-border);
+  background: var(--menu-icon-bg);
+  color: var(--menu-icon-color);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
   transition:
-    transform 0.18s ease,
     box-shadow 0.18s ease,
     background 0.18s ease,
-    border-color 0.18s ease;
+    border-color 0.18s ease,
+    color 0.18s ease;
 }
 
-.menu-icon :deep(svg) {
-  display: block;
-  margin: 0;
-  flex: 0 0 auto;
-}
-
-.menu-icon :deep(.svg-icon) {
-  display: block;
-}
-
+/* 保持 el-icon 内部 flex 居中，勿改成 block */
 .menu-icon :deep(.el-icon) {
-  margin-right: 0 !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin: 0 !important;
+  font-size: 16px;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.menu-icon :deep(.el-icon svg),
+.menu-icon :deep(.menu-icon__glyph.svg-icon) {
+  width: 16px;
+  height: 16px;
+  display: block;
+  shape-rendering: geometricPrecision;
+  cursor: inherit;
+  fill: currentColor;
+}
+
+.menu-icon :deep(.menu-icon__glyph.svg-icon:hover) {
+  color: inherit;
 }
 
 .menu-icon--default {
@@ -253,9 +282,6 @@ watch(
 
 :deep(.custom-menu-wrapper .el-menu-item.is-active .menu-icon),
 :deep(.custom-menu-wrapper .el-sub-menu.is-active > .el-sub-menu__title .menu-icon) {
-  transform: translateY(-1px);
-  box-shadow:
-    0 6px 16px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(124, 242, 255, 0.12);
 }
 </style>
