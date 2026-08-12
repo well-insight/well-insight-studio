@@ -4,7 +4,15 @@ import type { VisualEditorBlockData } from '@/visual-editor/visual-editor.utils'
 import { computed, ref } from 'vue'
 import { SvgIcon } from '@/components/svg-icon'
 import { useControlStore } from '@/stores'
-import { createBlockFromWidgetVariant, isWidgetVariantAvailable, WIDGET_CATALOGS } from './widget-catalog'
+import { isChartComponent } from '@/utils/datasetBinding'
+import ChartVariantPreview from './ChartVariantPreview.vue'
+import ComponentPreview from './ComponentPreview.vue'
+import {
+  createBlockFromWidgetVariant,
+  isWidgetVariantAvailable,
+  resolveWidgetComponent,
+  WIDGET_CATALOGS,
+} from './widget-catalog'
 
 interface ComponentListItem {
   key: string
@@ -24,12 +32,49 @@ const emits = defineEmits<{
   dblclickAdd: [value: VisualEditorBlockData]
 }>()
 
+const VARIANT_ICON_MAP: Record<string, string> = {
+  'button': 'comp-icon-button',
+  'text': 'comp-icon-text',
+  'image': 'comp-icon-image',
+  'carousel': 'comp-icon-carousel',
+  'divider': 'comp-icon-divider',
+  'progress': 'comp-icon-progress',
+  'input-text': 'comp-icon-input',
+  'input-textarea': 'comp-icon-input',
+  'select': 'comp-icon-select',
+  'checkbox': 'comp-icon-checkbox',
+  'radio': 'comp-icon-radio',
+  'switch': 'comp-icon-switch',
+  'slider': 'comp-icon-slider',
+  'rate': 'comp-icon-rate',
+  'datetimePicker': 'comp-icon-datetime-picker',
+  'bar-basic': 'comp-icon-chart-bar',
+  'bar-gradient': 'comp-icon-chart-bar',
+  'bar-stack': 'comp-icon-chart-bar',
+  'bar-horizontal': 'comp-icon-chart-bar',
+  'line-basic': 'comp-icon-chart-line',
+  'line-smooth': 'comp-icon-chart-line',
+  'line-area': 'comp-icon-chart-line',
+  'pie-basic': 'comp-icon-chart-pie',
+  'pie-doughnut': 'comp-icon-chart-pie',
+  'pie-rose': 'comp-icon-chart-pie',
+  'scatter-basic': 'comp-icon-chart-scatter',
+  'scatter-bubble': 'comp-icon-chart-scatter',
+  'radar-basic': 'comp-icon-chart-radar',
+  'gauge-basic': 'comp-icon-chart-gauge',
+  'funnel-basic': 'comp-icon-chart-funnel',
+  'container': 'comp-icon-container',
+  'layout': 'comp-icon-layout',
+  'form': 'comp-icon-form',
+}
+
 const controlStore = useControlStore()
 
 const catalogs = computed<WidgetCatalogConfig[]>(() => WIDGET_CATALOGS)
 const currentCategory = ref('all')
 const currentSearch = ref('')
 const gridColumns = ref<1 | 2>(2)
+const hoverKey = ref<string | null>(null)
 
 const allComponents = computed<ComponentListItem[]>(() => {
   return catalogs.value.flatMap((catalog) => {
@@ -41,7 +86,7 @@ const allComponents = computed<ComponentListItem[]>(() => {
         description,
         category: catalog.title,
         categoryLabel: catalog.title.replace(/组件$/u, ''),
-        icon: group.icon || catalog.icon,
+        icon: VARIANT_ICON_MAP[variant.key] || group.icon || catalog.icon,
         available: isWidgetVariantAvailable(variant),
         variant,
       }
@@ -76,6 +121,20 @@ const filteredComponents = computed(() => {
   })
 })
 
+const hoverPreviewComponent = computed(() => {
+  const item = filteredComponents.value.find(component => component.key === hoverKey.value)
+  const key = item?.variant?.componentKey
+  return key ? resolveWidgetComponent(key) : null
+})
+const hoverPreviewChartVariant = computed(() => {
+  const item = filteredComponents.value.find(component => component.key === hoverKey.value)
+  return String(item?.variant?.preset?.chartVariant ?? 'basic')
+})
+const hoverPreviewIsChart = computed(() => {
+  const item = filteredComponents.value.find(component => component.key === hoverKey.value)
+  return Boolean(item?.variant?.componentKey && isChartComponent(item.variant.componentKey))
+})
+
 function onVariantDragStart(e: DragEvent, variant: WidgetVariantItem, index: number) {
   const block = createBlockFromWidgetVariant(variant)
   if (!block)
@@ -102,6 +161,17 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   const block = createBlockFromWidgetVariant(variant)
   if (block)
     emits('dblclickAdd', block)
+}
+
+function showHoverPreview(item: ComponentListItem) {
+  if (!item.available)
+    return
+
+  hoverKey.value = item.key
+}
+
+function hideHoverPreview() {
+  hoverKey.value = null
 }
 </script>
 
@@ -164,35 +234,88 @@ function onVariantDblClick(variant: WidgetVariantItem) {
 
     <el-scrollbar :class="$style['component-grid-wrap']">
       <div :class="[$style['component-grid'], gridColumns === 1 ? $style['single-column'] : $style['two-columns']]">
-        <div
+        <el-popover
           v-for="(item, index) in filteredComponents"
           :key="item.key"
-          :class="[$style['component-card'], { [$style.disabled]: !item.available }]"
-          :draggable="item.available"
-          :title="item.description"
-          @dragstart="(e) => item.available && onVariantDragStart(e, item.variant, index)"
-          @drag="dragging"
-          @dragend="dragEnd"
-          @dblclick="item.available && onVariantDblClick(item.variant)"
+          :width="340"
+          placement="right-start"
+          :show-arrow="false"
+          trigger="hover"
+          :hide-after="120"
+          popper-class="component-hover-popover"
         >
-          <div :class="$style['card-icon']">
-            <SvgIcon :size="18" :name="item.icon" />
+          <template #reference>
+            <div
+              :class="[$style['component-card'], { [$style.disabled]: !item.available }]"
+              :draggable="item.available"
+              :title="item.description"
+              @mouseenter="showHoverPreview(item)"
+              @mouseleave="hideHoverPreview"
+              @focus="showHoverPreview(item)"
+              @blur="hideHoverPreview"
+              @dragstart="(e) => item.available && onVariantDragStart(e, item.variant, index)"
+              @drag="dragging"
+              @dragend="dragEnd"
+              @dblclick="item.available && onVariantDblClick(item.variant)"
+            >
+              <div :class="$style['card-icon']">
+                <SvgIcon :size="18" :name="item.icon" />
+              </div>
+              <div :class="$style['card-content']">
+                <div :class="$style['card-name']">
+                  {{ item.label }}
+                </div>
+                <div :class="$style['card-description']">
+                  {{ item.description }}
+                </div>
+                <div :class="$style['card-drag-hint']">
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M5 3.5h6M5 8h6M5 12.5h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                  </svg>
+                  {{ item.available ? '拖拽' : '即将开放' }}
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <div :class="$style['hover-preview']">
+            <div :class="$style['hover-preview__header']">
+              <div :class="$style['hover-preview__title']">
+                <SvgIcon :size="16" :name="item.icon" />
+                <span>{{ item.label }}</span>
+              </div>
+              <el-tag size="small" :type="item.available ? 'primary' : 'info'">
+                {{ item.available ? '可拖拽' : '即将开放' }}
+              </el-tag>
+            </div>
+
+            <div :class="$style['hover-preview__body']">
+              <div :class="$style['hover-preview__surface']">
+                <div :class="$style['hover-preview__content']">
+                  <ChartVariantPreview
+                    v-if="hoverKey === item.key && hoverPreviewIsChart && hoverPreviewComponent"
+                    :key="`${item.key}-chart`"
+                    :component-key="item.variant.componentKey"
+                    :chart-variant="hoverPreviewChartVariant"
+                  />
+                  <ComponentPreview
+                    v-else-if="hoverKey === item.key && hoverPreviewComponent"
+                    :key="`${item.key}-component`"
+                    :component="hoverPreviewComponent"
+                  />
+                </div>
+              </div>
+              <div :class="$style['hover-preview__meta']">
+                <div :class="$style['hover-preview__desc']">
+                  {{ item.description }}
+                </div>
+                <div :class="$style['hover-preview__tip']">
+                  预览仅用于查看样式，拖拽或双击可添加到画布
+                </div>
+              </div>
+            </div>
           </div>
-          <div :class="$style['card-content']">
-            <div :class="$style['card-name']">
-              {{ item.label }}
-            </div>
-            <div :class="$style['card-description']">
-              {{ item.description }}
-            </div>
-            <div :class="$style['card-drag-hint']">
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M5 3.5h6M5 8h6M5 12.5h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-              </svg>
-              {{ item.available ? '拖拽' : '即将开放' }}
-            </div>
-          </div>
-        </div>
+        </el-popover>
 
         <div v-if="!filteredComponents.length" :class="$style['empty-state']">
           <svg width="40" height="40" viewBox="0 0 48 48" fill="none" aria-hidden="true">
@@ -226,7 +349,6 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   height: 54px;
   min-height: 54px;
   box-sizing: border-box;
-  margin-bottom: 0;
 
   h2 {
     font-size: 15px;
@@ -241,9 +363,9 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   > span {
     font-size: 11px;
     font-weight: 600;
-    color: #1a5a9a;
-    background: rgba(37, 99, 235, 0.05);
-    border: 1px solid rgba(37, 99, 235, 0.06);
+    color: var(--el-color-primary);
+    background: var(--ve-chip-bg, color-mix(in srgb, var(--el-color-primary) 8%, transparent));
+    border: 1px solid var(--ve-chip-border, color-mix(in srgb, var(--el-color-primary) 16%, transparent));
     padding: 2px 10px;
     border-radius: 30px;
   }
@@ -256,10 +378,10 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   width: 32px;
   height: 32px;
   flex-shrink: 0;
-  border-radius: 8px;
-  background: rgba(37, 99, 235, 0.08);
-  border: 1px solid rgba(37, 99, 235, 0.12);
-  color: #2563eb;
+  border-radius: var(--ve-radius-sm, 8px);
+  background: var(--ve-chip-bg, color-mix(in srgb, var(--el-color-primary) 10%, transparent));
+  border: 1px solid var(--ve-chip-border, color-mix(in srgb, var(--el-color-primary) 18%, transparent));
+  color: var(--el-color-primary);
 }
 
 .search-row {
@@ -283,7 +405,7 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #9aa9bf;
+  color: var(--el-text-color-placeholder);
   line-height: 0;
   pointer-events: none;
 }
@@ -294,9 +416,9 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   padding: 2px;
   gap: 2px;
   flex-shrink: 0;
-  border: 1px solid rgba(82, 124, 181, 0.16);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.56);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: var(--ve-radius-sm, 8px);
+  background: var(--el-fill-color-blank);
 
   button {
     width: 26px;
@@ -307,21 +429,18 @@ function onVariantDblClick(variant: WidgetVariantItem) {
     padding: 0;
     border: 0;
     border-radius: 6px;
-    color: #7a8da8;
+    color: var(--el-text-color-secondary);
     background: transparent;
     cursor: pointer;
-    transition:
-      color 0.3s ease,
-      background 0.3s ease;
 
     &:hover {
-      color: #2563eb;
-      background: rgba(37, 99, 235, 0.06);
+      color: var(--el-color-primary);
+      background: color-mix(in srgb, var(--el-color-primary) 8%, transparent);
     }
 
     &.active {
-      color: #2563eb;
-      background: rgba(37, 99, 235, 0.1);
+      color: var(--el-color-primary);
+      background: color-mix(in srgb, var(--el-color-primary) 12%, transparent);
     }
   }
 }
@@ -330,25 +449,22 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   width: 100%;
   padding: 8px 12px 8px 36px;
   border-radius: 30px;
-  border: 1px solid rgba(82, 124, 181, 0.16);
-  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--el-border-color-lighter);
+  background: var(--el-fill-color-blank);
   font-size: 13px;
   outline: none;
-  transition:
-    color 0.3s ease,
-    background 0.3s ease;
   font-family: inherit;
   color: var(--el-text-color-primary);
 }
 
 .search-box input::placeholder {
-  color: #a8b7ce;
+  color: var(--el-text-color-placeholder);
 }
 
 .search-box input:focus {
-  border-color: #2563eb;
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  border-color: var(--el-color-primary-light-5);
+  background: var(--el-bg-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--el-color-primary) 12%, transparent);
 }
 
 .category-tabs {
@@ -358,7 +474,7 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   overflow: visible;
   padding: 2px 0 10px;
   margin-bottom: 12px;
-  border-bottom: 1px solid rgba(82, 124, 181, 0.13);
+  border-bottom: 1px solid var(--el-border-color-extra-light);
   flex-shrink: 0;
 }
 
@@ -367,33 +483,29 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   border-radius: 30px;
   font-size: 12px;
   font-weight: 600;
-  color: #4a6a8a;
-  background: rgba(0, 40, 80, 0.02);
-  border: 1px solid rgba(37, 99, 235, 0.05);
+  color: var(--el-text-color-secondary);
+  background: var(--el-fill-color-lighter);
+  border: 1px solid var(--el-border-color-extra-light);
   cursor: pointer;
   flex: 0 0 auto;
-  transition:
-    color 0.3s ease,
-    background 0.3s ease,
-    border-color 0.3s ease;
   font-family: inherit;
 
   &:hover {
-    background: rgba(37, 99, 235, 0.06);
+    background: color-mix(in srgb, var(--el-color-primary) 8%, transparent);
     color: var(--el-text-color-primary);
   }
 
   &.active {
-    background: #2563eb;
-    border-color: #2563eb;
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    background: var(--el-color-primary);
+    border-color: var(--el-color-primary);
+    color: var(--el-color-white);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--el-color-primary) 28%, transparent);
   }
 }
 
 .badge {
   font-size: 10px;
-  background: rgba(0, 0, 0, 0.06);
+  background: color-mix(in srgb, var(--el-text-color-primary) 8%, transparent);
   color: inherit;
   padding: 0 6px;
   border-radius: 20px;
@@ -426,7 +538,6 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  transition: grid-template-columns 0.3s ease;
 }
 
 .component-grid.single-column {
@@ -457,7 +568,7 @@ function onVariantDblClick(variant: WidgetVariantItem) {
 
 .card-description {
   overflow: hidden;
-  color: #8292a8;
+  color: var(--el-text-color-secondary);
   font-size: 11px;
   line-height: 1.5;
   text-overflow: ellipsis;
@@ -480,21 +591,12 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   width: 100%;
 }
 
-.component-grid.two-columns {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
 .component-card {
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 14px;
+  background: var(--el-bg-color);
+  border-radius: var(--ve-radius-md, 14px);
   padding: 12px 8px 10px;
-  border: 1px solid rgba(82, 124, 181, 0.13);
-  box-shadow: 0 4px 14px rgba(31, 58, 112, 0.05);
-  transition:
-    box-shadow 0.3s ease,
-    transform 0.3s ease,
-    border-color 0.3s ease,
-    background 0.3s ease;
+  border: 1px solid var(--el-border-color-lighter);
+  box-shadow: none;
   cursor: grab;
   display: flex;
   flex-direction: column;
@@ -505,43 +607,52 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   padding-bottom: 30px;
 
   &:hover {
-    transform: translateY(-2px);
-    border-color: rgba(37, 99, 235, 0.22);
-    box-shadow: 0 12px 24px -12px rgba(31, 58, 112, 0.14);
-    background: rgba(255, 255, 255, 0.92);
+    border-color: color-mix(in srgb, var(--el-color-primary) 32%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--el-color-primary) 18%, transparent);
+    background: var(--el-bg-color);
   }
 
   &:active {
     cursor: grabbing;
-    transform: scale(0.97);
+    transform: scale(0.98);
   }
+}
+
+:global(html.dark) .component-card {
+  background: color-mix(in srgb, var(--el-bg-color) 86%, var(--el-bg-color-overlay));
+  border-color: color-mix(in srgb, var(--el-color-primary) 14%, var(--el-border-color-light));
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--el-color-primary) 38%, var(--el-border-color));
+    background: color-mix(in srgb, var(--el-bg-color-overlay) 88%, var(--el-bg-color));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--el-color-primary) 20%, transparent);
+  }
+}
+
+:global(html.dark) .search-box input,
+:global(html.dark) .layout-switcher {
+  background: color-mix(in srgb, var(--el-bg-color) 82%, var(--el-bg-color-overlay));
+  border-color: color-mix(in srgb, var(--el-color-primary) 12%, var(--el-border-color-light));
 }
 
 .card-icon {
   width: 44px;
   height: 44px;
-  background: rgba(37, 99, 235, 0.06);
-  border: 1px solid rgba(37, 99, 235, 0.08);
-  border-radius: 12px;
+  background: var(--ve-chip-bg, color-mix(in srgb, var(--el-color-primary) 10%, transparent));
+  border: 1px solid var(--ve-chip-border, color-mix(in srgb, var(--el-color-primary) 16%, transparent));
+  border-radius: var(--ve-radius-sm, 12px);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
-  color: #2563eb;
+  color: var(--el-color-primary);
   margin-bottom: 6px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  transition:
-    box-shadow 0.3s ease,
-    transform 0.3s ease,
-    border-color 0.3s ease,
-    background 0.3s ease;
 }
 
 .component-card:hover .card-icon {
-  background: rgba(37, 99, 235, 0.14);
-  border-color: rgba(37, 99, 235, 0.2);
-  transform: scale(1.04);
-  box-shadow: 0 0 16px rgba(37, 99, 235, 0.12);
+  background: color-mix(in srgb, var(--el-color-primary) 16%, transparent);
+  border-color: color-mix(in srgb, var(--el-color-primary) 28%, transparent);
+  transform: scale(1.03);
 }
 
 .card-name {
@@ -557,28 +668,22 @@ function onVariantDblClick(variant: WidgetVariantItem) {
 
 .card-drag-hint {
   font-size: 10px;
-  color: #8595ab;
+  color: var(--el-text-color-secondary);
   display: flex;
   align-items: center;
   gap: 4px;
-  background: rgba(0, 0, 0, 0.03);
+  background: var(--el-fill-color-lighter);
   padding: 2px 10px;
   border-radius: 30px;
   position: absolute;
   right: 8px;
   bottom: 8px;
   margin: 0;
-  transition:
-    box-shadow 0.3s ease,
-    transform 0.3s ease,
-    border-color 0.3s ease,
-    background 0.3s ease;
 }
 
 .component-card:hover .card-drag-hint {
-  color: #2563eb;
-  background: rgba(37, 99, 235, 0.06);
-  border-color: rgba(37, 99, 235, 0.1);
+  color: var(--el-color-primary);
+  background: color-mix(in srgb, var(--el-color-primary) 10%, transparent);
 }
 
 .disabled {
@@ -587,20 +692,20 @@ function onVariantDblClick(variant: WidgetVariantItem) {
 
   &:hover {
     transform: none;
-    border-color: rgba(82, 124, 181, 0.13);
+    border-color: var(--el-border-color-lighter);
     box-shadow: none;
-    background: rgba(255, 255, 255, 0.6);
+    background: var(--el-bg-color);
   }
 
   &:hover .card-icon {
-    background: rgba(37, 99, 235, 0.06);
-    color: #2563eb;
+    background: var(--ve-chip-bg, color-mix(in srgb, var(--el-color-primary) 10%, transparent));
+    color: var(--el-color-primary);
+    transform: none;
   }
 
   &:hover .card-drag-hint {
-    color: #8595ab;
-    background: rgba(0, 0, 0, 0.03);
-    border-color: transparent;
+    color: var(--el-text-color-secondary);
+    background: var(--el-fill-color-lighter);
   }
 }
 
@@ -608,10 +713,10 @@ function onVariantDblClick(variant: WidgetVariantItem) {
   grid-column: 1 / -1;
   text-align: center;
   padding: 40px 12px;
-  color: #7a8aa3;
+  color: var(--el-text-color-secondary);
 
   svg {
-    color: rgba(82, 124, 181, 0.3);
+    color: var(--el-border-color);
     margin-bottom: 10px;
   }
 
@@ -619,23 +724,96 @@ function onVariantDblClick(variant: WidgetVariantItem) {
     margin: 0 0 4px;
     font-size: 13px;
     font-weight: 600;
-    color: #3a4a6b;
+    color: var(--el-text-color-primary);
   }
 
   span {
     font-size: 12px;
-    color: #8e9fb5;
+    color: var(--el-text-color-secondary);
   }
 }
 
-@media (max-width: 1024px) {
-  .component-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
+:global(.component-hover-popover) {
+  --el-popover-padding: 0;
+  --el-popover-border-radius: 14px;
 
-  .component-card {
-    padding: 10px 6px;
+  overflow: hidden;
+  padding: 0 !important;
+  border: 1px solid color-mix(in srgb, var(--el-color-primary) 16%, var(--el-border-color-lighter));
+  background: color-mix(in srgb, var(--el-bg-color-overlay) 96%, var(--el-bg-color));
+  box-shadow:
+    0 24px 56px rgba(15, 23, 42, 0.22),
+    0 0 0 1px color-mix(in srgb, var(--el-color-primary) 10%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.hover-preview {
+  width: 100%;
+}
+
+.hover-preview__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--el-border-color-extra-light);
+}
+
+.hover-preview__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--el-text-color-primary);
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
+}
+
+.hover-preview__body {
+  padding: 12px;
+}
+
+.hover-preview__surface {
+  min-height: 168px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--el-border-color-lighter);
+  background: var(--el-fill-color-lighter);
+}
+
+.hover-preview__content {
+  min-height: 168px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hover-preview__content > * {
+  max-width: 100%;
+}
+
+.hover-preview__meta {
+  padding-top: 10px;
+}
+
+.hover-preview__desc {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--el-text-color-secondary);
+}
+
+.hover-preview__tip {
+  margin-top: 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--el-text-color-placeholder);
 }
 </style>

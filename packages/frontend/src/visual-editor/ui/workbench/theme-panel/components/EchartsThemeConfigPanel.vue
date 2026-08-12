@@ -469,7 +469,7 @@ const axisTypeLabels: Record<string, string> = {
 
 .config-section :deep(.el-form-item__label) {
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--el-form-label-color);
 }
 
 .config-section :deep(.el-form-item__content) {

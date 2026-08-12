@@ -531,7 +531,7 @@ function onClear() {
   flex-shrink: 0;
   padding: 14px 16px 16px;
   border-bottom: 1px solid var(--el-border-color-lighter);
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .datasource-bar__top {

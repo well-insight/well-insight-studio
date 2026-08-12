@@ -556,9 +556,7 @@ onUnmounted(() => {
   min-height: 0;
   padding: 12px;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 14% 10%, rgba(37, 99, 235, 0.08), transparent 28%),
-    linear-gradient(135deg, rgba(38, 99, 235, 0.06), transparent 32%), var(--el-bg-color-page);
+  background: var(--el-bg-color-page);
 }
 
 .visual-editor-shell__content {
@@ -570,8 +568,6 @@ onUnmounted(() => {
 }
 
 :global(html.dark) .visual-editor-shell {
-  background:
-    radial-gradient(circle at 14% 10%, rgba(67, 156, 255, 0.13), transparent 30%),
-    linear-gradient(135deg, rgba(37, 99, 235, 0.14), transparent 34%), var(--el-bg-color-page);
+  background: var(--el-bg-color-page);
 }
 </style>

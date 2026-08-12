@@ -31,6 +31,10 @@ const hasCurrentBlock = computed(() => !!currentBlock.value?._vid)
 function initPageOptions() {
   const options = [
     {
+      label: '页面',
+      value: 'page',
+    },
+    {
       label: '属性',
       value: 'attr',
     },
@@ -55,10 +59,6 @@ function initPageOptions() {
     {
       label: '层级',
       value: 'layer',
-    },
-    {
-      label: '页面',
-      value: 'page',
     },
   )
 
@@ -177,9 +177,70 @@ watch(
   :global(.el-scrollbar__bar.is-vertical) {
     right: 3px;
   }
+
+  // 统一右侧面板内原生 ElCard（EventAction / FormRule）为玻璃卡片风格，
+  // 与 AttrEditorCard / page-setting-card 保持一致
+  :global(.el-card),
+  :global(.el-card.is-always-shadow),
+  :global(.el-card.is-hover-shadow:hover) {
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 10px;
+    background: var(--el-bg-color);
+    box-shadow: 0 2px 8px rgba(31, 58, 112, 0.04);
+    transition:
+      box-shadow 0.3s ease,
+      border-color 0.3s ease,
+      background 0.3s ease;
+  }
+
+  :global(.el-card:hover) {
+    border-color: var(--el-color-primary-light-5);
+    box-shadow: 0 4px 12px rgba(31, 58, 112, 0.07);
+  }
+
+  :global(.el-card__header) {
+    min-height: 42px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+    background: var(--el-fill-color-light);
+  }
+
+  :global(.el-card__body) {
+    padding: 12px;
+    background: var(--el-bg-color);
+  }
+
+  // 输入控件与统一卡片风格对齐（圆角、边框、聚焦态）
+  :global(.el-input__wrapper),
+  :global(.el-select__wrapper),
+  :global(.el-cascader__wrapper),
+  :global(.el-input-number) {
+    border-radius: 7px;
+    box-shadow: 0 0 0 1px var(--el-border-color) inset;
+    transition:
+      box-shadow 0.3s ease,
+      background 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 0 0 1px var(--el-border-color-dark) inset;
+    }
+
+    &:focus-within {
+      box-shadow:
+        0 0 0 1px var(--el-color-primary) inset,
+        0 0 0 3px var(--el-color-primary-light-8);
+    }
+  }
+
+  :global(.el-form-item__label) {
+    color: var(--el-form-label-color);
+    font-size: 12px;
+    font-weight: 500;
+  }
 }
 
 .tabBar {
+  position: relative;
   display: flex;
   min-height: 46px;
   height: 46px;
@@ -187,8 +248,8 @@ watch(
   gap: 4px;
   padding: 0 12px;
   margin: 0;
-  border-bottom: 1px solid rgba(82, 124, 181, 0.13);
-  background: rgba(255, 255, 255, 0.34);
+  border-bottom: 1px solid var(--el-border-color-extra-light);
+  background: color-mix(in srgb, var(--el-bg-color) 88%, transparent);
   flex-shrink: 0;
 
   :global(.flex.items-center) {
@@ -205,66 +266,81 @@ watch(
   }
 
   :global(.el-button) {
+    position: relative;
     min-width: 0;
     padding: 0 10px;
     border-radius: 7px;
-    color: #6f829d;
+    color: var(--el-text-color-secondary);
     font-size: 12px;
     font-weight: 600;
     line-height: 30px;
     transition:
-      color 0.3s ease,
-      background 0.3s ease;
+      color 0.18s ease,
+      background 0.18s ease,
+      box-shadow 0.18s ease;
 
     &:hover {
       color: var(--el-color-primary);
-      background: rgba(37, 99, 235, 0.06);
+      background: color-mix(in srgb, var(--el-color-primary) 8%, transparent);
     }
   }
 
   :global(.el-button.active),
   :global(.el-button--primary) {
     color: var(--el-color-primary) !important;
+    background: color-mix(in srgb, var(--el-color-primary) 12%, transparent) !important;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--el-color-primary) 28%, transparent);
+  }
+}
+
+:global(html.dark) .panelContent {
+  background: color-mix(in srgb, var(--el-bg-color) 76%, var(--el-bg-color-overlay));
+}
+
+:global(html.dark) .contentScrollbar {
+  :global(.el-scrollbar__view) {
+    background: color-mix(in srgb, var(--el-bg-color) 84%, var(--el-bg-color-overlay));
   }
 }
 
 :global(html.dark) {
   .tabBar {
-    border-bottom-color: rgba(148, 163, 184, 0.16);
-    background: rgba(15, 23, 42, 0.32);
+    border-bottom-color: var(--el-border-color-extra-light);
+    background: color-mix(in srgb, var(--el-bg-color) 94%, transparent);
 
     :global(.el-button) {
-      color: #94a3b8;
+      color: var(--el-text-color-secondary);
 
       &:hover {
-        color: #93c5fd;
-        background: rgba(96, 165, 250, 0.1);
+        color: var(--el-color-primary);
+        background: color-mix(in srgb, var(--el-color-primary) 10%, transparent);
       }
     }
 
     :global(.el-button.active),
     :global(.el-button--primary) {
-      background: rgba(96, 165, 250, 0.14) !important;
-      color: #93c5fd !important;
+      background: color-mix(in srgb, var(--el-color-primary) 14%, transparent) !important;
+      color: var(--el-color-primary) !important;
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--el-color-primary) 34%, transparent);
     }
   }
 
   .emptyState {
-    color: #94a3b8;
+    color: var(--el-text-color-secondary);
 
     p {
-      color: #dbeafe;
+      color: var(--el-text-color-primary);
     }
 
     span {
-      color: #94a3b8;
+      color: var(--el-text-color-secondary);
     }
   }
 
   .emptyIcon {
-    border-color: rgba(96, 165, 250, 0.2);
-    background: rgba(96, 165, 250, 0.1);
-    color: #93c5fd;
+    border-color: color-mix(in srgb, var(--el-color-primary) 24%, transparent);
+    background: color-mix(in srgb, var(--el-color-primary) 12%, transparent);
+    color: var(--el-color-primary);
   }
 }
 
@@ -277,18 +353,18 @@ watch(
   padding: 40px 20px;
   box-sizing: border-box;
   text-align: center;
-  color: #7a8aa3;
+  color: var(--el-text-color-secondary);
 
   p {
     margin: 0 0 4px;
     font-size: 13px;
     font-weight: 600;
-    color: #3a4a6b;
+    color: var(--el-text-color-primary);
   }
 
   span {
     font-size: 12px;
-    color: #8e9fb5;
+    color: var(--el-text-color-secondary);
   }
 }
 
@@ -299,9 +375,9 @@ watch(
   width: 52px;
   height: 52px;
   margin-bottom: 16px;
-  border: 1px solid rgba(37, 99, 235, 0.12);
-  border-radius: 14px;
-  background: rgba(37, 99, 235, 0.06);
-  color: #5b8fe3;
+  border: 1px solid color-mix(in srgb, var(--el-color-primary) 18%, transparent);
+  border-radius: var(--app-shell-radius, 14px);
+  background: color-mix(in srgb, var(--el-color-primary) 8%, transparent);
+  color: var(--el-color-primary);
 }
 </style>

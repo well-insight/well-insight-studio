@@ -67,21 +67,7 @@ export const AttrEditor = defineComponent({
         content.push(
           <>
             <ElFormItem label="组件标识" labelWidth="70px">
-              <ElPopover
-                width={200}
-                trigger="hover"
-                effect="dark"
-                content={`你可以利用该组件ID。对该组件进行获取和设置其属性，组件可用属性可在控制台输入：$$refs.${currentBlock.value._vid} 进行查看`}
-              >
-                {{
-                  reference: () => (
-                    <ElInput
-                      disabled
-                      v-model={currentBlock.value._vid}
-                    ></ElInput>
-                  ),
-                }}
-              </ElPopover>
+              <ElInput disabled v-model={currentBlock.value._vid}></ElInput>
             </ElFormItem>
           </>,
         );
@@ -93,8 +79,12 @@ export const AttrEditor = defineComponent({
                 <>
                   <AttrEditorCard header="基础配置" class="mb-3">
                     <ElFormItem label="" class={styles.paddingUniformItem}>
-                      <el-space class="w-full">
-                        <ElFormItem label="宽度" labelWidth="40px">
+                      <div class={styles.paddingUniformGrid}>
+                        <ElFormItem
+                          label="宽度"
+                          labelWidth="40px"
+                          labelPosition="right"
+                        >
                           <ElInput
                             type="number"
                             v-model={currentBlock.value.width}
@@ -105,7 +95,11 @@ export const AttrEditor = defineComponent({
                             }}
                           </ElInput>
                         </ElFormItem>
-                        <ElFormItem label="高度" labelWidth="40px">
+                        <ElFormItem
+                          label="高度"
+                          labelWidth="40px"
+                          labelPosition="right"
+                        >
                           <ElInput
                             v-model={currentBlock.value.height}
                             type="number"
@@ -116,17 +110,21 @@ export const AttrEditor = defineComponent({
                             }}
                           </ElInput>
                         </ElFormItem>
-                      </el-space>
+                      </div>
                     </ElFormItem>
 
                     <ElFormItem label="" class={styles.paddingUniformItem}>
-                      <el-space class="w-full">
+                      <div class={styles.paddingUniformGrid}>
                         <ElFormItem
                           label="X"
                           labelWidth="40px"
                           labelPosition="right"
                         >
-                          <ElInput type="number" v-model={currentBlock.value.x}>
+                          <ElInput
+                            type="number"
+                            v-model={currentBlock.value.x}
+                            class="w-full"
+                          >
                             {{
                               suffix: () => <span>px</span>,
                             }}
@@ -137,13 +135,17 @@ export const AttrEditor = defineComponent({
                           labelWidth="40px"
                           labelPosition="right"
                         >
-                          <ElInput type="number" v-model={currentBlock.value.y}>
+                          <ElInput
+                            type="number"
+                            v-model={currentBlock.value.y}
+                            class="w-full"
+                          >
                             {{
                               suffix: () => <span>px</span>,
                             }}
                           </ElInput>
                         </ElFormItem>
-                      </el-space>
+                      </div>
                     </ElFormItem>
 
                     {/* 样式配置合并到基础配置中 */}

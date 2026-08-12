@@ -136,7 +136,7 @@ function goBack() {
   flex-shrink: 0;
   height: 56px;
   padding: 0 16px;
-  border-bottom: 1px solid rgba(82, 124, 181, 0.14);
+  border-bottom: 1px solid var(--el-border-color-lighter);
   background: var(--el-bg-color);
   z-index: 10;
 }
@@ -147,18 +147,21 @@ function goBack() {
   justify-content: center;
   width: 32px;
   height: 32px;
-  border: 1px solid rgba(82, 124, 181, 0.12);
-  border-radius: 8px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: var(--app-shell-radius, 8px);
   background: transparent;
   cursor: pointer;
   color: var(--el-text-color-secondary);
-  transition: all 0.2s ease;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .visual-workspace__back:hover {
   background: var(--el-fill-color-light);
   color: var(--el-text-color-primary);
-  border-color: rgba(37, 99, 235, 0.2);
+  border-color: var(--el-border-color);
 }
 
 .visual-workspace__title {
@@ -188,8 +191,8 @@ function goBack() {
   color: var(--el-text-color-primary);
   cursor: pointer;
   padding: 2px 8px;
-  border-radius: 4px;
-  transition: background 0.2s;
+  border-radius: var(--app-shell-radius, 4px);
+  transition: background 0.15s ease;
   max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -215,5 +218,14 @@ function goBack() {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+}
+
+:global(html.dark) .visual-workspace__header {
+  border-bottom-color: var(--el-border-color-extra-light);
+  background: color-mix(in srgb, var(--el-bg-color) 92%, transparent);
+}
+
+:global(html.dark) .visual-workspace__back {
+  border-color: var(--el-border-color-extra-light);
 }
 </style>

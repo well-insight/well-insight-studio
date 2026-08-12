@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import type { AppearanceStyle, AppearanceStyleId, ThemeMode, ThemeSize } from '@/styles/theme/tokens'
 import type { ThemeCategory, ThemePreset } from '@/styles/theme/presets'
+import type { AppearanceStyle, AppearanceStyleId, ThemeMode, ThemeSize } from '@/styles/theme/tokens'
 import { ArrowDown, Expand, Fold, Monitor, Moon, Setting as SettingIcon, Sunny, SwitchButton } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 import { storeToRefs } from 'pinia'
@@ -11,8 +11,8 @@ import { AdaptiveDialog } from '@/components/adaptive-dialog'
 import { useAuthStore } from '@/stores/auth'
 import { useControlStore } from '@/stores/controlStore'
 import { useThemeStore } from '@/stores/themeStore'
-import { APPEARANCE_STYLES, WELLCUBE_PRIMARY } from '@/styles/theme/tokens'
 import { CATEGORY_LABELS, THEME_PRESETS } from '@/styles/theme/presets'
+import { APPEARANCE_STYLES, WELLCUBE_PRIMARY } from '@/styles/theme/tokens'
 
 defineProps<{ collapse?: boolean }>()
 
@@ -50,7 +50,8 @@ const sizeOptions: { value: ThemeSize, label: string }[] = [
 ]
 
 const filteredThemes = computed(() => {
-  if (filterTag.value === 'all') return THEME_PRESETS
+  if (filterTag.value === 'all')
+    return THEME_PRESETS
   return THEME_PRESETS.filter(t => t.category === filterTag.value)
 })
 
@@ -85,7 +86,7 @@ function onPresetClick(preset: ThemePreset) {
 }
 
 function onAppearanceClick(style: AppearanceStyle) {
-  // 切换风格时套用该风格推荐默认（Cube → 冰山冷蓝/暗黑/小圆角）
+  // 切换风格时套用该风格推荐默认（Cube → 薄荷青/暗黑/小圆角）
   themeStore.setAppearance(style.id as AppearanceStyleId, true)
 }
 
@@ -222,8 +223,7 @@ async function confirmLogout() {
       v-model="themeDialogVisible"
       title="主题设置"
       width="720px"
-      default-mode="dialog"
-      :show-mode-switch="false"
+      destroy-on-close
     >
       <div class="theme-dialog__body">
         <!-- 样式风格（壳层外观，与配色方案独立） -->
@@ -232,7 +232,9 @@ async function confirmLogout() {
             样式风格
             <span class="theme-dialog__badge">{{ APPEARANCE_STYLES.length }} 套</span>
           </div>
-          <p class="theme-dialog__hint">控制字体、圆角、Logo 形态、面板线框等结构气质；浅色/暗黑只换色，不改这些</p>
+          <p class="theme-dialog__hint">
+            控制字体、圆角、Logo 形态、面板线框等结构气质；浅色/暗黑只换色，不改这些
+          </p>
           <div class="theme-dialog__style-grid">
             <button
               v-for="style in APPEARANCE_STYLES"
@@ -246,7 +248,9 @@ async function confirmLogout() {
                 <span class="theme-dialog__style-name">{{ style.label }}</span>
                 <span class="theme-dialog__palette-badge">{{ style.id }}</span>
               </div>
-              <p class="theme-dialog__style-desc">{{ style.description }}</p>
+              <p class="theme-dialog__style-desc">
+                {{ style.description }}
+              </p>
               <div class="theme-dialog__palette-strip">
                 <span
                   v-for="(c, ci) in style.colors"
@@ -265,7 +269,9 @@ async function confirmLogout() {
             配色方案库
             <span class="theme-dialog__badge">{{ THEME_PRESETS.length }} 套配色</span>
           </div>
-          <p class="theme-dialog__hint">点击任意配色卡片切换全局主题，组件实时预览效果</p>
+          <p class="theme-dialog__hint">
+            点击任意配色卡片切换全局主题，组件实时预览效果
+          </p>
 
           <!-- 分类筛选 -->
           <div class="theme-dialog__filter">
@@ -314,7 +320,9 @@ async function confirmLogout() {
                 />
               </div>
               <div class="theme-dialog__palette-footer">
-                <el-tag size="small" type="info" effect="plain">{{ theme.primary }}</el-tag>
+                <el-tag size="small" type="info" effect="plain">
+                  {{ theme.primary }}
+                </el-tag>
               </div>
             </button>
           </div>
@@ -329,8 +337,12 @@ async function confirmLogout() {
 
         <!-- 外观模式 -->
         <section class="theme-dialog__section">
-          <div class="theme-dialog__label">外观模式</div>
-          <p class="theme-dialog__hint">仅切换浅色 / 暗黑色值，不改变样式风格里的字体、圆角与结构</p>
+          <div class="theme-dialog__label">
+            外观模式
+          </div>
+          <p class="theme-dialog__hint">
+            仅切换浅色 / 暗黑色值，不改变样式风格里的字体、圆角与结构
+          </p>
           <el-segmented
             :model-value="config.mode"
             :options="modeOptions.map(o => ({ label: o.label, value: o.value }))"
@@ -341,8 +353,12 @@ async function confirmLogout() {
 
         <!-- 品牌主色 -->
         <section class="theme-dialog__section">
-          <div class="theme-dialog__label">品牌主色</div>
-          <p class="theme-dialog__hint">拖拽色盘或直接输入 hex 值，页面实时预览</p>
+          <div class="theme-dialog__label">
+            品牌主色
+          </div>
+          <p class="theme-dialog__hint">
+            拖拽色盘或直接输入 hex 值，页面实时预览
+          </p>
           <div class="theme-dialog__primary-row">
             <el-color-picker
               :model-value="config.primary"
@@ -371,7 +387,9 @@ async function confirmLogout() {
 
         <!-- 组件尺寸 -->
         <section class="theme-dialog__section">
-          <div class="theme-dialog__label">组件尺寸</div>
+          <div class="theme-dialog__label">
+            组件尺寸
+          </div>
           <el-radio-group
             :model-value="config.size"
             class="theme-dialog__size"
@@ -389,7 +407,9 @@ async function confirmLogout() {
 
         <!-- 圆角大小 -->
         <section class="theme-dialog__section">
-          <div class="theme-dialog__label">圆角大小</div>
+          <div class="theme-dialog__label">
+            圆角大小
+          </div>
           <div class="theme-dialog__radius-row">
             <el-radio-group
               v-model="borderRadius"
@@ -414,12 +434,16 @@ async function confirmLogout() {
             </span>
           </div>
         </section>
-
-        <div class="theme-dialog__footer">
-          <el-button @click="themeStore.resetTheme()">恢复默认</el-button>
-          <el-button type="primary" @click="themeDialogVisible = false">完成</el-button>
-        </div>
       </div>
+
+      <template #footer>
+        <el-button @click="themeStore.resetTheme()">
+          恢复默认
+        </el-button>
+        <el-button type="primary" @click="themeDialogVisible = false">
+          完成
+        </el-button>
+      </template>
     </AdaptiveDialog>
   </div>
 </template>
@@ -611,7 +635,9 @@ async function confirmLogout() {
   background: var(--el-fill-color-blank);
   cursor: pointer;
   color: inherit;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 
   &:hover {
     border-color: var(--el-color-primary-light-5);
@@ -820,14 +846,5 @@ async function confirmLogout() {
   font-size: 12px;
   color: #fff;
   background: var(--el-color-primary);
-}
-
-/* 底部 */
-.theme-dialog__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding-top: 8px;
-  border-top: 1px solid var(--el-border-color-lighter);
 }
 </style>

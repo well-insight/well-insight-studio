@@ -1,7 +1,7 @@
 /**
  * 从 public/echarts-themes/*.json 加载完整配置并合并到预设画布主题
  */
-import { PRESETS, PREDEFINED_THEMES } from '@/common/types/predefinedThemes'
+import { PREDEFINED_THEMES, PRESETS } from '@/common/types/predefinedThemes'
 import { loadPresetEchartsTheme } from '@/common/utils/presetEchartsThemes'
 import { applyEchartsThemeToCanvas } from '@/common/utils/themeBridge'
 

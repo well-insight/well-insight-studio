@@ -2,8 +2,8 @@
 import { storeToRefs } from 'pinia'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { resolveMenuIcon } from '@/layout/aside/menuIcons'
 import SvgIcon from '@/components/svg-icon/SvgIcon.vue'
+import { resolveMenuIcon } from '@/layout/aside/menuIcons'
 import { usePageStore } from '@/stores/pageStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 
@@ -160,10 +160,30 @@ watch(
   width: 100%;
 }
 
+/* 收起态：覆盖展开态 padding/gap，并居中 tooltip trigger 内图标 */
 :deep(.custom-menu-wrapper.el-menu--collapse .el-sub-menu__title),
 :deep(.custom-menu-wrapper.el-menu--collapse .el-menu-item) {
   justify-content: center;
+  gap: 0;
+  padding: 0 !important;
+}
+
+:deep(.custom-menu-wrapper.el-menu--collapse .el-menu-item .el-menu-tooltip__trigger) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
   padding: 0;
+}
+
+:deep(.custom-menu-wrapper.el-menu--collapse .el-menu-item .el-menu-tooltip__trigger > span:not(.menu-icon)) {
+  visibility: hidden;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  display: inline-block;
 }
 
 :deep(.custom-menu-wrapper .el-sub-menu__title) {
@@ -282,6 +302,6 @@ watch(
 
 :deep(.custom-menu-wrapper .el-menu-item.is-active .menu-icon),
 :deep(.custom-menu-wrapper .el-sub-menu.is-active > .el-sub-menu__title .menu-icon) {
-  box-shadow: inset 0 0 0 1px rgba(124, 242, 255, 0.12);
+  box-shadow: inset 0 0 0 1px var(--menu-active-ring);
 }
 </style>

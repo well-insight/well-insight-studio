@@ -1,26 +1,13 @@
 /**
  * 画布主题 Store
- * 管理主题切换、多自定义主题的增删改、主题持久化
+ * 画布色板跟随系统壳层主题（侧栏「主题设置」），不再单独维护编辑器内主题。
  */
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
 import type { CanvasTheme } from '@/common/types/canvasTheme'
 import { themeToCSSVars } from '@/common/types/canvasTheme'
-import { hydratePredefinedThemes } from '@/common/types/predefinedThemeHydrate'
-import {
-  getPredefinedTheme,
-  getPresetEchartsJsonName,
-  PREDEFINED_THEME_METAS,
-} from '@/common/types/predefinedThemes'
-import { cloneDeep } from 'lodash-es'
-
-const DEFAULT_THEME_ID = 'welldesign'
-const STORAGE_KEY = 'canvas-theme-config'
-
-interface StoredThemeConfig {
-  activeThemeId: string
-  userThemes: UserThemeItem[]
-}
+import { buildSystemCanvasTheme } from '@/common/utils/systemCanvasTheme'
+import { defineStore, storeToRefs } from 'pinia'
+import { computed, ref, watch } from 'vue'
+import { useThemeStore } from '@/stores/themeStore'
 
 export interface UserThemeItem {
   id: string
@@ -37,155 +24,82 @@ export interface ThemeMeta {
   isDark: boolean
 }
 
-function loadStoredConfig(): StoredThemeConfig {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      return {
-        activeThemeId: parsed.activeThemeId ?? DEFAULT_THEME_ID,
-        userThemes: parsed.userThemes ?? [],
-      }
-    }
-  }
-  catch { /* ignore */ }
-  return { activeThemeId: DEFAULT_THEME_ID, userThemes: [] }
-}
-
-function saveStoredConfig(config: StoredThemeConfig) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(config)) }
-  catch { /* ignore */ }
-}
-
 export const useCanvasThemeStore = defineStore('canvasTheme', () => {
-  const stored = loadStoredConfig()
+  const systemTheme = useThemeStore()
+  const { isDark, config, currentPreset } = storeToRefs(systemTheme)
 
-  const activeThemeId = ref<string>(stored.activeThemeId ?? DEFAULT_THEME_ID)
-  const userThemes = ref<UserThemeItem[]>(stored.userThemes)
-  /** 预设主题 JSON 加载完成后递增，触发 currentTheme 重算 */
-  const presetRevision = ref(0)
+  /** DOM 变量写入后递增，确保读到最新 CSS 变量 */
+  const styleRevision = ref(0)
 
-  void hydratePredefinedThemes().then(() => {
-    presetRevision.value++
-  })
+  watch(
+    () => [
+      isDark.value,
+      config.value.primary,
+      config.value.presetId,
+      config.value.appearance,
+      config.value.mode,
+    ] as const,
+    async () => {
+      await Promise.resolve()
+      styleRevision.value++
+    },
+    { immediate: true },
+  )
 
   const currentTheme = computed<CanvasTheme>(() => {
-    void presetRevision.value
-    const override = userThemes.value.find(t => t.id === activeThemeId.value)
-    if (override)
-      return override.theme
-
-    if (activeThemeId.value.startsWith('user_')) {
-      const found = userThemes.value.find(t => t.id === activeThemeId.value)
-      if (found)
-        return found.theme
-    }
-    return getPredefinedTheme(activeThemeId.value) ?? getPredefinedTheme('welldesign')!
+    void styleRevision.value
+    return buildSystemCanvasTheme({
+      isDark: isDark.value,
+      primary: config.value.primary,
+      presetId: config.value.presetId,
+    })
   })
 
   const themeCSSVars = computed(() => themeToCSSVars(currentTheme.value))
-  const isDark = computed(() => currentTheme.value.isDark)
   const chartColors = computed(() => currentTheme.value.chartColors ?? [])
-  const isPresetActive = computed(() => !activeThemeId.value.startsWith('user_'))
-
-  /** 当前预设主题对应的 ECharts JSON 文件名（用于加载完整配置） */
-  const currentPresetEchartsName = computed(() => getPresetEchartsJsonName(activeThemeId.value))
+  const isPresetActive = computed(() => true)
+  const currentPresetEchartsName = computed(() => undefined as string | undefined)
+  const activeThemeId = computed(() => 'system')
+  const userThemes = ref<UserThemeItem[]>([])
 
   const allThemeMetas = computed<ThemeMeta[]>(() => {
-    const presetIds = new Set(PREDEFINED_THEME_METAS.map(m => m.id))
-    const presetMetas: ThemeMeta[] = PREDEFINED_THEME_METAS.map((m) => {
-      const override = userThemes.value.find(t => t.id === m.id)
-      if (override) {
-        return {
-          id: m.id,
-          name: override.name,
-          isPreset: true,
-          previewColors: (override.theme.chartColors ?? []).slice(0, 5),
-          previewBg: override.theme.bg?.page ?? m.previewBg,
-          isDark: override.theme.isDark,
-        }
-      }
-      return {
-        id: m.id,
-        name: m.name,
-        isPreset: true,
-        previewColors: m.previewColors,
-        previewBg: m.previewBg,
-        isDark: m.isDark,
-      }
-    })
-    const userMetas: ThemeMeta[] = userThemes.value
-      .filter(t => !presetIds.has(t.id))
-      .map(t => ({
-        id: t.id,
-        name: t.name,
-        isPreset: false,
-        previewColors: (t.theme.chartColors ?? []).slice(0, 5),
-        previewBg: t.theme.bg?.page ?? '#f5f7fa',
-        isDark: t.theme.isDark,
-      }))
-    return [...presetMetas, ...userMetas]
+    const theme = currentTheme.value
+    return [{
+      id: 'system',
+      name: currentPreset.value?.label ? `系统 · ${currentPreset.value.label}` : '系统主题',
+      isPreset: true,
+      previewColors: (theme.chartColors ?? []).slice(0, 5),
+      previewBg: theme.bg?.page ?? '#fff',
+      isDark: theme.isDark,
+    }]
   })
 
-  function getThemeById(id: string): CanvasTheme | undefined {
-    const override = userThemes.value.find(t => t.id === id)
-    if (override)
-      return cloneDeep(override.theme)
-
-    if (id.startsWith('user_'))
-      return undefined
-
-    const preset = getPredefinedTheme(id)
-    return preset ? cloneDeep(preset) : undefined
+  function getThemeById(_id: string): CanvasTheme | undefined {
+    return currentTheme.value
   }
 
-  function selectTheme(id: string) {
-    activeThemeId.value = id
-    persistConfig()
+  function selectTheme(_id: string) {
+    // 画布主题已绑定系统主题，忽略独立切换
   }
 
-  function saveUserTheme(id: string | null, name: string, theme: CanvasTheme): string {
-    const themeId = id ?? `user_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-    theme.id = themeId
-    theme.name = name
-    const idx = userThemes.value.findIndex(t => t.id === themeId)
-    if (idx >= 0) {
-      userThemes.value[idx] = { id: themeId, name, theme }
-    }
-    else {
-      userThemes.value.push({ id: themeId, name, theme })
-    }
-    activeThemeId.value = themeId
-    persistConfig()
-    return themeId
+  function saveUserTheme(_id: string | null, _name: string, _theme: CanvasTheme): string {
+    return 'system'
   }
 
-  function deleteUserTheme(id: string) {
-    const idx = userThemes.value.findIndex(t => t.id === id)
-    if (idx < 0) return
-    userThemes.value.splice(idx, 1)
-    if (activeThemeId.value === id) {
-      activeThemeId.value = DEFAULT_THEME_ID
-    }
-    persistConfig()
+  function deleteUserTheme(_id: string) {
+    // no-op
   }
 
   function getDefaultTheme(): CanvasTheme {
-    return cloneDeep(getPredefinedTheme('welldesign')!)
+    return currentTheme.value
   }
 
   function applyThemeToElement(el: HTMLElement | null) {
-    if (!el) return
+    if (!el)
+      return
     const vars = themeCSSVars.value
     Object.entries(vars).forEach(([key, value]) => {
       el.style.setProperty(key, value)
-    })
-  }
-
-  function persistConfig() {
-    saveStoredConfig({
-      activeThemeId: activeThemeId.value,
-      userThemes: userThemes.value,
     })
   }
 

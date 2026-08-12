@@ -48,7 +48,7 @@ defineProps<{ collapse?: boolean }>()
   border-radius: var(--logo-mark-radius, calc(var(--app-shell-radius, 16px) - 4px));
   background: var(--logo-mark-bg);
   color: var(--logo-mark-color);
-  box-shadow: inset 0 0 0 1px rgba(124, 242, 255, 0.04);
+  box-shadow: inset 0 0 0 1px var(--cube-border);
 }
 
 .logo-bar__stamp {

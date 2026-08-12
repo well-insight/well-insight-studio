@@ -80,7 +80,7 @@ function onDrop(e: DragEvent) {
   padding: 8px 12px;
   border: 1px dashed var(--el-border-color);
   border-radius: 8px;
-  background: #fafbfc;
+  background: var(--el-fill-color-light);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -99,7 +99,7 @@ function onDrop(e: DragEvent) {
 .drop-row--filled .drop-row__zone {
   border-style: solid;
   border-color: var(--el-border-color-lighter);
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .drop-row__placeholder {
@@ -135,7 +135,6 @@ function onDrop(e: DragEvent) {
   background: #eef2ff;
   color: #4f6ef7;
 }
-
 .drop-pill__text {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -163,5 +162,18 @@ function onDrop(e: DragEvent) {
 .drop-pill__close:hover {
   opacity: 1;
   background: rgb(0 0 0 / 6%);
+}
+
+:global(html.dark) {
+  .drop-pill--dimension {
+    background: color-mix(in srgb, #0d9b8a 18%, transparent);
+    color: #35c4b2;
+  }
+
+  .drop-pill--filter,
+  .drop-pill--bind {
+    background: color-mix(in srgb, #4f6ef7 20%, transparent);
+    color: #8b9cff;
+  }
 }
 </style>

@@ -2,6 +2,7 @@ import type { EChartsOption } from 'echarts'
 import type { PropType } from 'vue'
 import { defineComponent, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { echarts, ensureEChartsRegistered } from './register'
+import { getEChartsLoadingOpts } from './theme'
 
 const CANVAS_THEME_NAME = 'canvas-custom-theme'
 
@@ -42,7 +43,7 @@ export default defineComponent({
         return
       }
       if (props.loading) {
-        chartRef.value.showLoading({ text: '' })
+        chartRef.value.showLoading(getEChartsLoadingOpts())
       }
       else {
         chartRef.value.hideLoading()

@@ -26,14 +26,14 @@
 
 <style scoped>
 .bind-split-layout {
-  --bind-bg: #f7f8fa;
+  --bind-bg: var(--el-fill-color-lighter);
   flex: 1;
   height: 100%;
   min-height: 0;
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 10px;
   overflow: hidden;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .bind-split-layout__pane {
@@ -49,12 +49,12 @@
 }
 
 .bind-split-layout__pane--config {
-  background: #fff;
+  background: var(--el-bg-color);
   overflow-y: auto;
 }
 
 .bind-split-layout__pane--preview {
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .bind-split-layout :deep(.el-splitter-panel) {

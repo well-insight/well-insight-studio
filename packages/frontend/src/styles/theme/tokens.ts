@@ -1,21 +1,22 @@
 /** WellCube 主题工具；暗色壳层由「样式风格」appearances 驱动 */
 
+import type { AppearanceStyleId } from './appearances'
 import {
   APPEARANCE_INLINE_VAR_KEYS,
+
   DEFAULT_APPEARANCE,
   findAppearance,
   normalizeAppearance,
-  type AppearanceStyleId,
 } from './appearances'
 
 export {
   APPEARANCE_STYLES,
-  DEFAULT_APPEARANCE,
-  findAppearance,
-  normalizeAppearance,
   type AppearanceRecommendedDefaults,
   type AppearanceStyle,
   type AppearanceStyleId,
+  DEFAULT_APPEARANCE,
+  findAppearance,
+  normalizeAppearance,
 } from './appearances'
 
 export {
@@ -27,8 +28,8 @@ export {
   CUBE_WC_CSS_VARS,
 } from './cubeTokens'
 
-/** 交互主色兜底；默认主题以配色方案 iceberg 为准 */
-export const WELLCUBE_PRIMARY = '#5DADE2'
+/** 交互主色兜底；默认主题以配色方案 breeze（清风蓝）为准 */
+export const WELLCUBE_PRIMARY = '#409EFF'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 export type ThemeSize = 'large' | 'default' | 'small'
@@ -72,6 +73,7 @@ export const DARK_WC_CSS_VARS: Record<string, string> = {}
 
 const PRIMARY_VAR_KEYS = [
   '--el-color-primary',
+  '--el-color-primary-rgb',
   '--el-color-primary-light-1',
   '--el-color-primary-light-2',
   '--el-color-primary-light-3',
@@ -124,8 +126,10 @@ export function buildPrimaryCssVars(
 ): Record<string, string> {
   const base = parseHex(primary) ? primary : WELLCUBE_PRIMARY
   const style = findAppearance(appearance)
+  const [red, green, blue] = parseHex(base)!
   const vars: Record<string, string> = {
     '--el-color-primary': base,
+    '--el-color-primary-rgb': `${red}, ${green}, ${blue}`,
   }
   const lightMixTarget = isDark ? style.primaryMixTarget : '#ffffff'
   for (let i = 1; i <= 9; i++) {
@@ -154,6 +158,96 @@ export function applyPrimaryColor(
 ) {
   const root = document.documentElement
   setVars(root, buildPrimaryCssVars(primary, isDark, appearance))
+}
+
+/** 将 Cube 的视觉强调色绑定到当前主色；布局与中性色仍由 appearance 注册表定义。 */
+export function applyCubeColorVars(isDark: boolean, appearance: AppearanceStyleId = DEFAULT_APPEARANCE) {
+  const root = document.documentElement
+  if (normalizeAppearance(appearance) !== 'cube')
+    return
+
+  const primary = (alpha: number) => `rgba(var(--el-color-primary-rgb), ${alpha})`
+  const vars: Record<string, string> = {
+    '--cube-signal': 'var(--el-color-primary)',
+    '--cube-brass': 'var(--el-color-warning)',
+    '--cube-border': primary(isDark ? 0.14 : 0.22),
+    '--cube-border-strong': primary(isDark ? 0.28 : 0.4),
+    '--cube-fill': primary(isDark ? 0.08 : 0.06),
+    '--el-border-color': primary(isDark ? 0.2 : 0.22),
+    '--el-border-color-light': primary(isDark ? 0.14 : 0.16),
+    '--el-border-color-lighter': primary(isDark ? 0.1 : 0.12),
+    '--el-border-color-extra-light': primary(isDark ? 0.07 : 0.08),
+    '--el-border-color-dark': primary(isDark ? 0.3 : 0.32),
+    '--el-fill-color': primary(isDark ? 0.08 : 0.06),
+    '--el-fill-color-light': primary(isDark ? 0.06 : 0.04),
+    '--el-menu-hover-bg-color': primary(isDark ? 0.08 : 0.06),
+    '--el-menu-active-color': 'var(--el-color-primary)',
+    '--el-table-row-hover-bg-color': primary(isDark ? 0.08 : 0.05),
+    '--el-table-border-color': primary(0.12),
+    '--wc-border-color': primary(isDark ? 0.2 : 0.22),
+    '--wc-border-color-lighter': primary(0.12),
+    '--wc-accent-cyan': 'var(--el-color-primary)',
+    '--wc-active-fill': primary(isDark ? 0.12 : 0.1),
+    '--app-shell-bg': isDark
+      ? [
+          `radial-gradient(circle at 16% 18%, ${primary(0.16)}, transparent 28%)`,
+          'radial-gradient(circle at 78% 10%, color-mix(in srgb, var(--el-color-warning) 18%, transparent), transparent 22%)',
+          'linear-gradient(135deg, #151b27 0%, #202a3a 56%, #1b2535 100%)',
+        ].join(', ')
+      : [
+          `radial-gradient(circle at 16% 18%, ${primary(0.1)}, transparent 26%)`,
+          'radial-gradient(circle at 78% 10%, color-mix(in srgb, var(--el-color-warning) 14%, transparent), transparent 22%)',
+          'linear-gradient(135deg, #f7fafc 0%, #eef3f7 56%, #f5f8fb 100%)',
+        ].join(', '),
+    '--app-shell-panel-bg': isDark ? 'rgba(32, 42, 58, 0.94)' : 'rgba(255, 255, 255, 0.92)',
+    '--app-shell-panel-border': primary(isDark ? 0.12 : 0.16),
+    '--app-shell-panel-shadow': `inset 0 0 0 1px ${primary(isDark ? 0.04 : 0.05)}`,
+    '--app-shell-main-bg': isDark ? 'rgba(32, 42, 58, 0.9)' : 'rgba(255, 255, 255, 0.92)',
+    '--app-shell-main-border': primary(isDark ? 0.12 : 0.16),
+    '--app-shell-main-shadow': `inset 0 0 0 1px ${primary(isDark ? 0.04 : 0.05)}`,
+    '--app-shell-divider': primary(isDark ? 0.1 : 0.12),
+    '--app-shell-header-bg': isDark ? 'rgba(27, 37, 53, 0.78)' : 'rgba(255, 255, 255, 0.78)',
+    '--app-shell-header-border': primary(isDark ? 0.1 : 0.12),
+    '--logo-mark-border': primary(isDark ? 0.38 : 0.36),
+    '--logo-mark-bg': primary(0.06),
+    '--logo-mark-color': 'var(--el-color-primary)',
+    '--menu-icon-border': primary(0.22),
+    '--menu-icon-bg': primary(0.06),
+    '--menu-icon-color': 'var(--el-color-primary)',
+    '--menu-active-ring': primary(isDark ? 0.22 : 0.28),
+    '--header-icon-border': primary(0.28),
+    '--header-icon-bg': primary(0.06),
+    '--header-icon-color': 'var(--el-color-primary)',
+    '--header-eyebrow-color': primary(isDark ? 0.78 : 0.85),
+    '--footer-avatar-border': primary(0.28),
+    '--footer-avatar-bg': primary(0.1),
+    '--footer-avatar-color': 'var(--el-color-primary)',
+    '--footer-divider': primary(isDark ? 0.12 : 0.14),
+    '--type-eyebrow': primary(isDark ? 0.84 : 0.9),
+    '--workbench-hero-bg': isDark
+      ? [
+          `radial-gradient(circle at 18% 20%, ${primary(0.16)}, transparent 44%)`,
+          'linear-gradient(135deg, #25344a 0%, #202a3a 55%, #151b27 100%)',
+        ].join(', ')
+      : [
+          `radial-gradient(circle at 18% 20%, ${primary(0.1)}, transparent 42%)`,
+          'linear-gradient(135deg, #eef5f7 0%, #f7fafc 55%, #f3f6f9 100%)',
+        ].join(', '),
+    '--workbench-card-bg': isDark ? 'rgba(43, 55, 74, 0.82)' : 'rgba(255, 255, 255, 0.92)',
+    '--workbench-soft-bg': isDark ? 'rgba(52, 66, 87, 0.6)' : 'rgba(243, 246, 249, 0.9)',
+    '--workbench-hero-border': primary(isDark ? 0.16 : 0.18),
+    '--workbench-hero-eyebrow': primary(isDark ? 0.84 : 0.9),
+    '--workbench-card-border': primary(isDark ? 0.12 : 0.14),
+    '--workbench-soft-border': primary(isDark ? 0.1 : 0.12),
+    '--workbench-hover-bg': primary(0.06),
+    '--workbench-hover-border': primary(isDark ? 0.28 : 0.32),
+    '--ds-accent-blue': 'var(--el-color-primary)',
+    '--ds-accent-blue-rgb': 'var(--el-color-primary-rgb)',
+    '--ds-border-card': primary(isDark ? 0.14 : 0.16),
+    '--ds-border-card-light': primary(0.12),
+    '--ds-border-card-muted': primary(0.08),
+  }
+  setVars(root, vars)
 }
 
 /** 按样式风格 + 明暗同步变量：chrome 始终生效，颜色随 isDark 切换 */

@@ -9,6 +9,7 @@ import { adjustColor, findPreset, THEME_PRESETS } from '@/styles/theme/presets'
 import {
   applyAppearanceVars,
   applyBorderRadiusVars,
+  applyCubeColorVars,
   applyPrimaryColor,
   DEFAULT_THEME_CONFIG,
   resolveIsDark,
@@ -18,10 +19,10 @@ import {
 const STORAGE_KEY = 'wellcube-theme-config'
 const LEGACY_STORAGE_KEY = 'wellcube-theme'
 const STORAGE_VERSION_KEY = 'wellcube-theme-version'
-/** v9：Cube 统一圆角 4px */
-const CURRENT_STORAGE_VERSION = 9
+/** v14：Cube 默认配色改为清风蓝 */
+const CURRENT_STORAGE_VERSION = 14
 
-const ICEBERG_PRIMARY = findPreset('iceberg')?.primary ?? WELLCUBE_PRIMARY
+const DEFAULT_PRIMARY = findPreset(DEFAULT_THEME_CONFIG.presetId)?.primary ?? WELLCUBE_PRIMARY
 
 function loadConfig(): ThemeConfig {
   try {
@@ -30,7 +31,7 @@ function loadConfig(): ThemeConfig {
       localStorage.removeItem(STORAGE_KEY)
       localStorage.removeItem(LEGACY_STORAGE_KEY)
       localStorage.setItem(STORAGE_VERSION_KEY, String(CURRENT_STORAGE_VERSION))
-      return { ...DEFAULT_THEME_CONFIG, primary: ICEBERG_PRIMARY }
+      return { ...DEFAULT_THEME_CONFIG, primary: DEFAULT_PRIMARY }
     }
 
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -44,7 +45,7 @@ function loadConfig(): ThemeConfig {
         mode: normalizeMode(parsed.mode),
         primary: typeof parsed.primary === 'string' && parsed.primary
           ? parsed.primary
-          : (preset?.primary ?? ICEBERG_PRIMARY),
+          : (preset?.primary ?? DEFAULT_PRIMARY),
         size: normalizeSize(parsed.size),
         appearance: normalizeAppearance(parsed.appearance),
         presetId,
@@ -54,14 +55,14 @@ function loadConfig(): ThemeConfig {
 
     const legacy = localStorage.getItem(LEGACY_STORAGE_KEY)
     if (legacy === ThemeEnum.DARK || legacy === 'dark')
-      return { ...DEFAULT_THEME_CONFIG, primary: ICEBERG_PRIMARY, mode: 'dark' }
+      return { ...DEFAULT_THEME_CONFIG, primary: DEFAULT_PRIMARY, mode: 'dark' }
     if (legacy === ThemeEnum.LIGHT || legacy === 'light')
-      return { ...DEFAULT_THEME_CONFIG, primary: ICEBERG_PRIMARY, mode: 'light' }
+      return { ...DEFAULT_THEME_CONFIG, primary: DEFAULT_PRIMARY, mode: 'light' }
   }
   catch {
     /* ignore */
   }
-  return { ...DEFAULT_THEME_CONFIG, primary: ICEBERG_PRIMARY }
+  return { ...DEFAULT_THEME_CONFIG, primary: DEFAULT_PRIMARY }
 }
 
 function normalizeMode(mode: unknown): ThemeMode {
@@ -102,7 +103,7 @@ export const useThemeStore = defineStore('theme', () => {
   const appearances = computed(() => APPEARANCE_STYLES)
 
   const currentPreset = computed<ThemePreset>(() => {
-    return findPreset(currentPresetId.value) ?? findPreset('iceberg') ?? THEME_PRESETS[0]
+    return findPreset(currentPresetId.value) ?? findPreset(DEFAULT_THEME_CONFIG.presetId) ?? THEME_PRESETS[0]
   })
 
   const currentAppearance = computed(() => findAppearance(config.value.appearance))
@@ -139,6 +140,7 @@ export const useThemeStore = defineStore('theme', () => {
     const preset = findPreset(config.value.presetId)
     if (preset)
       applyAuxColors(preset)
+    applyCubeColorVars(isDark.value, config.value.appearance)
     persist(config.value)
   }
 
@@ -148,7 +150,7 @@ export const useThemeStore = defineStore('theme', () => {
   }
 
   function setPrimary(primary: string) {
-    config.value = { ...config.value, primary: primary || ICEBERG_PRIMARY }
+    config.value = { ...config.value, primary: primary || DEFAULT_PRIMARY }
     syncDom()
   }
 
@@ -191,7 +193,7 @@ export const useThemeStore = defineStore('theme', () => {
     currentPresetId.value = DEFAULT_THEME_CONFIG.presetId
     config.value = {
       ...DEFAULT_THEME_CONFIG,
-      primary: preset?.primary ?? ICEBERG_PRIMARY,
+      primary: preset?.primary ?? DEFAULT_PRIMARY,
     }
     syncDom()
   }
@@ -217,7 +219,7 @@ export const useThemeStore = defineStore('theme', () => {
     syncDom()
   }
 
-  // 首次同步：含圆角与 iceberg 辅色
+  // 首次同步：含圆角与默认配色辅色
   currentPresetId.value = config.value.presetId
   syncDom()
 
@@ -232,7 +234,10 @@ export const useThemeStore = defineStore('theme', () => {
 
   watch(
     () => [config.value.primary, isDark.value, config.value.appearance] as const,
-    () => applyPrimaryColor(config.value.primary, isDark.value, config.value.appearance),
+    () => {
+      applyPrimaryColor(config.value.primary, isDark.value, config.value.appearance)
+      applyCubeColorVars(isDark.value, config.value.appearance)
+    },
   )
 
   return {

@@ -135,7 +135,7 @@ function onDragStart(e: DragEvent, field: ApiDatasetField) {
 }
 
 .field-item:hover {
-  background: #fff;
+  background: var(--el-fill-color-light);
   border-color: var(--el-border-color-lighter);
   box-shadow: 0 1px 4px rgb(0 0 0 / 4%);
 }
@@ -155,8 +155,8 @@ function onDragStart(e: DragEvent, field: ApiDatasetField) {
 }
 
 .field-item__icon-wrap--text {
-  background: #f0f2f5;
-  color: #606266;
+  background: var(--el-fill-color-light);
+  color: var(--el-text-color-regular);
 }
 
 .field-item__icon-wrap--number {
@@ -175,5 +175,17 @@ function onDragStart(e: DragEvent, field: ApiDatasetField) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+:global(html.dark) {
+  .field-item__icon-wrap--number {
+    background: color-mix(in srgb, var(--el-color-primary) 16%, transparent);
+    color: var(--el-color-primary-light-5);
+  }
+
+  .field-item__icon-wrap--datetime {
+    background: color-mix(in srgb, #e6a23c 18%, transparent);
+    color: #e6a23c;
+  }
 }
 </style>

@@ -90,7 +90,7 @@ const summaryLines = computed(() => {
 }
 
 .chart-bind-panel__chip--dataset {
-  background: #f4f4f5;
+  background: var(--el-fill-color-light);
   color: var(--el-text-color-regular);
 }
 
@@ -98,7 +98,6 @@ const summaryLines = computed(() => {
   background: #e6f7f4;
   color: #0d9b8a;
 }
-
 .chart-bind-panel__chip--metric {
   background: var(--el-color-primary-light-8);
   color: var(--el-color-primary);
@@ -118,5 +117,12 @@ const summaryLines = computed(() => {
 
 .chart-bind-panel__btn {
   align-self: flex-start;
+}
+
+:global(html.dark) {
+  .chart-bind-panel__chip--dimension {
+    background: color-mix(in srgb, #0d9b8a 18%, transparent);
+    color: #35c4b2;
+  }
 }
 </style>

@@ -14,7 +14,7 @@ html[data-appearance="cube"] {
         border-color: var(--menu-icon-border) !important;
         background: var(--menu-icon-bg) !important;
         color: var(--menu-icon-color) !important;
-        box-shadow: inset 0 0 0 1px var(--cube-border, rgba(124, 242, 255, 0.06)) !important;
+        box-shadow: inset 0 0 0 1px var(--cube-border) !important;
         transform: none !important;
     }
 
@@ -41,7 +41,7 @@ html[data-appearance="cube"] {
         border-color: var(--menu-icon-border) !important;
         background: var(--menu-icon-bg) !important;
         color: var(--menu-icon-color) !important;
-        box-shadow: inset 0 0 0 1px var(--cube-border, rgba(124, 242, 255, 0.06)) !important;
+        box-shadow: inset 0 0 0 1px var(--cube-border) !important;
     }
 
     .workbench .metric-card,
@@ -54,7 +54,7 @@ html[data-appearance="cube"] {
     }
 
     .workbench__hero {
-        box-shadow: inset 0 0 0 1px var(--cube-border, rgba(124, 242, 255, 0.06)) !important;
+        box-shadow: inset 0 0 0 1px var(--cube-border) !important;
     }
 
     .app-shell__sider,
@@ -68,15 +68,15 @@ html[data-appearance="cube"] {
 html.dark[data-appearance="cube"] {
     .user-footer__theme-btn,
     .user-footer__toggle-btn {
-        --el-button-bg-color: rgba(124, 242, 255, 0.05);
-        --el-button-border-color: rgba(124, 242, 255, 0.18);
+        --el-button-bg-color: rgba(var(--el-color-primary-rgb), 0.05);
+        --el-button-border-color: rgba(var(--el-color-primary-rgb), 0.18);
         --el-button-text-color: rgba(234, 242, 255, 0.72);
-        --el-button-hover-bg-color: rgba(124, 242, 255, 0.1);
-        --el-button-hover-border-color: rgba(124, 242, 255, 0.36);
-        --el-button-hover-text-color: #7cf2ff;
+        --el-button-hover-bg-color: rgba(var(--el-color-primary-rgb), 0.1);
+        --el-button-hover-border-color: rgba(var(--el-color-primary-rgb), 0.36);
+        --el-button-hover-text-color: var(--el-color-primary);
     }
 
     .user-footer__trigger:hover {
-        background: rgba(124, 242, 255, 0.08) !important;
+        background: rgba(var(--el-color-primary-rgb), 0.08) !important;
     }
 }

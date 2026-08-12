@@ -1,8 +1,8 @@
 <script lang="ts" setup>
+import type { EChartsOption } from 'echarts'
 import type { ApiApplicationListItem } from '@/api/application'
 import type { ApiDatasetListItem } from '@/api/dataset'
 import type { ApiPageListItem } from '@/api/pages'
-import type { EChartsOption } from 'echarts'
 import { ArrowRight, Connection, DataAnalysis, DataBoard, Document, Grid, Monitor, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
@@ -104,21 +104,18 @@ interface MixSlice {
   path: string
 }
 
-const CHART_COLORS = {
-  visual: '#7cf2ff',
-  form: '#5ec8b0',
-  report: '#c9a76a',
-  dataset: '#6ea8ff',
-  app: '#a78bfa',
-} as const
-
 const resourceMix = computed<MixSlice[]>(() => {
+  void isDark.value
+  void themeConfig.value.primary
+  const signal = readCssVar('--cube-signal', '#2563EB')
+  const warning = readCssVar('--cube-brass', '#E6A23C')
+  const success = readCssVar('--el-color-success', '#67C23A')
   const slices: MixSlice[] = [
-    { name: '可视化', value: visualPages.value.length, color: CHART_COLORS.visual, path: '/project/pages/visual' },
-    { name: '表单', value: formPages.value.length, color: CHART_COLORS.form, path: '/project/pages/form' },
-    { name: '报表', value: reportPages.value.length, color: CHART_COLORS.report, path: '/project/pages/report' },
-    { name: '数据集', value: datasets.value.length, color: CHART_COLORS.dataset, path: '/project/dataset' },
-    { name: '应用集', value: applications.value.length, color: CHART_COLORS.app, path: '/project/app-assembly' },
+    { name: '可视化', value: visualPages.value.length, color: signal, path: '/project/pages/visual' },
+    { name: '表单', value: formPages.value.length, color: success, path: '/project/pages/form' },
+    { name: '报表', value: reportPages.value.length, color: warning, path: '/project/pages/report' },
+    { name: '数据集', value: datasets.value.length, color: readCssVar('--el-color-primary-light-3', signal), path: '/project/dataset' },
+    { name: '应用集', value: applications.value.length, color: readCssVar('--el-color-danger', '#F56C6C'), path: '/project/app-assembly' },
   ]
   return slices.filter(slice => slice.value > 0)
 })
@@ -480,7 +477,7 @@ onActivated(() => {
 </script>
 
 <template>
-  <div v-loading="loading" class="workbench">
+  <el-scrollbar v-loading="loading" class="workbench">
     <section class="workbench__hero workbench__band">
       <div class="workbench__hero-copy">
         <span class="workbench__eyebrow">PROJECT TELEMETRY</span>
@@ -611,22 +608,30 @@ onActivated(() => {
             <button type="button" @click="goTo('/project/pages/visual')">
               <span class="quick-actions__icon"><el-icon :size="14"><component :is="WORKBENCH_ICONS.visual" /></el-icon></span>
               <span class="quick-actions__label">可视化</span>
-              <el-icon :size="12"><ArrowRight /></el-icon>
+              <el-icon :size="12">
+                <ArrowRight />
+              </el-icon>
             </button>
             <button type="button" @click="goTo('/project/dataset')">
               <span class="quick-actions__icon"><el-icon :size="14"><component :is="WORKBENCH_ICONS.dataset" /></el-icon></span>
               <span class="quick-actions__label">数据集</span>
-              <el-icon :size="12"><ArrowRight /></el-icon>
+              <el-icon :size="12">
+                <ArrowRight />
+              </el-icon>
             </button>
             <button type="button" @click="goTo('/project/api')">
               <span class="quick-actions__icon"><el-icon :size="14"><component :is="WORKBENCH_ICONS.api" /></el-icon></span>
               <span class="quick-actions__label">导入</span>
-              <el-icon :size="12"><ArrowRight /></el-icon>
+              <el-icon :size="12">
+                <ArrowRight />
+              </el-icon>
             </button>
             <button type="button" @click="goTo('/project/app-assembly')">
               <span class="quick-actions__icon"><el-icon :size="14"><component :is="WORKBENCH_ICONS.app" /></el-icon></span>
               <span class="quick-actions__label">应用</span>
-              <el-icon :size="12"><ArrowRight /></el-icon>
+              <el-icon :size="12">
+                <ArrowRight />
+              </el-icon>
             </button>
           </div>
         </div>
@@ -756,20 +761,24 @@ onActivated(() => {
         </p>
       </article>
     </section>
-  </div>
+  </el-scrollbar>
 </template>
 
 <style scoped>
 .workbench {
+  height: 100%;
+  min-height: 0;
+  background: var(--workbench-bg);
+}
+
+.workbench :deep(.el-scrollbar__view) {
   box-sizing: border-box;
   display: grid;
   grid-template-rows: auto auto minmax(250px, 1.2fr) minmax(200px, 1fr) minmax(260px, 0.85fr);
   gap: 12px;
   width: 100%;
   min-height: 100%;
-  height: 100%;
   padding: 16px 18px;
-  overflow: auto;
   background: var(--workbench-bg);
   color: var(--type-body, var(--el-text-color-primary));
 }
@@ -861,7 +870,9 @@ h1 {
   box-shadow: var(--workbench-shadow, none);
   cursor: pointer;
   color: var(--workbench-card-title, var(--type-title));
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
 }
 
 .metric-card:hover {
@@ -921,9 +932,9 @@ h1 {
 
 .metric-card--visual .metric-card__icon,
 .metric-card--pulse .metric-card__icon {
-  background: rgba(124, 242, 255, 0.14);
-  border-color: rgba(124, 242, 255, 0.24);
-  color: #2aa8b8;
+  background: rgba(var(--el-color-primary-rgb), 0.14);
+  border-color: rgba(var(--el-color-primary-rgb), 0.24);
+  color: var(--el-color-primary);
 }
 
 .metric-card--form .metric-card__icon {
@@ -939,9 +950,9 @@ h1 {
 }
 
 .metric-card--report .metric-card__icon {
-  background: rgba(201, 167, 106, 0.16);
-  border-color: rgba(201, 167, 106, 0.3);
-  color: #b8893d;
+  background: color-mix(in srgb, var(--el-color-warning) 16%, transparent);
+  border-color: color-mix(in srgb, var(--el-color-warning) 30%, transparent);
+  color: var(--el-color-warning);
 }
 
 .metric-card--app .metric-card__icon {
@@ -1168,7 +1179,7 @@ h1 {
 }
 
 .status-legend .is-draft {
-  background: var(--cube-brass, #c9a76a);
+  background: var(--cube-brass, var(--el-color-warning));
 }
 
 .quick-actions {
@@ -1197,7 +1208,9 @@ h1 {
   border-radius: var(--app-shell-radius, 4px);
   border: 1px solid var(--workbench-soft-border, transparent);
   background: var(--workbench-soft-bg);
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
 }
 
 .quick-actions button:hover,

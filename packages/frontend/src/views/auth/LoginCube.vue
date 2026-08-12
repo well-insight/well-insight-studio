@@ -4,7 +4,7 @@ import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { useAuthForm } from '@/hooks/useAuthForm'
 import { useThemeStore } from '@/stores/themeStore'
-import { CUBE_COLORS, CUBE_FONTS, mixHex } from '@/styles/theme/tokens'
+import { CUBE_COLORS, CUBE_FONTS, WELLCUBE_PRIMARY, mixHex } from '@/styles/theme/tokens'
 
 const { mode, form, loading, canvasRef, refreshCaptcha, onSubmit, setMode } = useAuthForm({ prefillDemo: true })
 const themeStore = useThemeStore()
@@ -15,7 +15,7 @@ const cubeRef = ref<HTMLElement | null>(null)
 function primaryRgb(hex: string): string {
   const raw = hex.trim().replace('#', '')
   if (!/^[0-9a-f]{6}$/i.test(raw))
-    return '93, 173, 226'
+    return '58, 154, 138'
   return [
     Number.parseInt(raw.slice(0, 2), 16),
     Number.parseInt(raw.slice(2, 4), 16),
@@ -25,7 +25,7 @@ function primaryRgb(hex: string): string {
 
 /** 舞台保持 Cube 图纸气质；表单跟主题主色 / 明暗 */
 const cubeThemeStyle = computed(() => {
-  const primary = config.value.primary || '#5DADE2'
+  const primary = config.value.primary || WELLCUBE_PRIMARY
   const rgb = primaryRgb(primary)
   const radius = Math.max(4, config.value.borderRadius || 4)
   const dark = isDark.value

@@ -2381,10 +2381,10 @@ defineExpose({
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border-radius: 12px;
+    border-radius: var(--ve-radius-md, 12px);
     border: none;
     background-color: transparent;
-    background-image: radial-gradient(circle, rgba(37, 99, 235, 0.1) 1px, transparent 1px);
+    background-image: radial-gradient(circle, var(--ve-grid-dot, rgba(64, 158, 255, 0.16)) 1px, transparent 1px);
     background-size: 20px 20px;
   }
 }
@@ -2425,10 +2425,10 @@ defineExpose({
   flex-shrink: 0;
   width: 100%;
   overflow: visible;
-  border-radius: 12px;
-  border: 1px solid rgba(82, 124, 181, 0.14);
-  background: #ffffff;
-  box-shadow: 0 12px 32px rgba(31, 58, 112, 0.06);
+  border-radius: var(--ve-radius-md, 12px);
+  border: 1px solid var(--ve-paper-edge, var(--el-border-color-lighter));
+  background: var(--ve-paper-bg, var(--canvas-bg-page, var(--el-bg-color)));
+  box-shadow: var(--ve-paper-shadow, 0 12px 32px rgba(0, 0, 0, 0.06));
 }
 
 .edit-canvas-inner {

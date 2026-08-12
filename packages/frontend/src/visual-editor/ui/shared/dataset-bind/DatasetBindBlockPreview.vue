@@ -82,7 +82,7 @@ const PreviewInner = defineComponent({
   flex-direction: column;
   min-height: 0;
   flex: 1;
-  background: #fff;
+  background: var(--el-bg-color);
 }
 
 .bind-preview--column {
