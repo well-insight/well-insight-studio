@@ -39,13 +39,7 @@ export const useWorkspaceStore = defineStore('useWorkspaceStore', {
           icon: 'dataset',
         },
       },
-      {
-        path: '/project/pages/report',
-        title: '报表',
-        meta: {
-          icon: 'component-chart',
-        },
-      },
+
       {
         path: '/project/app-assembly',
         title: '应用集',

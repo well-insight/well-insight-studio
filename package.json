@@ -9,8 +9,9 @@
     "build": "pnpm --filter \"./packages/*\" build",
     "build:frontend": "pnpm --filter ./packages/frontend build",
     "build:backend": "pnpm --filter ./packages/backend build",
-    "lint": "pnpm --filter \"./packages/frontend\" lint",
-    "test": "pnpm --filter \"./packages/*\" test"
+    "lint": "pnpm --filter ./packages/frontend lint",
+    "lint:backend": "pnpm --filter ./packages/backend lint",
+    "test": "pnpm --filter ./packages/backend test:run"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

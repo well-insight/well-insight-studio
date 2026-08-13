@@ -1,15 +1,16 @@
 <script lang="ts" setup>
 import type { PageType } from '@/api/pages'
 import type { FormSchema } from '@/form-designer/types'
-import { DataLine } from '@element-plus/icons-vue'
+import type { ReportSchema } from '@/report-designer/types'
 import { ElMessage, ElMessageBox } from 'element-plus'
-
 import { computed, onActivated, onBeforeUnmount, onMounted, onUnmounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import { fetchPage } from '@/api/pages'
 import { ELayout, ELayoutContent } from '@/components/e-layout'
 import { FormDesigner } from '@/form-designer'
 import { getEmptyFormSchema, isValidFormSchema } from '@/form-designer/form-designer.utils'
+import { ReportDesigner } from '@/report-designer'
+import { getEmptyReportSchema, isValidReportSchema, normalizeReportSchema } from '@/report-designer/report-schema.utils'
 import { useControlStore } from '@/stores/controlStore'
 import { usePageStore } from '@/stores/pageStore'
 import { useVisualData } from '@/visual-editor/hooks/useVisualData'
@@ -28,6 +29,11 @@ const { overrideProject, updateVisualLoading, isDirty, jsonData, syncSavedBaseli
 const formDesignerRef = ref<InstanceType<typeof FormDesigner> | null>(null)
 const formSchemaRef = ref<FormSchema | null>(null)
 const formDirty = ref(false)
+
+/** 报表设计器相关状态 */
+const reportDesignerRef = ref<InstanceType<typeof ReportDesigner> | null>(null)
+const reportSchemaRef = ref<ReportSchema | null>(null)
+const reportDirty = ref(false)
 
 /** 页面级自动保存状态 */
 const AUTO_SAVE_DELAY = 3000
@@ -86,23 +92,7 @@ function getDefaultSchema(type: PageType): Record<string, unknown> {
     case 'form':
       return getEmptyFormSchema() as unknown as Record<string, unknown>
     case 'report':
-      return {
-        pages: {
-          '/': {
-            title: '报表页',
-            path: '/',
-            config: {
-              bgColor: '',
-              bgImage: '',
-              keepAlive: false,
-              pageSize: { name: '', width: 1920, height: 1080 },
-            },
-            blocks: [],
-          },
-        },
-        models: [],
-        actions: { fetch: { name: '接口请求', apis: [] }, dialog: { name: '对话框', handlers: [] } },
-      }
+      return getEmptyReportSchema() as unknown as Record<string, unknown>
   }
 }
 
@@ -135,14 +125,19 @@ async function loadPageById(id: string) {
     await pageStore.loadPage(id)
 
     if (detail.type === 'form') {
-      // 表单页面：使用 FormSchema
       const dsl = isFormTypeDSL(detail.dsl)
         ? (detail.dsl as unknown as FormSchema)
         : getEmptyFormSchema()
       formSchemaRef.value = dsl
     }
+    else if (detail.type === 'report') {
+      reportSchemaRef.value = isValidReportSchema(detail.dsl)
+        ? normalizeReportSchema(detail.dsl)
+        : getEmptyReportSchema()
+      reportDirty.value = false
+      autoSaveBaseline.value = JSON.stringify(reportSchemaRef.value)
+    }
     else {
-      // 可视化页面
       const dsl = isValidVisualDSL(detail.dsl) ? detail.dsl : getDefaultSchema(detail.type)
       overrideProject(dsl as any)
       updateVisualDSL(dsl as Record<string, unknown>)
@@ -172,6 +167,14 @@ function initNewPage(type: PageType) {
   if (type === 'form') {
     formSchemaRef.value = getEmptyFormSchema()
     formDirty.value = false
+    updateVisualLoading(false)
+    return
+  }
+
+  if (type === 'report') {
+    reportSchemaRef.value = getEmptyReportSchema()
+    reportDirty.value = false
+    autoSaveBaseline.value = JSON.stringify(reportSchemaRef.value)
     updateVisualLoading(false)
     return
   }
@@ -213,11 +216,14 @@ onActivated(() => {
 /** 获取当前待保存的 DSL */
 function getCurrentDSL(): Record<string, unknown> {
   if (pageType.value === 'form') {
-    // 从表单设计器获取最新 Schema
-    if (formDesignerRef.value) {
+    if (formDesignerRef.value)
       return formDesignerRef.value.getSchema() as unknown as Record<string, unknown>
-    }
     return (formSchemaRef.value ?? getEmptyFormSchema()) as unknown as Record<string, unknown>
+  }
+  if (pageType.value === 'report') {
+    if (reportDesignerRef.value)
+      return reportDesignerRef.value.getSchema() as unknown as Record<string, unknown>
+    return (reportSchemaRef.value ?? getEmptyReportSchema()) as unknown as Record<string, unknown>
   }
   return JSON.parse(JSON.stringify(jsonData.value)) as Record<string, unknown>
 }
@@ -239,11 +245,13 @@ function clearAutoSaveState() {
 function hasAutoSaveChanges() {
   if (pageType.value === 'form')
     return formDirty.value
+  if (pageType.value === 'report')
+    return reportDirty.value
   return Boolean(autoSaveBaseline.value) && JSON.stringify(getCurrentDSL()) !== autoSaveBaseline.value
 }
 
 function currentPageIsPersisted() {
-  return Boolean(pageId.value) && !isNew.value && (pageType.value === 'visualization' || pageType.value === 'form')
+  return Boolean(pageId.value) && !isNew.value && ['visualization', 'form', 'report'].includes(pageType.value)
 }
 
 async function performAutoSave(): Promise<boolean> {
@@ -281,9 +289,13 @@ async function performAutoSave(): Promise<boolean> {
       syncSavedBaseline()
       markVisualClean()
     }
-    else if (formDesignerRef.value) {
+    else if (pageType.value === 'form' && formDesignerRef.value) {
       formDesignerRef.value.syncSavedBaseline()
       formDirty.value = false
+    }
+    else if (pageType.value === 'report' && reportDesignerRef.value) {
+      reportDesignerRef.value.syncSavedBaseline()
+      reportDirty.value = false
     }
     return true
   }
@@ -346,11 +358,15 @@ async function _savePageDraft() {
       autoSaveBaseline.value = JSON.stringify(getCurrentDSL())
       markVisualClean()
     }
-    // 同步表单保存基线
     if (pageType.value === 'form' && formDesignerRef.value) {
       formDesignerRef.value.syncSavedBaseline()
       formDirty.value = false
     }
+    else if (pageType.value === 'report' && reportDesignerRef.value) {
+      reportDesignerRef.value.syncSavedBaseline()
+      reportDirty.value = false
+    }
+    autoSaveBaseline.value = JSON.stringify(getCurrentDSL())
   }
   catch (e) {
     ElMessage.error((e as Error).message || '保存失败')
@@ -391,6 +407,11 @@ async function _publishPage() {
       formDesignerRef.value.syncSavedBaseline()
       formDirty.value = false
     }
+    else if (pageType.value === 'report' && reportDesignerRef.value) {
+      reportDesignerRef.value.syncSavedBaseline()
+      reportDirty.value = false
+    }
+    autoSaveBaseline.value = JSON.stringify(getCurrentDSL())
   }
   catch (e) {
     ElMessage.error((e as Error).message || '发布失败')
@@ -404,7 +425,7 @@ async function _publishPage() {
 
 /** 离开确认 */
 async function confirmLeaveIfDirty(): Promise<boolean> {
-  const dirty = pageType.value === 'form' ? formDirty.value : hasAutoSaveChanges()
+  const dirty = hasAutoSaveChanges()
   if (!dirty)
     return true
   try {
@@ -435,6 +456,11 @@ watch(saveCounter, () => {
     formDesignerRef.value.syncSavedBaseline()
     formDirty.value = false
   }
+  else if (pageType.value === 'report' && reportDesignerRef.value) {
+    reportDesignerRef.value.syncSavedBaseline()
+    reportDirty.value = false
+    autoSaveBaseline.value = JSON.stringify(getCurrentDSL())
+  }
 })
 
 // 同步 dirty 状态到共享状态，供 header 标题栏显示保存标识
@@ -447,6 +473,13 @@ watch(isDirty, (val) => {
 
 watch(formDirty, (val) => {
   if (pageType.value === 'form') {
+    isPageDirty.value = val
+    scheduleAutoSave()
+  }
+})
+
+watch(reportDirty, (val) => {
+  if (pageType.value === 'report') {
     isPageDirty.value = val
     scheduleAutoSave()
   }
@@ -472,7 +505,7 @@ watch(formSchemaRef, (schema) => {
 }, { deep: true })
 
 function onBeforeUnload(e: BeforeUnloadEvent) {
-  const dirty = pageType.value === 'form' ? formDirty.value : hasAutoSaveChanges()
+  const dirty = hasAutoSaveChanges()
   if (dirty) {
     e.preventDefault()
     e.returnValue = ''
@@ -492,6 +525,14 @@ function onFormSchemaUpdate(schema: FormSchema) {
 /** 表单设计器脏状态回调 */
 function onFormDirtyChange(dirty: boolean) {
   formDirty.value = dirty
+}
+
+function onReportSchemaUpdate(schema: ReportSchema) {
+  reportSchemaRef.value = schema
+}
+
+function onReportDirtyChange(dirty: boolean) {
+  reportDirty.value = dirty
 }
 
 onMounted(() => {
@@ -531,20 +572,14 @@ onUnmounted(() => {
       @dirty-change="onFormDirtyChange"
     />
 
-    <!-- 报表占位 -->
-    <div v-else class="flex flex-1 items-center justify-center bg-(--el-bg-color-page)">
-      <div class="text-center">
-        <el-icon :size="72" color="#e6a23c">
-          <DataLine />
-        </el-icon>
-        <h2 class="mt-4 mb-2 text-xl font-semibold">
-          报表设计器
-        </h2>
-        <p class="text-(--el-text-color-secondary)">
-          报表设计器正在开发中，敬请期待...
-        </p>
-      </div>
-    </div>
+    <!-- 报表设计器 -->
+    <ReportDesigner
+      v-else-if="pageType === 'report'"
+      ref="reportDesignerRef"
+      :initial-schema="reportSchemaRef"
+      @update:schema="onReportSchemaUpdate"
+      @dirty-change="onReportDirtyChange"
+    />
   </div>
 </template>
 

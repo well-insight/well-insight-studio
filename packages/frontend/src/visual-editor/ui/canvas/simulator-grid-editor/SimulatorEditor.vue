@@ -92,7 +92,7 @@ function toggleRight() {
         </aside>
       </el-splitter-panel>
 
-      <el-splitter-panel :min="CENTER_MIN">
+      <el-splitter-panel :min="CENTER_MIN" class="simulator-splitter__center-pane">
         <main class="simulator-canvas-wrapper">
           <div class="simulator-canvas-toolbar">
             <h3>
@@ -193,6 +193,16 @@ function toggleRight() {
     height: 100%;
     overflow: hidden;
   }
+
+  :deep(.el-splitter-bar) {
+    z-index: 6;
+  }
+
+  :deep(.el-splitter-bar__dragger-horizontal) {
+    width: 12px;
+    height: 100%;
+    cursor: ew-resize;
+  }
 }
 
 .simulator-rail,
@@ -204,10 +214,10 @@ function toggleRight() {
   height: 100%;
   min-width: 0;
   overflow: hidden;
-  border-radius: var(--ve-radius-md, var(--app-shell-radius, 16px));
-  border: 1px solid var(--ve-panel-border, var(--el-border-color-lighter));
+  border-radius: var(--ve-radius-md, 12px);
+  border: 1px solid var(--ve-panel-border, var(--el-border-color-light));
   background: var(--ve-panel-bg, var(--el-bg-color));
-  box-shadow: var(--ve-panel-shadow, var(--workbench-shadow, none));
+  box-shadow: var(--ve-panel-shadow, var(--ds-shadow-card));
   transition:
     border-color 0.3s ease,
     background 0.3s ease,
@@ -231,29 +241,60 @@ function toggleRight() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 56px;
-  min-width: 28px;
+  width: 30px;
+  height: 64px;
+  min-width: 30px;
   padding: 0;
-  border: 1px solid var(--el-border-color);
-  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-light);
+  background: color-mix(in srgb, var(--el-bg-color) 92%, transparent);
   color: var(--el-text-color-secondary);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--el-color-primary) 8%, transparent),
+    0 6px 18px rgba(4, 8, 14, 0.16);
+  cursor: pointer;
   pointer-events: auto;
   user-select: none;
+  transform: translateY(-50%);
   -webkit-tap-highlight-color: transparent;
   transition:
-    color 0.15s ease,
-    background 0.15s ease,
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+    color 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    width 0.18s ease;
 
-  &:hover,
+  &::before {
+    width: 2px;
+    height: 18px;
+    border-radius: 999px;
+    background: currentColor;
+    content: '';
+    opacity: 0.35;
+  }
+
+  :deep(.el-icon) {
+    position: absolute;
+    display: inline-flex;
+    font-size: 14px;
+  }
+
+  &:hover {
+    width: 34px;
+    color: var(--el-color-primary);
+    border-color: color-mix(in srgb, var(--el-color-primary) 48%, var(--el-border-color-light));
+    background: color-mix(in srgb, var(--el-color-primary) 10%, var(--el-bg-color));
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, var(--el-color-primary) 20%, transparent),
+      0 8px 22px color-mix(in srgb, var(--el-color-primary) 16%, transparent);
+  }
+
   &:focus-visible {
     color: var(--el-color-primary);
-    border-color: var(--el-color-primary-light-5);
-    background: var(--el-color-primary-light-9);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    border-color: var(--el-color-primary);
+    background: color-mix(in srgb, var(--el-color-primary) 10%, var(--el-bg-color));
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--el-color-primary) 20%, transparent),
+      0 8px 22px color-mix(in srgb, var(--el-color-primary) 16%, transparent);
     outline: none;
   }
 }
@@ -261,13 +302,13 @@ function toggleRight() {
 .drawer-toggle--left {
   right: auto;
   border-left: 0;
-  border-radius: 0 var(--app-shell-radius, 8px) var(--app-shell-radius, 8px) 0;
+  border-radius: 0 10px 10px 0;
 }
 
 .drawer-toggle--right {
   left: auto;
   border-right: 0;
-  border-radius: var(--app-shell-radius, 8px) 0 0 var(--app-shell-radius, 8px);
+  border-radius: 10px 0 0 10px;
 }
 
 .simulator-canvas-wrapper {
@@ -276,13 +317,19 @@ function toggleRight() {
   flex: 1;
   min-width: 0;
   height: 100%;
+  margin: 0 10px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-radius: var(--ve-radius-md, var(--app-shell-radius, 16px));
-  border: 1px solid var(--ve-panel-border, var(--el-border-color-lighter));
-  background: var(--ve-canvas-bg, var(--ve-soft-bg, var(--el-bg-color-page)));
-  box-shadow: var(--ve-panel-shadow, var(--workbench-shadow, none));
+  border: 1px solid
+    color-mix(in srgb, var(--el-color-primary) 22%, var(--ve-panel-border, var(--el-border-color-light)));
+  border-radius: var(--ve-radius-md, 12px);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--el-color-primary) 5%, transparent), transparent 96px),
+    var(--ve-canvas-bg, var(--el-bg-color-page));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--el-color-primary) 12%, transparent),
+    var(--ds-shadow-card-lg, 0 18px 46px rgba(31, 58, 112, 0.12));
   padding: 0 16px 16px;
 }
 
@@ -293,7 +340,10 @@ function toggleRight() {
   height: 54px;
   min-height: 54px;
   box-sizing: border-box;
-  padding: 0;
+  padding: 0 16px;
+  margin: 0 -16px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: color-mix(in srgb, var(--el-fill-color-light) 88%, var(--el-bg-color));
   flex-shrink: 0;
 
   h3 {
@@ -314,7 +364,7 @@ function toggleRight() {
   width: 26px;
   height: 26px;
   flex-shrink: 0;
-  border-radius: var(--app-shell-radius, 8px);
+  border-radius: var(--ve-radius-sm, 8px);
   background: color-mix(in srgb, var(--el-color-primary) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--el-color-primary) 22%, transparent);
   color: var(--el-color-primary);
@@ -325,13 +375,19 @@ function toggleRight() {
   min-height: 0;
   position: relative;
   overflow: hidden;
-  border-radius: var(--app-shell-radius, 12px);
+  border: 1px solid var(--el-border-color-extra-light);
+  background:
+    linear-gradient(color-mix(in srgb, var(--el-color-primary) 4%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--el-color-primary) 4%, transparent) 1px, transparent 1px),
+    var(--el-bg-color-page);
+  background-size: 32px 32px;
 
   :deep(> *) {
     width: 100%;
     height: 100%;
     min-width: 0;
     min-height: 0;
+    border-radius: 0;
   }
 }
 
@@ -348,8 +404,8 @@ function toggleRight() {
   min-height: 54px;
   box-sizing: border-box;
   padding: 0 16px;
-  border-bottom: 1px solid var(--el-border-color-extra-light);
-  background: color-mix(in srgb, var(--el-bg-color) 88%, transparent);
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: var(--el-fill-color-light);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -363,7 +419,7 @@ function toggleRight() {
   width: 26px;
   height: 26px;
   flex-shrink: 0;
-  border-radius: var(--app-shell-radius, 8px);
+  border-radius: var(--ve-radius-sm, 8px);
   background: color-mix(in srgb, var(--el-color-primary) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--el-color-primary) 22%, transparent);
   color: var(--el-color-primary);
@@ -383,26 +439,33 @@ function toggleRight() {
 }
 
 :global(html.dark) .simulator-canvas-wrapper {
-  border-color: var(--ve-panel-border);
-  background: var(--ve-canvas-bg);
-  box-shadow: var(--ve-panel-shadow);
+  border-color: color-mix(in srgb, var(--el-color-primary) 22%, var(--ve-panel-border));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--el-color-primary) 6%, transparent), transparent 96px),
+    var(--ve-canvas-bg);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--el-color-primary) 12%, transparent),
+    var(--ds-shadow-card-lg);
 }
 
-:global(html.dark) .simulator-setting-panel__header {
-  border-color: var(--ve-panel-border);
-  background: color-mix(in srgb, var(--ve-panel-bg) 88%, var(--el-bg-color-overlay));
+:global(html.dark) .simulator-setting-panel__header,
+:global(html.dark) .simulator-canvas-toolbar {
+  border-color: var(--el-border-color-lighter);
+  background: var(--el-fill-color-light);
 }
 
 :global(html.dark) .drawer-toggle {
-  border-color: var(--el-border-color-lighter);
-  background: var(--el-bg-color);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+  border-color: var(--el-border-color-light);
+  background: color-mix(in srgb, var(--el-bg-color) 92%, #0c1016);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--el-color-primary) 10%, transparent),
+    0 6px 18px rgba(4, 8, 14, 0.3);
 }
 
 :global(html.dark) .drawer-toggle:hover,
 :global(html.dark) .drawer-toggle:focus-visible {
-  background: var(--el-fill-color);
-  border-color: color-mix(in srgb, var(--el-color-primary) 40%, transparent);
+  background: color-mix(in srgb, var(--el-color-primary) 12%, var(--el-bg-color));
+  border-color: color-mix(in srgb, var(--el-color-primary) 48%, var(--el-border-color-light));
 }
 
 .list-group-item {

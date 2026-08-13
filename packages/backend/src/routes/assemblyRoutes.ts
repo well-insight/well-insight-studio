@@ -1,17 +1,127 @@
-import { Router, Request, Response } from "express";
-import { z } from "zod";
-import { queryOne } from "../config/database";
-import { authenticateToken } from "../middleware/authMiddleware";
-import { AppPageMenuModel } from "../models/AppPageMenu";
-const router: Router = Router(); router.use(authenticateToken);
+import { Router, Request, Response } from 'express';
+import { z } from 'zod';
+import { queryOne } from '../config/database';
+import { authenticateToken } from '../middleware/authMiddleware';
+import { AppPageMenuModel } from '../models/AppPageMenu';
+const router: Router = Router();
+router.use(authenticateToken);
 const id = z.string().min(1);
-const Create = z.object({ page_id: z.string().optional().nullable(), parent_id: z.string().nullable().optional(), menu_title: z.string().min(1).max(200), menu_icon: z.string().max(100).optional(), route_path: z.string().max(500).optional(), permission: z.string().max(100).optional(), sort_order: z.number().int().optional() });
-const Update = z.object({ menu_title: z.string().min(1).max(200).optional(), menu_icon: z.string().max(100).nullable().optional(), route_path: z.string().max(500).nullable().optional(), permission: z.string().max(100).nullable().optional(), parent_id: z.string().nullable().optional(), sort_order: z.number().int().optional() });
-const Sort = z.object({ menus: z.array(z.object({ id: z.string().min(1), parent_id: z.string().nullable().optional(), sort_order: z.number().int() })) });
-router.get("/:id/menus", async (req: Request, res: Response) => { try { const appId = id.parse(req.params.id); if (!await queryOne("SELECT id FROM applications WHERE id = ?", [appId])) return res.status(404).json({ success: false, error: "应用不存在" }); res.json({ success: true, data: await AppPageMenuModel.getMenuTree(appId), message: "获取菜单树成功" }); } catch { res.status(400).json({ success: false, error: "无效的应用 ID" }); } });
-router.post("/:id/menus", async (req, res) => { try { const appId = id.parse(req.params.id), body = Create.parse(req.body), app = await queryOne<{ title: string }>("SELECT title FROM applications WHERE id = ?", [appId]); if (!app) return res.status(404).json({ success: false, error: "应用不存在" }); if (body.page_id && !await queryOne("SELECT id FROM pages WHERE id = ?", [body.page_id])) return res.status(404).json({ success: false, error: "页面不存在" }); const route = body.route_path ?? (body.page_id ? `/${body.menu_title.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-").replace(/^-|-$/g, "")}-${body.page_id.substring(0, 8)}` : undefined); const menu = await AppPageMenuModel.create({ ...body, application_id: appId, route_path: route }); res.status(201).json({ success: true, data: menu, message: "菜单项创建成功" }); } catch (error) { if (error instanceof z.ZodError) return res.status(400).json({ success: false, error: "数据验证失败", details: error.errors }); res.status(500).json({ success: false, error: "服务器内部错误" }); } });
-router.put("/:id/menus/:menuId", async (req, res) => { try { const menu = await AppPageMenuModel.update(id.parse(req.params.menuId), Update.parse(req.body)); if (!menu) return res.status(404).json({ success: false, error: "菜单项不存在" }); res.json({ success: true, data: menu, message: "菜单项更新成功" }); } catch { res.status(400).json({ success: false, error: "数据验证失败" }); } });
-router.delete("/:id/menus/:menuId", async (req, res) => { try { if (!await AppPageMenuModel.delete(id.parse(req.params.menuId))) return res.status(404).json({ success: false, error: "菜单项不存在" }); res.json({ success: true, data: null, message: "菜单项已移除" }); } catch { res.status(400).json({ success: false, error: "无效的菜单 ID" }); } });
-router.patch("/:id/menus/sort", async (req, res) => { try { await AppPageMenuModel.batchUpdateSort(Sort.parse(req.body).menus); res.json({ success: true, data: null, message: "排序更新成功" }); } catch { res.status(400).json({ success: false, error: "数据验证失败" }); } });
-router.post("/:id/publish", async (req, res) => { try { const appId = id.parse(req.params.id), app = await queryOne<{ title: string }>("SELECT title FROM applications WHERE id = ?", [appId]); if (!app) return res.status(404).json({ success: false, error: "应用不存在" }); const menus = await AppPageMenuModel.getMountedPageIds(appId); res.json({ success: true, data: { published_at: new Date().toISOString(), version: "v1.0.0", menu_count: menus.length, preview_url: `/app-preview/${appId}` }, message: `应用 "${app.title}" 发布成功` }); } catch { res.status(400).json({ success: false, error: "无效的应用 ID" }); } });
+const Create = z.object({
+  page_id: z.string().optional().nullable(),
+  parent_id: z.string().nullable().optional(),
+  menu_title: z.string().min(1).max(200),
+  menu_icon: z.string().max(100).optional(),
+  route_path: z.string().max(500).optional(),
+  permission: z.string().max(100).optional(),
+  sort_order: z.number().int().optional(),
+});
+const Update = z.object({
+  menu_title: z.string().min(1).max(200).optional(),
+  menu_icon: z.string().max(100).nullable().optional(),
+  route_path: z.string().max(500).nullable().optional(),
+  permission: z.string().max(100).nullable().optional(),
+  parent_id: z.string().nullable().optional(),
+  sort_order: z.number().int().optional(),
+});
+const Sort = z.object({
+  menus: z.array(
+    z.object({
+      id: z.string().min(1),
+      parent_id: z.string().nullable().optional(),
+      sort_order: z.number().int(),
+    }),
+  ),
+});
+router.get('/:id/menus', async (req: Request, res: Response) => {
+  try {
+    const appId = id.parse(req.params.id);
+    if (!(await queryOne('SELECT id FROM applications WHERE id = ?', [appId])))
+      return res.status(404).json({ success: false, error: '应用不存在' });
+    res.json({
+      success: true,
+      data: await AppPageMenuModel.getMenuTree(appId),
+      message: '获取菜单树成功',
+    });
+  } catch {
+    res.status(400).json({ success: false, error: '无效的应用 ID' });
+  }
+});
+router.post('/:id/menus', async (req, res) => {
+  try {
+    const appId = id.parse(req.params.id),
+      body = Create.parse(req.body),
+      app = await queryOne<{ title: string }>('SELECT title FROM applications WHERE id = ?', [
+        appId,
+      ]);
+    if (!app) return res.status(404).json({ success: false, error: '应用不存在' });
+    if (body.page_id && !(await queryOne('SELECT id FROM pages WHERE id = ?', [body.page_id])))
+      return res.status(404).json({ success: false, error: '页面不存在' });
+    const route =
+      body.route_path ??
+      (body.page_id
+        ? `/${body.menu_title
+            .toLowerCase()
+            .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
+            .replace(/^-|-$/g, '')}-${body.page_id.substring(0, 8)}`
+        : undefined);
+    const menu = await AppPageMenuModel.create({
+      ...body,
+      application_id: appId,
+      route_path: route,
+    });
+    res.status(201).json({ success: true, data: menu, message: '菜单项创建成功' });
+  } catch (error) {
+    if (error instanceof z.ZodError)
+      return res.status(400).json({ success: false, error: '数据验证失败', details: error.errors });
+    res.status(500).json({ success: false, error: '服务器内部错误' });
+  }
+});
+router.put('/:id/menus/:menuId', async (req, res) => {
+  try {
+    const menu = await AppPageMenuModel.update(id.parse(req.params.menuId), Update.parse(req.body));
+    if (!menu) return res.status(404).json({ success: false, error: '菜单项不存在' });
+    res.json({ success: true, data: menu, message: '菜单项更新成功' });
+  } catch {
+    res.status(400).json({ success: false, error: '数据验证失败' });
+  }
+});
+router.delete('/:id/menus/:menuId', async (req, res) => {
+  try {
+    if (!(await AppPageMenuModel.delete(id.parse(req.params.menuId))))
+      return res.status(404).json({ success: false, error: '菜单项不存在' });
+    res.json({ success: true, data: null, message: '菜单项已移除' });
+  } catch {
+    res.status(400).json({ success: false, error: '无效的菜单 ID' });
+  }
+});
+router.patch('/:id/menus/sort', async (req, res) => {
+  try {
+    await AppPageMenuModel.batchUpdateSort(Sort.parse(req.body).menus);
+    res.json({ success: true, data: null, message: '排序更新成功' });
+  } catch {
+    res.status(400).json({ success: false, error: '数据验证失败' });
+  }
+});
+router.post('/:id/publish', async (req, res) => {
+  try {
+    const appId = id.parse(req.params.id),
+      app = await queryOne<{ title: string }>('SELECT title FROM applications WHERE id = ?', [
+        appId,
+      ]);
+    if (!app) return res.status(404).json({ success: false, error: '应用不存在' });
+    const menus = await AppPageMenuModel.getMountedPageIds(appId);
+    res.json({
+      success: true,
+      data: {
+        published_at: new Date().toISOString(),
+        version: 'v1.0.0',
+        menu_count: menus.length,
+        preview_url: `/app-preview/${appId}`,
+      },
+      message: `应用 "${app.title}" 发布成功`,
+    });
+  } catch {
+    res.status(400).json({ success: false, error: '无效的应用 ID' });
+  }
+});
 export default router;

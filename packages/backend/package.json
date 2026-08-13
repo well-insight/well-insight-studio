@@ -11,7 +11,9 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
-    "lint": "eslint src --ext .ts,.js",
+    "format": "oxfmt --write src",
+    "format:check": "oxfmt --check src",
+    "lint": "pnpm format:check && pnpm type-check",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

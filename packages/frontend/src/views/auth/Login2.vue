@@ -4,7 +4,6 @@ import { ElMessage } from 'element-plus'
 import { nextTick, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { loginRequest, registerRequest } from '@/api/auth'
-import heroImg from '@/assets/login-hero.png'
 
 import { getAuthStore } from '@/stores/auth'
 
@@ -119,7 +118,6 @@ async function onSubmit() {
   }
 
   if (mode.value === 'register') {
-    const email = accountOrEmail
     const username = form.username.trim()
     if (!username) {
       ElMessage.warning('请输入用户名')
@@ -183,13 +181,8 @@ function setMode(next: AuthMode) {
 <template>
   <div class="login-page">
     <div class="login-page__bg" aria-hidden="true">
-      <img
-        class="login-page__bg-img"
-        :src="heroImg"
-        alt=""
-        fetchpriority="high"
-        decoding="async"
-      >
+      <div class="login-page__bg-orb login-page__bg-orb--one" />
+      <div class="login-page__bg-orb login-page__bg-orb--two" />
       <div class="login-page__bg-overlay" />
     </div>
 
@@ -366,16 +359,29 @@ function setMode(next: AuthMode) {
   inset: 0;
   z-index: 0;
   overflow: hidden;
-  background: #e6eef9;
+  background:
+    radial-gradient(circle at 15% 15%, rgba(110, 170, 255, 0.45), transparent 34%),
+    linear-gradient(135deg, #dcecff 0%, #edf5ff 48%, #d7e9ff 100%);
 }
 
-.login-page__bg-img {
+.login-page__bg-orb {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  /* 拉伸铺满视口，四边无留白（宽高比与屏幕不一致时会变形） */
-  object-fit: fill;
+  width: min(52vw, 760px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(4px);
+}
+
+.login-page__bg-orb--one {
+  top: -20%;
+  left: -8%;
+  background: rgba(64, 129, 226, 0.22);
+}
+
+.login-page__bg-orb--two {
+  right: 22%;
+  bottom: -28%;
+  background: rgba(65, 184, 196, 0.2);
 }
 
 .login-page__bg-overlay {

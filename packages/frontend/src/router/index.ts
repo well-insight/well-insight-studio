@@ -75,12 +75,10 @@ const routes2: RouteRecordRaw[] = [
         path: 'project/pages/form/:pathMatch(.*)*',
         redirect: '/project/dataset',
       },
-      // 页面设计 - 报表
+      // 报表功能暂未开放，保留历史链接的安全回退。
       {
         path: 'project/pages/report',
-        name: 'PageListReport',
-        component: () => import('@/views/page-factory/ReportDesignList.vue'),
-        meta: { title: '报表' },
+        redirect: '/project/pages/visual',
       },
       // 页面编辑 - 新建
       {
@@ -103,16 +101,9 @@ const routes2: RouteRecordRaw[] = [
         },
         meta: { title: '可视化编辑' },
       },
-      // 页面编辑 - 报表
       {
-        path: 'project/pages/report/:id',
-        name: 'ReportPageEditor',
-        components: {
-          default: () => import('@/views/page-factory/PageEditor.vue'),
-          headerCenter: () => import('@/views/page-factory/components/PageTitle.vue'),
-          headerActions: () => import('@/views/page-factory/components/PageEditorActions.vue'),
-        },
-        meta: { title: '报表编辑' },
+        path: 'project/pages/report/:pathMatch(.*)*',
+        redirect: '/project/pages/visual',
       },
       // 应用集
       {

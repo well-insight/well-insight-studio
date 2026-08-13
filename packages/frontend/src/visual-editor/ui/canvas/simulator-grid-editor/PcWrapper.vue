@@ -2425,7 +2425,7 @@ defineExpose({
   flex-shrink: 0;
   width: 100%;
   overflow: visible;
-  border-radius: var(--ve-radius-md, 12px);
+  border-radius: 0;
   border: 1px solid var(--ve-paper-edge, var(--el-border-color-lighter));
   background: var(--ve-paper-bg, var(--canvas-bg-page, var(--el-bg-color)));
   box-shadow: var(--ve-paper-shadow, 0 12px 32px rgba(0, 0, 0, 0.06));
@@ -2435,7 +2435,7 @@ defineExpose({
   width: 100%;
   height: auto;
   overflow: visible;
-  border-radius: inherit;
+  border-radius: 0;
 }
 
 .grid-layout-canvas {

@@ -73,7 +73,7 @@ const controlStore = useControlStore()
 const catalogs = computed<WidgetCatalogConfig[]>(() => WIDGET_CATALOGS)
 const currentCategory = ref('all')
 const currentSearch = ref('')
-const gridColumns = ref<1 | 2>(2)
+const gridColumns = ref<1 | 2>(1)
 const hoverKey = ref<string | null>(null)
 
 const allComponents = computed<ComponentListItem[]>(() => {

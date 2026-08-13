@@ -172,7 +172,7 @@ watch(datasetId, () => void loadDataset(), { immediate: true })
   gap: 14px;
   height: 56px;
   padding: 0 16px;
-  border-bottom: 1px solid rgba(82, 124, 181, 0.14);
+  border-bottom: 1px solid var(--el-border-color-light);
   background: var(--el-bg-color);
 }
 
@@ -202,5 +202,18 @@ watch(datasetId, () => void loadDataset(), { immediate: true })
   flex: 1;
   min-height: 0;
   overflow: hidden;
+}
+
+:global(html.dark) .dataset-form-workspace__header {
+  background: color-mix(in srgb, var(--el-bg-color) 92%, #0c1016);
+}
+
+:global(html.dark) .dataset-form-workspace__header :deep(.el-button.is-text) {
+  color: var(--el-text-color-regular);
+}
+
+:global(html.dark) .dataset-form-workspace__header :deep(.el-button.is-text:hover) {
+  color: var(--el-color-primary);
+  background: var(--el-fill-color-light);
 }
 </style>

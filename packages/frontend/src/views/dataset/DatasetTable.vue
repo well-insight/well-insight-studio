@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import type { ColumnDefine, ListTableConstructorOptions } from '@visactor/vtable'
 import type { ApiDatasetDetail, ApiDatasetField } from '@/api/dataset'
 import type { FormField, FormSchema } from '@/form-designer/types'
 import dayjs from 'dayjs'
 import { ElButton, ElMessage, ElMessageBox } from 'element-plus'
-import { h, reactive, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import {
   createDatasetRow,
   deleteDatasetRow,
@@ -13,12 +12,9 @@ import {
   updateDatasetRow,
 } from '@/api/dataset'
 import { AdaptiveDialog } from '@/components/adaptive-dialog'
-import ColumnField from '@/components/column-field/ColumnField.vue'
-import ElListTable from '@/components/el-vtable/ElListTable.vue'
+
 import { FormRenderer } from '@/form-designer'
 import { createFormField, getEmptyFormSchema, isValidFormSchema, normalizeFormSchema } from '@/form-designer/form-designer.utils'
-
-import { vueGroupCustomLayout } from '@/utils/vtableVueCustomLayout'
 
 const props = withDefaults(
   defineProps<{
@@ -44,11 +40,7 @@ const pageSize = ref(20)
 const total = ref(0)
 const fields = ref<ApiDatasetField[]>([])
 
-const tableOptions = reactive<ListTableConstructorOptions>({
-  columns: [],
-  records: [],
-  widthMode: 'autoWidth',
-})
+const tableRows = ref<Record<string, unknown>[]>([])
 
 const rowDialogVisible = ref(false)
 const rowDialogMode = ref<'create' | 'edit'>('create')
@@ -161,90 +153,6 @@ function formatCell(v: unknown): string {
   return String(v)
 }
 
-function syncTableFrozen(editable: boolean) {
-  tableOptions.frozenColCount = editable ? 1 : 0
-  tableOptions.rightFrozenColCount = editable ? 1 : 0
-  if (editable) {
-    tableOptions.emptyTip = { text: '暂无数据，点击「新增行」添加' }
-  }
-  else {
-    delete tableOptions.emptyTip
-  }
-}
-
-function buildColumns(f: ApiDatasetField[], editable: boolean) {
-  const base: ColumnDefine[] = [
-    {
-      field: '__row_seq',
-      title: '序号',
-      width: 60,
-      minWidth: 60,
-      maxWidth: 120,
-      headerStyle: { textAlign: 'center' },
-      style: { textAlign: 'center' },
-    },
-  ]
-  const dataCols: ColumnDefine[] = f.map((col) => {
-    const headerLayout = vueGroupCustomLayout(() =>
-      h('div', { style: { display: 'flex', alignItems: 'center', height: '100%' } }, [
-        h(ColumnField, { field: col }),
-      ]),
-    )
-    return {
-      field: `c_${col.id}`,
-      title: `${col.name} (${col.field_type})`,
-      width: 160,
-      headerCustomLayout: headerLayout,
-    }
-  })
-  if (!editable) {
-    return [...base, ...dataCols]
-  }
-  const actionsCol = {
-    field: '__actions',
-    title: '操作',
-    minWidth: 150,
-    headerStyle: {
-      textAlign: 'center',
-    },
-    customLayout: vueGroupCustomLayout(({ record }) =>
-      h(
-        'div',
-        {
-          style: {
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            height: '100%',
-          },
-        },
-        [
-          h(
-            ElButton,
-            {
-              link: true,
-              type: 'primary',
-              onClick: () => openEditRow(record),
-            },
-            () => '编辑',
-          ),
-          h(
-            ElButton,
-            {
-              link: true,
-              type: 'danger',
-              onClick: () => confirmDeleteRow(record),
-            },
-            () => '删除',
-          ),
-        ],
-      ),
-    ),
-  } as ColumnDefine
-  return [...base, ...dataCols, actionsCol]
-}
-
 function buildRecords(
   rows: { id: string, values: Record<string, unknown> }[],
   f: ApiDatasetField[],
@@ -271,13 +179,13 @@ async function loadRowsOnly() {
   loading.value = true
   try {
     const { rows, total: t } = await fetchDatasetRowsPage(id, page.value, pageSize.value)
-    tableOptions.records = buildRecords(rows, fields.value, (page.value - 1) * pageSize.value + 1)
+    tableRows.value = buildRecords(rows, fields.value, (page.value - 1) * pageSize.value + 1)
     total.value = t
   }
   catch (e) {
     const msg = e instanceof Error ? e.message : '加载数据失败'
     ElMessage.error(msg)
-    tableOptions.records = []
+    tableRows.value = []
     total.value = 0
   }
   finally {
@@ -290,31 +198,24 @@ async function loadDetailAndRows() {
   if (id == null) {
     fields.value = []
     rowFormSchema.value = null
-    tableOptions.columns = []
-    tableOptions.records = []
+    tableRows.value = []
     total.value = 0
     return
   }
   loading.value = true
   fields.value = []
-  tableOptions.columns = []
-  tableOptions.records = []
-  syncTableFrozen(false)
+  tableRows.value = []
   try {
     const detail = await fetchDatasetDetail(id)
     fields.value = [...detail.fields].sort((a, b) => a.sort_order - b.sort_order)
     rowFormSchema.value = createRowFormSchema(detail)
     if (fields.value.length === 0) {
-      tableOptions.columns = []
-      tableOptions.records = []
-      syncTableFrozen(false)
+      tableRows.value = []
       total.value = detail.row_count
       return
     }
     const { rows, total: t } = await fetchDatasetRowsPage(id, page.value, pageSize.value)
-    syncTableFrozen(props.editable)
-    tableOptions.columns = buildColumns(fields.value, props.editable)
-    tableOptions.records = buildRecords(rows, fields.value, (page.value - 1) * pageSize.value + 1)
+    tableRows.value = buildRecords(rows, fields.value, (page.value - 1) * pageSize.value + 1)
     total.value = t
   }
   catch (e) {
@@ -322,25 +223,13 @@ async function loadDetailAndRows() {
     ElMessage.error(msg)
     fields.value = []
     rowFormSchema.value = null
-    tableOptions.columns = []
-    tableOptions.records = []
-    syncTableFrozen(false)
+    tableRows.value = []
     total.value = 0
   }
   finally {
     loading.value = false
   }
 }
-
-watch(
-  () => props.editable,
-  (editable: boolean) => {
-    if (fields.value.length === 0)
-      return
-    syncTableFrozen(editable)
-    tableOptions.columns = buildColumns(fields.value, editable)
-  },
-)
 
 watch(
   () => props.datasetId,
@@ -467,7 +356,7 @@ async function confirmDeleteRow(row: Record<string, unknown>) {
   try {
     await deleteDatasetRow(id, rowId)
     ElMessage.success('已删除')
-    if (tableOptions.records.length <= 1 && page.value > 1) {
+    if (tableRows.value.length <= 1 && page.value > 1) {
       page.value -= 1
     }
     await loadRowsOnly()
@@ -495,12 +384,35 @@ defineExpose({
       </div>
       <template v-else-if="editable">
         <div v-loading="loading" :class="$style.editArea">
-          <div class="w-full flex-auto h-0">
-            <el-auto-resizer>
-              <template #default="{ height, width }">
-                <ElListTable :options="tableOptions" :width="width" :height="height" />
-              </template>
-            </el-auto-resizer>
+          <div :class="$style.tableViewport">
+            <el-table
+              :data="tableRows"
+              height="100%"
+              border
+              stripe
+              row-key="__row_id"
+              empty-text="暂无数据，点击「新增行」添加"
+            >
+              <el-table-column prop="__row_seq" label="序号" width="68" align="center" />
+              <el-table-column
+                v-for="field in fields"
+                :key="field.id"
+                :prop="`c_${field.id}`"
+                :label="`${field.name}（${field.field_type}）`"
+                min-width="160"
+                show-overflow-tooltip
+              />
+              <el-table-column label="操作" width="150" fixed="right" align="center">
+                <template #default="{ row }">
+                  <ElButton link type="primary" @click="openEditRow(row)">
+                    编辑
+                  </ElButton>
+                  <ElButton link type="danger" @click="confirmDeleteRow(row)">
+                    删除
+                  </ElButton>
+                </template>
+              </el-table-column>
+            </el-table>
           </div>
           <div v-if="fields.length > 0" :class="$style.pager">
             <el-pagination
@@ -543,12 +455,25 @@ defineExpose({
         </AdaptiveDialog>
       </template>
       <div v-else v-loading="loading" :class="$style.tableArea">
-        <div class="w-full flex-auto h-0">
-          <el-auto-resizer>
-            <template #default="{ height, width }">
-              <ElListTable :options="tableOptions" :width="width" :height="height" />
-            </template>
-          </el-auto-resizer>
+        <div :class="$style.tableViewport">
+          <el-table
+            :data="tableRows"
+            height="100%"
+            border
+            stripe
+            row-key="__row_id"
+            empty-text="暂无数据"
+          >
+            <el-table-column prop="__row_seq" label="序号" width="68" align="center" />
+            <el-table-column
+              v-for="field in fields"
+              :key="field.id"
+              :prop="`c_${field.id}`"
+              :label="`${field.name}（${field.field_type}）`"
+              min-width="160"
+              show-overflow-tooltip
+            />
+          </el-table>
         </div>
         <div v-if="fields.length > 0" :class="$style.pager">
           <el-pagination
@@ -592,10 +517,27 @@ defineExpose({
   height: 100%;
 }
 
+.tableViewport {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tableViewport :global(.el-table) {
+  width: 100%;
+  --el-table-header-bg-color: var(--el-fill-color-light);
+  --el-table-header-text-color: var(--el-text-color-primary);
+}
+
+.tableViewport :global(.el-table__header th.el-table__cell) {
+  font-weight: 600;
+}
+
 .pager {
   display: flex;
+  flex: 0 0 40px;
+  align-items: center;
   justify-content: flex-end;
-  height: 60px;
   padding: 0 12px;
 }
 </style>

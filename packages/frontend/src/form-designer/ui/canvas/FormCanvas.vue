@@ -486,8 +486,8 @@ function onCanvasPointerDown(event: MouseEvent) {
   border-radius: 12px;
   background-color: var(--el-bg-color-page);
   background-image:
-    linear-gradient(rgba(37, 99, 235, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(37, 99, 235, 0.035) 1px, transparent 1px),
+    linear-gradient(color-mix(in srgb, var(--el-color-primary) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--el-color-primary) 5%, transparent) 1px, transparent 1px),
     radial-gradient(circle, var(--fd-grid-dot, var(--el-fill-color-lighter)) 1px, transparent 1px);
   background-size:
     80px 80px,
@@ -530,7 +530,7 @@ function onCanvasPointerDown(event: MouseEvent) {
     var(--el-bg-color);
   box-shadow:
     0 1px 0 color-mix(in srgb, var(--el-color-primary) 8%, transparent),
-    0 18px 46px rgba(31, 58, 112, 0.12);
+    var(--ds-shadow-card-lg, 0 18px 46px rgba(31, 58, 112, 0.12));
 }
 
 .form-canvas-empty__mark {

@@ -177,8 +177,12 @@ defineExpose({
   height: 100%;
   padding: 10px;
   background:
-    radial-gradient(circle at 18% 12%, rgba(20, 184, 166, 0.09), transparent 26%),
-    linear-gradient(135deg, rgba(248, 251, 255, 0.94), rgba(240, 249, 255, 0.78)), var(--el-bg-color-page);
+    radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--el-color-primary) 9%, transparent), transparent 28%),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--el-bg-color) 94%, var(--el-bg-color-page)),
+      var(--el-bg-color-page)
+    );
 }
 
 .form-designer-body {
@@ -190,10 +194,10 @@ defineExpose({
 .form-designer-center {
   min-height: 0;
   overflow: hidden;
-  border: 1px solid rgba(82, 124, 181, 0.16);
+  border: 1px solid var(--el-border-color-light);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.86);
-  box-shadow: 0 12px 32px rgba(31, 58, 112, 0.08);
+  background: var(--el-bg-color);
+  box-shadow: var(--ds-shadow-card, 0 12px 32px rgba(31, 58, 112, 0.08));
 }
 
 .form-designer-left {
@@ -211,24 +215,24 @@ defineExpose({
 }
 
 .form-designer-right__tabs {
-  border-bottom: 1px solid rgba(82, 124, 181, 0.12);
-  background: rgba(255, 255, 255, 0.78);
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: var(--el-fill-color-light);
 }
 
 :global(html.dark) .form-designer {
   background:
-    radial-gradient(circle at 18% 12%, rgba(20, 184, 166, 0.1), transparent 26%),
-    linear-gradient(135deg, rgba(6, 17, 28, 0.95), rgba(7, 26, 43, 0.8)), var(--el-bg-color-page);
+    radial-gradient(circle at 18% 12%, rgba(124, 242, 255, 0.08), transparent 28%),
+    linear-gradient(135deg, #0c1016, #121923);
 }
 
 :global(html.dark) .form-designer-left,
 :global(html.dark) .form-designer-right,
 :global(html.dark) .form-designer-center {
-  border-color: rgba(140, 210, 255, 0.14);
-  background: rgba(8, 28, 48, 0.72);
+  background: var(--el-bg-color);
+  box-shadow: var(--ds-shadow-card);
 }
 
 :global(html.dark) .form-designer-right__tabs {
-  background: rgba(13, 40, 64, 0.72);
+  background: var(--el-fill-color-light);
 }
 </style>

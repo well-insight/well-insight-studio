@@ -173,16 +173,16 @@ const filteredCategories = computed(() => {
 .form-component-list {
   overflow: hidden;
   border-radius: 12px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 251, 255, 0.84)), var(--el-bg-color);
+  background: linear-gradient(180deg, var(--el-bg-color), var(--el-fill-color-extra-light));
 }
 
 .form-component-list__head {
-  border-bottom: 1px solid rgba(82, 124, 181, 0.12);
-  background: rgba(255, 255, 255, 0.78);
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: var(--el-fill-color-light);
 }
 
 .form-component-list__search {
-  border-bottom: 1px solid rgba(82, 124, 181, 0.08);
+  border-bottom: 1px solid var(--el-border-color-extra-light);
 }
 
 .form-component-item {
@@ -194,14 +194,14 @@ const filteredCategories = computed(() => {
 }
 
 .form-component-item__icon {
-  background: linear-gradient(135deg, rgba(var(--el-color-primary-rgb), 0.12), rgba(20, 184, 166, 0.08));
+  background: var(--fd-chip-bg, var(--el-fill-color-light));
 }
 
 .form-component-item:hover {
   border-color: color-mix(in srgb, var(--el-color-primary) 45%, var(--el-border-color));
-  background: linear-gradient(135deg, rgba(var(--el-color-primary-rgb), 0.1), rgba(20, 184, 166, 0.06));
+  background: color-mix(in srgb, var(--el-color-primary) 8%, var(--el-fill-color-light));
   color: var(--el-color-primary);
-  box-shadow: 0 10px 20px rgba(31, 58, 112, 0.1);
+  box-shadow: var(--ds-shadow-card, 0 10px 20px rgba(31, 58, 112, 0.1));
   transform: translateY(-1px);
 }
 
@@ -218,12 +218,10 @@ const filteredCategories = computed(() => {
 }
 
 :global(html.dark) .form-component-list {
-  background: linear-gradient(180deg, rgba(13, 40, 64, 0.86), rgba(8, 28, 48, 0.78)), var(--el-bg-color);
+  background: linear-gradient(180deg, var(--el-bg-color), var(--el-fill-color-extra-light));
 }
 
-:global(html.dark) .form-component-list__head,
-:global(html.dark) .form-component-list__search {
-  border-color: rgba(140, 210, 255, 0.1);
-  background: rgba(13, 40, 64, 0.68);
+:global(html.dark) .form-component-list__head {
+  background: var(--el-fill-color-light);
 }
 </style>

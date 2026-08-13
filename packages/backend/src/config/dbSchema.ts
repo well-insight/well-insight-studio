@@ -1,12 +1,16 @@
-import { PoolConnection } from "mysql2/promise";
-import { execute, queryOne, withTransaction } from "./database";
-import { generateSnowflakeId } from "../utils/snowflake";
+import { PoolConnection } from 'mysql2/promise';
+import { execute, queryOne, withTransaction } from './database';
+import { generateSnowflakeId } from '../utils/snowflake';
 
-type SqlExecutor = Pick<PoolConnection, "execute">;
+type SqlExecutor = Pick<PoolConnection, 'execute'>;
 
-const tableOptions = "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+const tableOptions = 'ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
 
-async function ensureColumn(tableName: string, columnName: string, columnDefinition: string): Promise<void> {
+async function ensureColumn(
+  tableName: string,
+  columnName: string,
+  columnDefinition: string,
+): Promise<void> {
   const column = await queryOne(
     `SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?`,
     [tableName, columnName],
@@ -14,7 +18,11 @@ async function ensureColumn(tableName: string, columnName: string, columnDefinit
   if (!column) await execute(`ALTER TABLE \`${tableName}\` ADD COLUMN ${columnDefinition}`);
 }
 
-async function ensureIndex(tableName: string, indexName: string, definition: string): Promise<void> {
+async function ensureIndex(
+  tableName: string,
+  indexName: string,
+  definition: string,
+): Promise<void> {
   const index = await queryOne(
     `SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?`,
     [tableName, indexName],
@@ -123,62 +131,99 @@ async function createTables(): Promise<void> {
   for (const statement of statements) await execute(statement);
 
   const indexes: Array<[string, string, string]> = [
-    ["users", "idx_users_email", "(email)"], ["user_roles", "idx_user_roles_user_id", "(user_id)"],
-    ["user_roles", "idx_user_roles_project_id", "(project_id)"], ["permission_rules", "idx_permission_rules_resource", "(resource_type, resource_id)"],
-    ["projects", "idx_projects_owner", "(owner_id)"], ["applications", "idx_applications_owner", "(owner_id)"], ["applications", "idx_applications_updated", "(updated_at)"],
-    ["datasets", "idx_datasets_owner", "(owner_id)"], ["datasets", "idx_datasets_project", "(project_id)"], ["datasets", "idx_datasets_folder", "(folder_id)"],
-    ["dataset_folders", "idx_dataset_folders_owner", "(owner_id)"], ["dataset_folders", "idx_dataset_folders_parent", "(parent_id)"], ["dataset_folders", "idx_dataset_folders_project", "(project_id)"],
-    ["dataset_fields", "idx_dataset_fields_dataset", "(dataset_id)"], ["dataset_rows", "idx_dataset_rows_dataset", "(dataset_id)"],
-    ["pages", "idx_pages_created_by", "(created_by)"], ["pages", "idx_pages_folder", "(folder_id)"], ["pages", "idx_pages_type", "(type)"], ["pages", "idx_pages_status", "(status)"],
-    ["page_folders", "idx_page_folders_owner", "(owner_id)"], ["page_folders", "idx_page_folders_parent", "(parent_id)"],
-    ["form_records", "idx_form_records_page", "(page_id)"], ["form_records", "idx_form_records_created_by", "(created_by)"],
-    ["app_page_menus", "idx_app_page_menus_app", "(application_id)"], ["app_page_menus", "idx_app_page_menus_page", "(page_id)"], ["app_page_menus", "idx_app_page_menus_parent", "(parent_id)"],
+    ['users', 'idx_users_email', '(email)'],
+    ['user_roles', 'idx_user_roles_user_id', '(user_id)'],
+    ['user_roles', 'idx_user_roles_project_id', '(project_id)'],
+    ['permission_rules', 'idx_permission_rules_resource', '(resource_type, resource_id)'],
+    ['projects', 'idx_projects_owner', '(owner_id)'],
+    ['applications', 'idx_applications_owner', '(owner_id)'],
+    ['applications', 'idx_applications_updated', '(updated_at)'],
+    ['datasets', 'idx_datasets_owner', '(owner_id)'],
+    ['datasets', 'idx_datasets_project', '(project_id)'],
+    ['datasets', 'idx_datasets_folder', '(folder_id)'],
+    ['dataset_folders', 'idx_dataset_folders_owner', '(owner_id)'],
+    ['dataset_folders', 'idx_dataset_folders_parent', '(parent_id)'],
+    ['dataset_folders', 'idx_dataset_folders_project', '(project_id)'],
+    ['dataset_fields', 'idx_dataset_fields_dataset', '(dataset_id)'],
+    ['dataset_rows', 'idx_dataset_rows_dataset', '(dataset_id)'],
+    ['pages', 'idx_pages_created_by', '(created_by)'],
+    ['pages', 'idx_pages_folder', '(folder_id)'],
+    ['pages', 'idx_pages_type', '(type)'],
+    ['pages', 'idx_pages_status', '(status)'],
+    ['page_folders', 'idx_page_folders_owner', '(owner_id)'],
+    ['page_folders', 'idx_page_folders_parent', '(parent_id)'],
+    ['form_records', 'idx_form_records_page', '(page_id)'],
+    ['form_records', 'idx_form_records_created_by', '(created_by)'],
+    ['app_page_menus', 'idx_app_page_menus_app', '(application_id)'],
+    ['app_page_menus', 'idx_app_page_menus_page', '(page_id)'],
+    ['app_page_menus', 'idx_app_page_menus_parent', '(parent_id)'],
   ];
   for (const [table, name, definition] of indexes) await ensureIndex(table, name, definition);
 }
 
 async function initializeDefaultRoles(): Promise<void> {
   await withTransaction(async (connection) => {
-    const [existing] = await connection.execute("SELECT 1 FROM roles WHERE name = ? LIMIT 1", ["admin"]);
+    const [existing] = await connection.execute('SELECT 1 FROM roles WHERE name = ? LIMIT 1', [
+      'admin',
+    ]);
     if (Array.isArray(existing) && existing.length > 0) return;
 
     const systemUserId = generateSnowflakeId();
-    const defaultPasswordHash = "$2a$10$cSbztqHbBsIu4FDFi8zjIuG54VZVwhA0BRicTrjKTt3yD.QkDMtWy";
+    const defaultPasswordHash = '$2a$10$cSbztqHbBsIu4FDFi8zjIuG54VZVwhA0BRicTrjKTt3yD.QkDMtWy';
     await connection.execute(
-      "INSERT INTO users (id, email, password_hash, username, display_name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [systemUserId, "admin@cube.com", defaultPasswordHash, "admin", "管理员", "admin", 1],
+      'INSERT INTO users (id, email, password_hash, username, display_name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [systemUserId, 'admin@cube.com', defaultPasswordHash, 'admin', '管理员', 'admin', 1],
     );
 
     const roles = [
-      [generateSnowflakeId(), "admin", "系统管理员，拥有所有权限"],
-      [generateSnowflakeId(), "developer", "开发者，可以创建和编辑项目"],
-      [generateSnowflakeId(), "analyst", "分析师，可以查看和分析数据"],
-      [generateSnowflakeId(), "viewer", "查看者，只能查看项目"],
+      [generateSnowflakeId(), 'admin', '系统管理员，拥有所有权限'],
+      [generateSnowflakeId(), 'developer', '开发者，可以创建和编辑项目'],
+      [generateSnowflakeId(), 'analyst', '分析师，可以查看和分析数据'],
+      [generateSnowflakeId(), 'viewer', '查看者，只能查看项目'],
     ];
     for (const [id, name, description] of roles) {
-      await connection.execute("INSERT INTO roles (id, name, description, created_by) VALUES (?, ?, ?, ?)", [id, name, description, systemUserId]);
+      await connection.execute(
+        'INSERT INTO roles (id, name, description, created_by) VALUES (?, ?, ?, ?)',
+        [id, name, description, systemUserId],
+      );
     }
-    const roleIds = Object.fromEntries(roles.map(([id, name]) => [name, id])) as Record<string, string>;
+    const roleIds = Object.fromEntries(roles.map(([id, name]) => [name, id])) as Record<
+      string,
+      string
+    >;
     const rules: Array<[string, string, string[], number]> = [
-      ["admin", "project", ["read", "write", "delete", "execute"], 100], ["admin", "dataset", ["read", "write", "delete", "import", "export"], 100], ["admin", "workflow", ["read", "write", "delete", "execute"], 100],
-      ["developer", "project", ["read", "write", "delete"], 50], ["developer", "dataset", ["read", "write", "import", "export"], 50], ["developer", "workflow", ["read", "write", "execute"], 50],
-      ["analyst", "project", ["read"], 30], ["analyst", "dataset", ["read", "export"], 30], ["analyst", "workflow", ["read"], 30],
-      ["viewer", "project", ["read"], 10], ["viewer", "dataset", ["read"], 10],
+      ['admin', 'project', ['read', 'write', 'delete', 'execute'], 100],
+      ['admin', 'dataset', ['read', 'write', 'delete', 'import', 'export'], 100],
+      ['admin', 'workflow', ['read', 'write', 'delete', 'execute'], 100],
+      ['developer', 'project', ['read', 'write', 'delete'], 50],
+      ['developer', 'dataset', ['read', 'write', 'import', 'export'], 50],
+      ['developer', 'workflow', ['read', 'write', 'execute'], 50],
+      ['analyst', 'project', ['read'], 30],
+      ['analyst', 'dataset', ['read', 'export'], 30],
+      ['analyst', 'workflow', ['read'], 30],
+      ['viewer', 'project', ['read'], 10],
+      ['viewer', 'dataset', ['read'], 10],
     ];
     for (const [roleName, resourceType, actions, priority] of rules) {
       const permissionId = generateSnowflakeId();
-      await connection.execute("INSERT INTO permission_rules (id, resource_type, resource_id, actions, priority, is_active) VALUES (?, ?, ?, ?, ?, ?)", [permissionId, resourceType, "*", JSON.stringify(actions), priority, 1]);
-      await connection.execute("INSERT INTO role_permissions (id, role_id, permission_rule_id) VALUES (?, ?, ?)", [generateSnowflakeId(), roleIds[roleName], permissionId]);
+      await connection.execute(
+        'INSERT INTO permission_rules (id, resource_type, resource_id, actions, priority, is_active) VALUES (?, ?, ?, ?, ?, ?)',
+        [permissionId, resourceType, '*', JSON.stringify(actions), priority, 1],
+      );
+      await connection.execute(
+        'INSERT INTO role_permissions (id, role_id, permission_rule_id) VALUES (?, ?, ?)',
+        [generateSnowflakeId(), roleIds[roleName], permissionId],
+      );
     }
-    console.log("[DATABASE] 默认管理员、角色和权限已初始化");
+    console.log('[DATABASE] 默认管理员、角色和权限已初始化');
   });
 }
 
 export async function initializeDatabaseSchema(): Promise<void> {
-  console.log("[DATABASE] 初始化 MySQL 数据库表结构...");
+  console.log('[DATABASE] 初始化 MySQL 数据库表结构...');
   await createTables();
-  await ensureColumn("pages", "folder_id", "folder_id VARCHAR(64) NULL");
-  await ensureColumn("datasets", "form_schema", "form_schema LONGTEXT NULL");
+  await ensureColumn('pages', 'folder_id', 'folder_id VARCHAR(64) NULL');
+  await ensureColumn('datasets', 'form_schema', 'form_schema LONGTEXT NULL');
   await initializeDefaultRoles();
-  console.log("[DATABASE] MySQL 数据库表结构初始化完成");
+  console.log('[DATABASE] MySQL 数据库表结构初始化完成');
 }

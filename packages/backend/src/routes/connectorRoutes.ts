@@ -1,14 +1,10 @@
-import { Request, Response, Router } from "express";
-import multer from "multer";
-import * as XLSX from "xlsx";
-import { z } from "zod";
-import { authenticateToken } from "../middleware/authMiddleware";
-import {
-    DatasetEntityModel,
-    DatasetFieldModel,
-    DatasetRowModel,
-} from "../models/DatasetModel";
-import { generateSnowflakeId } from "../utils/snowflake";
+import { Request, Response, Router } from 'express';
+import multer from 'multer';
+import * as XLSX from 'xlsx';
+import { z } from 'zod';
+import { authenticateToken } from '../middleware/authMiddleware';
+import { DatasetEntityModel, DatasetFieldModel, DatasetRowModel } from '../models/DatasetModel';
+import { generateSnowflakeId } from '../utils/snowflake';
 
 const router: Router = Router();
 
@@ -17,11 +13,11 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const ext = file.originalname.split(".").pop()?.toLowerCase() ?? "";
-    if (["xlsx", "xls", "csv"].includes(ext)) {
+    const ext = file.originalname.split('.').pop()?.toLowerCase() ?? '';
+    if (['xlsx', 'xls', 'csv'].includes(ext)) {
       cb(null, true);
     } else {
-      cb(new Error("仅支持 .xlsx / .xls / .csv 格式"));
+      cb(new Error('仅支持 .xlsx / .xls / .csv 格式'));
     }
   },
 });
@@ -36,7 +32,9 @@ interface ParseSession {
 
 const sessions = new Map<string, ParseSession>();
 
-function buildImportedFormSchema(fields: Awaited<ReturnType<typeof DatasetFieldModel.listByDataset>>) {
+function buildImportedFormSchema(
+  fields: Awaited<ReturnType<typeof DatasetFieldModel.listByDataset>>,
+) {
   return {
     config: {
       gridColumns: 24,
@@ -45,10 +43,20 @@ function buildImportedFormSchema(fields: Awaited<ReturnType<typeof DatasetFieldM
     },
     fields: fields.map((field, index) => ({
       _vid: `dataset_${field.id}`,
-      componentKey: field.field_type === "number" ? "number" : field.field_type === "datetime" ? "datePicker" : "input",
+      componentKey:
+        field.field_type === 'number'
+          ? 'number'
+          : field.field_type === 'datetime'
+            ? 'datePicker'
+            : 'input',
       label: field.name,
       field: field.id,
-      placeholder: field.field_type === "number" ? "请输入数字" : field.field_type === "datetime" ? "请选择日期" : "请输入",
+      placeholder:
+        field.field_type === 'number'
+          ? '请输入数字'
+          : field.field_type === 'datetime'
+            ? '请选择日期'
+            : '请输入',
       required: false,
       disabled: false,
       hidden: false,
@@ -64,37 +72,40 @@ function buildImportedFormSchema(fields: Awaited<ReturnType<typeof DatasetFieldM
 }
 
 function formatDateTime(value: Date): string {
-  const pad = (part: number) => String(part).padStart(2, "0");
+  const pad = (part: number) => String(part).padStart(2, '0');
   return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())} ${pad(value.getHours())}:${pad(value.getMinutes())}:${pad(value.getSeconds())}`;
 }
 
-setInterval(() => {
-  const now = Date.now();
-  for (const [id, s] of sessions) {
-    if (s.expiresAt < now) sessions.delete(id);
-  }
-}, 10 * 60 * 1000).unref();
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [id, s] of sessions) {
+      if (s.expiresAt < now) sessions.delete(id);
+    }
+  },
+  10 * 60 * 1000,
+).unref();
 
 // ─── POST /parse-file ─────────────────────────────────────────────────
 router.post(
-  "/parse-file",
+  '/parse-file',
   authenticateToken,
-  upload.single("file"),
+  upload.single('file'),
   (req: Request, res: Response) => {
     try {
       if (!req.file) {
-        res.status(400).json({ success: false, error: "请上传文件" });
+        res.status(400).json({ success: false, error: '请上传文件' });
         return;
       }
 
       const workbook = XLSX.read(req.file.buffer, {
-        type: "buffer",
+        type: 'buffer',
         raw: false,
         cellDates: false,
       });
       const sheetName = workbook.SheetNames[0];
       if (!sheetName) {
-        res.status(400).json({ success: false, error: "文件中没有工作表" });
+        res.status(400).json({ success: false, error: '文件中没有工作表' });
         return;
       }
       const sheet = workbook.Sheets[sheetName];
@@ -107,7 +118,7 @@ router.post(
       });
 
       if (rawMatrix.length === 0) {
-        res.status(400).json({ success: false, error: "文件内容为空" });
+        res.status(400).json({ success: false, error: '文件内容为空' });
         return;
       }
 
@@ -130,11 +141,11 @@ router.post(
           previewMatrix: rawMatrix.slice(0, 50),
           colCount,
         },
-        message: "文件解析成功",
+        message: '文件解析成功',
       });
     } catch (err) {
-      console.error("[CONNECTOR] parse-file error:", err);
-      res.status(500).json({ success: false, error: "文件解析失败，请检查格式" });
+      console.error('[CONNECTOR] parse-file error:', err);
+      res.status(500).json({ success: false, error: '文件解析失败，请检查格式' });
     }
   },
 );
@@ -149,8 +160,8 @@ const ImportSchema = z.object({
       z.object({
         /** 0-based 列索引 */
         colIndex: z.number().int().min(0),
-        name: z.string().min(1, "字段名不能为空"),
-        type: z.enum(["text", "number", "datetime"]),
+        name: z.string().min(1, '字段名不能为空'),
+        type: z.enum(['text', 'number', 'datetime']),
         include: z.boolean(),
       }),
     )
@@ -163,28 +174,26 @@ const ImportSchema = z.object({
   }),
 });
 
-router.post("/import", authenticateToken, async (req: Request, res: Response) => {
+router.post('/import', authenticateToken, async (req: Request, res: Response) => {
   try {
     const body = ImportSchema.parse(req.body);
     const session = sessions.get(body.sessionId);
     if (!session) {
       res.status(400).json({
         success: false,
-        error: "解析会话已过期，请重新上传文件",
+        error: '解析会话已过期，请重新上传文件',
       });
       return;
     }
 
     const includedFields = body.fields.filter((f) => f.include);
     if (includedFields.length === 0) {
-      res.status(400).json({ success: false, error: "请至少选择一个字段" });
+      res.status(400).json({ success: false, error: '请至少选择一个字段' });
       return;
     }
 
     // 数据行 = 全部行，排除表头行
-    const dataRows = session.rawMatrix.filter(
-      (_, i) => i !== body.headerRowIndex,
-    );
+    const dataRows = session.rawMatrix.filter((_, i) => i !== body.headerRowIndex);
 
     // 创建数据集
     const datasetId = await DatasetEntityModel.create({
@@ -224,12 +233,12 @@ router.post("/import", authenticateToken, async (req: Request, res: Response) =>
         const fieldId = colIndexToFieldId.get(f.colIndex);
         if (!fieldId) continue;
         const raw = (row as unknown[])[f.colIndex];
-        if (raw === null || raw === undefined || String(raw).trim() === "") {
+        if (raw === null || raw === undefined || String(raw).trim() === '') {
           values[fieldId] = null;
-        } else if (f.type === "number") {
+        } else if (f.type === 'number') {
           const n = Number(raw);
           values[fieldId] = isFinite(n) ? n : null;
-        } else if (f.type === "datetime") {
+        } else if (f.type === 'datetime') {
           const d = new Date(String(raw));
           values[fieldId] = Number.isNaN(d.getTime()) ? String(raw) : formatDateTime(d);
         } else {
@@ -254,16 +263,16 @@ router.post("/import", authenticateToken, async (req: Request, res: Response) =>
       message: `成功导入 ${dataRows.length} 行数据，${includedFields.length} 个字段`,
     });
   } catch (err) {
-    console.error("[CONNECTOR] import error:", err);
+    console.error('[CONNECTOR] import error:', err);
     if (err instanceof z.ZodError) {
       res.status(400).json({
         success: false,
-        error: "参数验证失败",
+        error: '参数验证失败',
         details: err.errors,
       });
       return;
     }
-    res.status(500).json({ success: false, error: "导入失败，请稍后重试" });
+    res.status(500).json({ success: false, error: '导入失败，请稍后重试' });
   }
 });
 

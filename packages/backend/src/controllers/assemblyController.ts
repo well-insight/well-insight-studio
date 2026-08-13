@@ -1,7 +1,7 @@
-import { Request, Response } from "express";
-import { z } from "zod";
-import { AppPageMenuModel } from "../models/AppPageMenu";
-import { execute, queryOne } from "../config/database";
+import { Request, Response } from 'express';
+import { z } from 'zod';
+import { AppPageMenuModel } from '../models/AppPageMenu';
+import { execute, queryOne } from '../config/database';
 
 const IdParamSchema = z.string().min(1);
 
@@ -26,7 +26,7 @@ const SortMenusSchema = z.object({
       id: z.string().min(1),
       parent_id: z.string().nullable(),
       sort_order: z.number().int().min(0),
-    })
+    }),
   ),
 });
 
@@ -40,11 +40,11 @@ export async function getAppMenus(req: Request, res: Response): Promise<void> {
     res.json({ success: true, data: tree });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, error: "参数校验失败", details: error.errors });
+      res.status(400).json({ success: false, error: '参数校验失败', details: error.errors });
       return;
     }
-    console.error("[assemblyController] getAppMenus error:", error);
-    res.status(500).json({ success: false, error: "获取菜单失败" });
+    console.error('[assemblyController] getAppMenus error:', error);
+    res.status(500).json({ success: false, error: '获取菜单失败' });
   }
 }
 
@@ -68,11 +68,11 @@ export async function addMenu(req: Request, res: Response): Promise<void> {
     res.status(201).json({ success: true, data: menu });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, error: "参数校验失败", details: error.errors });
+      res.status(400).json({ success: false, error: '参数校验失败', details: error.errors });
       return;
     }
-    console.error("[assemblyController] addMenu error:", error);
-    res.status(500).json({ success: false, error: "添加菜单项失败" });
+    console.error('[assemblyController] addMenu error:', error);
+    res.status(500).json({ success: false, error: '添加菜单项失败' });
   }
 }
 
@@ -86,18 +86,18 @@ export async function updateMenu(req: Request, res: Response): Promise<void> {
 
     const updated = await AppPageMenuModel.update(menuId, body);
     if (!updated) {
-      res.status(404).json({ success: false, error: "菜单项不存在" });
+      res.status(404).json({ success: false, error: '菜单项不存在' });
       return;
     }
 
     res.json({ success: true, data: updated });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, error: "参数校验失败", details: error.errors });
+      res.status(400).json({ success: false, error: '参数校验失败', details: error.errors });
       return;
     }
-    console.error("[assemblyController] updateMenu error:", error);
-    res.status(500).json({ success: false, error: "更新菜单失败" });
+    console.error('[assemblyController] updateMenu error:', error);
+    res.status(500).json({ success: false, error: '更新菜单失败' });
   }
 }
 
@@ -115,11 +115,11 @@ export async function sortMenus(req: Request, res: Response): Promise<void> {
     res.json({ success: true, data: tree });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, error: "参数校验失败", details: error.errors });
+      res.status(400).json({ success: false, error: '参数校验失败', details: error.errors });
       return;
     }
-    console.error("[assemblyController] sortMenus error:", error);
-    res.status(500).json({ success: false, error: "排序失败" });
+    console.error('[assemblyController] sortMenus error:', error);
+    res.status(500).json({ success: false, error: '排序失败' });
   }
 }
 
@@ -132,18 +132,18 @@ export async function removeMenu(req: Request, res: Response): Promise<void> {
     const deleted = await AppPageMenuModel.delete(menuId);
 
     if (!deleted) {
-      res.status(404).json({ success: false, error: "菜单项不存在" });
+      res.status(404).json({ success: false, error: '菜单项不存在' });
       return;
     }
 
-    res.json({ success: true, message: "菜单项已移除" });
+    res.json({ success: true, message: '菜单项已移除' });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, error: "参数校验失败", details: error.errors });
+      res.status(400).json({ success: false, error: '参数校验失败', details: error.errors });
       return;
     }
-    console.error("[assemblyController] removeMenu error:", error);
-    res.status(500).json({ success: false, error: "移除菜单失败" });
+    console.error('[assemblyController] removeMenu error:', error);
+    res.status(500).json({ success: false, error: '移除菜单失败' });
   }
 }
 
@@ -155,15 +155,20 @@ export async function publishApp(req: Request, res: Response): Promise<void> {
     const appId = IdParamSchema.parse(req.params.id);
 
     // 更新应用的 updated_at 时间戳作为发布标记
-    const result = await execute("UPDATE applications SET updated_at = CURRENT_TIMESTAMP WHERE id = ?", [appId]);
+    const result = await execute(
+      'UPDATE applications SET updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [appId],
+    );
 
     if (result.affectedRows === 0) {
-      res.status(404).json({ success: false, error: "应用不存在" });
+      res.status(404).json({ success: false, error: '应用不存在' });
       return;
     }
 
     const tree = await AppPageMenuModel.getMenuTree(appId);
-    const app = await queryOne<Record<string, unknown>>("SELECT * FROM applications WHERE id = ?", [appId]);
+    const app = await queryOne<Record<string, unknown>>('SELECT * FROM applications WHERE id = ?', [
+      appId,
+    ]);
 
     res.json({
       success: true,
@@ -176,10 +181,10 @@ export async function publishApp(req: Request, res: Response): Promise<void> {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, error: "参数校验失败", details: error.errors });
+      res.status(400).json({ success: false, error: '参数校验失败', details: error.errors });
       return;
     }
-    console.error("[assemblyController] publishApp error:", error);
-    res.status(500).json({ success: false, error: "发布失败" });
+    console.error('[assemblyController] publishApp error:', error);
+    res.status(500).json({ success: false, error: '发布失败' });
   }
 }

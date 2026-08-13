@@ -26,7 +26,7 @@ const pagesTotal = ref(0)
 
 const visualPages = computed(() => pages.value.filter(page => page.type === 'visualization'))
 const formPages = computed(() => pages.value.filter(page => page.type === 'form'))
-const reportPages = computed(() => pages.value.filter(page => page.type === 'report'))
+
 const draftPages = computed(() => pages.value.filter(page => page.status === 'draft'))
 const publishedPages = computed(() => pages.value.filter(page => page.status === 'published'))
 const totalResources = computed(() => pages.value.length + datasets.value.length + applications.value.length)
@@ -63,21 +63,17 @@ interface RecentActivity {
 }
 
 const recentActivities = computed<RecentActivity[]>(() => [
-  ...pages.value.map(page => ({
+  ...pages.value.filter(page => page.type !== 'report').map(page => ({
     id: `page-${page.id}`,
     title: page.name,
     description: `${PAGE_TYPE_LABEL[page.type] ?? page.type} · ${page.status === 'published' ? '已发布' : '草稿'}`,
     time: page.updated_at,
     icon: page.type === 'visualization'
       ? WORKBENCH_ICONS.visual
-      : page.type === 'report'
-        ? WORKBENCH_ICONS.report
-        : WORKBENCH_ICONS.dataset,
+      : WORKBENCH_ICONS.dataset,
     path: page.type === 'visualization'
       ? '/project/pages/visual'
-      : page.type === 'report'
-        ? '/project/pages/report'
-        : '/project/dataset',
+      : '/project/dataset',
   })),
   ...datasets.value.map(dataset => ({
     id: `dataset-${dataset.id}`,
@@ -108,12 +104,12 @@ const resourceMix = computed<MixSlice[]>(() => {
   void isDark.value
   void themeConfig.value.primary
   const signal = readCssVar('--cube-signal', '#2563EB')
-  const warning = readCssVar('--cube-brass', '#E6A23C')
+
   const success = readCssVar('--el-color-success', '#67C23A')
   const slices: MixSlice[] = [
     { name: '可视化', value: visualPages.value.length, color: signal, path: '/project/pages/visual' },
     { name: '表单', value: formPages.value.length, color: success, path: '/project/pages/form' },
-    { name: '报表', value: reportPages.value.length, color: warning, path: '/project/pages/report' },
+
     { name: '数据集', value: datasets.value.length, color: readCssVar('--el-color-primary-light-3', signal), path: '/project/dataset' },
     { name: '应用集', value: applications.value.length, color: readCssVar('--el-color-danger', '#F56C6C'), path: '/project/app-assembly' },
   ]
@@ -129,7 +125,7 @@ const mixShare = computed(() => {
 })
 
 const recentPages = computed(() =>
-  [...pages.value]
+  pages.value.filter(page => page.type !== 'report')
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
     .slice(0, 8),
 )
@@ -513,14 +509,7 @@ onActivated(() => {
         <strong>{{ formPages.length }}</strong>
         <small>草稿 {{ draftPages.filter(p => p.type === 'form').length }}</small>
       </button>
-      <button class="metric-card metric-card--report" type="button" @click="goTo('/project/pages/report')">
-        <span class="metric-card__top">
-          <span class="metric-card__icon"><el-icon :size="14"><component :is="WORKBENCH_ICONS.report" /></el-icon></span>
-          <span>报表</span>
-        </span>
-        <strong>{{ reportPages.length }}</strong>
-        <small>页面合计 {{ pages.length }}{{ pagesTotal > pages.length ? ` / ${pagesTotal}` : '' }}</small>
-      </button>
+
       <button class="metric-card metric-card--dataset" type="button" @click="goTo('/project/dataset')">
         <span class="metric-card__top">
           <span class="metric-card__icon"><el-icon :size="14"><component :is="WORKBENCH_ICONS.dataset" /></el-icon></span>
@@ -655,7 +644,7 @@ onActivated(() => {
             :key="page.id"
             type="button"
             class="data-row"
-            @click="goTo(page.type === 'visualization' ? '/project/pages/visual' : page.type === 'report' ? '/project/pages/report' : '/project/pages/form')"
+            @click="goTo(page.type === 'visualization' ? '/project/pages/visual' : '/project/pages/form')"
           >
             <span class="data-row__name">{{ page.name }}</span>
             <span class="data-row__tag">{{ PAGE_TYPE_LABEL[page.type] }}</span>

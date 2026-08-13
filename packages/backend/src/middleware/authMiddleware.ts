@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { UserModel } from '../models/User';
 import { AuthService } from '../services/AuthService';
+import { getJwtSecret } from '../config/security';
 import { ActionType, ResourceType } from '../models/Permission';
 
 // 为 Express Request 对象扩展属性
@@ -23,7 +24,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     return;
   }
 
-  jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key', async (err, decoded: any) => {
+  jwt.verify(token, getJwtSecret(), async (err, decoded: any) => {
     if (err) {
       // 与前端约定：鉴权失败统一 401，便于请求层统一跳转登录（403 保留给业务权限不足）
       return res.status(401).json({ success: false, error: 'Invalid Token' });
@@ -77,7 +78,7 @@ export const requireAdmin = async (
 export const requirePermission = (
   resourceType: ResourceType,
   action: ActionType,
-  resourceIdFromParam: string = 'id'
+  resourceIdFromParam: string = 'id',
 ) => {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     if (!req.userId) {
@@ -93,7 +94,7 @@ export const requirePermission = (
         req.userId,
         resourceType,
         action,
-        resourceId
+        resourceId,
       );
 
       if (!hasPermission) {

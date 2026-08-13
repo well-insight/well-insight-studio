@@ -242,14 +242,14 @@ watch(
 .tabBar {
   position: relative;
   display: flex;
-  min-height: 46px;
-  height: 46px;
+  min-height: 54px;
+  height: 54px;
   align-items: center;
   gap: 4px;
   padding: 0 12px;
   margin: 0;
-  border-bottom: 1px solid var(--el-border-color-extra-light);
-  background: color-mix(in srgb, var(--el-bg-color) 88%, transparent);
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: var(--el-fill-color-light);
   flex-shrink: 0;
 
   :global(.flex.items-center) {
@@ -294,19 +294,19 @@ watch(
 }
 
 :global(html.dark) .panelContent {
-  background: color-mix(in srgb, var(--el-bg-color) 76%, var(--el-bg-color-overlay));
+  background: var(--el-bg-color);
 }
 
 :global(html.dark) .contentScrollbar {
   :global(.el-scrollbar__view) {
-    background: color-mix(in srgb, var(--el-bg-color) 84%, var(--el-bg-color-overlay));
+    background: var(--el-bg-color);
   }
 }
 
 :global(html.dark) {
   .tabBar {
-    border-bottom-color: var(--el-border-color-extra-light);
-    background: color-mix(in srgb, var(--el-bg-color) 94%, transparent);
+    border-bottom-color: var(--el-border-color-lighter);
+    background: var(--el-fill-color-light);
 
     :global(.el-button) {
       color: var(--el-text-color-secondary);

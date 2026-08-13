@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from "express";
-import { PermissionDatabase } from "../models/PermissionDatabase";
-import { ResourceType, ActionType } from "../models/Permission";
+import { Request, Response, NextFunction } from 'express';
+import { PermissionDatabase } from '../models/PermissionDatabase';
+import { ResourceType, ActionType } from '../models/Permission';
 
 // 检查权限的中间件
 export const requirePermission = (
@@ -15,7 +15,7 @@ export const requirePermission = (
       if (!userId) {
         return res.status(401).json({
           success: false,
-          error: "未认证用户",
+          error: '未认证用户',
         });
       }
 
@@ -43,7 +43,7 @@ export const requirePermission = (
       if (!result.allowed) {
         return res.status(403).json({
           success: false,
-          error: "权限不足",
+          error: '权限不足',
           details: result.reason,
         });
       }
@@ -51,10 +51,10 @@ export const requirePermission = (
       // 权限检查通过，继续执行
       next();
     } catch (error) {
-      console.error("权限检查中间件错误:", error);
+      console.error('权限检查中间件错误:', error);
       res.status(500).json({
         success: false,
-        error: "权限检查过程中发生错误",
+        error: '权限检查过程中发生错误',
       });
     }
   };
@@ -69,7 +69,7 @@ export const requireRole = (requiredRoleName: string) => {
       if (!userId) {
         return res.status(401).json({
           success: false,
-          error: "未认证用户",
+          error: '未认证用户',
         });
       }
 
@@ -88,10 +88,10 @@ export const requireRole = (requiredRoleName: string) => {
 
       next();
     } catch (error) {
-      console.error("角色检查中间件错误:", error);
+      console.error('角色检查中间件错误:', error);
       res.status(500).json({
         success: false,
-        error: "角色检查过程中发生错误",
+        error: '角色检查过程中发生错误',
       });
     }
   };
@@ -100,7 +100,7 @@ export const requireRole = (requiredRoleName: string) => {
 // 项目级别的权限检查
 export const requireProjectPermission = (
   action: ActionType,
-  projectIdParam: string = "projectId",
+  projectIdParam: string = 'projectId',
 ) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -109,15 +109,15 @@ export const requireProjectPermission = (
       if (!userId) {
         return res.status(401).json({
           success: false,
-          error: "未认证用户",
+          error: '未认证用户',
         });
       }
 
-      const projectId = String(req.params[projectIdParam] ?? "").trim();
+      const projectId = String(req.params[projectIdParam] ?? '').trim();
       if (!projectId) {
         return res.status(400).json({
           success: false,
-          error: "无效的项目ID",
+          error: '无效的项目ID',
         });
       }
 
@@ -133,17 +133,17 @@ export const requireProjectPermission = (
       if (!result.allowed) {
         return res.status(403).json({
           success: false,
-          error: "项目权限不足",
+          error: '项目权限不足',
           details: result.reason,
         });
       }
 
       next();
     } catch (error) {
-      console.error("项目权限检查中间件错误:", error);
+      console.error('项目权限检查中间件错误:', error);
       res.status(500).json({
         success: false,
-        error: "项目权限检查过程中发生错误",
+        error: '项目权限检查过程中发生错误',
       });
     }
   };

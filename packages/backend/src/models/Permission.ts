@@ -1,12 +1,12 @@
-import { z } from "zod";
-import { query } from "../config/database";
+import { z } from 'zod';
+import { query } from '../config/database';
 
 export const ResourceType = {
-  PROJECT: "project",
-  DATASET: "dataset",
-  WORKFLOW: "workflow",
-  ROLE: "role",
-  USER: "user",
+  PROJECT: 'project',
+  DATASET: 'dataset',
+  WORKFLOW: 'workflow',
+  ROLE: 'role',
+  USER: 'user',
 } as const;
 export const ResourceTypeSchema = z.enum([
   ResourceType.PROJECT,
@@ -18,16 +18,16 @@ export const ResourceTypeSchema = z.enum([
 export type ResourceType = z.infer<typeof ResourceTypeSchema>;
 
 export const ActionType = {
-  READ: "read",
-  WRITE: "write",
-  DELETE: "delete",
-  EXECUTE: "execute",
-  IMPORT: "import",
-  EXPORT: "export",
-  ASSIGN: "assign",
-  REMOVE: "remove",
-  VIEW_PERMISSIONS: "view_permissions",
-  VIEW_ROLES: "view_roles",
+  READ: 'read',
+  WRITE: 'write',
+  DELETE: 'delete',
+  EXECUTE: 'execute',
+  IMPORT: 'import',
+  EXPORT: 'export',
+  ASSIGN: 'assign',
+  REMOVE: 'remove',
+  VIEW_PERMISSIONS: 'view_permissions',
+  VIEW_ROLES: 'view_roles',
 } as const;
 export const ActionTypeSchema = z.enum([
   ActionType.READ,
@@ -166,7 +166,11 @@ export class PermissionModel {
         AND pr.resource_id = ?
       ORDER BY pr.priority DESC
     `;
-    const instanceRows = await query<Array<{ actions: string }>>(sql, [userId, resourceType, resourceId]);
+    const instanceRows = await query<Array<{ actions: string }>>(sql, [
+      userId,
+      resourceType,
+      resourceId,
+    ]);
 
     for (const row of instanceRows) {
       (JSON.parse(row.actions) as ActionType[]).forEach((action) => allActions.add(action));
