@@ -1,5 +1,0 @@
-export { default as ELayout } from './ELayout.vue'
-export { default as ELayoutContent } from './ELayoutContent.vue'
-export { default as ELayoutFooter } from './ELayoutFooter.vue'
-export { default as ELayoutHeader } from './ELayoutHeader.vue'
-export { default as ELayoutSider } from './ELayoutSider.vue'

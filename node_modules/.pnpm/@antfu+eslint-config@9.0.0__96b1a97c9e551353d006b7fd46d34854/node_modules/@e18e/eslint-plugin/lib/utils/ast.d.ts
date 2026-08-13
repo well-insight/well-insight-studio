@@ -1,0 +1,39 @@
+import type { CallExpression, Node, Expression } from 'estree';
+import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
+import type { SourceCode } from 'eslint';
+export type AnyNode = Node | TSESTree.Node;
+/**
+ * Checks if a node is in a boolean context (where the result is only used as truthy/falsy).
+ * e.g. if conditions, while loops, ternary tests, logical operators
+ */
+export declare function isInBooleanContext(node: AnyNode): boolean;
+/**
+ * Checks if a node is undefined, null, or void 0.
+ * Returns the type of nullish value or false if not nullish.
+ */
+export declare function isNullish(node: Expression): 'undefined' | 'null' | false;
+/**
+ * Checks if a CallExpression is a copy operation that creates a shallow copy of an array.
+ * e.g. concat(), slice(), slice(0)
+ */
+export declare function isCopyCall(node: CallExpression): boolean;
+/**
+ * Extracts the array node from array copy patterns.
+ */
+export declare function getArrayFromCopyPattern(node: TSESTree.Node): TSESTree.Node | null;
+export declare function getArrayFromCopyPattern(node: Node): Node | null;
+/**
+ * Checks if a node needs to be wrapped in parentheses when used as the
+ * object of a property access (e.g. `expr.foo()`).
+ */
+export declare function needsParensForPropertyAccess(node: AnyNode): boolean;
+/**
+ * Checks if a copy pattern (node passed to getArrayFromCopyPattern) uses
+ * optional chaining on the copy method call, e.g. `arr?.slice()`.
+ */
+export declare function isCopyPatternOptional(node: AnyNode): boolean;
+/**
+ * Formats arguments from a CallExpression as a comma-separated string.
+ */
+export declare function formatArguments(args: TSESTree.CallExpression['arguments'], sourceCode: Readonly<TSESLint.SourceCode>): string;
+export declare function formatArguments(args: CallExpression['arguments'], sourceCode: SourceCode): string;

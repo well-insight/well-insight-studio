@@ -1,9 +1,0 @@
-node_modules
-
-# 主库 data/app.db 提交到 Git，团队 pull 后共用同一份数据。
-# 勿提交 WAL 运行时文件（易冲突且无需版本管理）
-data/*.db-shm
-data/*.db-wal
-!data/.gitkeep
-
-/dist

@@ -1,7 +1,0 @@
-{
-  "$schema": "https://oxc.rs/schema/oxfmtrc.json",
-  "semi": true,
-  "singleQuote": true,
-  "tabWidth": 2,
-  "trailingComma": "all"
-}
