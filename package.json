@@ -1,0 +1,27 @@
+{
+  "name": "well-design",
+  "private": true,
+  "packageManager": "pnpm@10.12.4",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @well-design/api --filter @well-design/web --filter @well-design/ui run dev",
+    "dev:web": "pnpm --filter @well-design/web dev",
+    "dev:ui": "pnpm --filter @well-design/ui dev",
+    "dev:api": "pnpm --filter @well-design/api dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "test:coverage": "pnpm -r test:coverage",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "typescript": "^5.9.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "typescript": "5.9.3"
+    }
+  }
+}

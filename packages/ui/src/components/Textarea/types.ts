@@ -1,0 +1,28 @@
+import type { WdInputVariant, WdSizeInput } from '../../shared/types'
+
+export interface TextareaProps {
+  modelValue?: string
+  label?: string
+  helpText?: string
+  /** Prefer over `error`. Marks the field invalid. */
+  invalid?: boolean
+  /** @deprecated Prefer `invalid`. */
+  error?: boolean
+  id?: string
+  rows?: number
+  resize?: 'none' | 'vertical' | 'horizontal' | 'both'
+  /** Grow height to fit content (PrimeVue autoResize). */
+  autoResize?: boolean
+  /** Size aligned with PrimeVue Textarea; also accepts legacy sm/md/lg. */
+  size?: WdSizeInput
+  /** Visual variant; default outlined. */
+  variant?: WdInputVariant
+  /** Full-width textarea. */
+  fluid?: boolean
+  disabled?: boolean
+  readonly?: boolean
+}
+
+export interface TextareaEmits {
+  (event: 'update:modelValue', value: string): void
+}

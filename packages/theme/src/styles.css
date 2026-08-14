@@ -1,0 +1,82 @@
+:root {
+    --wd-color-primary: #2563eb;
+    --wd-color-primary-hover: #1d4ed8;
+    --wd-color-surface: #ffffff;
+    --wd-color-text: #0f172a;
+    --wd-color-text-muted: #64748b;
+    --wd-color-border: #e2e8f0;
+    --wd-color-focus-ring: #2563eb;
+    --wd-color-success: #159570;
+    --wd-color-info: #2563eb;
+    --wd-color-warning: #d97706;
+    --wd-color-warn: var(--wd-color-warning);
+    --wd-color-help: #9333ea;
+    --wd-color-danger: #dc2626;
+    --wd-color-contrast: #0f172a;
+    --wd-color-contrast-fg: #ffffff;
+    --wd-color-contrast-hover: #1e293b;
+    --wd-color-contrast-active: #020617;
+    --wd-space-1: 0.25rem;
+    --wd-space-2: 0.5rem;
+    --wd-space-3: 0.75rem;
+    --wd-space-4: 1rem;
+    --wd-space-6: 1.5rem;
+    --wd-space-8: 2rem;
+    --wd-radius-sm: 0.25rem;
+    --wd-radius-md: 0.5rem;
+    --wd-radius-lg: 0.75rem;
+    --wd-radius-full: 9999px;
+    --wd-font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+    --wd-motion-fast: 150ms;
+    --wd-motion-normal: 250ms;
+    --wd-motion-ease: cubic-bezier(0.2, 0, 0, 1);
+    --wd-motion-enter: 180ms;
+    --wd-motion-exit: 130ms;
+    --wd-motion-distance: 0.5rem;
+}
+
+:root[data-wd-motion="reduced"] {
+    --wd-motion-fast: 80ms;
+    --wd-motion-normal: 120ms;
+    --wd-motion-enter: 100ms;
+    --wd-motion-exit: 80ms;
+    --wd-motion-distance: 0;
+}
+
+:root[data-wd-motion="none"] {
+    --wd-motion-fast: 0ms;
+    --wd-motion-normal: 0ms;
+    --wd-motion-enter: 0ms;
+    --wd-motion-exit: 0ms;
+    --wd-motion-distance: 0;
+}
+
+[data-theme="dark"] {
+    --wd-color-primary: #60a5fa;
+    --wd-color-primary-hover: #93c5fd;
+    --wd-color-surface: #0f172a;
+    --wd-color-text: #f8fafc;
+    --wd-color-text-muted: #94a3b8;
+    --wd-color-border: #334155;
+    --wd-color-focus-ring: #93c5fd;
+    --wd-color-success: #5eead4;
+    --wd-color-info: #93c5fd;
+    --wd-color-warning: #fbbf24;
+    --wd-color-warn: var(--wd-color-warning);
+    --wd-color-help: #c084fc;
+    --wd-color-danger: #fca5a5;
+    --wd-color-contrast: #f8fafc;
+    --wd-color-contrast-fg: #0f172a;
+    --wd-color-contrast-hover: #e2e8f0;
+    --wd-color-contrast-active: #cbd5e1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root:not([data-wd-motion="full"]) {
+        --wd-motion-fast: 80ms;
+        --wd-motion-normal: 120ms;
+        --wd-motion-enter: 100ms;
+        --wd-motion-exit: 80ms;
+        --wd-motion-distance: 0;
+    }
+}
