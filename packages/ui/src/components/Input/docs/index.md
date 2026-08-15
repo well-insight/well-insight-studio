@@ -1,7 +1,7 @@
 ---
 title: Input
 category: 02 / FORM
-description: 文本输入框。API 对齐 PrimeVue InputText：size、invalid、variant、fluid。
+description: 文本输入框。API 对齐 PrimeVue InputText：size、invalid、variant、fluid、clearable、maxlength、showCount。
 ---
 
 # Input
@@ -29,7 +29,51 @@ const value = ref('')
 </template>
 ```
 
-## Size
+## Invalid
+
+优先使用 `invalid`；`error` 仍可作为别名。
+
+```vue preview
+<script setup lang="ts">
+import { WdInput } from '@well-design/ui'
+</script>
+
+<template>
+  <WdInput invalid label="Email" model-value="not-an-email" help-text="Enter a valid email" />
+</template>
+```
+
+## Clearable
+
+```vue preview
+<script setup lang="ts">
+import { ref } from 'vue'
+import { WdInput } from '@well-design/ui'
+
+const value = ref('Draft note')
+</script>
+
+<template>
+  <WdInput v-model="value" clearable label="Note" />
+</template>
+```
+
+## Password-like type
+
+```vue preview
+<script setup lang="ts">
+import { ref } from 'vue'
+import { WdInput } from '@well-design/ui'
+
+const password = ref('')
+</script>
+
+<template>
+  <WdInput v-model="password" type="password" label="Password" placeholder="••••••••" />
+</template>
+```
+
+## Sizes
 
 支持 `small` / `large`，并兼容 `sm` / `md` / `lg`。
 
@@ -47,9 +91,24 @@ import { WdInput } from '@well-design/ui'
 </template>
 ```
 
-## Variant & Fluid
+## Count
 
-`variant="filled"` 使用填充样式；`fluid` 宽度撑满容器。
+`showCount` 显示字数；配合 `maxlength` 展示上限。
+
+```vue preview
+<script setup lang="ts">
+import { ref } from 'vue'
+import { WdInput } from '@well-design/ui'
+
+const bio = ref('Hello')
+</script>
+
+<template>
+  <WdInput v-model="bio" label="Bio" :maxlength="20" show-count />
+</template>
+```
+
+## Fluid
 
 ```vue preview
 <script setup lang="ts">
@@ -65,9 +124,7 @@ import { WdInput } from '@well-design/ui'
 </template>
 ```
 
-## Invalid
-
-优先使用 `invalid`；`error` 仍可作为别名。
+## Disabled
 
 ```vue preview
 <script setup lang="ts">
@@ -75,10 +132,7 @@ import { WdInput } from '@well-design/ui'
 </script>
 
 <template>
-  <div style="display:grid;gap:1rem;width:min(24rem,100%)">
-    <WdInput invalid label="Email" model-value="not-an-email" help-text="Enter a valid email" />
-    <WdInput clearable label="Clearable" model-value="Draft note" />
-  </div>
+  <WdInput model-value="Read only value" label="Disabled" disabled />
 </template>
 ```
 
@@ -99,6 +153,8 @@ import { WdInput } from '@well-design/ui'
 | `disabled` | `boolean` | `false` | 禁用。 |
 | `readonly` | `boolean` | `false` | 只读。 |
 | `clearable` | `boolean` | `false` | 显示清除按钮。 |
+| `maxlength` | `number` | — | 原生 maxlength。 |
+| `showCount` | `boolean` | `false` | 显示字数统计。 |
 
 ## Events
 

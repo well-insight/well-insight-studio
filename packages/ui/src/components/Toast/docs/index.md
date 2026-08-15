@@ -1,6 +1,6 @@
 ---
 title: Toast
-category: 03 / OVERLAY
+category: 04 / OVERLAY
 description: 轻量消息反馈。API 对齐 PrimeVue Toast severity：success、info、warn、error；兼容 warning → warn。
 ---
 

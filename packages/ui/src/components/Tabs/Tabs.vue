@@ -23,7 +23,9 @@ function onKeydown(event: KeyboardEvent, index: number) {
   const target = enabledTabs[targetIndex]
   if (!target) return
   selectTab(target.value)
-  requestAnimationFrame(() => document.getElementById(`wd-tab-${target.value}`)?.focus())
+  requestAnimationFrame(() =>
+    document.getElementById(`wd-tab-${target.value}`)?.focus({ preventScroll: true }),
+  )
 }
 </script>
 

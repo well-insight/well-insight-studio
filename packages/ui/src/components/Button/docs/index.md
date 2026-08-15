@@ -72,8 +72,6 @@ import { WdButton } from '@well-design/ui'
       <WdButton label="Danger" severity="danger" outlined />
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center">
-      <WdButton label="Text" text />
-      <WdButton label="Link" link />
       <WdButton label="Raised" raised />
       <WdButton label="Rounded" rounded />
       <WdButton label="Plain Text" text plain />
@@ -83,6 +81,25 @@ import { WdButton } from '@well-design/ui'
       <WdButton label="Large" size="large" />
       <WdButton label="Fluid" fluid />
     </div>
+  </div>
+</template>
+```
+
+## Text & Link
+
+`text` 为轻量文字按钮；`link` 呈现为内联链接样式。二者均可与 `severity` 组合。
+
+```vue preview
+<script setup lang="ts">
+import { WdButton } from '@well-design/ui'
+</script>
+
+<template>
+  <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center">
+    <WdButton label="Text" text />
+    <WdButton label="Text Danger" text severity="danger" />
+    <WdButton label="Link" link />
+    <WdButton label="Link Secondary" link severity="secondary" />
   </div>
 </template>
 ```
@@ -130,6 +147,22 @@ function toggleLoading() {
   <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center">
     <WdButton label="Search" icon="search" :loading="loading" @click="toggleLoading" />
     <WdButton label="Always Loading" loading severity="secondary" />
+  </div>
+</template>
+```
+
+## Disabled
+
+```vue preview
+<script setup lang="ts">
+import { WdButton } from '@well-design/ui'
+</script>
+
+<template>
+  <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center">
+    <WdButton label="Disabled" disabled />
+    <WdButton label="Disabled Outlined" outlined disabled />
+    <WdButton label="Disabled Text" text disabled />
   </div>
 </template>
 ```

@@ -14,10 +14,13 @@ describe('WdDialog', () => {
   })
 
   it('supports close controls and configurable outside clicks', async () => {
-    const wrapper = mount(WdDialog, { attachTo: document.body, props: { modelValue: true, title: 'Confirm', closeOnOutsideClick: false } })
+    const wrapper = mount(WdDialog, {
+      attachTo: document.body,
+      props: { modelValue: true, title: 'Confirm', closeOnOutsideClick: false },
+    })
     await nextTick()
     const backdrop = document.body.querySelector('.wd-dialog-backdrop')
-    const closeButton = document.body.querySelector('.wd-dialog__header button')
+    const closeButton = document.body.querySelector('.wd-dialog__actions .wd-dialog__action:last-child')
     expect(backdrop).toBeTruthy()
     expect(closeButton).toBeTruthy()
     backdrop!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
@@ -40,6 +43,25 @@ describe('WdDialog', () => {
     document.body.querySelector('.wd-dialog-backdrop')!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     await nextTick()
     expect(wrapper.emitted('close')).toBeUndefined()
+    wrapper.unmount()
+  })
+
+  it('toggles maximized state when maximizable', async () => {
+    const wrapper = mount(WdDialog, {
+      attachTo: document.body,
+      props: { modelValue: true, header: 'Workspace', maximizable: true },
+    })
+    await nextTick()
+    const maximizeButton = document.body.querySelector('.wd-dialog__action') as HTMLButtonElement
+    expect(maximizeButton?.getAttribute('aria-label')).toBe('最大化')
+    maximizeButton.click()
+    await nextTick()
+    expect(document.body.querySelector('.wd-dialog--maximized')).toBeTruthy()
+    expect(wrapper.emitted('maximize')).toHaveLength(1)
+    maximizeButton.click()
+    await nextTick()
+    expect(document.body.querySelector('.wd-dialog--maximized')).toBeFalsy()
+    expect(wrapper.emitted('unmaximize')).toHaveLength(1)
     wrapper.unmount()
   })
 })

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useWdConfig } from '../../shared/config'
 import { resolveOverlayTeleport } from '../../shared/overlay'
 import { normalizeSeverity } from '../../shared/types'
 import type { ToastMessage, ToastProps } from './types'
@@ -8,10 +9,10 @@ const props = withDefaults(defineProps<ToastProps>(), {
   messages: () => [],
   position: 'top-right',
   teleport: true,
-  appendTo: 'body',
 })
 const emit = defineEmits<{ (event: 'close', message: ToastMessage): void }>()
-const teleportTarget = computed(() => resolveOverlayTeleport(props))
+const config = useWdConfig()
+const teleportTarget = computed(() => resolveOverlayTeleport(props, config.value.appendTo))
 
 function messageSeverityClass(severity?: ToastMessage['severity']) {
   return `wd-toast__message--${normalizeSeverity(severity) ?? 'info'}`

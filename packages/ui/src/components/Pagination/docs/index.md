@@ -1,6 +1,6 @@
 ---
 title: Pagination
-category: 05 / DATA
+category: 06 / DATA
 description: 分页器，对齐 PrimeVue Paginator。v-model 为页码；实例暴露 first（零基首条索引）。
 ---
 

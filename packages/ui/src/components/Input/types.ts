@@ -19,6 +19,10 @@ export interface InputProps {
   disabled?: boolean
   readonly?: boolean
   clearable?: boolean
+  /** Native maxlength. */
+  maxlength?: number
+  /** Show character count (with maxlength when set). */
+  showCount?: boolean
 }
 
 export interface InputEmits {

@@ -1,17 +1,40 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
 import ComponentDocViewer from '../components/ComponentDocViewer.vue'
-import { listDocumentedComponents, resolveComponentDoc } from '../docs/loadComponentDocs'
+import {
+  listDocumentedComponents,
+  resolveComponentDoc,
+  type DocumentedComponentMeta,
+} from '../docs/loadComponentDocs'
 import { useMotion, useTheme } from '@well-design/theme'
 import { WdCard, WdIcon, WdScrollbar } from '@well-design/ui'
 
+const OVERVIEW = '全部组件'
+
+const categoryTitles: Record<string, string> = {
+  GUIDE: '指南',
+  PRIMITIVE: '基础',
+  FORM: '表单',
+  OVERLAY: '浮层',
+  PANEL: '面板',
+  DATA: '数据',
+  MISC: '杂项',
+  MESSAGE: '消息',
+  MENU: '菜单',
+  FILE: '文件',
+  MEDIA: '媒体',
+  OTHER: '其他',
+}
+
+const route = useRoute()
 const search = ref('')
-const selectedComponent = ref('全部组件')
 const accent = ref('blue')
 const radius = ref('comfortable')
 const density = ref('comfortable')
+const contentScroll = ref<{ setScrollTop: (value: number) => void } | null>(null)
 const { preference: motionPreference, setMotion } = useMotion()
-const { isDark, setTheme, toggleTheme } = useTheme()
+const { isDark, setTheme } = useTheme()
 
 const motionOptions = [
   { name: 'full', label: '完整' },
@@ -58,13 +81,110 @@ const componentBlurbs: Record<string, string> = {
   Dropdown: '在浮层菜单中选择一个动作。',
   Icon: '传达轻量、明确的视觉信息。',
   Scrollbar: '替换原生滚动条，提供可换肤滚动体验。',
+  ConfigProvider: '全局配置：浮层挂载、尺寸、文案、zIndex（类似 Element Plus / PrimeVue）。',
+  Drawer: '从屏幕边缘滑出的侧栏面板。',
+  Popover: '相对触发器展示的浮层内容。',
+  Accordion: '可折叠的内容分组面板。',
+  Badge: '展示计数或状态点。',
+  Message: '页面内联的提示消息。',
+  Skeleton: '内容加载时的占位骨架。',
+  Avatar: '展示用户头像、缩写或图标。',
+  Chip: '展示可移除的标签实体。',
+  ProgressBar: '展示任务完成进度。',
+  ProgressSpinner: '展示不确定的加载状态。',
+  InputNumber: '输入并约束数值，可带步进按钮。',
+  InputPassword: '密码输入，支持显示切换与强度提示。',
+  FloatLabel: '浮动标签包裹输入控件。',
+  IconField: '为输入框添加左/右侧图标。',
+  InputGroup: '组合输入与前后缀附加内容。',
+  SelectButton: '以按钮组进行单选或多选。',
+  Slider: '拖动选择数值或区间。',
+  Rating: '星级评分与清除。',
+  Breadcrumb: '展示页面层级路径。',
+  Panel: '带可选折叠的内容面板。',
+  Fieldset: '带图例的字段分组，可折叠。',
+  Splitter: '双栏水平或垂直分割布局。',
+  Stepper: '多步流程指示与切换。',
+  Toolbar: '工具栏 start / center / end 布局。',
+  Menu: '垂直菜单列表，支持 popup。',
+  Menubar: '水平菜单栏，支持一级下拉。',
+  ContextMenu: '右键上下文菜单。',
+  TieredMenu: '带一层子菜单的分层菜单。',
+  ConfirmDialog: '确认 / 取消模态对话框。',
+  DatePicker: '日历弹层选择日期。',
+  Listbox: '列表形式的单选或多选。',
+  ToggleButton: '开 / 关标签切换按钮。',
+  InputOtp: '多格验证码输入。',
+  Knob: '圆形旋钮选择数值。',
+  AutoComplete: '输入建议与补全。',
+  SplitButton: '主按钮附带下拉菜单。',
+  Tree: '可展开的树形选择。',
+  Timeline: '垂直时间轴事件流。',
+  DataView: '列表或网格数据展示。',
+  ConfirmPopup: '锚定目标的确认气泡。',
+  ScrollTop: '滚动后回到顶部。',
+  BlockUI: '遮罩阻止区域交互。',
+  Inplace: '点击切换为可编辑内容。',
+  CascadeSelect: '多级联级选择，分栏展开嵌套选项。',
+  TreeSelect: '下拉面板中的树形单选。',
+  InputColor: '色板与十六进制文本编辑颜色。',
+  InputTags: '回车添加、可移除的标签输入。',
+  Label: '可访问的表单标签。',
+  SpeedDial: '悬浮快捷操作按钮组。',
+  OrderList: '列表项上移下移排序。',
+  PickList: '双列表穿梭选择。',
+  VirtualScroller: '按可视窗口渲染长列表。',
+  TreeTable: '可展开的树形表格。',
+  MegaMenu: '水平菜单，子项按多列展示。',
+  Dock: 'macOS 风格图标坞。',
+  Sidebar: '可折叠的应用导航轨。',
+  CommandMenu: '可搜索的命令面板。',
+  FileUpload: '选择文件并展示列表。',
+  Carousel: '轮播展示一组内容。',
+  Gallery: '主图与缩略图画廊。',
+  MeterGroup: '多段占比计量条。',
+  Fluid: '让子元素宽度撑满。',
+  Terminal: '简易命令提示符界面。',
 }
 
 const documented = listDocumentedComponents()
-const components = [
-  { name: '全部组件', count: documented.length },
-  ...documented.map((name) => ({ name, count: 1 })),
-]
+const documentedNames = documented.map((item) => item.name)
+
+const selectedComponent = computed(() => {
+  const param = route.params.component
+  if (typeof param !== 'string' || !param) return OVERVIEW
+  return documentedNames.find((name) => name.toLowerCase() === param.toLowerCase()) ?? param
+})
+
+function componentRoute(name: string) {
+  return name === OVERVIEW
+    ? { name: 'components' as const }
+    : { name: 'component-doc' as const, params: { component: name } }
+}
+
+function categoryTitle(label: string) {
+  return categoryTitles[label] ?? label
+}
+
+function groupByCategory(items: DocumentedComponentMeta[]) {
+  const groups = new Map<string, { order: number; label: string; title: string; items: DocumentedComponentMeta[] }>()
+
+  for (const item of items) {
+    const existing = groups.get(item.categoryLabel)
+    if (existing) {
+      existing.items.push(item)
+      continue
+    }
+    groups.set(item.categoryLabel, {
+      order: item.categoryOrder,
+      label: item.categoryLabel,
+      title: categoryTitle(item.categoryLabel),
+      items: [item],
+    })
+  }
+
+  return [...groups.values()].sort((a, b) => a.order - b.order || a.label.localeCompare(b.label))
+}
 
 function applyPlaygroundTheme() {
   const root = document.documentElement
@@ -91,37 +211,40 @@ function applyPlaygroundTheme() {
 
 watch([accent, radius, density, motionPreference], applyPlaygroundTheme, { immediate: true })
 
+watch(selectedComponent, async () => {
+  await nextTick()
+  contentScroll.value?.setScrollTop(0)
+})
+
 const activePackageDoc = computed(() => {
-  if (selectedComponent.value === '全部组件') return null
+  if (selectedComponent.value === OVERVIEW) return null
   return resolveComponentDoc(selectedComponent.value)
 })
 
-const filteredComponents = computed(() => {
+const filteredDocumented = computed(() => {
   const query = search.value.trim().toLowerCase()
-  if (!query) return components
-  return components.filter((component) => component.name.toLowerCase().includes(query))
+  if (!query) return documented
+  return documented.filter((component) => {
+    const haystack = [
+      component.name,
+      component.categoryLabel,
+      categoryTitle(component.categoryLabel),
+      component.description ?? '',
+      componentBlurbs[component.name] ?? '',
+    ]
+      .join(' ')
+      .toLowerCase()
+    return haystack.includes(query)
+  })
 })
+
+const navGroups = computed(() => groupByCategory(filteredDocumented.value))
+const overviewGroups = computed(() => groupByCategory(documented))
 </script>
 
 <template>
-  <div class="app-shell">
-    <header class="topbar">
-      <a class="brand" href="#top" aria-label="Well Design 组件库首页">
-        <span class="brand-mark">W</span>
-        <span>well design</span>
-        <span class="version">v0.1.0</span>
-      </a>
-      <div class="topbar-actions">
-        <span class="status-dot" aria-hidden="true" />
-        <span class="status-text">本地开发中</span>
-        <button class="theme-toggle" type="button" :aria-label="isDark ? '切换到亮色主题' : '切换到暗色主题'" @click="toggleTheme">
-          <span aria-hidden="true">{{ isDark ? '☼' : '◐' }}</span>
-          {{ isDark ? '亮色' : '暗色' }}
-        </button>
-      </div>
-    </header>
-
-    <div id="top" class="workspace">
+  <div class="components-shell">
+    <div class="workspace">
       <aside class="sidebar" aria-label="组件导航">
         <WdScrollbar class="column-scroll">
           <div class="sidebar-body">
@@ -181,19 +304,29 @@ const filteredComponents = computed(() => {
               </div>
             </section>
             <nav class="component-nav" aria-label="组件目录">
-              <p class="nav-heading">COMPONENTS</p>
-              <button
-                v-for="component in filteredComponents"
-                :key="component.name"
-                type="button"
-                class="nav-item"
-                :class="{ 'nav-item--active': selectedComponent === component.name }"
-                @click="selectedComponent = component.name"
+              <RouterLink
+                class="nav-item nav-item--overview"
+                :class="{ 'nav-item--active': selectedComponent === OVERVIEW }"
+                :to="componentRoute(OVERVIEW)"
               >
-                <span>{{ component.name }}</span>
-                <span class="nav-count">{{ component.count }}</span>
-              </button>
-              <p v-if="filteredComponents.length === 0" class="empty-search">没有找到组件</p>
+                <span>{{ OVERVIEW }}</span>
+                <span class="nav-count">{{ documented.length }}</span>
+              </RouterLink>
+
+              <section v-for="group in navGroups" :key="group.label" class="nav-group">
+                <p class="nav-heading">{{ group.title }} <span>{{ group.label }}</span></p>
+                <RouterLink
+                  v-for="component in group.items"
+                  :key="component.name"
+                  class="nav-item"
+                  :class="{ 'nav-item--active': selectedComponent === component.name }"
+                  :to="componentRoute(component.name)"
+                >
+                  <span>{{ component.name }}</span>
+                </RouterLink>
+              </section>
+
+              <p v-if="navGroups.length === 0" class="empty-search">没有找到组件</p>
             </nav>
             <div class="sidebar-footer">
               <span class="footer-symbol">✦</span>
@@ -204,28 +337,36 @@ const filteredComponents = computed(() => {
       </aside>
 
       <main class="content">
-        <WdScrollbar class="column-scroll">
+        <WdScrollbar ref="contentScroll" class="column-scroll">
           <div class="content-body">
             <section class="hero">
               <div>
-                <p class="eyebrow">DOCS / COMPONENTS / {{ selectedComponent.toUpperCase() }}</p>
+                <p class="eyebrow">COMPONENTS / {{ selectedComponent.toUpperCase() }}</p>
                 <h1>组件实验室<span>。</span></h1>
-                <p class="hero-copy">文档写在各组件的 <code>docs/index.md</code>，支持 Markdown + <code>vue preview</code>。API 对齐 PrimeVue。</p>
+                <p class="hero-copy">每个组件的 API 与示例写在 <code>docs/index.md</code>，支持 Markdown + <code>vue preview</code>。上手与主题配置请见顶部「文档」。</p>
                 <div class="doc-meta"><span>Vue 3</span><span>PrimeVue-aligned</span><span>Markdown docs</span></div>
               </div>
               <div class="hero-glyph" aria-hidden="true"><span>W</span></div>
             </section>
 
-            <template v-if="selectedComponent === '全部组件'">
-              <div class="section-heading"><div><p class="eyebrow">FOUNDATION / OVERVIEW</p><h2>基础组件</h2></div><span class="section-rule" /></div>
-              <section class="demo-grid" aria-label="组件总览">
-                <WdCard v-for="item in components.slice(1)" :key="item.name" class="overview-card">
-                  <div class="overview-card__number">{{ String(item.count).padStart(2, '0') }}</div>
-                  <h2>{{ item.name }}</h2>
-                  <p>{{ componentBlurbs[item.name] ?? '组件文档。' }}</p>
-                  <button type="button" class="text-link" @click="selectedComponent = item.name">查看详情 <span>→</span></button>
-                </WdCard>
-              </section>
+            <template v-if="selectedComponent === OVERVIEW">
+              <template v-for="group in overviewGroups" :key="group.label">
+                <div class="section-heading">
+                  <div>
+                    <p class="eyebrow">{{ String(group.order).padStart(2, '0') }} / {{ group.label }}</p>
+                    <h2>{{ group.title }}</h2>
+                  </div>
+                  <span class="section-rule" />
+                </div>
+                <section class="demo-grid overview-section" :aria-label="`${group.title}组件`">
+                  <WdCard v-for="item in group.items" :key="item.name" class="overview-card">
+                    <div class="overview-card__number">{{ group.label.slice(0, 2) }}</div>
+                    <h2>{{ item.name }}</h2>
+                    <p>{{ componentBlurbs[item.name] ?? item.description ?? '组件文档。' }}</p>
+                    <RouterLink class="text-link" :to="componentRoute(item.name)">查看详情 <span>→</span></RouterLink>
+                  </WdCard>
+                </section>
+              </template>
             </template>
 
             <ComponentDocViewer v-else-if="activePackageDoc" :doc="activePackageDoc" />
@@ -233,6 +374,7 @@ const filteredComponents = computed(() => {
             <section v-else class="missing-doc">
               <h2>{{ selectedComponent }}</h2>
               <p>尚未找到 <code>docs/index.md</code>。</p>
+              <RouterLink class="text-link" :to="{ name: 'components' }">返回全部组件 <span>→</span></RouterLink>
             </section>
           </div>
         </WdScrollbar>
@@ -255,20 +397,14 @@ const filteredComponents = computed(() => {
 </template>
 
 <style>
-:root { color: var(--wd-color-text); background: var(--wd-color-surface); font-family: var(--wd-font-sans); }
-html, body, #app { height: 100%; }
-body { margin: 0; min-width: 320px; overflow: hidden; }
-* { box-sizing: border-box; }
-button, input { font: inherit; }
-button:focus-visible, input:focus-visible { outline: 3px solid color-mix(in srgb, var(--wd-color-focus-ring) 40%, transparent); outline-offset: 3px; }
-.app-shell { background: var(--wd-color-surface); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-.topbar { align-items: center; background: var(--wd-color-surface); border-bottom: 1px solid var(--wd-color-border); display: flex; flex: 0 0 auto; height: 4.5rem; justify-content: space-between; padding: 0 clamp(1.25rem, 3vw, 3.5rem); width: 100%; z-index: 100; }
-.brand { align-items: center; color: var(--wd-color-text); display: flex; font-size: 1rem; font-weight: 750; gap: .7rem; letter-spacing: -.03em; text-decoration: none; }
-.brand-mark { align-items: center; background: var(--wd-color-primary); border-radius: var(--wd-radius-sm); color: white; display: inline-flex; font-family: Georgia, serif; font-size: 1.15rem; height: 2rem; justify-content: center; width: 2rem; }
-.version, .token-index { color: var(--wd-color-text-muted); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .68rem; letter-spacing: .04em; }
-.topbar-actions { align-items: center; color: var(--wd-color-text-muted); display: flex; font-size: .75rem; gap: .5rem; }
-.status-dot { background: #41b883; border-radius: 50%; height: .45rem; width: .45rem; }
-.theme-toggle { background: transparent; border: 1px solid var(--wd-color-border); border-radius: var(--wd-radius-full); color: var(--wd-color-text); cursor: pointer; font-size: .75rem; margin-left: 1rem; padding: .45rem .8rem; }
+.components-shell {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.token-index { color: var(--wd-color-text-muted); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .68rem; letter-spacing: .04em; }
 .workspace { display: grid; flex: 1; grid-template-columns: 15rem minmax(0, 1fr) 14rem; min-height: 0; overflow: hidden; }
 .sidebar, .content, .token-panel { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 .column-scroll { flex: 1; height: 100%; min-height: 0; }
@@ -297,8 +433,11 @@ button:focus-visible, input:focus-visible { outline: 3px solid color-mix(in srgb
 .setting-select { display: grid; grid-template-columns: 1fr 1.15fr; align-items: center; }
 .setting-select select { background: var(--wd-color-surface); border: 1px solid var(--wd-color-border); border-radius: var(--wd-radius-sm); color: var(--wd-color-text); font-size: .68rem; padding: .35rem .45rem; width: 100%; }
 .component-nav { display: grid; gap: .2rem; margin-top: 1.25rem; }
-.nav-heading { margin: 0 0 .35rem .75rem; }
-.nav-item { align-items: center; background: transparent; border: 0; border-radius: var(--wd-radius-sm); color: var(--wd-color-text-muted); cursor: pointer; display: flex; font-size: .8rem; justify-content: space-between; padding: .7rem .75rem; text-align: left; }
+.nav-group { display: grid; gap: .15rem; margin-top: 1rem; }
+.nav-heading { display: flex; gap: .4rem; margin: 0 0 .35rem .75rem; }
+.nav-heading span { opacity: .55; }
+.nav-item { align-items: center; background: transparent; border: 0; border-radius: var(--wd-radius-sm); color: var(--wd-color-text-muted); cursor: pointer; display: flex; font-size: .8rem; justify-content: space-between; padding: .7rem .75rem; text-align: left; text-decoration: none; }
+.nav-item--overview { margin-bottom: .35rem; }
 .nav-item:hover, .nav-item--active { background: color-mix(in srgb, var(--wd-color-primary) 9%, transparent); color: var(--wd-color-primary); }
 .nav-item--active { font-weight: 700; }
 .nav-count { font-family: ui-monospace, monospace; font-size: .65rem; opacity: .7; }
@@ -315,26 +454,26 @@ button:focus-visible, input:focus-visible { outline: 3px solid color-mix(in srgb
 .hero-copy code { font-family: ui-monospace, monospace; font-size: .8em; }
 .doc-meta { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.5rem; }
 .doc-meta span { border: 1px solid var(--wd-color-border); border-radius: var(--wd-radius-full); color: var(--wd-color-text-muted); font-family: ui-monospace, monospace; font-size: .6rem; padding: .3rem .55rem; }
-.section-heading { align-items: end; display: flex; gap: 1rem; margin-bottom: 1rem; }
+.section-heading { align-items: end; display: flex; gap: 1rem; margin: 2.5rem 0 1rem; }
+.section-heading:first-of-type { margin-top: 0; }
 .section-heading h2 { font-family: Georgia, serif; font-size: 1.6rem; font-weight: 400; letter-spacing: -.04em; margin: .5rem 0 0; }
 .section-rule { background: var(--wd-color-border); flex: 1; height: 1px; margin-bottom: .45rem; }
 .hero-glyph { align-items: center; border: 1px solid var(--wd-color-border); border-radius: 50%; color: var(--wd-color-primary); display: flex; font-family: Georgia, serif; font-size: 5rem; height: 9rem; justify-content: center; opacity: .8; transform: rotate(-12deg); width: 9rem; }
 .demo-grid { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.overview-section { margin-bottom: 1rem; }
 .overview-card { min-height: 13rem; position: relative; }
 .overview-card__number { color: var(--wd-color-primary); font-family: ui-monospace, monospace; font-size: .65rem; }
 .overview-card h2 { font-family: Georgia, serif; font-size: 1.65rem; font-weight: 400; letter-spacing: -.04em; margin: 2.5rem 0 .5rem; }
 .overview-card p { color: var(--wd-color-text-muted); font-size: .78rem; line-height: 1.5; margin: 0; max-width: 15rem; }
-.text-link { background: transparent; border: 0; color: var(--wd-color-primary); cursor: pointer; font-size: .75rem; margin-top: 1.4rem; padding: 0; }
+.text-link { background: transparent; border: 0; color: var(--wd-color-primary); cursor: pointer; display: inline-flex; font-size: .75rem; margin-top: 1.4rem; padding: 0; text-decoration: none; }
 .text-link span { display: inline-block; margin-left: .35rem; transition: transform var(--wd-motion-fast) var(--wd-motion-ease); }
 .text-link:hover span { transform: translateX(.25rem); }
 .missing-doc { color: var(--wd-color-text-muted); }
+.missing-doc .text-link { margin-top: 1rem; }
 .token-heading { display: flex; justify-content: space-between; }.token-description { color: var(--wd-color-text-muted); font-family: Georgia, serif; font-size: .8rem; line-height: 1.5; margin: 1.5rem 0 2.5rem; }.token-group { border-top: 1px solid var(--wd-color-border); padding: 1rem 0; }.token-group h3 { font-family: ui-monospace, monospace; font-size: .65rem; font-weight: 500; letter-spacing: .08em; margin: 0 0 1rem; text-transform: uppercase; }.swatch-row { align-items: center; color: var(--wd-color-text-muted); display: grid; font-size: .7rem; gap: .5rem; grid-template-columns: 1rem 1fr auto; margin: .6rem 0; }.swatch { border: 1px solid var(--wd-color-border); border-radius: 50%; height: .8rem; width: .8rem; }.swatch--primary { background: var(--wd-color-primary); }.swatch--surface { background: var(--wd-color-surface); }.swatch--border { background: var(--wd-color-border); }.swatch-row code { color: var(--wd-color-text-muted); font-family: ui-monospace, monospace; font-size: .6rem; }.radius-row { align-items: center; color: var(--wd-color-text-muted); display: flex; font-family: ui-monospace, monospace; font-size: .6rem; gap: .35rem; }.radius-sample { background: color-mix(in srgb, var(--wd-color-primary) 15%, transparent); border: 1px solid var(--wd-color-primary); height: 1.25rem; width: 1.25rem; }.radius-sample--sm { border-radius: var(--wd-radius-sm); }.radius-sample--md { border-radius: var(--wd-radius-md); }.radius-sample--lg { border-radius: var(--wd-radius-lg); }.spacing-bars { align-items: end; display: flex; gap: .35rem; height: 4rem; }.spacing-bars span { align-items: center; background: color-mix(in srgb, var(--wd-color-primary) 20%, transparent); color: var(--wd-color-primary); display: flex; font-family: ui-monospace, monospace; font-size: .6rem; height: var(--bar); justify-content: center; width: 1.45rem; }.token-note { align-items: start; border: 1px solid var(--wd-color-border); color: var(--wd-color-text-muted); display: flex; font-size: .68rem; gap: .5rem; line-height: 1.5; margin-top: 2rem; padding: .75rem; }.token-note .wd-icon { color: var(--wd-color-primary); flex: 0 0 auto; }
 @media (max-width: 1100px) { .workspace { grid-template-columns: 13rem minmax(0, 1fr); }.token-panel { display: none; } }
 @media (max-width: 700px) {
-  body { overflow: auto; }
-  .app-shell { height: auto; min-height: 100vh; overflow: visible; }
-  .topbar { height: 4rem; }
-  .status-text { display: none; }
+  .components-shell { height: auto; min-height: 0; overflow: visible; }
   .workspace { display: block; flex: none; overflow: visible; }
   .sidebar, .content, .token-panel { display: block; overflow: visible; }
   .column-scroll { height: auto; }
@@ -343,6 +482,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid color-mix(in srgb
   .sidebar-intro { display: none; }
   .appearance-panel { margin-top: 1rem; }
   .component-nav { display: flex; flex-wrap: wrap; }
+  .nav-group { flex-basis: 100%; }
   .nav-heading { flex-basis: 100%; margin-top: .25rem; }
   .nav-item { padding: .5rem .7rem; }
   .sidebar-footer { display: none; }

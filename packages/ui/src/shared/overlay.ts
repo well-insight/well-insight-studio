@@ -1,5 +1,5 @@
-/** Overlay mount target. Prefer `'body'`; use `'self'` / `false` to keep in place. */
-export type WdAppendTo = string | HTMLElement | 'self' | false
+/** Overlay mount target. Prefer `'body'`; use `'self'` to keep in place. */
+export type WdAppendTo = string | HTMLElement | 'self'
 
 export interface WdOverlayMountProps {
   /**
@@ -8,24 +8,32 @@ export interface WdOverlayMountProps {
    */
   teleport?: boolean
   /**
-   * Teleport target. Defaults to `'body'`.
-   * Pass `'self'` or `false` to render in place (same as `teleport: false`).
+   * Teleport target. Defaults to `'body'` (or ConfigProvider `appendTo`).
+   * Pass `'self'` to render in place (same as `teleport: false`).
+   * `false` is still accepted at runtime for compatibility.
    */
-  appendTo?: WdAppendTo
+  appendTo?: WdAppendTo | false
 }
 
-export function resolveOverlayTeleport(options: WdOverlayMountProps = {}): {
+export function resolveOverlayTeleport(
+  options: WdOverlayMountProps = {},
+  /** Global default from ConfigProvider / createWellDesign. */
+  globalAppendTo: WdAppendTo | false = 'body',
+): {
   disabled: boolean
   to: string | HTMLElement
 } {
   const teleport = options.teleport !== false
-  const appendTo = options.appendTo ?? 'body'
+  const appendTo = options.appendTo ?? globalAppendTo ?? 'body'
   if (!teleport || appendTo === false || appendTo === 'self') {
     return { disabled: true, to: 'body' }
   }
   return { disabled: false, to: appendTo }
 }
 
-export function isOverlayTeleported(options: WdOverlayMountProps = {}): boolean {
-  return !resolveOverlayTeleport(options).disabled
+export function isOverlayTeleported(
+  options: WdOverlayMountProps = {},
+  globalAppendTo: WdAppendTo | false = 'body',
+): boolean {
+  return !resolveOverlayTeleport(options, globalAppendTo).disabled
 }

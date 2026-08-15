@@ -49,11 +49,49 @@ describe('WdSelect', () => {
   })
 
   it('teleports the styled menu to body by default', async () => {
-    const wrapper = mount(WdSelect, { props: { options, modelValue: 'sm' } })
+    const wrapper = mount(WdSelect, { props: { options, modelValue: 'sm' }, attachTo: document.body })
     await wrapper.get('[role="combobox"]').trigger('click')
     await nextTick()
 
     expect(document.body.querySelector('.wd-select__menu--teleported')).toBeTruthy()
     wrapper.unmount()
+  })
+
+  it('clears the value when showClear is enabled', async () => {
+    const wrapper = mount(WdSelect, {
+      props: { options, modelValue: 'sm', showClear: true, teleport: false },
+    })
+    await wrapper.get('.wd-select__clear').trigger('click')
+    expect(wrapper.emitted('update:modelValue')).toEqual([[undefined]])
+    expect(wrapper.emitted('clear')).toHaveLength(1)
+  })
+
+  it('filters options by label and shows empty message', async () => {
+    const wrapper = mount(WdSelect, {
+      props: {
+        options,
+        filter: true,
+        emptyMessage: '暂无选项',
+        teleport: false,
+      },
+    })
+    await wrapper.get('[role="combobox"]').trigger('click')
+    await wrapper.get('.wd-select__filter').setValue('zzz')
+    await nextTick()
+    expect(wrapper.findAll('[role="option"]')).toHaveLength(0)
+    expect(wrapper.get('.wd-select__empty').text()).toBe('暂无选项')
+
+    await wrapper.get('.wd-select__filter').setValue('lar')
+    await nextTick()
+    expect(wrapper.findAll('[role="option"]')).toHaveLength(1)
+    expect(wrapper.get('[role="option"]').text()).toContain('Large')
+  })
+
+  it('shows empty message when options are empty', async () => {
+    const wrapper = mount(WdSelect, {
+      props: { options: [], emptyMessage: '没有可选内容', teleport: false },
+    })
+    await wrapper.get('[role="combobox"]').trigger('click')
+    expect(wrapper.get('.wd-select__empty').text()).toBe('没有可选内容')
   })
 })

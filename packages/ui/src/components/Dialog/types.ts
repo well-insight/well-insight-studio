@@ -24,6 +24,8 @@ export interface DialogProps {
   /** PrimeVue-aligned alias for `closeOnOutsideClick`. */
   dismissableMask?: boolean
   closable?: boolean
+  /** Show maximize / restore toggle in the header. */
+  maximizable?: boolean
   modal?: boolean
   position?: DialogPosition
   width?: string
@@ -38,4 +40,6 @@ export interface DialogEmits {
   (event: 'close'): void
   (event: 'show'): void
   (event: 'hide'): void
+  (event: 'maximize'): void
+  (event: 'unmaximize'): void
 }

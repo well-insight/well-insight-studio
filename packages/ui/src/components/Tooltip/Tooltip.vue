@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { useWdConfig } from '../../shared/config'
 import { isOverlayTeleported, resolveOverlayTeleport } from '../../shared/overlay'
 import type { TooltipProps } from './types'
 
@@ -8,14 +9,14 @@ const props = withDefaults(defineProps<TooltipProps>(), {
   disabled: false,
   showDelay: 0,
   teleport: true,
-  appendTo: 'body',
 })
 
+const config = useWdConfig()
 const root = ref<HTMLElement | null>(null)
 const visible = ref(false)
 const tipStyle = ref<Record<string, string>>({})
-const teleportTarget = computed(() => resolveOverlayTeleport(props))
-const teleported = computed(() => isOverlayTeleported(props))
+const teleportTarget = computed(() => resolveOverlayTeleport(props, config.value.appendTo))
+const teleported = computed(() => isOverlayTeleported(props, config.value.appendTo))
 let showTimer: ReturnType<typeof setTimeout> | null = null
 
 function clearShowTimer() {

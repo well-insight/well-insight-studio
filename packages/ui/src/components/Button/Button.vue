@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { Comment, Fragment, Text, computed, ref, useSlots, type VNode, type VNodeChild } from 'vue'
+import { useWdConfig } from '../../shared/config'
+import { resolveSizeClass } from '../../shared/types'
 import WdIcon from '../Icon/Icon.vue'
 import type { IconName } from '../Icon/types'
 import type { ButtonProps } from './types'
@@ -23,6 +25,7 @@ const props = withDefaults(defineProps<ButtonProps>(), {
 })
 
 const emit = defineEmits<{ (event: 'click', value: MouseEvent): void }>()
+const config = useWdConfig()
 const slots = useSlots()
 const buttonElement = ref<HTMLButtonElement | null>(null)
 
@@ -34,11 +37,7 @@ const isText = computed(() => props.text || props.variant === 'text')
 const isLink = computed(() => props.link || props.variant === 'link')
 const isFluid = computed(() => props.fluid || props.block)
 
-const resolvedSize = computed(() => {
-  if (props.size === 'sm' || props.size === 'small') return 'small'
-  if (props.size === 'lg' || props.size === 'large') return 'large'
-  return 'normal'
-})
+const resolvedSize = computed(() => resolveSizeClass(props.size ?? config.value.size))
 
 const isIconOnly = computed(() => props.iconOnly || ((!hasLabel.value) && Boolean(props.icon || slots.icon || props.loading)))
 

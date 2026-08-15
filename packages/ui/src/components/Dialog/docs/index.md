@@ -1,7 +1,7 @@
 ---
 title: Dialog
 category: 04 / OVERLAY
-description: 模态对话框。API 对齐 PrimeVue Dialog：header / dismissableMask 别名、多位置、modal / closable；可见性仍使用 v-model（modelValue）。
+description: 模态对话框。API 对齐 PrimeVue Dialog：header / dismissableMask 别名、多位置、modal / closable / maximizable；可见性仍使用 v-model（modelValue）。
 ---
 
 # Dialog
@@ -29,6 +29,57 @@ const open = ref(false)
     <WdButton label="Open Dialog" @click="open = true" />
     <WdDialog v-model="open" header="Confirm" width="28rem">
       <p style="margin:0">Use <code>header</code> or <code>title</code> for the dialog title.</p>
+    </WdDialog>
+  </div>
+</template>
+```
+
+## Positions
+
+支持 `center` / `top` / `bottom` / `left` / `right` 以及四角位置。
+
+```vue preview
+<script setup lang="ts">
+import { ref } from 'vue'
+import { WdButton, WdDialog } from '@well-design/ui'
+
+const open = ref(false)
+const position = ref<'center' | 'top' | 'topright' | 'bottomleft'>('center')
+
+function openAt(next: 'center' | 'top' | 'topright' | 'bottomleft') {
+  position.value = next
+  open.value = true
+}
+</script>
+
+<template>
+  <div style="display:flex;flex-wrap:wrap;gap:0.75rem">
+    <WdButton label="Center" size="small" @click="openAt('center')" />
+    <WdButton label="Top" size="small" severity="secondary" @click="openAt('top')" />
+    <WdButton label="Top Right" size="small" @click="openAt('topright')" />
+    <WdButton label="Bottom Left" size="small" severity="secondary" @click="openAt('bottomleft')" />
+    <WdDialog v-model="open" :header="`Position: ${position}`" :position="position">
+      <p style="margin:0">Dialog can dock to edges and corners.</p>
+    </WdDialog>
+  </div>
+</template>
+```
+
+## Footer actions
+
+```vue preview
+<script setup lang="ts">
+import { ref } from 'vue'
+import { WdButton, WdDialog } from '@well-design/ui'
+
+const open = ref(false)
+</script>
+
+<template>
+  <div>
+    <WdButton label="With Footer" @click="open = true" />
+    <WdDialog v-model="open" header="Save changes" width="28rem">
+      <p style="margin:0">Footer slot is for primary and secondary actions.</p>
       <template #footer>
         <div style="display:flex;gap:0.75rem;justify-content:flex-end;width:100%">
           <WdButton label="Cancel" severity="secondary" text @click="open = false" />
@@ -40,9 +91,9 @@ const open = ref(false)
 </template>
 ```
 
-## Position
+## No dismiss mask
 
-支持 `center` / `top` / `bottom` / `left` / `right` 以及四角位置。
+`dismissableMask={false}`（或 `closeOnOutsideClick={false}`）时点击遮罩不关闭。
 
 ```vue preview
 <script setup lang="ts">
@@ -50,20 +101,35 @@ import { ref } from 'vue'
 import { WdButton, WdDialog } from '@well-design/ui'
 
 const open = ref(false)
-const position = ref<'topright' | 'bottomleft'>('topright')
-
-function openAt(next: 'topright' | 'bottomleft') {
-  position.value = next
-  open.value = true
-}
 </script>
 
 <template>
-  <div style="display:flex;flex-wrap:wrap;gap:0.75rem">
-    <WdButton label="Top Right" size="small" @click="openAt('topright')" />
-    <WdButton label="Bottom Left" size="small" severity="secondary" @click="openAt('bottomleft')" />
-    <WdDialog v-model="open" :header="`Position: ${position}`" :position="position">
-      <p style="margin:0">Mask dismiss uses <code>dismissableMask</code> / <code>closeOnOutsideClick</code>.</p>
+  <div>
+    <WdButton label="No Mask Dismiss" severity="secondary" @click="open = true" />
+    <WdDialog v-model="open" header="Stay open" :dismissable-mask="false">
+      <p style="margin:0">Click the mask — the dialog stays open. Use the close button or Esc.</p>
+    </WdDialog>
+  </div>
+</template>
+```
+
+## Maximizable
+
+`maximizable` 在标题栏提供最大化 / 还原切换。
+
+```vue preview
+<script setup lang="ts">
+import { ref } from 'vue'
+import { WdButton, WdDialog } from '@well-design/ui'
+
+const open = ref(false)
+</script>
+
+<template>
+  <div>
+    <WdButton label="Maximizable" @click="open = true" />
+    <WdDialog v-model="open" header="Workspace" maximizable width="32rem">
+      <p style="margin:0">Toggle maximize to fill the viewport.</p>
     </WdDialog>
   </div>
 </template>
@@ -80,11 +146,12 @@ function openAt(next: 'topright' | 'bottomleft') {
 | `closeOnOutsideClick` | `boolean` | `true` | 点击遮罩关闭。 |
 | `dismissableMask` | `boolean` | — | `closeOnOutsideClick` 的 PrimeVue 别名。 |
 | `closable` | `boolean` | `true` | 显示关闭按钮。 |
+| `maximizable` | `boolean` | `false` | 显示最大化 / 还原按钮。 |
 | `modal` | `boolean` | `true` | 遮罩层。 |
 | `position` | `'center' \| 'top' \| 'bottom' \| 'left' \| 'right' \| 'topleft' \| 'topright' \| 'bottomleft' \| 'bottomright'` | `'center'` | 对话框位置。 |
-| `width` | `string` | — | 对话框宽度。 |
+| `width` | `string` | — | 对话框宽度（最大化时忽略）。 |
 | `teleport` | `boolean` | `true` | 浮层 Teleport；默认挂到 `body`。 |
-| `appendTo` | `string \| HTMLElement \| 'self' \| false` | `'body'` | 挂载目标；`'self'` / `false` 就地渲染。 |
+| `appendTo` | `string \| HTMLElement \| 'self'` | `'body'` | 挂载目标；`'self'` 就地渲染。 |
 
 ## Events
 
@@ -94,6 +161,8 @@ function openAt(next: 'topright' | 'bottomleft') {
 | `close` | — | 关闭时触发。 |
 | `show` | — | 打开时触发。 |
 | `hide` | — | 关闭后触发。 |
+| `maximize` | — | 进入最大化。 |
+| `unmaximize` | — | 退出最大化。 |
 
 ## Slots
 

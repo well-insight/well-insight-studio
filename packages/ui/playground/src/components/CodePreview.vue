@@ -16,7 +16,7 @@ defineProps<{
       <div v-if="$slots.code" class="code-preview__highlight">
         <slot name="code" />
       </div>
-      <pre v-else><code>{{ code }}</code></pre>
+      <pre v-else class="code-preview__fallback"><code>{{ code }}</code></pre>
     </details>
   </section>
 </template>
@@ -54,22 +54,40 @@ defineProps<{
   text-transform: uppercase;
 }
 .code-preview__highlight,
-.code-preview__code pre {
+.code-preview__fallback {
   background: color-mix(in srgb, var(--wd-color-text) 7%, var(--wd-color-surface));
   border-top: 1px solid var(--wd-color-border);
   margin: 0;
   overflow-x: auto;
   padding: var(--wd-space-4);
 }
-.code-preview__code code,
-.code-preview__highlight :deep(code),
-.code-preview__highlight :deep(pre) {
-  background: transparent;
+.code-preview__fallback {
   color: var(--wd-color-text);
   font-family: ui-monospace, monospace;
   font-size: 0.7rem;
   line-height: 1.6;
+  white-space: pre;
+}
+.code-preview__fallback code {
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+}
+.code-preview__highlight :deep(pre),
+.code-preview__highlight :deep(.shiki) {
+  background: transparent !important;
   margin: 0;
+  overflow-x: visible;
+  padding: 0;
+}
+.code-preview__highlight :deep(code),
+.code-preview__highlight :deep(.shiki code) {
+  background: transparent;
+  font-family: ui-monospace, monospace;
+  font-size: 0.7rem;
+  line-height: 1.6;
+  padding: 0;
   white-space: pre;
 }
 </style>

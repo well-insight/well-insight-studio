@@ -1,6 +1,6 @@
 ---
 title: Tabs
-category: 05 / DATA
+category: 05 / PANEL
 description: 标签页切换。使用 modelValue 与 tabs 列表控制活动项。
 ---
 

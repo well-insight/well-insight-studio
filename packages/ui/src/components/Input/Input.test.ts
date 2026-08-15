@@ -32,4 +32,13 @@ describe('WdInput', () => {
       expect.arrayContaining(['wd-input--large', 'wd-input--invalid', 'wd-input--error']),
     )
   })
+
+  it('applies maxlength and shows character count', () => {
+    const wrapper = mount(WdInput, {
+      props: { modelValue: 'Hello', maxlength: 20, showCount: true, id: 'bio' },
+    })
+    expect(wrapper.get('input').attributes('maxlength')).toBe('20')
+    expect(wrapper.get('.wd-input-field__count').text()).toBe('5 / 20')
+    expect(wrapper.get('input').attributes('aria-describedby')).toContain('bio-count')
+  })
 })

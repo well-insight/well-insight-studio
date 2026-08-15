@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, useAttrs, watch } from 'vue'
+import { useWdConfig } from '../../shared/config'
 import { resolveSizeClass } from '../../shared/types'
 import type { TextareaProps } from './types'
 
@@ -11,7 +12,6 @@ const props = withDefaults(defineProps<TextareaProps>(), {
   rows: 4,
   resize: 'vertical',
   autoResize: false,
-  variant: 'outlined',
   fluid: false,
   disabled: false,
   readonly: false,
@@ -19,17 +19,19 @@ const props = withDefaults(defineProps<TextareaProps>(), {
   invalid: false,
 })
 const emit = defineEmits<{ (event: 'update:modelValue', value: string): void }>()
+const config = useWdConfig()
 const textareaElement = ref<HTMLTextAreaElement | null>(null)
 const textareaId = computed(() => props.id ?? `wd-textarea-${Math.random().toString(36).slice(2, 8)}`)
 const isInvalid = computed(() => props.invalid || props.error)
-const sizeClass = computed(() => resolveSizeClass(props.size))
+const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
+const resolvedVariant = computed(() => props.variant ?? config.value.inputVariant ?? 'outlined')
 const resizeStyle = computed(() => (props.autoResize ? 'none' : props.resize))
 
 const textareaClass = computed(() => [
   'wd-textarea',
   `wd-textarea--${sizeClass.value}`,
   {
-    'wd-textarea--filled': props.variant === 'filled',
+    'wd-textarea--filled': resolvedVariant.value === 'filled',
     'wd-textarea--fluid': props.fluid,
     'wd-textarea--invalid': isInvalid.value,
     'wd-textarea--error': isInvalid.value,

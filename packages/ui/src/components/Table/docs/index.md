@@ -1,6 +1,6 @@
 ---
 title: Table
-category: 05 / DATA
+category: 06 / DATA
 description: 数据表格。支持列定义、单元格插槽与 small/large 密度。
 ---
 

@@ -39,18 +39,19 @@ defineProps<{
   margin: 0.8rem 0 1rem;
 }
 .component-doc-viewer__intro p {
-  color: var(--wd-color-text-muted);
-  font-size: 0.9rem;
+  color: var(--wd-color-text);
+  font-size: 0.95rem;
   line-height: 1.7;
   margin: 0;
   max-width: 42rem;
+  opacity: 0.88;
 }
 </style>
 
 <style>
 .wd-markdown-doc {
   color: var(--wd-color-text);
-  font-size: 0.86rem;
+  font-size: 0.9rem;
   line-height: 1.7;
   width: 100%;
 }
@@ -60,6 +61,7 @@ defineProps<{
 .wd-markdown-doc h1,
 .wd-markdown-doc h2,
 .wd-markdown-doc h3 {
+  color: var(--wd-color-text);
   font-family: Georgia, serif;
   font-weight: 400;
   letter-spacing: -0.03em;
@@ -76,19 +78,22 @@ defineProps<{
 }
 .wd-markdown-doc p,
 .wd-markdown-doc ul,
-.wd-markdown-doc ol {
-  color: var(--wd-color-text-muted);
+.wd-markdown-doc ol,
+.wd-markdown-doc li,
+.wd-markdown-doc blockquote {
+  color: var(--wd-color-text);
   margin: 0.55rem 0;
 }
 .wd-markdown-doc a {
   color: var(--wd-color-primary);
 }
 .wd-markdown-doc code {
-  background: color-mix(in srgb, var(--wd-color-primary) 8%, transparent);
+  background: color-mix(in srgb, var(--wd-color-primary) 10%, var(--wd-color-surface));
   border-radius: var(--wd-radius-sm);
+  color: var(--wd-color-text);
   font-family: ui-monospace, monospace;
-  font-size: 0.78em;
-  padding: 0.1rem 0.3rem;
+  font-size: 0.82em;
+  padding: 0.12rem 0.35rem;
 }
 .wd-markdown-doc pre {
   background: color-mix(in srgb, var(--wd-color-text) 7%, var(--wd-color-surface));
@@ -103,7 +108,7 @@ defineProps<{
 }
 .wd-markdown-doc table {
   border-collapse: collapse;
-  font-size: 0.78rem;
+  font-size: 0.9rem;
   margin: 1rem 0 1.5rem;
   min-width: 100%;
   width: 100%;
@@ -111,19 +116,48 @@ defineProps<{
 .wd-markdown-doc th,
 .wd-markdown-doc td {
   border-bottom: 1px solid var(--wd-color-border);
-  padding: 0.75rem 0.65rem;
+  color: var(--wd-color-text);
+  line-height: 1.55;
+  padding: 0.85rem 0.75rem;
   text-align: left;
   vertical-align: top;
 }
 .wd-markdown-doc thead th {
-  color: var(--wd-color-text-muted);
+  background: color-mix(in srgb, var(--wd-color-text) 6%, var(--wd-color-surface));
+  color: var(--wd-color-text);
   font-family: ui-monospace, monospace;
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  opacity: 1;
   text-transform: uppercase;
 }
 .wd-markdown-doc tbody td {
-  color: var(--wd-color-text-muted);
+  color: var(--wd-color-text);
+  opacity: 1;
+}
+.wd-markdown-doc tbody td code {
+  color: var(--wd-color-primary);
+  font-weight: 600;
+}
+
+/* Shiki dual theme：跟随 documentElement[data-theme] */
+.wd-markdown-doc .shiki,
+.wd-markdown-doc .shiki span {
+  background-color: transparent !important;
+  color: var(--shiki-light);
+  font-style: var(--shiki-light-font-style);
+  font-weight: var(--shiki-light-font-weight);
+  text-decoration: var(--shiki-light-text-decoration);
+}
+html[data-theme='dark'] .wd-markdown-doc .shiki,
+html[data-theme='dark'] .wd-markdown-doc .shiki span {
+  color: var(--shiki-dark);
+  font-style: var(--shiki-dark-font-style);
+  font-weight: var(--shiki-dark-font-weight);
+  text-decoration: var(--shiki-dark-text-decoration);
+}
+.wd-markdown-doc pre.shiki {
+  background: color-mix(in srgb, var(--wd-color-text) 7%, var(--wd-color-surface)) !important;
 }
 </style>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { useWdConfig } from '../../shared/config'
 import { isOverlayTeleported, resolveOverlayTeleport } from '../../shared/overlay'
 import type { DropdownItem, DropdownProps } from './types'
 
@@ -8,21 +9,21 @@ const props = withDefaults(defineProps<DropdownProps>(), {
   placement: 'bottom-start',
   closeOnSelect: true,
   teleport: true,
-  appendTo: 'body',
 })
 const emit = defineEmits<{
   (event: 'update:modelValue', value: boolean): void
   (event: 'select', item: DropdownItem): void
 }>()
 
+const config = useWdConfig()
 const root = ref<HTMLElement | null>(null)
 const trigger = ref<HTMLElement | null>(null)
 const menu = ref<HTMLElement | null>(null)
 const menuStyle = ref<Record<string, string>>({})
 const highlightedIndex = ref(-1)
 const enabledItems = computed(() => props.items.filter((item) => !item.disabled))
-const teleportTarget = computed(() => resolveOverlayTeleport(props))
-const teleported = computed(() => isOverlayTeleported(props))
+const teleportTarget = computed(() => resolveOverlayTeleport(props, config.value.appendTo))
+const teleported = computed(() => isOverlayTeleported(props, config.value.appendTo))
 
 function initHighlight() {
   highlightedIndex.value = enabledItems.value.length ? 0 : -1
@@ -45,7 +46,7 @@ function setOpen(open: boolean) {
     initHighlight()
     void nextTick(() => {
       updateMenuPosition()
-      menu.value?.focus()
+      menu.value?.focus({ preventScroll: true })
     })
   }
 }
@@ -70,7 +71,7 @@ function onKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     event.preventDefault()
     setOpen(false)
-    trigger.value?.focus()
+    trigger.value?.focus({ preventScroll: true })
     return
   }
   if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {

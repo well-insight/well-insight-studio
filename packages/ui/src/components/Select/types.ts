@@ -24,6 +24,12 @@ export interface SelectProps {
   required?: boolean
   size?: SelectSize
   fluid?: boolean
+  /** Show clear button when a value is selected. */
+  showClear?: boolean
+  /** Empty / no-match message. Falls back to ConfigProvider `locale.emptyMessage`, then `暂无选项`. */
+  emptyMessage?: string
+  /** Show a filter input when the menu is open (matches option labels). */
+  filter?: boolean
   /** Teleport overlay. Defaults to `true`. */
   teleport?: boolean
   /** Mount target. Defaults to `'body'`. */
@@ -34,6 +40,7 @@ export interface SelectProps {
 export interface SelectEmits {
   (event: 'update:modelValue', value: SelectValue | undefined): void
   (event: 'change', value: SelectValue | undefined): void
+  (event: 'clear'): void
   (event: 'show'): void
   (event: 'hide'): void
 }

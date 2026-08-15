@@ -1,0 +1,64 @@
+---
+title: 指南
+order: 3
+description: 组件目录约定、文档写法与浮层通用约定。
+---
+
+# 指南
+
+## 组件目录
+
+推荐每个公开组件保持如下结构：
+
+```text
+packages/ui/src/components/Button/
+├── Button.vue
+├── types.ts
+├── index.ts
+├── Button.test.ts
+└── docs/index.md
+```
+
+- **前缀**：组件导出为 `Wd*`，CSS 类为 `.wd-*`。
+- **类型**：Props / Emits 放在 `types.ts`，并从包入口再导出。
+- **测试**：用户行为导向的 Vitest + Vue Test Utils。
+
+## 写文档
+
+在 `docs/index.md` 顶部写 frontmatter：
+
+```md
+---
+title: Button
+category: 01 / PRIMITIVE
+description: 触发动作的按钮
+---
+```
+
+正文使用 Markdown；可交互示例用 `vue preview` 代码块（文档站会渲染预览并支持查看代码）。
+
+分类前缀数字决定侧栏排序，例如：
+
+| 前缀 | 分类 |
+| --- | --- |
+| `00 / GUIDE` | 指南类（如 ConfigProvider） |
+| `01 / PRIMITIVE` | 基础 |
+| `02 / FORM` | 表单 |
+| `03 / OVERLAY` | 浮层 |
+
+## 浮层约定
+
+所有浮层默认 Teleport 到 `body`，并支持：
+
+| 参数 | 默认 | 说明 |
+| --- | --- | --- |
+| `teleport` | `true` | 是否 Teleport |
+| `appendTo` | `'body'` | 挂载目标；`'self'` 就地渲染 |
+
+动效统一：
+
+- 模态：`wd-fade`
+- 锚定菜单：`wd-scale-fade`
+- Toast：`wd-slide-fade`
+
+全局默认挂载点可通过 [ConfigProvider](/docs/config) 的 `appendTo` 统一设置。
