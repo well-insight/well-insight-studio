@@ -3192,6 +3192,7 @@ a.wd-breadcrumb__link:hover {
 .wd-splitter {
     display: flex;
     min-height: 6rem;
+    overflow: hidden;
     width: 100%;
 }
 .wd-splitter--horizontal {
@@ -3200,22 +3201,42 @@ a.wd-breadcrumb__link:hover {
 .wd-splitter--vertical {
     flex-direction: column;
 }
+.wd-splitter--dragging,
+.wd-splitter--dragging * {
+    user-select: none !important;
+}
 .wd-splitter__panel {
     background: var(--wd-color-surface);
-    flex: 1 1 0;
     min-height: 0;
     min-width: 0;
     overflow: auto;
 }
+.wd-splitter__panel--fill {
+    flex: 1 1 0;
+}
 .wd-splitter__gutter {
     background: var(--wd-color-border);
-    flex: 0 0 1px;
+    flex: 0 0 6px;
+    touch-action: none;
+    z-index: 1;
 }
 .wd-splitter--horizontal > .wd-splitter__gutter {
-    width: 1px;
+    cursor: col-resize;
+    width: 6px;
 }
 .wd-splitter--vertical > .wd-splitter__gutter {
-    height: 1px;
+    cursor: row-resize;
+    height: 6px;
+    width: 100%;
+}
+.wd-splitter__gutter:hover,
+.wd-splitter--dragging > .wd-splitter__gutter,
+.wd-splitter__gutter:focus-visible {
+    background: var(--wd-color-primary);
+}
+.wd-splitter__gutter:focus-visible {
+    box-shadow: var(--wd-focus-shadow);
+    outline: none;
 }
 
 /* —— Panel: Stepper —— */
@@ -4886,10 +4907,10 @@ a.wd-breadcrumb__link:hover {
 }
 .wd-orderlist__ghost {
     background: color-mix(in srgb, var(--wd-color-primary) 10%, var(--wd-color-surface));
-    opacity: 0.7;
+    opacity: var(--wd-opacity-disabled);
 }
-.wd-orderlist__drag {
-    box-shadow: var(--wd-shadow-md);
+.wd-orderlist__drop-target {
+    box-shadow: inset 0 0 0 1px var(--wd-color-primary);
 }
 
 /* —— Data: PickList —— */

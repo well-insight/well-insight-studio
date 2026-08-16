@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import draggable from 'vuedraggable'
+import { ref } from 'vue'
 import WdIcon from '../Icon/Icon.vue'
 import type { OrderListProps } from './types'
 
@@ -16,14 +15,10 @@ const emit = defineEmits<{
 }>()
 
 const selectedIndex = ref<number | null>(null)
-
-const list = computed({
-  get: () => props.modelValue,
-  set: (value: unknown[]) => {
-    emit('update:modelValue', value)
-    emit('reorder', value)
-  },
-})
+const dragFrom = ref<number | null>(null)
+const dropTarget = ref<number | null>(null)
+/** Only start HTML5 drag after pressing the grip handle. */
+const handleArmed = ref(false)
 
 function itemKey(item: unknown, index: number) {
   if (props.dataKey && item && typeof item === 'object' && props.dataKey in item) {
@@ -36,6 +31,11 @@ function select(index: number) {
   selectedIndex.value = index
 }
 
+function commitOrder(next: unknown[]) {
+  emit('update:modelValue', next)
+  emit('reorder', next)
+}
+
 function move(delta: number) {
   if (selectedIndex.value === null) return
   const from = selectedIndex.value
@@ -45,14 +45,57 @@ function move(delta: number) {
   const [item] = next.splice(from, 1)
   next.splice(to, 0, item)
   selectedIndex.value = to
-  emit('update:modelValue', next)
-  emit('reorder', next)
+  commitOrder(next)
+}
+
+function armHandle() {
+  if (!props.dragdrop) return
+  handleArmed.value = true
+}
+
+function onDragStart(index: number, event: DragEvent) {
+  if (!props.dragdrop || !handleArmed.value) {
+    event.preventDefault()
+    return
+  }
+  dragFrom.value = index
+  dropTarget.value = index
+  event.dataTransfer?.setData('text/plain', String(index))
+  event.dataTransfer!.effectAllowed = 'move'
+  select(index)
+}
+
+function onDragOver(index: number, event: DragEvent) {
+  if (!props.dragdrop || dragFrom.value == null || dragFrom.value === index) return
+  event.preventDefault()
+  event.dataTransfer!.dropEffect = 'move'
+  dropTarget.value = index
+}
+
+function onDrop(index: number, event: DragEvent) {
+  if (!props.dragdrop || dragFrom.value == null) return
+  event.preventDefault()
+  const from = dragFrom.value
+  if (from === index) {
+    resetDrag()
+    return
+  }
+  const next = [...props.modelValue]
+  const [item] = next.splice(from, 1)
+  next.splice(index, 0, item)
+  selectedIndex.value = index
+  commitOrder(next)
+  resetDrag()
 }
 
 function onDragEnd() {
-  if (selectedIndex.value != null && selectedIndex.value >= list.value.length) {
-    selectedIndex.value = null
-  }
+  resetDrag()
+}
+
+function resetDrag() {
+  dragFrom.value = null
+  dropTarget.value = null
+  handleArmed.value = false
 }
 </script>
 
@@ -67,48 +110,38 @@ function onDragEnd() {
       </button>
     </div>
 
-    <draggable
-      v-if="dragdrop"
-      v-model="list"
-      class="wd-orderlist__list"
-      tag="ul"
-      :style="listStyle"
-      :item-key="(item: unknown, index: number) => itemKey(item, index)"
-      handle=".wd-orderlist__handle"
-      ghost-class="wd-orderlist__ghost"
-      drag-class="wd-orderlist__drag"
-      role="listbox"
-      @end="onDragEnd"
-    >
-      <template #item="{ element, index }">
-        <li
-          class="wd-orderlist__item"
-          :class="{ 'wd-orderlist__item--selected': selectedIndex === index }"
-          role="option"
-          :aria-selected="selectedIndex === index"
-          @click="select(index)"
-        >
-          <button type="button" class="wd-orderlist__handle" aria-label="拖拽排序" @click.stop>
-            <WdIcon name="grip" size="sm" />
-          </button>
-          <span class="wd-orderlist__label">
-            <slot name="item" :item="element" :index="index">{{ element }}</slot>
-          </span>
-        </li>
-      </template>
-    </draggable>
-
-    <ul v-else class="wd-orderlist__list" :style="listStyle" role="listbox">
+    <ul class="wd-orderlist__list" :style="listStyle" role="listbox">
       <li
         v-for="(item, index) in modelValue"
         :key="itemKey(item, index)"
         class="wd-orderlist__item"
-        :class="{ 'wd-orderlist__item--selected': selectedIndex === index }"
+        :class="{
+          'wd-orderlist__item--selected': selectedIndex === index,
+          'wd-orderlist__ghost': dragdrop && dragFrom === index,
+          'wd-orderlist__drop-target': dragdrop && dropTarget === index && dragFrom !== index,
+        }"
         role="option"
         :aria-selected="selectedIndex === index"
+        :draggable="dragdrop"
         @click="select(index)"
+        @dragstart="onDragStart(index, $event)"
+        @dragover="onDragOver(index, $event)"
+        @drop="onDrop(index, $event)"
+        @dragend="onDragEnd"
       >
-        <slot name="item" :item="item" :index="index">{{ item }}</slot>
+        <button
+          v-if="dragdrop"
+          type="button"
+          class="wd-orderlist__handle"
+          aria-label="拖拽排序"
+          @click.stop
+          @pointerdown="armHandle"
+        >
+          <WdIcon name="grip" size="sm" />
+        </button>
+        <span class="wd-orderlist__label">
+          <slot name="item" :item="item" :index="index">{{ item }}</slot>
+        </span>
       </li>
     </ul>
   </div>

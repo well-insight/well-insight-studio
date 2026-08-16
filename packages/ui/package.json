@@ -18,8 +18,7 @@
   },
   "dependencies": {
     "@well-design/theme": "workspace:*",
-    "vue": "^3.5.41",
-    "vuedraggable": "4.1.0"
+    "vue": "^3.5.41"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.8",

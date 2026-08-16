@@ -37,6 +37,11 @@ defineProps<{
   min-height: 7rem;
   padding: var(--wd-space-4);
 }
+.code-preview__demo :deep(.wd-splitter) {
+  align-self: stretch;
+  flex: 1 1 100%;
+  width: 100%;
+}
 .code-preview__code summary {
   align-items: center;
   border-top: 1px solid var(--wd-color-border);

@@ -32,7 +32,7 @@ const search = ref('')
 const themeOpen = ref(false)
 const accent = ref('blue')
 const radius = ref('comfortable')
-const { preference: density } = useDensity()
+const { preference: density, setDensity } = useDensity()
 const contentScroll = ref<{ setScrollTop: (value: number) => void } | null>(null)
 const { preference: motionPreference, setMotion } = useMotion()
 const { isDark, setTheme } = useTheme()
@@ -51,15 +51,15 @@ const accentOptions = [
 ] as const
 
 const radiusOptions = [
-  { name: 'sharp', label: 'Sharp', values: ['0.125rem', '0.25rem', '0.5rem'] },
-  { name: 'comfortable', label: 'Comfortable', values: ['0.25rem', '0.5rem', '0.75rem'] },
-  { name: 'soft', label: 'Soft', values: ['0.5rem', '0.75rem', '1rem'] },
+  { name: 'sharp', label: '锐利', values: ['0.125rem', '0.25rem', '0.5rem'] },
+  { name: 'comfortable', label: '适中', values: ['0.25rem', '0.5rem', '0.75rem'] },
+  { name: 'soft', label: '柔和', values: ['0.5rem', '0.75rem', '1rem'] },
 ] as const
 
 const densityOptions = [
-  { name: 'compact' as const, label: 'Compact' },
-  { name: 'comfortable' as const, label: 'Comfortable' },
-  { name: 'spacious' as const, label: 'Spacious' },
+  { name: 'compact' as const, label: '紧凑' },
+  { name: 'comfortable' as const, label: '适中' },
+  { name: 'spacious' as const, label: '宽松' },
 ]
 
 const componentBlurbs: Record<string, string> = {
@@ -209,7 +209,7 @@ watch([accent, radius, motionPreference], applyPlaygroundTheme, { immediate: tru
 const themeSummary = computed(() => {
   const mode = isDark.value ? 'Dark' : 'Light'
   const accentLabel = accentOptions.find((item) => item.name === accent.value)?.label ?? 'Ocean'
-  const densityLabel = densityOptions.find((item) => item.name === density.value)?.label ?? 'Comfortable'
+  const densityLabel = densityOptions.find((item) => item.name === density.value)?.label ?? '适中'
   return `${mode} · ${accentLabel} · ${densityLabel}`
 })
 
@@ -290,18 +290,34 @@ const overviewGroups = computed(() => groupByCategory(documented))
                     />
                   </div>
                 </div>
-                <label class="setting-group setting-select">
+                <div class="setting-group">
                   <span class="setting-label">圆角</span>
-                  <select v-model="radius" aria-label="选择圆角风格">
-                    <option v-for="option in radiusOptions" :key="option.name" :value="option.name">{{ option.label }}</option>
-                  </select>
-                </label>
-                <label class="setting-group setting-select">
+                  <div class="segmented-control segmented-control--triple" role="group" aria-label="选择圆角风格">
+                    <button
+                      v-for="option in radiusOptions"
+                      :key="option.name"
+                      type="button"
+                      :class="{ 'is-selected': radius === option.name }"
+                      @click="radius = option.name"
+                    >
+                      {{ option.label }}
+                    </button>
+                  </div>
+                </div>
+                <div class="setting-group">
                   <span class="setting-label">内容密度</span>
-                  <select v-model="density" aria-label="选择内容密度">
-                    <option v-for="option in densityOptions" :key="option.name" :value="option.name">{{ option.label }}</option>
-                  </select>
-                </label>
+                  <div class="segmented-control segmented-control--triple" role="group" aria-label="选择内容密度">
+                    <button
+                      v-for="option in densityOptions"
+                      :key="option.name"
+                      type="button"
+                      :class="{ 'is-selected': density === option.name }"
+                      @click="setDensity(option.name)"
+                    >
+                      {{ option.label }}
+                    </button>
+                  </div>
+                </div>
                 <div class="setting-group motion-setting">
                   <span class="setting-label">动效</span>
                   <div class="segmented-control segmented-control--triple" role="group" aria-label="全局组件动效">
@@ -449,8 +465,6 @@ const overviewGroups = computed(() => groupByCategory(documented))
 .accent-list { display: flex; gap: .55rem; }
 .accent-swatch { background: var(--swatch-color); border: 2px solid transparent; border-radius: 50%; cursor: pointer; height: 1.25rem; outline: 0; padding: 0; width: 1.25rem; }
 .accent-swatch.is-selected { box-shadow: 0 0 0 2px var(--wd-color-surface), 0 0 0 4px var(--swatch-color); }
-.setting-select { display: grid; grid-template-columns: 1fr 1.15fr; align-items: center; }
-.setting-select select { background: var(--wd-color-surface); border: 1px solid var(--wd-color-border); border-radius: var(--wd-radius-sm); color: var(--wd-color-text); font-size: .68rem; padding: .35rem .45rem; width: 100%; }
 .component-nav { display: grid; gap: .15rem; margin-top: 0.85rem; }
 .nav-group { display: grid; gap: .1rem; margin-top: 0.85rem; }
 .nav-heading { align-items: baseline; display: flex; gap: .45rem; justify-content: space-between; margin: 0 0 .3rem .55rem; }
