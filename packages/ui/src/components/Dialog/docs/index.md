@@ -143,6 +143,7 @@ const open = ref(false)
 | `title` | `string` | — | 标题文案。 |
 | `header` | `string` | — | `title` 的 PrimeVue 别名。 |
 | `closeOnEsc` | `boolean` | `true` | 按 Esc 关闭。 |
+| `blockScroll` | `boolean` | `true` | 打开时锁定页面滚动（`modal` 时生效）。 |
 | `closeOnOutsideClick` | `boolean` | `true` | 点击遮罩关闭。 |
 | `dismissableMask` | `boolean` | — | `closeOnOutsideClick` 的 PrimeVue 别名。 |
 | `closable` | `boolean` | `true` | 显示关闭按钮。 |

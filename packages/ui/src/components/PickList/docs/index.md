@@ -21,12 +21,40 @@ import { WdPickList } from '@well-design/ui'
 import { ref } from 'vue'
 import { WdPickList } from '@well-design/ui'
 
-const source = ref(['苹果', '香蕉', '樱桃'])
+const source = ref(['苹果', '香蕉', '樱桃', '葡萄'])
 const target = ref(['榴莲'])
 </script>
 
 <template>
-  <WdPickList v-model:source="source" v-model:target="target" />
+  <WdPickList
+    v-model:source="source"
+    v-model:target="target"
+    source-header="可选水果"
+    target-header="已选水果"
+  />
+</template>
+```
+
+## 自定义条目
+
+```vue preview
+<script setup lang="ts">
+import { ref } from 'vue'
+import { WdPickList } from '@well-design/ui'
+
+const source = ref([
+  { id: 1, name: '设计' },
+  { id: 2, name: '研发' },
+])
+const target = ref([{ id: 3, name: '测试' }])
+</script>
+
+<template>
+  <WdPickList v-model:source="source" v-model:target="target" data-key="id">
+    <template #item="{ item }">
+      <strong>{{ item.name }}</strong>
+    </template>
+  </WdPickList>
 </template>
 ```
 
@@ -46,3 +74,9 @@ const target = ref(['榴莲'])
 | --- | --- | --- |
 | `update:source` | `unknown[]` | 源列表变化。 |
 | `update:target` | `unknown[]` | 目标列表变化。 |
+
+## Slots
+
+| 插槽 | 参数 | 说明 |
+| --- | --- | --- |
+| `item` | `{ item, index }` | 自定义列表项内容。 |

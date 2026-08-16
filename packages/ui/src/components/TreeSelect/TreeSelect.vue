@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useWdConfig } from '../../shared/config'
 import { isOverlayTeleported, resolveOverlayTeleport } from '../../shared/overlay'
+import { resolveSizeClass } from '../../shared/types'
 import type { TreeSelectNode, TreeSelectProps } from './types'
 import TreeSelectNodeItem from './TreeSelectNodeItem.vue'
 
@@ -18,6 +19,7 @@ const emit = defineEmits<{
 }>()
 
 const config = useWdConfig()
+const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
 const open = ref(false)
 const root = ref<HTMLElement | null>(null)
 const trigger = ref<HTMLElement | null>(null)
@@ -102,7 +104,10 @@ onBeforeUnmount(() => {
   <div
     ref="root"
     class="wd-treeselect"
-    :class="{ 'wd-treeselect--disabled': disabled, 'wd-treeselect--open': open }"
+    :class="[
+      `wd-treeselect--${sizeClass}`,
+      { 'wd-treeselect--disabled': disabled, 'wd-treeselect--open': open },
+    ]"
   >
     <button
       ref="trigger"

@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useWdConfig } from '../../shared/config'
 import { isOverlayTeleported, resolveOverlayTeleport } from '../../shared/overlay'
+import { resolveSizeClass } from '../../shared/types'
 import type { CascadeSelectOption, CascadeSelectProps, CascadeSelectValue } from './types'
 
 const props = withDefaults(defineProps<CascadeSelectProps>(), {
@@ -16,6 +17,7 @@ const emit = defineEmits<{
 }>()
 
 const config = useWdConfig()
+const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
 const open = ref(false)
 const root = ref<HTMLElement | null>(null)
 const trigger = ref<HTMLElement | null>(null)
@@ -101,7 +103,10 @@ onBeforeUnmount(() => {
   <div
     ref="root"
     class="wd-cascadeselect"
-    :class="{ 'wd-cascadeselect--disabled': disabled, 'wd-cascadeselect--open': open }"
+    :class="[
+      `wd-cascadeselect--${sizeClass}`,
+      { 'wd-cascadeselect--disabled': disabled, 'wd-cascadeselect--open': open },
+    ]"
   >
     <button
       ref="trigger"

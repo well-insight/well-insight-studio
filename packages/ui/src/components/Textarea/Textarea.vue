@@ -22,10 +22,12 @@ const emit = defineEmits<{ (event: 'update:modelValue', value: string): void }>(
 const config = useWdConfig()
 const textareaElement = ref<HTMLTextAreaElement | null>(null)
 const textareaId = computed(() => props.id ?? `wd-textarea-${Math.random().toString(36).slice(2, 8)}`)
-const isInvalid = computed(() => props.invalid || props.error)
+const isInvalid = computed(() => props.invalid || props.error || Boolean(props.errorMessage))
 const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
 const resolvedVariant = computed(() => props.variant ?? config.value.inputVariant ?? 'outlined')
 const resizeStyle = computed(() => (props.autoResize ? 'none' : props.resize))
+const feedbackText = computed(() => props.errorMessage || props.helpText)
+const feedbackIsError = computed(() => Boolean(props.errorMessage) || (isInvalid.value && Boolean(props.helpText)))
 
 const textareaClass = computed(() => [
   'wd-textarea',
@@ -76,10 +78,18 @@ watch(
       :disabled="disabled"
       :readonly="readonly"
       :aria-invalid="isInvalid || undefined"
-      :aria-describedby="helpText ? `${textareaId}-help` : undefined"
+      :aria-describedby="feedbackText ? `${textareaId}-help` : undefined"
       :style="{ resize: resizeStyle }"
       @input="updateValue"
     />
-    <span v-if="helpText" :id="`${textareaId}-help`" class="wd-textarea-field__help">{{ helpText }}</span>
+    <span
+      v-if="feedbackText"
+      :id="`${textareaId}-help`"
+      class="wd-textarea-field__help"
+      :class="{ 'wd-textarea-field__help--error': feedbackIsError }"
+      :role="feedbackIsError ? 'alert' : undefined"
+    >
+      {{ feedbackText }}
+    </span>
   </div>
 </template>

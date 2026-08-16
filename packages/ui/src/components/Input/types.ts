@@ -8,6 +8,8 @@ export interface InputProps {
   invalid?: boolean
   /** @deprecated Prefer `invalid`. */
   error?: boolean
+  /** Error copy under the field; implies invalid when set. */
+  errorMessage?: string
   id?: string
   type?: 'text' | 'email' | 'password' | 'search' | 'url' | 'tel'
   /** Size aligned with PrimeVue InputText; also accepts legacy sm/md/lg. */

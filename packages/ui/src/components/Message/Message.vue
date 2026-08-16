@@ -18,9 +18,20 @@ let lifeTimer: ReturnType<typeof setTimeout> | undefined
 
 const severityTone = computed(() => normalizeSeverity(props.severity) ?? 'info')
 
-const iconName = computed<IconName>(() =>
-  severityTone.value === 'success' ? 'check' : 'info',
-)
+const iconName = computed<IconName>(() => {
+  switch (severityTone.value) {
+    case 'success':
+      return 'check-circle'
+    case 'warn':
+    case 'warning':
+      return 'warning'
+    case 'error':
+    case 'danger':
+      return 'x-circle'
+    default:
+      return 'info'
+  }
+})
 
 const rootClass = computed(() => ['wd-message', `wd-message--${severityTone.value}`])
 

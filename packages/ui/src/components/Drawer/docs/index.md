@@ -75,7 +75,7 @@ function openAt(next: 'left' | 'right' | 'top' | 'bottom') {
 | `dismissable` | `boolean` | `true` | 点击遮罩关闭。 |
 | `showCloseIcon` | `boolean` | `true` | 显示关闭按钮。 |
 | `header` | `string` | — | 标题文案。 |
-| `blockScroll` | `boolean` | `false` | 打开时锁定 `body` 滚动。 |
+| `blockScroll` | `boolean` | `true` | 打开时锁定 `body` 滚动。 |
 | `teleport` | `boolean` | `true` | 浮层 Teleport；默认挂到 `body`。 |
 | `appendTo` | `string \| HTMLElement \| 'self' \| false` | `'body'` | 挂载目标；`'self'` / `false` 就地渲染。 |
 

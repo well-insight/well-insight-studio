@@ -48,11 +48,13 @@ const selectedOption = computed(() => props.options.find((option) => option.valu
 const displayLabel = computed(
   () => selectedOption.value?.label ?? props.placeholder ?? config.value.locale?.selectPlaceholder ?? '请选择',
 )
-const isInvalid = computed(() => props.error || props.invalid)
+const isInvalid = computed(() => props.error || props.invalid || Boolean(props.errorMessage))
 const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
 const teleportTarget = computed(() => resolveOverlayTeleport(props, config.value.appendTo))
 const teleported = computed(() => isOverlayTeleported(props, config.value.appendTo))
 const showClearButton = computed(() => props.showClear && selectedOption.value != null && !props.disabled)
+const feedbackText = computed(() => props.errorMessage || props.helpText)
+const feedbackIsError = computed(() => Boolean(props.errorMessage) || (isInvalid.value && Boolean(props.helpText)))
 
 function updateMenuPosition() {
   if (!teleported.value || !trigger.value) return
@@ -202,7 +204,7 @@ onBeforeUnmount(() => {
         aria-haspopup="listbox"
         :aria-controls="`${selectId}-listbox`"
         :aria-invalid="isInvalid || undefined"
-        :aria-describedby="helpText ? `${selectId}-help` : undefined"
+        :aria-describedby="feedbackText ? `${selectId}-help` : undefined"
         :disabled="disabled"
         @click="setOpen(!open)"
         @keydown="onTriggerKeydown"
@@ -277,6 +279,14 @@ onBeforeUnmount(() => {
       :required="!selectedOption"
       :value="modelValue"
     />
-    <span v-if="helpText" :id="`${selectId}-help`" class="wd-select-field__help">{{ helpText }}</span>
+    <span
+      v-if="feedbackText"
+      :id="`${selectId}-help`"
+      class="wd-select-field__help"
+      :class="{ 'wd-select-field__help--error': feedbackIsError }"
+      :role="feedbackIsError ? 'alert' : undefined"
+    >
+      {{ feedbackText }}
+    </span>
   </div>
 </template>

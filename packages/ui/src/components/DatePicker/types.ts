@@ -1,4 +1,5 @@
 import type { WdAppendTo } from '../../shared/overlay'
+import type { WdSizeInput } from '../../shared/types'
 
 export type DatePickerValue = string | Date | null
 
@@ -8,6 +9,7 @@ export interface DatePickerProps {
   disabled?: boolean
   invalid?: boolean
   fluid?: boolean
+  size?: WdSizeInput
   minDate?: DatePickerValue
   maxDate?: DatePickerValue
   placeholder?: string

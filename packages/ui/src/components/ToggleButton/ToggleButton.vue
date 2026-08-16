@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useWdConfig } from '../../shared/config'
+import { resolveSizeClass } from '../../shared/types'
 import type { ToggleButtonProps } from './types'
 
 const props = withDefaults(defineProps<ToggleButtonProps>(), {
@@ -13,8 +15,12 @@ const emit = defineEmits<{
   (event: 'update:modelValue', value: boolean): void
 }>()
 
+const config = useWdConfig()
+const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
+
 const rootClass = computed(() => [
   'wd-togglebutton',
+  `wd-togglebutton--${sizeClass.value}`,
   {
     'wd-togglebutton--checked': props.modelValue,
     'wd-togglebutton--disabled': props.disabled,

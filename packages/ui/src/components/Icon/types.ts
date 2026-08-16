@@ -1,23 +1,12 @@
 import type { WdSizeInput } from '../../shared/types'
+import type { IconName } from './icons'
 
-export type IconName =
-  | 'check'
-  | 'close'
-  | 'info'
-  | 'chevron-down'
-  | 'chevron-left'
-  | 'chevron-right'
-  | 'plus'
-  | 'minus'
-  | 'search'
-  | 'menu'
-  | 'edit'
-  | 'trash'
-
+export type { IconName } from './icons'
 export type IconSize = WdSizeInput
 
 export interface IconProps {
-  name: IconName
+  /** Built-in system icon. Omit when using the default slot for custom SVG / Lucide. */
+  name?: IconName
   label?: string
   size?: IconSize
 }

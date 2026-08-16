@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
+import { computed, ref, toRef } from 'vue'
 import { useWdConfig } from '../../shared/config'
 import { resolveOverlayTeleport } from '../../shared/overlay'
+import { useModalOverlay } from '../../shared/useModalOverlay'
 import type { DialogProps } from './types'
 
 const props = withDefaults(defineProps<DialogProps>(), {
@@ -12,6 +13,7 @@ const props = withDefaults(defineProps<DialogProps>(), {
   modal: true,
   position: 'center',
   teleport: true,
+  blockScroll: true,
 })
 const emit = defineEmits<{
   (event: 'update:modelValue', value: boolean): void
@@ -24,7 +26,6 @@ const emit = defineEmits<{
 const config = useWdConfig()
 const dialogElement = ref<HTMLElement | null>(null)
 const maximized = ref(false)
-let previouslyFocused: HTMLElement | null = null
 
 const dialogTitle = computed(() => props.header ?? props.title)
 const teleportTarget = computed(() => resolveOverlayTeleport(props, config.value.appendTo))
@@ -36,6 +37,7 @@ const isDismissableMask = computed(() => {
   if (props.closeOnOutsideClick !== undefined) return props.closeOnOutsideClick
   return true
 })
+
 function close() {
   maximized.value = false
   emit('update:modelValue', false)
@@ -47,34 +49,22 @@ function toggleMaximize() {
   emit(maximized.value ? 'maximize' : 'unmaximize')
 }
 
-function onKeydown(event: KeyboardEvent) {
-  if (props.closeOnEsc && event.key === 'Escape') close()
-}
-
 function onOutsideClick() {
   if (isDismissableMask.value) close()
 }
 
-watch(
-  () => props.modelValue,
-  async (open, previousOpen) => {
-    if (open) {
-      previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null
-      document.addEventListener('keydown', onKeydown)
-      emit('show')
-      await nextTick()
-      dialogElement.value?.focus()
-    } else {
-      maximized.value = false
-      document.removeEventListener('keydown', onKeydown)
-      if (previousOpen) emit('hide')
-      previouslyFocused?.focus()
-    }
+useModalOverlay({
+  open: toRef(props, 'modelValue'),
+  container: dialogElement,
+  closeOnEsc: toRef(props, 'closeOnEsc'),
+  blockScroll: () => props.blockScroll && props.modal,
+  onEscape: close,
+  onOpen: () => emit('show'),
+  onClose: () => {
+    maximized.value = false
+    emit('hide')
   },
-  { immediate: true },
-)
-
-onUnmounted(() => document.removeEventListener('keydown', onKeydown))
+})
 </script>
 
 <template>

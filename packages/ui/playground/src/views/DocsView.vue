@@ -83,7 +83,7 @@ watch(
 }
 
 .docs-sidebar__body {
-  padding: 2rem 1.25rem;
+  padding: 1.5rem 1rem 2rem;
 }
 
 .docs-kicker {
@@ -92,27 +92,27 @@ watch(
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.12em;
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.55rem;
 }
 
 .docs-sidebar__title {
   font-family: Georgia, serif;
-  font-size: 1.75rem;
+  font-size: 1.45rem;
   font-weight: 400;
   letter-spacing: -0.04em;
-  margin: 0 0 1.5rem;
+  margin: 0 0 1.15rem;
 }
 
 .docs-nav {
   display: grid;
-  gap: 0.2rem;
+  gap: 0.15rem;
 }
 
 .docs-nav__item {
   border-radius: var(--wd-radius-sm);
   color: var(--wd-color-text-muted);
-  font-size: 0.875rem;
-  padding: 0.65rem 0.75rem;
+  font-size: 0.84rem;
+  padding: 0.5rem 0.65rem;
   text-decoration: none;
 }
 

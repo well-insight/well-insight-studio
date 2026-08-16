@@ -7,7 +7,7 @@ import {
   resolveComponentDoc,
   type DocumentedComponentMeta,
 } from '../docs/loadComponentDocs'
-import { useMotion, useTheme } from '@well-design/theme'
+import { useDensity, useMotion, useTheme } from '@well-design/theme'
 import { WdCard, WdIcon, WdScrollbar } from '@well-design/ui'
 
 const OVERVIEW = '全部组件'
@@ -29,9 +29,10 @@ const categoryTitles: Record<string, string> = {
 
 const route = useRoute()
 const search = ref('')
+const themeOpen = ref(false)
 const accent = ref('blue')
 const radius = ref('comfortable')
-const density = ref('comfortable')
+const { preference: density } = useDensity()
 const contentScroll = ref<{ setScrollTop: (value: number) => void } | null>(null)
 const { preference: motionPreference, setMotion } = useMotion()
 const { isDark, setTheme } = useTheme()
@@ -56,10 +57,10 @@ const radiusOptions = [
 ] as const
 
 const densityOptions = [
-  { name: 'compact', label: 'Compact', scale: 0.85 },
-  { name: 'comfortable', label: 'Comfortable', scale: 1 },
-  { name: 'spacious', label: 'Spacious', scale: 1.15 },
-] as const
+  { name: 'compact' as const, label: 'Compact' },
+  { name: 'comfortable' as const, label: 'Comfortable' },
+  { name: 'spacious' as const, label: 'Spacious' },
+]
 
 const componentBlurbs: Record<string, string> = {
   Button: '触发一个动作，反馈当前状态。',
@@ -81,7 +82,8 @@ const componentBlurbs: Record<string, string> = {
   Dropdown: '在浮层菜单中选择一个动作。',
   Icon: '传达轻量、明确的视觉信息。',
   Scrollbar: '替换原生滚动条，提供可换肤滚动体验。',
-  ConfigProvider: '全局配置：浮层挂载、尺寸、文案、zIndex（类似 Element Plus / PrimeVue）。',
+  ConfigProvider: '全局配置：浮层挂载、尺寸、密度、文案、zIndex。',
+  Form: '表单布局与字段错误反馈（校验状态由业务控制）。',
   Drawer: '从屏幕边缘滑出的侧栏面板。',
   Popover: '相对触发器展示的浮层内容。',
   Accordion: '可折叠的内容分组面板。',
@@ -190,8 +192,6 @@ function applyPlaygroundTheme() {
   const root = document.documentElement
   const selectedAccent = accentOptions.find((item) => item.name === accent.value) ?? accentOptions[0]
   const selectedRadius = radiusOptions.find((item) => item.name === radius.value) ?? radiusOptions[1]
-  const selectedDensity = densityOptions.find((item) => item.name === density.value) ?? densityOptions[1]
-  const spacing = selectedDensity.scale
 
   root.style.setProperty('--wd-color-primary', selectedAccent.color)
   root.style.setProperty('--wd-color-primary-hover', selectedAccent.hover)
@@ -199,17 +199,19 @@ function applyPlaygroundTheme() {
   root.style.setProperty('--wd-radius-sm', selectedRadius.values[0])
   root.style.setProperty('--wd-radius-md', selectedRadius.values[1])
   root.style.setProperty('--wd-radius-lg', selectedRadius.values[2])
-  root.style.setProperty('--wd-space-1', `${0.25 * spacing}rem`)
-  root.style.setProperty('--wd-space-2', `${0.5 * spacing}rem`)
-  root.style.setProperty('--wd-space-3', `${0.75 * spacing}rem`)
-  root.style.setProperty('--wd-space-4', `${1 * spacing}rem`)
-  root.style.setProperty('--wd-space-6', `${1.5 * spacing}rem`)
-  root.style.setProperty('--wd-space-8', `${2 * spacing}rem`)
+  // Density comes from useDensity() → data-wd-density tokens; do not override spaces here.
   root.style.setProperty('--wd-motion-fast', motionPreference.value === 'full' ? '150ms' : motionPreference.value === 'reduced' ? '80ms' : '0ms')
   root.style.setProperty('--wd-motion-normal', motionPreference.value === 'full' ? '250ms' : motionPreference.value === 'reduced' ? '120ms' : '0ms')
 }
 
-watch([accent, radius, density, motionPreference], applyPlaygroundTheme, { immediate: true })
+watch([accent, radius, motionPreference], applyPlaygroundTheme, { immediate: true })
+
+const themeSummary = computed(() => {
+  const mode = isDark.value ? 'Dark' : 'Light'
+  const accentLabel = accentOptions.find((item) => item.name === accent.value)?.label ?? 'Ocean'
+  const densityLabel = densityOptions.find((item) => item.name === density.value)?.label ?? 'Comfortable'
+  return `${mode} · ${accentLabel} · ${densityLabel}`
+})
 
 watch(selectedComponent, async () => {
   await nextTick()
@@ -248,73 +250,90 @@ const overviewGroups = computed(() => groupByCategory(documented))
       <aside class="sidebar" aria-label="组件导航">
         <WdScrollbar class="column-scroll">
           <div class="sidebar-body">
-            <div class="sidebar-intro">
-              <span class="kicker">COMPONENT LAB</span>
-              <p>探索、组合、验证。</p>
-            </div>
             <label class="search-box">
-              <WdIcon name="info" size="sm" />
-              <input v-model="search" type="search" placeholder="搜索组件" aria-label="搜索组件" />
+              <WdIcon name="search" size="sm" />
+              <input v-model="search" type="search" placeholder="筛选组件" aria-label="筛选组件" />
             </label>
-            <section class="appearance-panel" aria-labelledby="appearance-title">
-              <div class="appearance-title-row">
-                <h2 id="appearance-title">外观设置</h2>
-                <span class="live-label">LIVE</span>
-              </div>
-              <div class="setting-group">
-                <span class="setting-label">主题模式</span>
-                <div class="segmented-control">
-                  <button type="button" :class="{ 'is-selected': !isDark }" @click="setTheme('light')">亮色</button>
-                  <button type="button" :class="{ 'is-selected': isDark }" @click="setTheme('dark')">暗色</button>
+
+            <section class="theme-panel">
+              <button
+                type="button"
+                class="theme-panel__toggle"
+                :aria-expanded="themeOpen"
+                @click="themeOpen = !themeOpen"
+              >
+                <span class="theme-panel__title">主题</span>
+                <span class="theme-panel__summary">{{ themeSummary }}</span>
+                <span class="theme-panel__chevron" aria-hidden="true">{{ themeOpen ? '▾' : '▸' }}</span>
+              </button>
+              <div v-show="themeOpen" class="theme-panel__body" aria-labelledby="appearance-title">
+                <h2 id="appearance-title" class="sr-only">主题设置</h2>
+                <div class="setting-group">
+                  <span class="setting-label">主题模式</span>
+                  <div class="segmented-control">
+                    <button type="button" :class="{ 'is-selected': !isDark }" @click="setTheme('light')">亮色</button>
+                    <button type="button" :class="{ 'is-selected': isDark }" @click="setTheme('dark')">暗色</button>
+                  </div>
                 </div>
-              </div>
-              <div class="setting-group">
-                <span class="setting-label">品牌主色</span>
-                <div class="accent-list">
-                  <button
-                    v-for="option in accentOptions"
-                    :key="option.name"
-                    type="button"
-                    class="accent-swatch"
-                    :class="{ 'is-selected': accent === option.name }"
-                    :style="{ '--swatch-color': option.color }"
-                    :aria-label="`使用${option.label}主题色`"
-                    @click="accent = option.name"
-                  />
+                <div class="setting-group">
+                  <span class="setting-label">品牌主色</span>
+                  <div class="accent-list">
+                    <button
+                      v-for="option in accentOptions"
+                      :key="option.name"
+                      type="button"
+                      class="accent-swatch"
+                      :class="{ 'is-selected': accent === option.name }"
+                      :style="{ '--swatch-color': option.color }"
+                      :aria-label="`使用${option.label}主题色`"
+                      @click="accent = option.name"
+                    />
+                  </div>
                 </div>
-              </div>
-              <label class="setting-group setting-select">
-                <span class="setting-label">圆角</span>
-                <select v-model="radius" aria-label="选择圆角风格">
-                  <option v-for="option in radiusOptions" :key="option.name" :value="option.name">{{ option.label }}</option>
-                </select>
-              </label>
-              <label class="setting-group setting-select">
-                <span class="setting-label">内容密度</span>
-                <select v-model="density" aria-label="选择内容密度">
-                  <option v-for="option in densityOptions" :key="option.name" :value="option.name">{{ option.label }}</option>
-                </select>
-              </label>
-              <div class="setting-group motion-setting">
-                <span class="setting-label">动效</span>
-                <div class="segmented-control" role="group" aria-label="全局组件动效">
-                  <button v-for="option in motionOptions" :key="option.name" type="button" :class="{ 'is-selected': motionPreference === option.name }" @click="setMotion(option.name)">{{ option.label }}</button>
+                <label class="setting-group setting-select">
+                  <span class="setting-label">圆角</span>
+                  <select v-model="radius" aria-label="选择圆角风格">
+                    <option v-for="option in radiusOptions" :key="option.name" :value="option.name">{{ option.label }}</option>
+                  </select>
+                </label>
+                <label class="setting-group setting-select">
+                  <span class="setting-label">内容密度</span>
+                  <select v-model="density" aria-label="选择内容密度">
+                    <option v-for="option in densityOptions" :key="option.name" :value="option.name">{{ option.label }}</option>
+                  </select>
+                </label>
+                <div class="setting-group motion-setting">
+                  <span class="setting-label">动效</span>
+                  <div class="segmented-control segmented-control--triple" role="group" aria-label="全局组件动效">
+                    <button
+                      v-for="option in motionOptions"
+                      :key="option.name"
+                      type="button"
+                      :class="{ 'is-selected': motionPreference === option.name }"
+                      @click="setMotion(option.name)"
+                    >
+                      {{ option.label }}
+                    </button>
+                  </div>
                 </div>
-                <span class="motion-status">{{ motionPreference === 'full' ? '标准过渡与浮层动画' : motionPreference === 'reduced' ? '减弱时长并移除位移' : '立即切换，不播放动画' }}</span>
               </div>
             </section>
+
             <nav class="component-nav" aria-label="组件目录">
               <RouterLink
                 class="nav-item nav-item--overview"
                 :class="{ 'nav-item--active': selectedComponent === OVERVIEW }"
                 :to="componentRoute(OVERVIEW)"
               >
-                <span>{{ OVERVIEW }}</span>
+                <span>全部组件</span>
                 <span class="nav-count">{{ documented.length }}</span>
               </RouterLink>
 
               <section v-for="group in navGroups" :key="group.label" class="nav-group">
-                <p class="nav-heading">{{ group.title }} <span>{{ group.label }}</span></p>
+                <p class="nav-heading">
+                  <span>{{ group.title }}</span>
+                  <span class="nav-heading__count">{{ group.items.length }}</span>
+                </p>
                 <RouterLink
                   v-for="component in group.items"
                   :key="component.name"
@@ -328,10 +347,6 @@ const overviewGroups = computed(() => groupByCategory(documented))
 
               <p v-if="navGroups.length === 0" class="empty-search">没有找到组件</p>
             </nav>
-            <div class="sidebar-footer">
-              <span class="footer-symbol">✦</span>
-              <p>组件是产品语言的<br />基本句子。</p>
-            </div>
           </div>
         </WdScrollbar>
       </aside>
@@ -411,41 +426,41 @@ const overviewGroups = computed(() => groupByCategory(documented))
 .column-scroll :deep(.wd-scrollbar__wrap) { overscroll-behavior: contain; }
 .sidebar, .token-panel { border-right: 1px solid var(--wd-color-border); }
 .token-panel { border-left: 1px solid var(--wd-color-border); border-right: 0; }
-.sidebar-body { padding: 2.5rem 1.5rem; }
+.sidebar-body { padding: 1.25rem 1rem 2rem; }
 .content-body { padding: clamp(2rem, 5vw, 4.5rem) clamp(1.25rem, 4vw, 4rem); width: 100%; }
 .token-panel-body { padding: 2.5rem 1.25rem; }
 .kicker, .eyebrow { color: var(--wd-color-primary); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .63rem; font-weight: 700; letter-spacing: .14em; }
-.sidebar-intro p { color: var(--wd-color-text-muted); font-family: Georgia, serif; font-size: 1.1rem; line-height: 1.25; margin: .7rem 0 2rem; }
-.search-box { align-items: center; background: color-mix(in srgb, var(--wd-color-border) 35%, transparent); border-radius: var(--wd-radius-sm); color: var(--wd-color-text-muted); display: flex; gap: .5rem; padding: .55rem .65rem; }
+.search-box { align-items: center; background: color-mix(in srgb, var(--wd-color-border) 35%, transparent); border-radius: var(--wd-radius-sm); color: var(--wd-color-text-muted); display: flex; gap: .5rem; padding: .5rem .65rem; }
 .search-box input { background: transparent; border: 0; color: var(--wd-color-text); min-width: 0; outline: 0; width: 100%; }
-.appearance-panel { border-bottom: 1px solid var(--wd-color-border); margin: 1.5rem 0 1.25rem; padding-bottom: 1.35rem; }
-.appearance-title-row { align-items: center; display: flex; justify-content: space-between; margin-bottom: 1.2rem; }
-.appearance-title-row h2 { font-size: .78rem; letter-spacing: -.02em; margin: 0; }
-.live-label { color: var(--wd-color-primary); font-family: ui-monospace, monospace; font-size: .55rem; letter-spacing: .08em; }
-.setting-group { display: grid; gap: .5rem; margin: .9rem 0; }
+.theme-panel { border-bottom: 1px solid var(--wd-color-border); margin: 0.85rem 0 0.35rem; padding-bottom: 0.85rem; }
+.theme-panel__toggle { align-items: center; background: transparent; border: 0; border-radius: var(--wd-radius-sm); color: var(--wd-color-text); cursor: pointer; display: grid; gap: 0.2rem 0.5rem; grid-template-columns: auto 1fr auto; padding: 0.45rem 0.35rem; text-align: left; width: 100%; }
+.theme-panel__toggle:hover { background: color-mix(in srgb, var(--wd-color-primary) 8%, transparent); }
+.theme-panel__title { font-size: 0.78rem; font-weight: 650; }
+.theme-panel__summary { color: var(--wd-color-text-muted); font-family: ui-monospace, monospace; font-size: 0.58rem; grid-column: 1 / 3; letter-spacing: 0.02em; }
+.theme-panel__chevron { color: var(--wd-color-text-muted); font-size: 0.7rem; grid-column: 3; grid-row: 1 / 3; }
+.theme-panel__body { padding: 0.35rem 0.15rem 0.15rem; }
+.sr-only { border: 0; clip: rect(0, 0, 0, 0); height: 1px; margin: -1px; overflow: hidden; padding: 0; position: absolute; width: 1px; }
+.setting-group { display: grid; gap: .5rem; margin: .75rem 0; }
 .setting-label, .nav-heading { color: var(--wd-color-text-muted); font-family: ui-monospace, monospace; font-size: .59rem; letter-spacing: .08em; text-transform: uppercase; }
 .segmented-control { background: color-mix(in srgb, var(--wd-color-border) 45%, transparent); border-radius: var(--wd-radius-sm); display: grid; grid-template-columns: 1fr 1fr; padding: .15rem; }
+.segmented-control--triple { grid-template-columns: 1fr 1fr 1fr; }
 .segmented-control button { background: transparent; border: 0; border-radius: var(--wd-radius-sm); color: var(--wd-color-text-muted); cursor: pointer; font-size: .68rem; padding: .38rem .25rem; }
-.segmented-control button.is-selected { background: var(--wd-color-surface); box-shadow: 0 1px 3px rgb(15 23 42 / .12); color: var(--wd-color-text); font-weight: 650; }
+.segmented-control button.is-selected { background: var(--wd-color-surface); box-shadow: var(--wd-shadow-sm); color: var(--wd-color-text); font-weight: 650; }
 .accent-list { display: flex; gap: .55rem; }
 .accent-swatch { background: var(--swatch-color); border: 2px solid transparent; border-radius: 50%; cursor: pointer; height: 1.25rem; outline: 0; padding: 0; width: 1.25rem; }
 .accent-swatch.is-selected { box-shadow: 0 0 0 2px var(--wd-color-surface), 0 0 0 4px var(--swatch-color); }
 .setting-select { display: grid; grid-template-columns: 1fr 1.15fr; align-items: center; }
 .setting-select select { background: var(--wd-color-surface); border: 1px solid var(--wd-color-border); border-radius: var(--wd-radius-sm); color: var(--wd-color-text); font-size: .68rem; padding: .35rem .45rem; width: 100%; }
-.component-nav { display: grid; gap: .2rem; margin-top: 1.25rem; }
-.nav-group { display: grid; gap: .15rem; margin-top: 1rem; }
-.nav-heading { display: flex; gap: .4rem; margin: 0 0 .35rem .75rem; }
-.nav-heading span { opacity: .55; }
-.nav-item { align-items: center; background: transparent; border: 0; border-radius: var(--wd-radius-sm); color: var(--wd-color-text-muted); cursor: pointer; display: flex; font-size: .8rem; justify-content: space-between; padding: .7rem .75rem; text-align: left; text-decoration: none; }
-.nav-item--overview { margin-bottom: .35rem; }
+.component-nav { display: grid; gap: .15rem; margin-top: 0.85rem; }
+.nav-group { display: grid; gap: .1rem; margin-top: 0.85rem; }
+.nav-heading { align-items: baseline; display: flex; gap: .45rem; justify-content: space-between; margin: 0 0 .3rem .55rem; }
+.nav-heading__count { font-family: ui-monospace, monospace; opacity: .55; }
+.nav-item { align-items: center; background: transparent; border: 0; border-radius: var(--wd-radius-sm); color: var(--wd-color-text-muted); cursor: pointer; display: flex; font-size: .8rem; justify-content: space-between; padding: .48rem .65rem; text-align: left; text-decoration: none; }
+.nav-item--overview { margin-bottom: .2rem; }
 .nav-item:hover, .nav-item--active { background: color-mix(in srgb, var(--wd-color-primary) 9%, transparent); color: var(--wd-color-primary); }
 .nav-item--active { font-weight: 700; }
 .nav-count { font-family: ui-monospace, monospace; font-size: .65rem; opacity: .7; }
 .empty-search { color: var(--wd-color-text-muted); font-size: .75rem; padding: .5rem .75rem; }
-.sidebar-footer { border-top: 1px solid var(--wd-color-border); color: var(--wd-color-text-muted); display: flex; gap: .65rem; margin-top: 3rem; padding-top: 1.25rem; }
-.footer-symbol { color: var(--wd-color-primary); font-size: 1.4rem; }
-.sidebar-footer p { font-family: Georgia, serif; font-size: .75rem; line-height: 1.4; margin: 0; }
-.motion-status { color: var(--wd-color-text-muted); font-size: .65rem; }
 .content { min-width: 0; width: 100%; }
 .hero { align-items: end; display: flex; justify-content: space-between; margin-bottom: 3.5rem; }
 .hero h1 { font-family: Georgia, 'Times New Roman', serif; font-size: clamp(2.8rem, 6vw, 5.4rem); font-weight: 400; letter-spacing: -.07em; line-height: .95; margin: 1rem 0 1.3rem; }
@@ -479,13 +494,11 @@ const overviewGroups = computed(() => groupByCategory(documented))
   .column-scroll { height: auto; }
   .sidebar { border-bottom: 1px solid var(--wd-color-border); border-right: 0; }
   .sidebar-body { padding: 1.25rem; }
-  .sidebar-intro { display: none; }
-  .appearance-panel { margin-top: 1rem; }
+  .theme-panel { margin-top: 0.75rem; }
   .component-nav { display: flex; flex-wrap: wrap; }
   .nav-group { flex-basis: 100%; }
   .nav-heading { flex-basis: 100%; margin-top: .25rem; }
   .nav-item { padding: .5rem .7rem; }
-  .sidebar-footer { display: none; }
   .content-body { padding: 2rem 1.25rem; }
   .hero { align-items: start; }
   .hero-glyph { display: none; }

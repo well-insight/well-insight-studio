@@ -1,12 +1,12 @@
 ---
 title: OrderList
 category: 06 / DATA
-description: 列表项上移下移排序。
+description: 列表拖拽与上下按钮排序。
 ---
 
 # OrderList
 
-通过上下按钮重排列表。
+支持拖拽手柄重排，并保留上下按钮作为键盘友好备选。
 
 ## 引入
 
@@ -36,6 +36,7 @@ const items = ref(['设计', '开发', '测试', '发布'])
 | `modelValue` | `unknown[]` | `[]` | 列表数据。 |
 | `dataKey` | `string` | — | 对象项的唯一键。 |
 | `listStyle` | `string \| object` | — | 列表样式。 |
+| `dragdrop` | `boolean` | `true` | 是否启用拖拽。 |
 
 ## Slots
 
@@ -48,3 +49,4 @@ const items = ref(['设计', '开发', '测试', '发布'])
 | 事件名 | 参数 | 说明 |
 | --- | --- | --- |
 | `update:modelValue` | `unknown[]` | 顺序变化。 |
+| `reorder` | `unknown[]` | 拖拽或按钮重排后。 |

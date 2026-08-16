@@ -1,47 +1,100 @@
 <script setup lang="ts">
+import { computed, inject, useSlots } from 'vue'
+import WdCheckbox from '../Checkbox/Checkbox.vue'
+import WdIcon from '../Icon/Icon.vue'
+import { isIconName } from '../Icon/icons'
+import type { IconName } from '../Icon/types'
+import { WD_TREE_KEY } from './context'
 import type { TreeNode } from './types'
 import TreeNodeItem from './TreeNodeItem.vue'
 
-defineProps<{
-  node: TreeNode
-  isExpanded: (key: string) => boolean
-  isSelected: (key: string) => boolean
-}>()
+const props = defineProps<{ node: TreeNode }>()
+const slots = useSlots()
+const tree = inject(WD_TREE_KEY)!
 
-defineEmits<{
-  (event: 'toggle', key: string): void
-  (event: 'select', node: TreeNode): void
-}>()
+const expanded = computed(() => tree.isExpanded(props.node.key))
+const selected = computed(() => tree.isSelected(props.node.key))
+const checked = computed(() => tree.isChecked(props.node.key))
+const indeterminate = computed(() => tree.isIndeterminate(props.node.key))
+const disabled = computed(() => tree.isDisabled(props.node))
+const matched = computed(() => tree.isMatch(props.node))
+const loading = computed(() => Boolean(tree.loadingKeys[props.node.key]))
+const hasChildren = computed(
+  () => Boolean(props.node.children?.length) || (tree.lazy && !props.node.isLeaf),
+)
+
+const iconName = computed<IconName | undefined>(() => {
+  if (props.node.icon && isIconName(props.node.icon)) return props.node.icon
+  return undefined
+})
+
+const visibleChildren = computed(() => props.node.children ?? [])
 </script>
 
 <template>
-  <li class="wd-tree__node" role="treeitem" :aria-expanded="node.children?.length ? isExpanded(node.key) : undefined">
-    <div class="wd-tree__row" :class="{ 'wd-tree__row--selected': isSelected(node.key) }">
+  <li
+    class="wd-tree__node"
+    role="treeitem"
+    :aria-expanded="hasChildren ? expanded : undefined"
+    :aria-disabled="disabled || undefined"
+  >
+    <div
+      class="wd-tree__row"
+      :class="{
+        'wd-tree__row--selected': selected,
+        'wd-tree__row--disabled': disabled,
+        'wd-tree__row--matched': matched,
+        'wd-tree__row--indeterminate': indeterminate,
+      }"
+      :draggable="tree.draggable && !disabled"
+      @dragstart="tree.onDragStart(node, $event)"
+      @dragover="tree.onDragOver(node, $event)"
+      @drop="tree.onDrop(node, $event)"
+    >
       <button
-        v-if="node.children?.length"
+        v-if="hasChildren"
         type="button"
         class="wd-tree__toggler"
-        :aria-label="isExpanded(node.key) ? '折叠' : '展开'"
-        @click="$emit('toggle', node.key)"
+        :aria-label="expanded ? '折叠' : '展开'"
+        :disabled="disabled"
+        @click="tree.toggleExpand(node)"
       >
-        {{ isExpanded(node.key) ? '▾' : '▸' }}
+        <WdIcon v-if="loading" name="loader" size="sm" />
+        <WdIcon v-else :name="expanded ? 'chevron-down' : 'chevron-right'" size="sm" />
       </button>
       <span v-else class="wd-tree__toggler wd-tree__toggler--leaf" aria-hidden="true" />
-      <span v-if="node.icon" class="wd-tree__icon" aria-hidden="true">{{ node.icon }}</span>
-      <button type="button" class="wd-tree__label" @click="$emit('select', node)">
-        {{ node.label }}
+
+      <WdCheckbox
+        v-if="tree.showCheckbox"
+        class="wd-tree__checkbox"
+        :model-value="checked || indeterminate"
+        :disabled="disabled"
+        @update:model-value="tree.toggleCheck(node)"
+        @click.stop
+      />
+
+      <span v-if="iconName || node.icon" class="wd-tree__icon" aria-hidden="true">
+        <WdIcon v-if="iconName" :name="iconName" size="sm" />
+        <template v-else>{{ node.icon }}</template>
+      </span>
+
+      <button
+        type="button"
+        class="wd-tree__label"
+        :disabled="disabled"
+        @click="tree.select(node)"
+      >
+        <slot v-if="slots.default" :node="node" :data="node" />
+        <template v-else>{{ node.label }}</template>
       </button>
     </div>
-    <ul v-if="node.children?.length && isExpanded(node.key)" class="wd-tree__children" role="group">
-      <TreeNodeItem
-        v-for="child in node.children"
-        :key="child.key"
-        :node="child"
-        :is-expanded="isExpanded"
-        :is-selected="isSelected"
-        @toggle="$emit('toggle', $event)"
-        @select="$emit('select', $event)"
-      />
+
+    <ul v-if="hasChildren && expanded" class="wd-tree__children" role="group">
+      <TreeNodeItem v-for="child in visibleChildren" :key="child.key" :node="child">
+        <template v-if="slots.default" #default="slotProps">
+          <slot v-bind="slotProps" />
+        </template>
+      </TreeNodeItem>
     </ul>
   </li>
 </template>

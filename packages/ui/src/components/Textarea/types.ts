@@ -8,6 +8,8 @@ export interface TextareaProps {
   invalid?: boolean
   /** @deprecated Prefer `invalid`. */
   error?: boolean
+  /** Error copy under the field; implies invalid when set. */
+  errorMessage?: string
   id?: string
   rows?: number
   resize?: 'none' | 'vertical' | 'horizontal' | 'both'

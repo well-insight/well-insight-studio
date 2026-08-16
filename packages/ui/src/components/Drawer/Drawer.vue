@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
+import { computed, ref, toRef } from 'vue'
 import { useWdConfig } from '../../shared/config'
 import { resolveOverlayTeleport } from '../../shared/overlay'
+import { useModalOverlay } from '../../shared/useModalOverlay'
 import type { DrawerProps } from './types'
 
 const props = withDefaults(defineProps<DrawerProps>(), {
@@ -10,7 +11,7 @@ const props = withDefaults(defineProps<DrawerProps>(), {
   modal: true,
   dismissable: true,
   showCloseIcon: true,
-  blockScroll: false,
+  blockScroll: true,
   teleport: true,
 })
 const emit = defineEmits<{
@@ -21,56 +22,23 @@ const emit = defineEmits<{
 
 const config = useWdConfig()
 const drawerElement = ref<HTMLElement | null>(null)
-let previouslyFocused: HTMLElement | null = null
-let previousBodyOverflow = ''
-
 const teleportTarget = computed(() => resolveOverlayTeleport(props, config.value.appendTo))
 
 function close() {
   emit('update:modelValue', false)
 }
 
-function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape') close()
-}
-
 function onOutsideClick() {
   if (props.dismissable) close()
 }
 
-function lockScroll(lock: boolean) {
-  if (!props.blockScroll || typeof document === 'undefined') return
-  if (lock) {
-    previousBodyOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-  } else {
-    document.body.style.overflow = previousBodyOverflow
-  }
-}
-
-watch(
-  () => props.modelValue,
-  async (open, previousOpen) => {
-    if (open) {
-      previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null
-      document.addEventListener('keydown', onKeydown)
-      lockScroll(true)
-      emit('show')
-      await nextTick()
-      drawerElement.value?.focus()
-    } else {
-      document.removeEventListener('keydown', onKeydown)
-      lockScroll(false)
-      if (previousOpen) emit('hide')
-      previouslyFocused?.focus()
-    }
-  },
-  { immediate: true },
-)
-
-onUnmounted(() => {
-  document.removeEventListener('keydown', onKeydown)
-  lockScroll(false)
+useModalOverlay({
+  open: toRef(props, 'modelValue'),
+  container: drawerElement,
+  blockScroll: () => props.blockScroll && props.modal,
+  onEscape: close,
+  onOpen: () => emit('show'),
+  onClose: () => emit('hide'),
 })
 </script>
 

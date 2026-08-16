@@ -41,4 +41,21 @@ describe('WdConfigProvider', () => {
     expect(input.classes()).toContain('wd-input--small')
     expect(input.classes()).toContain('wd-input--filled')
   })
+
+  it('exposes density on the provider root', () => {
+    const wrapper = mount(WdConfigProvider, {
+      props: { density: 'compact', globalDensity: false },
+      slots: { default: () => h('span', 'x') },
+    })
+    expect(wrapper.get('.wd-config-provider').attributes('data-wd-density')).toBe('compact')
+  })
+
+  it('writes overlay z-index base as a CSS variable', () => {
+    const wrapper = mount(WdConfigProvider, {
+      props: { zIndex: 2200, globalDensity: false },
+      slots: { default: () => h('span', 'x') },
+    })
+    const style = wrapper.get('.wd-config-provider').attributes('style') ?? ''
+    expect(style).toContain('--wd-z-base: 2200')
+  })
 })

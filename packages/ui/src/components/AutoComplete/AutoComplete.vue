@@ -2,6 +2,8 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useWdConfig } from '../../shared/config'
 import { isOverlayTeleported, resolveOverlayTeleport } from '../../shared/overlay'
+import { resolveSizeClass } from '../../shared/types'
+import WdIcon from '../Icon/Icon.vue'
 import type { AutoCompleteProps } from './types'
 
 const props = withDefaults(defineProps<AutoCompleteProps>(), {
@@ -19,6 +21,7 @@ const emit = defineEmits<{
 }>()
 
 const config = useWdConfig()
+const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
 const open = ref(false)
 const root = ref<HTMLElement | null>(null)
 const trigger = ref<HTMLElement | null>(null)
@@ -36,6 +39,7 @@ const filtered = computed(() => {
 
 const rootClass = computed(() => [
   'wd-autocomplete',
+  `wd-autocomplete--${sizeClass.value}`,
   {
     'wd-autocomplete--disabled': props.disabled,
     'wd-autocomplete--open': open.value,
@@ -167,7 +171,7 @@ onBeforeUnmount(() => {
         :disabled="disabled"
         @click="toggleDropdown"
       >
-        ▾
+        <WdIcon name="chevron-down" size="sm" />
       </button>
     </div>
     <Teleport :to="teleportTarget.to" :disabled="teleportTarget.disabled">

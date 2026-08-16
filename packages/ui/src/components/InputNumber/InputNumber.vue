@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue'
+import { useWdConfig } from '../../shared/config'
 import { resolveSizeClass } from '../../shared/types'
 import type { InputNumberProps } from './types'
 
@@ -16,8 +17,9 @@ const props = withDefaults(defineProps<InputNumberProps>(), {
 })
 const emit = defineEmits<{ (event: 'update:modelValue', value: number | null): void }>()
 
+const config = useWdConfig()
 const inputId = computed(() => props.id ?? `wd-inputnumber-${Math.random().toString(36).slice(2, 8)}`)
-const sizeClass = computed(() => resolveSizeClass(props.size))
+const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
 
 const rootClass = computed(() => [
   'wd-inputnumber',

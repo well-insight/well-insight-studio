@@ -18,6 +18,8 @@ export interface SelectProps {
   /** @deprecated Prefer `invalid`. */
   error?: boolean
   invalid?: boolean
+  /** Error copy under the field; implies invalid when set. */
+  errorMessage?: string
   id?: string
   placeholder?: string
   disabled?: boolean

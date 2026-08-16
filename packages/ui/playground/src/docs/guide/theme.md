@@ -33,9 +33,25 @@ toggleTheme()
 | `--wd-color-border` | 分割线 / 描边 |
 | `--wd-radius-sm/md/lg` | 圆角阶梯 |
 | `--wd-space-*` | 间距阶梯 |
+| `--wd-font-size-xs/sm/md/lg` | 组件正文字号阶梯 |
+| `--wd-opacity-disabled` | 禁用态透明度 |
+| `--wd-z-base` / `--wd-z-overlay` / `--wd-z-dropdown` / `--wd-z-toast` | 浮层层叠（Config `zIndex` 会写 `--wd-z-base`） |
+| `--wd-menu-min-width` / `--wd-control-affix-*` | 菜单最小宽、输入清除区尺寸 |
 | `--wd-motion-fast/normal` | 过渡时长 |
 
-在组件页左侧「外观设置」可临时改主色、圆角与密度，用于本地预览，不会写进包默认值。
+## 内容密度
+
+```ts
+import { useDensity } from '@well-design/theme'
+
+const { preference, setDensity } = useDensity()
+setDensity('compact') // 'compact' | 'comfortable' | 'spacious'
+```
+
+也会写到 `document.documentElement` 的 `data-wd-density`，并缩放 `--wd-space-*` 与 `--wd-control-height-*`。  
+应用级可用 `createWellDesign({ density: 'compact' })` 或 `<WdConfigProvider density="compact">`。
+
+在组件页侧栏「主题」可临时改主色、圆角与密度，用于本地预览。
 
 ## 动效偏好
 
@@ -49,6 +65,25 @@ setMotion('full') // 'full' | 'reduced' | 'none'
 - `full`：标准过渡与浮层动画  
 - `reduced`：缩短时长、弱化位移  
 - `none`：立即切换  
+
+## 控件尺寸与聚焦（参考 Naive UI）
+
+默认控件高度对齐 Naive 的 compact 节奏：
+
+| Size | 高度 | 字号 |
+| --- | --- | --- |
+| `small` | `28px`（`--wd-control-height-small`） | `14px` |
+| 默认 / `medium` | `34px` | `14px` |
+| `large` | `40px` | `15px` |
+
+聚焦样式为 **主色描边 + 2px 淡色光晕**（非外扩 outline ring）：
+
+```css
+border-color: var(--wd-color-primary-hover);
+box-shadow: var(--wd-focus-shadow); /* 0 0 0 2px primary@20% */
+```
+
+相关 token：`--wd-radius-control`、`--wd-control-padding-x-*`、`--wd-button-padding-x-*`、`--wd-focus-shadow` / `--wd-focus-shadow-danger`。
 
 ## 与 ConfigProvider
 

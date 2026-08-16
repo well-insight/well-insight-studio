@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import WdIcon from '../Icon/Icon.vue'
 import type { PickListProps } from './types'
 
 const props = withDefaults(defineProps<PickListProps>(), {
@@ -68,7 +69,7 @@ function moveAllToSource() {
   <div class="wd-picklist">
     <div class="wd-picklist__listbox">
       <div class="wd-picklist__header">{{ sourceHeader }}</div>
-      <ul class="wd-picklist__list" role="listbox" aria-multiselectable="true">
+      <ul class="wd-picklist__list" role="listbox" aria-multiselectable="true" tabindex="0">
         <li
           v-for="(item, index) in source"
           :key="itemKey(item, index)"
@@ -76,21 +77,34 @@ function moveAllToSource() {
           :class="{ 'wd-picklist__item--selected': selectedSource.includes(index) }"
           role="option"
           :aria-selected="selectedSource.includes(index)"
+          tabindex="0"
           @click="toggleSelection('source', index)"
+          @keydown.enter.prevent="toggleSelection('source', index)"
+          @keydown.space.prevent="toggleSelection('source', index)"
         >
           <slot name="item" :item="item" :index="index">{{ item }}</slot>
         </li>
       </ul>
     </div>
     <div class="wd-picklist__controls">
-      <button type="button" class="wd-picklist__btn" aria-label="全部移到右侧" @click="moveAllToTarget">≫</button>
-      <button type="button" class="wd-picklist__btn" aria-label="移到右侧" @click="moveToTarget">›</button>
-      <button type="button" class="wd-picklist__btn" aria-label="移到左侧" @click="moveToSource">‹</button>
-      <button type="button" class="wd-picklist__btn" aria-label="全部移到左侧" @click="moveAllToSource">≪</button>
+      <button type="button" class="wd-picklist__btn" aria-label="全部移到右侧" @click="moveAllToTarget">
+        <WdIcon name="chevron-right" size="sm" />
+        <WdIcon name="chevron-right" size="sm" />
+      </button>
+      <button type="button" class="wd-picklist__btn" aria-label="移到右侧" @click="moveToTarget">
+        <WdIcon name="chevron-right" size="sm" />
+      </button>
+      <button type="button" class="wd-picklist__btn" aria-label="移到左侧" @click="moveToSource">
+        <WdIcon name="chevron-left" size="sm" />
+      </button>
+      <button type="button" class="wd-picklist__btn" aria-label="全部移到左侧" @click="moveAllToSource">
+        <WdIcon name="chevron-left" size="sm" />
+        <WdIcon name="chevron-left" size="sm" />
+      </button>
     </div>
     <div class="wd-picklist__listbox">
       <div class="wd-picklist__header">{{ targetHeader }}</div>
-      <ul class="wd-picklist__list" role="listbox" aria-multiselectable="true">
+      <ul class="wd-picklist__list" role="listbox" aria-multiselectable="true" tabindex="0">
         <li
           v-for="(item, index) in target"
           :key="itemKey(item, index)"
@@ -98,7 +112,10 @@ function moveAllToSource() {
           :class="{ 'wd-picklist__item--selected': selectedTarget.includes(index) }"
           role="option"
           :aria-selected="selectedTarget.includes(index)"
+          tabindex="0"
           @click="toggleSelection('target', index)"
+          @keydown.enter.prevent="toggleSelection('target', index)"
+          @keydown.space.prevent="toggleSelection('target', index)"
         >
           <slot name="item" :item="item" :index="index">{{ item }}</slot>
         </li>

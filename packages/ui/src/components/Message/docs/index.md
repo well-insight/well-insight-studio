@@ -8,6 +8,8 @@ description: 行内消息提示。支持 severity、closable、life 自动关闭
 
 行内消息提示，用于页面内反馈。Severity 对齐 [PrimeVue Message](https://primevue.org/message/)。
 
+需要标题、描述与操作区的页面级告警条，请使用 [Alert](/components/Alert)。
+
 ## 引入
 
 ```ts

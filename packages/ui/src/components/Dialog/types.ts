@@ -33,6 +33,8 @@ export interface DialogProps {
   teleport?: boolean
   /** Mount target. Defaults to `'body'`. */
   appendTo?: WdAppendTo
+  /** Lock page scroll while open (default true when modal). */
+  blockScroll?: boolean
 }
 
 export interface DialogEmits {

@@ -30,6 +30,28 @@ const suggestions = ['Vue', 'Vite', 'Vitest', 'Vue Router']
 </template>
 ```
 
+## Size
+
+```vue preview
+<script setup lang="ts">
+import { ref } from 'vue'
+import { WdAutoComplete } from '@well-design/ui'
+
+const a = ref('')
+const b = ref('')
+const c = ref('')
+const suggestions = ['Vue', 'Vite', 'Vitest']
+</script>
+
+<template>
+  <div style="display:flex;flex-wrap:wrap;gap:0.75rem">
+    <WdAutoComplete v-model="a" size="small" :suggestions="suggestions" placeholder="Small" />
+    <WdAutoComplete v-model="b" :suggestions="suggestions" placeholder="Default" />
+    <WdAutoComplete v-model="c" size="large" :suggestions="suggestions" placeholder="Large" />
+  </div>
+</template>
+```
+
 ## Props
 
 | 参数 | 类型 | 默认值 | 说明 |
@@ -38,6 +60,7 @@ const suggestions = ['Vue', 'Vite', 'Vitest', 'Vue Router']
 | `suggestions` | `string[]` | `[]` | 建议列表。 |
 | `dropdown` | `boolean` | `false` | 显示下拉按钮。 |
 | `placeholder` | `string` | — | 占位。 |
+| `size` | `WdSizeInput` | — | `small` / `large`；可继承 ConfigProvider。 |
 | `disabled` | `boolean` | `false` | 禁用。 |
 | `teleport` | `boolean` | `true` | 浮层 Teleport；默认挂到 `body`。 |
 | `appendTo` | `string \| HTMLElement \| 'self' \| false` | `'body'` | 挂载目标；`'self'` / `false` 就地渲染。 |

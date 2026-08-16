@@ -58,6 +58,30 @@ const value = ref('Draft note')
 </template>
 ```
 
+## Prefix / Suffix
+
+```vue preview
+<script setup lang="ts">
+import { ref } from 'vue'
+import { WdInput } from '@well-design/ui'
+
+const amount = ref('128')
+const host = ref('docs')
+</script>
+
+<template>
+  <div style="display:grid;gap:1rem;width:min(24rem,100%)">
+    <WdInput v-model="amount" label="金额" fluid>
+      <template #prefix>¥</template>
+      <template #suffix>.00</template>
+    </WdInput>
+    <WdInput v-model="host" label="域名" fluid>
+      <template #suffix>.well.design</template>
+    </WdInput>
+  </div>
+</template>
+```
+
 ## Password-like type
 
 ```vue preview
@@ -155,6 +179,13 @@ import { WdInput } from '@well-design/ui'
 | `clearable` | `boolean` | `false` | 显示清除按钮。 |
 | `maxlength` | `number` | — | 原生 maxlength。 |
 | `showCount` | `boolean` | `false` | 显示字数统计。 |
+
+## Slots
+
+| 插槽名 | 说明 |
+| --- | --- |
+| `prefix` | 输入框左侧装饰（如单位、图标）。 |
+| `suffix` | 输入框右侧装饰；与清除按钮可并存。 |
 
 ## Events
 

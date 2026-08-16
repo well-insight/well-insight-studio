@@ -47,6 +47,15 @@ a:focus-visible {
   outline-offset: 3px;
 }
 
+/* 组合控件由自身壳层画聚焦环，避免 input 单独 outline 在中间露竖条 */
+.wd-autocomplete__input:focus-visible,
+.wd-autocomplete__dropdown:focus-visible,
+.wd-select:focus-visible,
+.wd-icon-field input:focus-visible {
+  outline: none;
+  outline-offset: 0;
+}
+
 .site-shell {
   background: var(--wd-color-surface);
   display: flex;

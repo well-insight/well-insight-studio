@@ -41,4 +41,15 @@ describe('WdInput', () => {
     expect(wrapper.get('.wd-input-field__count').text()).toBe('5 / 20')
     expect(wrapper.get('input').attributes('aria-describedby')).toContain('bio-count')
   })
+
+  it('renders prefix and suffix slots', () => {
+    const wrapper = mount(WdInput, {
+      props: { modelValue: '12', label: '金额' },
+      slots: { prefix: () => '¥', suffix: () => '.00' },
+    })
+    expect(wrapper.get('.wd-input__prefix').text()).toBe('¥')
+    expect(wrapper.get('.wd-input__suffix').text()).toBe('.00')
+    expect(wrapper.get('input').classes()).toContain('wd-input--has-prefix')
+    expect(wrapper.get('input').classes()).toContain('wd-input--has-suffix')
+  })
 })

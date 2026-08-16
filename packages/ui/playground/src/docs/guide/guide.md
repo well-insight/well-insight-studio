@@ -62,3 +62,8 @@ description: 触发动作的按钮
 - Toast：`wd-slide-fade`
 
 全局默认挂载点可通过 [ConfigProvider](/docs/config) 的 `appendTo` 统一设置。
+
+## 图标约定
+
+- **系统图标**：组件内部与通用操作使用 `WdIcon` + `name`（见 [Icon](/components/Icon) 注册表）。
+- **业务图标**：在应用侧安装 Lucide 等库，通过 `WdIcon` 默认插槽或 Button 的 `icon` 组件传入，不要往组件库堆全量 SVG。

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, useAttrs } from 'vue'
+import { useWdConfig } from '../../shared/config'
 import { resolveSizeClass } from '../../shared/types'
 import type { InputPasswordProps, PasswordStrength } from './types'
 
@@ -16,9 +17,10 @@ const props = withDefaults(defineProps<InputPasswordProps>(), {
 })
 const emit = defineEmits<{ (event: 'update:modelValue', value: string): void }>()
 
+const config = useWdConfig()
 const unmasked = ref(false)
 const inputId = computed(() => props.id ?? `wd-password-${Math.random().toString(36).slice(2, 8)}`)
-const sizeClass = computed(() => resolveSizeClass(props.size))
+const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
 
 const strength = computed<PasswordStrength>(() => {
   const value = props.modelValue ?? ''

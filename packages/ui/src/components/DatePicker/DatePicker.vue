@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useWdConfig } from '../../shared/config'
 import { isOverlayTeleported, resolveOverlayTeleport } from '../../shared/overlay'
+import { resolveSizeClass } from '../../shared/types'
 import type { DatePickerProps, DatePickerValue } from './types'
 
 const props = withDefaults(defineProps<DatePickerProps>(), {
@@ -18,6 +19,7 @@ const emit = defineEmits<{
 }>()
 
 const config = useWdConfig()
+const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
 const open = ref(false)
 const root = ref<HTMLElement | null>(null)
 const trigger = ref<HTMLElement | null>(null)
@@ -98,6 +100,7 @@ function buildCell(date: Date, inMonth: boolean) {
 
 const rootClass = computed(() => [
   'wd-datepicker',
+  `wd-datepicker--${sizeClass.value}`,
   {
     'wd-datepicker--fluid': props.fluid,
     'wd-datepicker--disabled': props.disabled,

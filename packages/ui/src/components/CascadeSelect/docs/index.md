@@ -40,6 +40,31 @@ const options = [
 </template>
 ```
 
+## Size
+
+```vue preview
+<script setup lang="ts">
+import { ref } from 'vue'
+import { WdCascadeSelect } from '@well-design/ui'
+
+const a = ref(null)
+const b = ref(null)
+const c = ref(null)
+const options = [
+  { label: '图书', value: 'books' },
+  { label: '影音', value: 'media' },
+]
+</script>
+
+<template>
+  <div style="display:flex;flex-wrap:wrap;gap:0.75rem">
+    <WdCascadeSelect v-model="a" size="small" :options="options" placeholder="Small" />
+    <WdCascadeSelect v-model="b" :options="options" placeholder="Default" />
+    <WdCascadeSelect v-model="c" size="large" :options="options" placeholder="Large" />
+  </div>
+</template>
+```
+
 ## Props
 
 | 参数 | 类型 | 默认值 | 说明 |
@@ -47,6 +72,7 @@ const options = [
 | `modelValue` | `string \| number \| null` | `null` | 选中值。 |
 | `options` | `CascadeSelectOption[]` | — | 嵌套选项。 |
 | `placeholder` | `string` | `'请选择'` | 占位文案。 |
+| `size` | `WdSizeInput` | — | `small` / `large`；可继承 ConfigProvider。 |
 | `disabled` | `boolean` | `false` | 禁用。 |
 | `teleport` | `boolean` | `true` | 浮层 Teleport；默认挂到 `body`。 |
 | `appendTo` | `string \| HTMLElement \| 'self' \| false` | `'body'` | 挂载目标；`'self'` / `false` 就地渲染。 |

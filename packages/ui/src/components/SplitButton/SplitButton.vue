@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useWdConfig } from '../../shared/config'
 import { resolveSizeClass } from '../../shared/types'
 import type { SplitButtonItem, SplitButtonProps } from './types'
 
@@ -14,9 +15,10 @@ const emit = defineEmits<{
   (event: 'command', item: SplitButtonItem): void
 }>()
 
+const config = useWdConfig()
 const open = ref(false)
 const root = ref<HTMLElement | null>(null)
-const sizeClass = computed(() => resolveSizeClass(props.size))
+const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
 
 const rootClass = computed(() => [
   'wd-splitbutton',

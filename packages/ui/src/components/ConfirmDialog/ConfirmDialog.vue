@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
+import { computed, ref, toRef } from 'vue'
 import { useWdConfig } from '../../shared/config'
 import { resolveOverlayTeleport } from '../../shared/overlay'
+import { useModalOverlay } from '../../shared/useModalOverlay'
 import WdButton from '../Button/Button.vue'
 import type { ConfirmDialogProps } from './types'
 
 const props = withDefaults(defineProps<ConfirmDialogProps>(), {
   modelValue: false,
-  acceptLabel: '确认',
-  rejectLabel: '取消',
   acceptSeverity: undefined,
   teleport: true,
 })
@@ -22,9 +21,9 @@ const emit = defineEmits<{
 const config = useWdConfig()
 const dialogElement = ref<HTMLElement | null>(null)
 const teleportTarget = computed(() => resolveOverlayTeleport(props, config.value.appendTo))
-let previouslyFocused: HTMLElement | null = null
-
 const title = computed(() => props.header ?? '确认')
+const acceptText = computed(() => props.acceptLabel ?? config.value.locale?.accept ?? '确认')
+const rejectText = computed(() => props.rejectLabel ?? config.value.locale?.reject ?? '取消')
 
 function close() {
   emit('update:modelValue', false)
@@ -40,31 +39,12 @@ function reject() {
   close()
 }
 
-function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape') reject()
-}
-
-function onOutsideClick() {
-  reject()
-}
-
-watch(
-  () => props.modelValue,
-  async (open, previousOpen) => {
-    if (open) {
-      previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null
-      document.addEventListener('keydown', onKeydown)
-      await nextTick()
-      dialogElement.value?.focus()
-    } else {
-      document.removeEventListener('keydown', onKeydown)
-      if (previousOpen) previouslyFocused?.focus()
-    }
-  },
-  { immediate: true },
-)
-
-onUnmounted(() => document.removeEventListener('keydown', onKeydown))
+useModalOverlay({
+  open: toRef(props, 'modelValue'),
+  container: dialogElement,
+  blockScroll: true,
+  onEscape: reject,
+})
 </script>
 
 <template>
@@ -73,7 +53,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
       <div
         v-if="modelValue"
         class="wd-dialog-backdrop wd-dialog-backdrop--center wd-dialog-backdrop--modal wd-confirmdialog-backdrop"
-        @click.self="onOutsideClick"
+        @click.self="reject"
       >
         <section
           ref="dialogElement"
@@ -93,8 +73,8 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
           </div>
           <footer class="wd-dialog__footer wd-confirmdialog__footer">
             <slot name="footer">
-              <WdButton :label="rejectLabel" severity="secondary" @click="reject" />
-              <WdButton :label="acceptLabel" :severity="acceptSeverity" @click="accept" />
+              <WdButton :label="rejectText" severity="secondary" @click="reject" />
+              <WdButton :label="acceptText" :severity="acceptSeverity" @click="accept" />
             </slot>
           </footer>
         </section>

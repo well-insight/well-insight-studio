@@ -1,4 +1,5 @@
 import type { WdAppendTo } from '../../shared/overlay'
+import type { WdSizeInput } from '../../shared/types'
 
 export interface TreeSelectNode {
   key: string
@@ -12,6 +13,7 @@ export interface TreeSelectProps {
   modelValue?: string | null
   placeholder?: string
   disabled?: boolean
+  size?: WdSizeInput
   selectionMode?: 'single'
   /** Teleport overlay. Defaults to `true`. */
   teleport?: boolean

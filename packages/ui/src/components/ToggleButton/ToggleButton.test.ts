@@ -18,4 +18,9 @@ describe('WdToggleButton', () => {
     expect(wrapper.emitted('update:modelValue')).toBeUndefined()
     expect(wrapper.classes()).toContain('wd-togglebutton--disabled')
   })
+
+  it('applies size classes', () => {
+    expect(mount(WdToggleButton, { props: { size: 'small' } }).classes()).toContain('wd-togglebutton--small')
+    expect(mount(WdToggleButton, { props: { size: 'lg' } }).classes()).toContain('wd-togglebutton--large')
+  })
 })

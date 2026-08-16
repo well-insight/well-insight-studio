@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, ref, useAttrs } from 'vue'
+import { computed, ref, useAttrs, useSlots } from 'vue'
 import { useWdConfig } from '../../shared/config'
 import { resolveSizeClass } from '../../shared/types'
 import type { InputProps } from './types'
 
 defineOptions({ inheritAttrs: false })
 const attrs = useAttrs()
+const slots = useSlots()
 const props = withDefaults(defineProps<InputProps>(), {
   modelValue: '',
   type: 'text',
@@ -24,16 +25,20 @@ const emit = defineEmits<{
 const config = useWdConfig()
 const inputElement = ref<HTMLInputElement | null>(null)
 const inputId = computed(() => props.id ?? `wd-input-${Math.random().toString(36).slice(2, 8)}`)
-const isInvalid = computed(() => props.invalid || props.error)
+const isInvalid = computed(() => props.invalid || props.error || Boolean(props.errorMessage))
 const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
 const resolvedVariant = computed(() => props.variant ?? config.value.inputVariant ?? 'outlined')
 const charCount = computed(() => props.modelValue.length)
 const countText = computed(() =>
   props.maxlength != null ? `${charCount.value} / ${props.maxlength}` : String(charCount.value),
 )
+const feedbackText = computed(() => props.errorMessage || props.helpText)
+const feedbackIsError = computed(() => Boolean(props.errorMessage) || (isInvalid.value && Boolean(props.helpText)))
+const hasPrefix = computed(() => Boolean(slots.prefix))
+const hasSuffix = computed(() => Boolean(slots.suffix) || (props.clearable && Boolean(props.modelValue)))
 const describedBy = computed(() => {
   const ids: string[] = []
-  if (props.helpText) ids.push(`${inputId.value}-help`)
+  if (feedbackText.value) ids.push(`${inputId.value}-help`)
   if (props.showCount) ids.push(`${inputId.value}-count`)
   return ids.length ? ids.join(' ') : undefined
 })
@@ -46,6 +51,8 @@ const inputClass = computed(() => [
     'wd-input--fluid': props.fluid,
     'wd-input--invalid': isInvalid.value,
     'wd-input--error': isInvalid.value,
+    'wd-input--has-prefix': hasPrefix.value,
+    'wd-input--has-suffix': hasSuffix.value,
   },
 ])
 
@@ -74,8 +81,13 @@ defineExpose({ focus })
       :class="{
         'wd-input-field__control--clearable': clearable && modelValue,
         'wd-input-field__control--counted': showCount,
+        'wd-input-field__control--prefixed': hasPrefix,
+        'wd-input-field__control--suffixed': $slots.suffix || (clearable && modelValue),
       }"
     >
+      <span v-if="$slots.prefix" class="wd-input__prefix">
+        <slot name="prefix" />
+      </span>
       <input
         ref="inputElement"
         v-bind="attrs"
@@ -90,6 +102,9 @@ defineExpose({ focus })
         :aria-describedby="describedBy"
         @input="updateValue"
       />
+      <span v-if="$slots.suffix" class="wd-input__suffix">
+        <slot name="suffix" />
+      </span>
       <button
         v-if="clearable && modelValue"
         class="wd-input__clear"
@@ -101,8 +116,16 @@ defineExpose({ focus })
         ×
       </button>
     </div>
-    <div v-if="helpText || showCount" class="wd-input-field__meta">
-      <span v-if="helpText" :id="`${inputId}-help`" class="wd-input-field__help">{{ helpText }}</span>
+    <div v-if="feedbackText || showCount" class="wd-input-field__meta">
+      <span
+        v-if="feedbackText"
+        :id="`${inputId}-help`"
+        class="wd-input-field__help"
+        :class="{ 'wd-input-field__help--error': feedbackIsError }"
+        :role="feedbackIsError ? 'alert' : undefined"
+      >
+        {{ feedbackText }}
+      </span>
       <span
         v-if="showCount"
         :id="`${inputId}-count`"

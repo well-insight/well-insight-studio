@@ -29,6 +29,27 @@ const on = ref(false)
 </template>
 ```
 
+## Size
+
+```vue preview
+<script setup lang="ts">
+import { ref } from 'vue'
+import { WdToggleButton } from '@well-design/ui'
+
+const a = ref(false)
+const b = ref(true)
+const c = ref(false)
+</script>
+
+<template>
+  <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center">
+    <WdToggleButton v-model="a" size="small" on-label="小" off-label="小" />
+    <WdToggleButton v-model="b" on-label="默认" off-label="默认" />
+    <WdToggleButton v-model="c" size="large" on-label="大" off-label="大" />
+  </div>
+</template>
+```
+
 ## Props
 
 | 参数 | 类型 | 默认值 | 说明 |
@@ -36,6 +57,7 @@ const on = ref(false)
 | `modelValue` | `boolean` | `false` | 是否开启。 |
 | `onLabel` / `offLabel` | `string` | `On` / `Off` | 文案。 |
 | `onIcon` / `offIcon` | `string` | — | 可选图标字符。 |
+| `size` | `WdSizeInput` | — | `small` / `large`；可继承 ConfigProvider。 |
 | `disabled` | `boolean` | `false` | 禁用。 |
 
 ## Events

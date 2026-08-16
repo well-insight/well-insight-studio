@@ -1,3 +1,5 @@
+import type { WdSizeInput } from '../../shared/types'
+
 export interface ToggleButtonProps {
   modelValue?: boolean
   onLabel?: string
@@ -5,6 +7,7 @@ export interface ToggleButtonProps {
   onIcon?: string
   offIcon?: string
   disabled?: boolean
+  size?: WdSizeInput
 }
 
 export interface ToggleButtonEmits {

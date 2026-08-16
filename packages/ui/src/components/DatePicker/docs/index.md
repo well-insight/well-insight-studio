@@ -29,6 +29,27 @@ const value = ref('2024-06-15')
 </template>
 ```
 
+## Size
+
+```vue preview
+<script setup lang="ts">
+import { ref } from 'vue'
+import { WdDatePicker } from '@well-design/ui'
+
+const a = ref('2024-06-15')
+const b = ref('2024-06-15')
+const c = ref('2024-06-15')
+</script>
+
+<template>
+  <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end">
+    <WdDatePicker v-model="a" size="small" label="Small" />
+    <WdDatePicker v-model="b" label="Default" />
+    <WdDatePicker v-model="c" size="large" label="Large" />
+  </div>
+</template>
+```
+
 ## Min / Max
 
 超出范围的日期在日历中禁用。
@@ -120,6 +141,7 @@ const value = ref<string | null>(null)
 | `maxDate` | `string \| Date \| null` | — | 可选上限。 |
 | `placeholder` | `string` | `选择日期` | 占位。 |
 | `fluid` | `boolean` | `false` | 宽度撑满。 |
+| `size` | `WdSizeInput` | — | `small` / `large`；可继承 ConfigProvider。 |
 | `disabled` | `boolean` | `false` | 禁用。 |
 | `invalid` | `boolean` | `false` | 校验失败态。 |
 | `teleport` | `boolean` | `true` | 面板 Teleport；默认挂到 `body`。 |

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { nextTick, computed, ref, toRef, watch } from 'vue'
 import { useWdConfig } from '../../shared/config'
 import { resolveOverlayTeleport } from '../../shared/overlay'
+import { useModalOverlay } from '../../shared/useModalOverlay'
 import type { CommandMenuItem, CommandMenuProps } from './types'
 
 const props = withDefaults(defineProps<CommandMenuProps>(), {
@@ -17,6 +18,7 @@ const emit = defineEmits<{
 
 const config = useWdConfig()
 const query = ref('')
+const panelRef = ref<HTMLElement | null>(null)
 const inputRef = ref<HTMLInputElement | null>(null)
 const activeIndex = ref(0)
 const teleportTarget = computed(() => resolveOverlayTeleport(props, config.value.appendTo))
@@ -37,12 +39,7 @@ function activate(item: CommandMenuItem) {
   close()
 }
 
-function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape') {
-    event.preventDefault()
-    close()
-    return
-  }
+function onPanelKeydown(event: KeyboardEvent) {
   if (event.key === 'ArrowDown') {
     event.preventDefault()
     activeIndex.value = Math.min(filtered.value.length - 1, activeIndex.value + 1)
@@ -60,15 +57,24 @@ function onKeydown(event: KeyboardEvent) {
   }
 }
 
+useModalOverlay({
+  open: toRef(props, 'modelValue'),
+  container: panelRef,
+  blockScroll: true,
+  autoFocus: false,
+  onEscape: close,
+  onOpen: () => {
+    query.value = ''
+    activeIndex.value = 0
+  },
+})
+
 watch(
   () => props.modelValue,
   async (open) => {
-    if (open) {
-      query.value = ''
-      activeIndex.value = 0
-      await nextTick()
-      inputRef.value?.focus()
-    }
+    if (!open) return
+    await nextTick()
+    inputRef.value?.focus()
   },
 )
 
@@ -82,11 +88,13 @@ watch(filtered, () => {
     <Transition name="wd-fade">
       <div v-if="modelValue" class="wd-commandmenu-backdrop" @click.self="close">
         <div
+          ref="panelRef"
           class="wd-commandmenu"
           role="dialog"
           aria-modal="true"
           aria-label="命令面板"
-          @keydown="onKeydown"
+          tabindex="-1"
+          @keydown="onPanelKeydown"
         >
           <input
             ref="inputRef"

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useWdConfig } from '../../shared/config'
 import { resolveSizeClass } from '../../shared/types'
 import type { SelectButtonOption, SelectButtonProps, SelectButtonValue } from './types'
 
@@ -12,7 +13,8 @@ const emit = defineEmits<{
   (event: 'update:modelValue', value: SelectButtonValue | SelectButtonValue[] | undefined): void
 }>()
 
-const sizeClass = computed(() => resolveSizeClass(props.size))
+const config = useWdConfig()
+const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
 
 const rootClass = computed(() => [
   'wd-selectbutton',

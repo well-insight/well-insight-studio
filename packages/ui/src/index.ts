@@ -18,7 +18,14 @@ export type { DialogEmits, DialogPosition, DialogProps } from './components/Dial
 export { default as WdDropdown } from './components/Dropdown/Dropdown.vue'
 export type { DropdownEmits, DropdownItem, DropdownProps } from './components/Dropdown/types'
 export { default as WdIcon } from './components/Icon/Icon.vue'
-export type { IconName, IconProps, IconSize } from './components/Icon/types'
+export {
+  getIconDefinition,
+  iconNames,
+  iconRegistry,
+  isIconName,
+} from './components/Icon/icons'
+export type { IconDefinition, IconName, IconPrimitive } from './components/Icon/icons'
+export type { IconProps, IconSize } from './components/Icon/types'
 export { default as WdInput } from './components/Input/Input.vue'
 export type { InputEmits, InputProps } from './components/Input/types'
 export { default as WdCheckbox } from './components/Checkbox/Checkbox.vue'
@@ -42,7 +49,18 @@ export type { TooltipProps } from './components/Tooltip/types'
 export { default as WdToast } from './components/Toast/Toast.vue'
 export type { ToastEmits, ToastMessage, ToastProps, ToastSeverity } from './components/Toast/types'
 export { default as WdTable } from './components/Table/Table.vue'
-export type { TableColumn, TableProps, TableSize } from './components/Table/types'
+export type {
+  TableColumn,
+  TableColumnFilterOption,
+  TableEmits,
+  TableFilters,
+  TableFixed,
+  TableProps,
+  TableSelectionMode,
+  TableSize,
+  TableSortMode,
+  TableSortOrder,
+} from './components/Table/types'
 export { default as WdPagination } from './components/Pagination/Pagination.vue'
 export type { PaginationEmits, PaginationInstance, PaginationProps } from './components/Pagination/types'
 export { default as WdScrollbar } from './components/Scrollbar/Scrollbar.vue'
@@ -64,6 +82,8 @@ export { default as WdBadge } from './components/Badge/Badge.vue'
 export type { BadgeProps, BadgeSeverity, BadgeSize } from './components/Badge/types'
 export { default as WdMessage } from './components/Message/Message.vue'
 export type { MessageEmits, MessageProps, MessageSeverity } from './components/Message/types'
+export { default as WdAlert } from './components/Alert/Alert.vue'
+export type { AlertEffect, AlertEmits, AlertProps, AlertSeverity } from './components/Alert/types'
 export { default as WdSkeleton } from './components/Skeleton/Skeleton.vue'
 export type { SkeletonAnimation, SkeletonProps, SkeletonShape } from './components/Skeleton/types'
 export { default as WdAvatar } from './components/Avatar/Avatar.vue'
@@ -144,14 +164,16 @@ export { default as WdSplitButton } from './components/SplitButton/SplitButton.v
 export type { SplitButtonEmits, SplitButtonItem, SplitButtonProps } from './components/SplitButton/types'
 export { default as WdTree } from './components/Tree/Tree.vue'
 export type {
+  TreeCheckedKeys,
   TreeEmits,
+  TreeExpandedKeys,
   TreeNode,
   TreeProps,
   TreeSelectionKeys,
   TreeSelectionMode,
 } from './components/Tree/types'
 export { default as WdTimeline } from './components/Timeline/Timeline.vue'
-export type { TimelineAlign, TimelineEvent, TimelineProps } from './components/Timeline/types'
+export type { TimelineAlign, TimelineEvent, TimelineLayout, TimelineProps, TimelineSeverity } from './components/Timeline/types'
 export { default as WdDataView } from './components/DataView/DataView.vue'
 export type { DataViewLayout, DataViewProps } from './components/DataView/types'
 export { default as WdConfirmPopup } from './components/ConfirmPopup/ConfirmPopup.vue'
@@ -225,8 +247,14 @@ export type { FluidProps } from './components/Fluid/types'
 export { default as WdTerminal } from './components/Terminal/Terminal.vue'
 export type { TerminalEmits, TerminalProps } from './components/Terminal/types'
 
+export { default as WdForm } from './components/Form/Form.vue'
+export { default as WdFormItem } from './components/Form/FormItem.vue'
+export type { FormItemProps, FormLabelPosition, FormProps, FormValidateTrigger } from './components/Form/types'
+export { WD_FORM_ERRORS_KEY, WD_FORM_KEY } from './components/Form/context'
+export type { FormFieldValidator, WdFormContext, WdFormFieldRegistration } from './components/Form/context'
+
 export { default as WdConfigProvider } from './components/ConfigProvider/ConfigProvider.vue'
-export type { WdGlobalConfig, WdLocaleConfig } from './components/ConfigProvider/types'
+export type { WdGlobalConfig, WdLocaleConfig, WdDensity } from './components/ConfigProvider/types'
 export {
   createWellDesign,
   getDefaultWdConfig,
@@ -246,3 +274,5 @@ export type {
 export { normalizeSeverity, resolveSizeClass } from './shared/types'
 export type { WdAppendTo, WdOverlayMountProps } from './shared/overlay'
 export { isOverlayTeleported, resolveOverlayTeleport } from './shared/overlay'
+export { useModalOverlay } from './shared/useModalOverlay'
+export type { UseModalOverlayOptions } from './shared/useModalOverlay'

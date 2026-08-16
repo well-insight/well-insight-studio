@@ -8,6 +8,8 @@ export type { ColorTokens, DesignTokens, MotionTokens, RadiusTokens, SpacingToke
 export { useTheme } from './useTheme'
 export { applyMotion, getPreferredMotion, useMotion } from './useMotion'
 export type { MotionPreference } from './useMotion'
+export { applyDensity, useDensity } from './useDensity'
+export type { DensityPreference } from './useDensity'
 
 export function getPreferredTheme(): ThemeName {
   if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
