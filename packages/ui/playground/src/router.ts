@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import ChangelogView from './views/ChangelogView.vue'
 import ComponentPlayground from './views/ComponentPlayground.vue'
 import DocsView from './views/DocsView.vue'
 import HomeView from './views/HomeView.vue'
@@ -29,6 +30,11 @@ const router = createRouter({
       path: '/components/:component',
       name: 'component-doc',
       component: ComponentPlayground,
+    },
+    {
+      path: '/changelog',
+      name: 'changelog',
+      component: ChangelogView,
     },
     {
       // 兼容旧路径 /Button → /components/Button

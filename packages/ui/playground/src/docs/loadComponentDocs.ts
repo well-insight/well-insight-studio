@@ -61,7 +61,7 @@ function parseFrontmatterFromRaw(raw: string): ComponentDocFrontmatter {
 function parseCategory(raw?: string): Pick<DocumentedComponentMeta, 'category' | 'categoryOrder' | 'categoryLabel'> {
   const category = raw?.trim() || '99 / OTHER'
   const match = category.match(/^(\d+)\s*\/\s*(.+)$/)
-  if (!match) {
+  if (!match?.[1] || !match[2]) {
     return { category, categoryOrder: 99, categoryLabel: category }
   }
   return {
@@ -82,20 +82,19 @@ function resolveFrontmatter(path: string, mod: { frontmatter?: ComponentDocFront
 }
 
 export function listDocumentedComponents(): DocumentedComponentMeta[] {
-  return Object.entries(docModules)
-    .map(([path, mod]) => {
-      const name = componentNameFromPath(path)
-      if (!name) return null
-      const frontmatter = resolveFrontmatter(path, mod, name)
-      const parsed = parseCategory(frontmatter.category)
-      return {
-        name,
-        description: frontmatter.description,
-        ...parsed,
-      } satisfies DocumentedComponentMeta
+  const items: DocumentedComponentMeta[] = []
+  for (const [path, mod] of Object.entries(docModules)) {
+    const name = componentNameFromPath(path)
+    if (!name) continue
+    const frontmatter = resolveFrontmatter(path, mod, name)
+    const parsed = parseCategory(frontmatter.category)
+    items.push({
+      name,
+      description: frontmatter.description,
+      ...parsed,
     })
-    .filter((item): item is DocumentedComponentMeta => Boolean(item))
-    .sort((a, b) => a.categoryOrder - b.categoryOrder || a.name.localeCompare(b.name))
+  }
+  return items.sort((a, b) => a.categoryOrder - b.categoryOrder || a.name.localeCompare(b.name))
 }
 
 export function listDocumentedComponentNames(): string[] {

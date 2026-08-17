@@ -14,9 +14,13 @@
     "build:ui": "pnpm --filter @well-design/ui build",
     "test": "pnpm -r test",
     "test:coverage": "pnpm -r test:coverage",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "pnpm build:ui && changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^3.0.0",
     "@types/node": "^26.2.0",
     "typescript": "^5.9.3"
   },

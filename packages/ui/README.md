@@ -56,11 +56,35 @@ pnpm build:ui
 | `dist/index.d.ts` | 类型入口 |
 | `dist/styles.css` | 组件样式（含主题 token） |
 
+### Changesets 发版
+
+版本与 `CHANGELOG.md` 由 [Changesets](https://github.com/changesets/changesets) 管理（配置见仓库根目录 `.changeset/`）。
+
+```bash
+# 有用户可见改动时先记一条
+pnpm changeset
+
+# 汇总 bump 版本并写入 CHANGELOG.md
+pnpm version-packages
+
+# 构建并 npm publish
+pnpm release
+```
+
+首次发布 `0.1.0`（版本与 changelog 已就绪）可：
+
+```bash
+pnpm build:ui
+pnpm --filter @well-design/ui publish --access public
+```
+
+文档站「更新日志」页读取 `packages/ui/CHANGELOG.md`，与发版记录同步。
+
 发布前检查：
 
-1. `version` 已 bump
+1. `version` 与 CHANGELOG 一致
 2. `pnpm --filter @well-design/ui build` 与 `typecheck` / `test` 通过
-3. `files` 仅包含 `dist`
+3. `files` 包含 `dist` 与 `CHANGELOG.md`
 4. peer：`vue`
 
 Monorepo 开发时 `exports.development` 指向源码；对外安装走 `dist`。

@@ -38,6 +38,9 @@ const pillars = [
           <RouterLink :to="{ name: 'components' }">
             <WdButton label="浏览组件" outlined />
           </RouterLink>
+          <RouterLink :to="{ name: 'changelog' }">
+            <WdButton label="更新日志" text />
+          </RouterLink>
         </div>
         <div class="home-meta" aria-label="技术标签">
           <span>Vue 3</span>

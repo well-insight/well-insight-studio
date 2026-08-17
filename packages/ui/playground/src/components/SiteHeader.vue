@@ -2,8 +2,10 @@
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useTheme } from '@well-design/ui'
+import { getUiPackageMeta } from '../docs/loadChangelog'
 
 const GIT_REPO = 'https://gitcode.com/Wayne1308/well-design'
+const uiMeta = getUiPackageMeta()
 
 const route = useRoute()
 const { isDark, toggleTheme } = useTheme()
@@ -13,6 +15,7 @@ const activeSection = computed(() => {
   if (name === 'home') return 'home'
   if (name.startsWith('docs')) return 'docs'
   if (name.startsWith('component')) return 'components'
+  if (name === 'changelog') return 'changelog'
   return ''
 })
 </script>
@@ -23,7 +26,7 @@ const activeSection = computed(() => {
       <span class="site-brand__mark" aria-hidden="true">W</span>
       <span class="site-brand__text">
         <span class="site-brand__name">Well Design</span>
-        <span class="site-brand__version">UI · v0.1.0</span>
+        <span class="site-brand__version">UI · v{{ uiMeta.version }}</span>
       </span>
     </RouterLink>
 
@@ -48,6 +51,13 @@ const activeSection = computed(() => {
         :to="{ name: 'components' }"
       >
         组件
+      </RouterLink>
+      <RouterLink
+        class="site-nav__link"
+        :class="{ 'is-active': activeSection === 'changelog' }"
+        :to="{ name: 'changelog' }"
+      >
+        更新日志
       </RouterLink>
     </nav>
 
