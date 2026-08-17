@@ -1,13 +1,13 @@
 # Well Design
 
-Vue 3 + TypeScript + Hono 的可复用前后端 Monorepo。
+Vue 3 + TypeScript + Hono 的可复用前后端 Monorepo。组件库（`@well-design/ui` / `@well-design/theme`）可对内源码消费，也可构建为可发布的 ESM 包。
 
 ## Workspace
 
 - `apps/web`：业务前端应用
 - `apps/api`：Hono + TypeScript API 服务
-- `packages/ui`：本地 Vue 组件库（可独立启动文档站）
-- `packages/theme`：设计令牌与主题样式
+- `packages/ui`：Vue 组件库（文档站 + 可发布构建）
+- `packages/theme`：设计令牌与主题样式 / API
 - `packages/shared`：前后端共享类型
 
 ## Commands
@@ -20,18 +20,29 @@ pnpm dev:ui       # 仅组件库文档站 http://localhost:5182
 pnpm dev:api      # 仅 API
 pnpm typecheck
 pnpm test
-pnpm build
+pnpm build        # 先构建 theme / ui，再构建其余包
+pnpm build:ui     # 仅构建 theme + ui
 ```
 
-## 组件库文档
-
-组件文档写在各组件目录的 `docs/index.md` 中，支持 ` ```vue preview ` 代码块预览（`unplugin-vue-markdown` + `vite-plugin-markdown-preview`）。
+## 组件库（对外）
 
 ```bash
-pnpm --filter @well-design/ui dev
+pnpm add @well-design/ui @well-design/theme vue
 ```
 
-打开：`http://localhost:5182`
+```ts
+import { WdButton } from '@well-design/ui'
+import '@well-design/ui/styles.css'
+```
+
+本地文档站与静态构建：
+
+```bash
+pnpm --filter @well-design/ui dev          # http://localhost:5182
+pnpm --filter @well-design/ui build:docs
+```
+
+组件文档写在各组件目录的 `docs/index.md`，支持 `vue preview` 代码块。更多说明见 [`packages/ui/README.md`](packages/ui/README.md)。
 
 ## API documentation
 

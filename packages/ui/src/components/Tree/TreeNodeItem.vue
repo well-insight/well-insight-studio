@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { computed, inject, useSlots } from 'vue'
+import { computed, inject } from 'vue'
 import WdCheckbox from '../Checkbox/Checkbox.vue'
 import WdIcon from '../Icon/Icon.vue'
 import { isIconName } from '../Icon/icons'
 import type { IconName } from '../Icon/types'
-import { WD_TREE_KEY } from './context'
+import { WD_TREE_KEY, WD_TREE_NODE_SLOT } from './context'
 import type { TreeNode } from './types'
 import TreeNodeItem from './TreeNodeItem.vue'
 
 const props = defineProps<{ node: TreeNode }>()
-const slots = useSlots()
 const tree = inject(WD_TREE_KEY)!
+const nodeSlot = inject(WD_TREE_NODE_SLOT, undefined)
 
 const expanded = computed(() => tree.isExpanded(props.node.key))
 const selected = computed(() => tree.isSelected(props.node.key))
@@ -29,6 +29,10 @@ const iconName = computed<IconName | undefined>(() => {
 })
 
 const visibleChildren = computed(() => props.node.children ?? [])
+
+const customContent = computed(() =>
+  nodeSlot?.({ node: props.node, data: props.node }),
+)
 </script>
 
 <template>
@@ -84,17 +88,15 @@ const visibleChildren = computed(() => props.node.children ?? [])
         :disabled="disabled"
         @click="tree.select(node)"
       >
-        <slot v-if="slots.default" :node="node" :data="node" />
+        <template v-if="customContent">
+          <component :is="{ render: () => customContent }" />
+        </template>
         <template v-else>{{ node.label }}</template>
       </button>
     </div>
 
     <ul v-if="hasChildren && expanded" class="wd-tree__children" role="group">
-      <TreeNodeItem v-for="child in visibleChildren" :key="child.key" :node="child">
-        <template v-if="slots.default" #default="slotProps">
-          <slot v-bind="slotProps" />
-        </template>
-      </TreeNodeItem>
+      <TreeNodeItem v-for="child in visibleChildren" :key="child.key" :node="child" />
     </ul>
   </li>
 </template>

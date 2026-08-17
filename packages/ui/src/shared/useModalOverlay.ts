@@ -72,8 +72,8 @@ export function useModalOverlay(options: UseModalOverlayOptions) {
       options.container.value?.focus()
       return
     }
-    const first = focusable[0]
-    const last = focusable[focusable.length - 1]
+    const first = focusable[0]!
+    const last = focusable[focusable.length - 1]!
     const active = document.activeElement as HTMLElement | null
     if (event.shiftKey && active === first) {
       event.preventDefault()

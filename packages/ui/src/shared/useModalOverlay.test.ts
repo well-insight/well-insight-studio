@@ -25,8 +25,8 @@ describe('useModalOverlay', () => {
           h(
             'div',
             {
-              ref: (el: Element | null) => {
-                panelRef.value = el as HTMLElement | null
+              ref: (el) => {
+                panelRef.value = (el as HTMLElement | null) ?? null
               },
               tabindex: -1,
             },

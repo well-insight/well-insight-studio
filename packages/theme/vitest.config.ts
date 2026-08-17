@@ -1,6 +1,9 @@
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
+  resolve: {
+    conditions: ['development', 'node'],
+  },
   test: {
     environment: 'happy-dom',
     clearMocks: true,

@@ -11,10 +11,11 @@ const props = defineProps<{
   always?: boolean
 }>()
 
-const scrollbar = inject(scrollbarContextKey)
-if (!scrollbar) {
+const scrollbarContext = inject(scrollbarContextKey)
+if (!scrollbarContext) {
   throw new Error('[WdScrollbar] Thumb must be used inside WdScrollbar')
 }
+const scrollbar = scrollbarContext
 
 const trackRef = ref<HTMLDivElement>()
 const thumbRef = ref<HTMLDivElement>()

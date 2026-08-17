@@ -1,21 +1,42 @@
 {
   "name": "@well-design/theme",
-  "private": true,
+  "version": "0.1.0",
+  "description": "Design tokens, theme helpers, and CSS variables for Well Design.",
+  "license": "MIT",
   "type": "module",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
   "exports": {
-    ".": "./src/index.ts",
-    "./styles.css": "./src/styles.css"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "development": "./src/index.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles.css": {
+      "development": "./src/styles.css",
+      "default": "./dist/styles.css"
+    }
   },
+  "types": "./dist/index.d.ts",
+  "module": "./dist/index.js",
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json && node scripts/copy-styles.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.0"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.10",
     "@vue/test-utils": "^2.4.11",
     "happy-dom": "^20.11.2",
+    "typescript": "^5.9.3",
     "vitest": "^4.1.10",
     "vue": "^3.5.41"
   }

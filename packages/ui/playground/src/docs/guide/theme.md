@@ -8,6 +8,8 @@ description: 亮暗主题、设计令牌与动效偏好。
 
 主题能力由 `@well-design/theme` 提供。组件只消费语义化 CSS 变量（`--wd-*`），不自行维护第二套色板。
 
+引入 `@well-design/ui/styles.css` 时已包含这些变量；主题 JS API（`useTheme` 等）仍从 `@well-design/theme` 导入。
+
 ## 亮 / 暗色
 
 ```ts

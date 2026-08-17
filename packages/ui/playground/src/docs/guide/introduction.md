@@ -6,11 +6,11 @@ description: Well Design 是什么、适合谁用、与 PrimeVue 的关系。
 
 # 介绍
 
-**Well Design**（`@well-design/ui`）是一套面向 Vue 3 的本地组件库，配合 `@well-design/theme` 提供设计令牌、亮暗主题与动效偏好。
+**Well Design**（`@well-design/ui`）是一套面向 Vue 3 的组件库，配合 `@well-design/theme` 提供设计令牌、亮暗主题与动效偏好。可在本仓库业务应用中使用，也可构建后对外发布。
 
 ## 设计目标
 
-- **可独立复用**：业务应用通过包入口引入组件与样式，不依赖文档站运行时。
+- **可独立复用**：业务应用通过包入口引入组件与样式；发布产物为 ESM + 类型 + CSS。
 - **API 对齐**：命名与交互尽量贴近 PrimeVue，降低迁移与记忆成本。
 - **主题一体**：颜色、圆角、间距、动效走 `--wd-*` CSS 变量，组件不硬编码品牌色。
 - **文档即预览**：每个组件目录下的 `docs/index.md` 支持 Markdown + 可交互 `vue preview`。
@@ -20,7 +20,14 @@ description: Well Design 是什么、适合谁用、与 PrimeVue 的关系。
 | 包 | 说明 |
 | --- | --- |
 | `@well-design/ui` | 组件、样式、文档站 |
-| `@well-design/theme` | 主题 token、`useTheme` / `useMotion` |
+| `@well-design/theme` | 主题 token、`useTheme` / `useMotion` / `useDensity` |
+
+## 消费方式
+
+| 场景 | 行为 |
+| --- | --- |
+| Monorepo 开发（Vite `development`） | `exports` 指向源码，热更新 |
+| 对外安装 / 生产构建 | 使用 `dist` 中的 ESM、`.d.ts` 与 `styles.css` |
 
 ## 下一步
 

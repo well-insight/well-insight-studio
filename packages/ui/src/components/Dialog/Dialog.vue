@@ -46,7 +46,8 @@ function close() {
 
 function toggleMaximize() {
   maximized.value = !maximized.value
-  emit(maximized.value ? 'maximize' : 'unmaximize')
+  if (maximized.value) emit('maximize')
+  else emit('unmaximize')
 }
 
 function onOutsideClick() {

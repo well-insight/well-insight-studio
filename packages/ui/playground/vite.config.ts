@@ -37,6 +37,14 @@ export default defineConfig({
       markdownOptions: {
         highlight: highlightCode,
       },
+      transforms: {
+        // vite-plugin-markdown-preview 的 load() 会把 YAML 重写成 *** / ----，
+        // markdown-it 会当成 hr + setext 标题，导致 frontmatter 原文出现在正文顶部。
+        before: (code) =>
+          code.replace(/^\*{3,}\r?\n([\s\S]*?)\r?\n-{3,}\r?\n/, '---\n$1\n---\n'),
+        // 页面顶部已用 frontmatter 渲染标题；去掉正文首个 h1，避免标题重复。
+        after: (html) => html.replace(/<h1[^>]*>[\s\S]*?<\/h1>\s*/i, ''),
+      },
     }),
     MarkdownPreview(),
   ],

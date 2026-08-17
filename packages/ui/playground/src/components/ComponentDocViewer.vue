@@ -55,7 +55,7 @@ defineProps<{
   line-height: 1.7;
   width: 100%;
 }
-.wd-markdown-doc > h1:first-child {
+.wd-markdown-doc > h1:first-of-type {
   display: none;
 }
 .wd-markdown-doc h1,

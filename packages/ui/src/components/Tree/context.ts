@@ -1,4 +1,4 @@
-import type { InjectionKey } from 'vue'
+import type { InjectionKey, Slot } from 'vue'
 import type { TreeNode } from './types'
 
 export interface TreeContext {
@@ -21,4 +21,7 @@ export interface TreeContext {
   onDrop: (node: TreeNode, event: DragEvent) => void
 }
 
+export type TreeNodeSlotProps = { node: TreeNode; data: TreeNode }
+
 export const WD_TREE_KEY: InjectionKey<TreeContext> = Symbol('wd-tree')
+export const WD_TREE_NODE_SLOT: InjectionKey<Slot<TreeNodeSlotProps> | undefined> = Symbol('wd-tree-node-slot')

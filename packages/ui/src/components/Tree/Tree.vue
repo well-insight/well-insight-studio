@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, provide, reactive, ref, watch } from 'vue'
-import { WD_TREE_KEY } from './context'
+import { computed, provide, reactive, ref, useSlots, watch } from 'vue'
+import { WD_TREE_KEY, WD_TREE_NODE_SLOT } from './context'
 import type {
   TreeCheckedKeys,
   TreeExpandedKeys,
@@ -23,6 +23,9 @@ const props = withDefaults(defineProps<TreeProps>(), {
   lazy: false,
   draggable: false,
 })
+
+const slots = useSlots()
+provide(WD_TREE_NODE_SLOT, slots.default)
 
 const emit = defineEmits<{
   (event: 'update:selectionKeys', value: TreeSelectionKeys): void
@@ -307,10 +310,6 @@ provide(WD_TREE_KEY, {
 
 <template>
   <ul class="wd-tree" role="tree">
-    <TreeNodeItem v-for="node in visibleRoots" :key="node.key" :node="node">
-      <template v-if="$slots.default" #default="slotProps">
-        <slot v-bind="slotProps" />
-      </template>
-    </TreeNodeItem>
+    <TreeNodeItem v-for="node in visibleRoots" :key="node.key" :node="node" />
   </ul>
 </template>

@@ -23,10 +23,8 @@ const iconName = computed<IconName>(() => {
     case 'success':
       return 'check-circle'
     case 'warn':
-    case 'warning':
       return 'warning'
     case 'error':
-    case 'danger':
       return 'x-circle'
     default:
       return 'info'
