@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { computeColumnLayout, TABLE_DEFAULT_MIN_WIDTH, TABLE_SELECTION_WIDTH } from './layout'
 
 describe('computeColumnLayout', () => {
-  it('distributes leftover width to flex columns by minWidth (Element Plus fit)', () => {
+  it('distributes leftover width to flex columns by minWidth (fit)', () => {
     const result = computeColumnLayout(
       [
         { key: 'name', label: 'Name', width: 100 },

@@ -6,7 +6,7 @@ description: 单选框。支持 invalid。
 
 # Radio
 
-单选框。API 对齐 [PrimeVue RadioButton](https://primevue.org/radiobutton/)。
+单选框。
 
 ## 引入
 

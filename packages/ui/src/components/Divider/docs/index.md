@@ -1,12 +1,12 @@
 ---
 title: Divider
 category: 01 / PRIMITIVE
-description: 内容分隔线。API 对齐 PrimeVue：layout、type、align；兼容 orientation。
+description: 内容分隔线。
 ---
 
 # Divider
 
-内容分隔线，可带标签。API 对齐 [PrimeVue Divider](https://primevue.org/divider/)。
+内容分隔线，可带标签。
 
 ## 引入
 
@@ -92,7 +92,7 @@ import { WdDivider } from '@well-design/ui'
 
 | 参数 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `layout` | `'horizontal' \| 'vertical'` | `'horizontal'` | 布局方向（PrimeVue）。 |
+| `layout` | `'horizontal' \| 'vertical'` | `'horizontal'` | 布局方向。 |
 | `orientation` | `'horizontal' \| 'vertical'` | — | **兼容别名**；仅在未传 `layout` 时生效。 |
 | `type` | `'solid' \| 'dashed' \| 'dotted'` | `'solid'` | 线条样式。 |
 | `align` | `'left' \| 'center' \| 'right'` | `'center'` | 水平分隔带标签时的标签对齐。 |

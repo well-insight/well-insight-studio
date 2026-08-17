@@ -68,9 +68,9 @@ setMotion('full') // 'full' | 'reduced' | 'none'
 - `reduced`：缩短时长、弱化位移  
 - `none`：立即切换  
 
-## 控件尺寸与聚焦（参考 Naive UI）
+## 控件尺寸与聚焦
 
-默认控件高度对齐 Naive 的 compact 节奏：
+默认控件高度采用 compact 节奏：
 
 | Size | 高度 | 字号 |
 | --- | --- | --- |

@@ -5,7 +5,7 @@ import type { WdInputVariant, WdSizeInput } from './types'
 
 export type WdDensity = DensityPreference
 
-/** Global defaults inspired by Element Plus ConfigProvider / PrimeVue app config. */
+/** Application-level default configuration. */
 export interface WdGlobalConfig {
   /** Default Teleport target for overlays. Defaults to `'body'`. */
   appendTo?: WdAppendTo
@@ -98,7 +98,7 @@ export function resolveConfiguredAppendTo(
 }
 
 /**
- * Vue plugin entry (PrimeVue / Element Plus style).
+ * Vue plugin entry for global defaults.
  *
  * @example
  * ```ts

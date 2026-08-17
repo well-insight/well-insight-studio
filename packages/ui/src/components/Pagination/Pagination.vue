@@ -14,7 +14,7 @@ const emit = defineEmits<{
 }>()
 const pageCount = computed(() => Math.max(1, Math.ceil(props.totalRecords / props.rows)))
 const currentPage = computed(() => Math.min(Math.max(1, props.modelValue), pageCount.value))
-/** Zero-based index of the first record on the current page (PrimeVue Paginator `first`). */
+/** Zero-based index of the first record on the current page . */
 const first = computed(() => (currentPage.value - 1) * props.rows)
 const pages = computed(() => {
   const count = Math.min(props.pageLinkSize, pageCount.value)

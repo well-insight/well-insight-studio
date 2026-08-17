@@ -20,7 +20,7 @@ export function parseSize(value?: string | number): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined
 }
 
-/** Element Plus–style column width layout. */
+/** –style column width layout. */
 export function computeColumnLayout(
   columns: TableColumn[],
   bodyWidth: number,

@@ -1,12 +1,12 @@
 ---
 title: Textarea
 category: 02 / FORM
-description: 多行文本输入。API 对齐 PrimeVue Textarea：invalid、autoResize、variant、fluid、size。
+description: 多行文本输入。
 ---
 
 # Textarea
 
-多行文本输入。API 对齐 [PrimeVue Textarea](https://primevue.org/textarea/)。
+多行文本输入。
 
 ## 引入
 

@@ -22,29 +22,32 @@ defineProps<{
   width: 100%;
 }
 .component-doc-viewer__intro {
-  border-bottom: 1px solid var(--wd-color-border);
-  margin-bottom: 0.5rem;
-  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--docs-edge);
+  margin-bottom: 0.35rem;
+  padding-bottom: 1rem;
 }
 .component-doc-viewer__label {
-  color: var(--wd-color-primary);
-  font-family: ui-monospace, monospace;
-  font-size: 0.7rem;
+  color: var(--docs-glow);
+  font-family: var(--docs-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
 }
 .component-doc-viewer__intro h2 {
-  font-family: Georgia, serif;
-  font-size: clamp(2rem, 4vw, 3.3rem);
-  font-weight: 400;
-  letter-spacing: -0.06em;
-  margin: 0.8rem 0 1rem;
+  font-family: var(--docs-display);
+  font-size: clamp(1.45rem, 2.4vw, 1.85rem);
+  font-weight: 750;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+  margin: 0.35rem 0 0.45rem;
 }
 .component-doc-viewer__intro p {
   color: var(--wd-color-text);
-  font-size: 0.95rem;
-  line-height: 1.7;
+  font-size: 0.86rem;
+  line-height: 1.55;
   margin: 0;
   max-width: 42rem;
-  opacity: 0.88;
+  opacity: 0.82;
 }
 </style>
 
@@ -62,8 +65,8 @@ defineProps<{
 .wd-markdown-doc h2,
 .wd-markdown-doc h3 {
   color: var(--wd-color-text);
-  font-family: Georgia, serif;
-  font-weight: 400;
+  font-family: var(--docs-display);
+  font-weight: 700;
   letter-spacing: -0.03em;
   margin: 1.6rem 0 0.7rem;
 }

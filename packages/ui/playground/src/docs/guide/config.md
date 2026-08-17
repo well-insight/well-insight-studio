@@ -1,12 +1,12 @@
 ---
 title: 全局配置
 order: 5
-description: ConfigProvider、createWellDesign 与 useWdConfig，对齐 Element Plus / PrimeVue。
+description: ConfigProvider、createWellDesign 与 useWdConfig。
 ---
 
 # 全局配置
 
-Well Design 提供应用级 / 页面级默认值，写法对齐 Element Plus `ConfigProvider` 与 PrimeVue `app.use(PrimeVue, …)`。
+Well Design 提供应用级 / 页面级默认值，用于统一浮层挂载、尺寸、密度与文案。
 
 ## 能力一览
 
@@ -19,7 +19,7 @@ Well Design 提供应用级 / 页面级默认值，写法对齐 Element Plus `Co
 | `zIndex` | 浮层基准层级 |
 | `locale` | 确认、空态、加载、占位等文案 |
 
-优先级：**组件 Props > `WdConfigProvider` > `createWellDesign()` > 内置默认**。
+优先级：**组件 Props > `WdConfigProvider` > `createWellDesign` > 内置默认**。
 
 ## Size
 
@@ -176,16 +176,14 @@ const visible = ref(false)
 import { createApp } from 'vue'
 import { createWellDesign } from '@well-design/ui'
 
-createApp(App)
-  .use(
+createApp(App).use(
     createWellDesign({
       appendTo: 'body',
       size: 'small',
       zIndex: 2000,
       locale: { accept: '确认', reject: '取消' },
     }),
-  )
-  .mount('#app')
+  ).mount('#app')
 ```
 
 ## 读取配置

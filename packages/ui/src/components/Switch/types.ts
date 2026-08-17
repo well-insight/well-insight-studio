@@ -3,7 +3,7 @@ export interface SwitchProps {
   label?: string
   /** Native input id. */
   id?: string
-  /** Alias of `id` (PrimeVue ToggleSwitch). */
+  /** Alias of `id` . */
   inputId?: string
   name?: string
   value?: string

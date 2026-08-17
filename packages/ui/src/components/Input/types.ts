@@ -12,7 +12,7 @@ export interface InputProps {
   errorMessage?: string
   id?: string
   type?: 'text' | 'email' | 'password' | 'search' | 'url' | 'tel'
-  /** Size aligned with PrimeVue InputText; also accepts legacy sm/md/lg. */
+  /** Size aligned with InputText; also accepts legacy sm/md/lg. */
   size?: WdSizeInput
   /** Visual variant; default outlined. */
   variant?: WdInputVariant

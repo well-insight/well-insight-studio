@@ -1,12 +1,12 @@
 ---
 title: Button
 category: 01 / PRIMITIVE
-description: 按钮用于触发即时动作。API 对齐 PrimeVue：默认即为 Primary，用 severity 表达语义色，用 outlined / text / link / raised / rounded / plain 组合样式。
+description: 按钮用于触发即时动作。
 ---
 
 # Button
 
-按钮用于触发即时动作。API 对齐 [PrimeVue Button](https://primevue.org/button/)。
+按钮用于触发即时动作。
 
 ## 引入
 

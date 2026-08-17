@@ -5,6 +5,11 @@ import SiteHeader from './components/SiteHeader.vue'
 
 <template>
   <div class="site-shell">
+    <div class="site-atmosphere" aria-hidden="true">
+      <div class="site-atmosphere__glow site-atmosphere__glow--a" />
+      <div class="site-atmosphere__glow site-atmosphere__glow--b" />
+      <div class="site-atmosphere__grid" />
+    </div>
     <SiteHeader />
     <div class="site-shell__body">
       <RouterView />
@@ -14,9 +19,17 @@ import SiteHeader from './components/SiteHeader.vue'
 
 <style>
 :root {
+  --docs-display: 'Syne', 'Segoe UI', sans-serif;
+  --docs-body: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  --docs-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --docs-ink: color-mix(in srgb, var(--wd-color-text) 92%, #041018);
+  --docs-glow: color-mix(in srgb, var(--wd-color-primary) 55%, #22d3ee);
+  --docs-panel: color-mix(in srgb, var(--wd-color-surface) 78%, transparent);
+  --docs-edge: color-mix(in srgb, var(--wd-color-border) 70%, transparent);
+
   color: var(--wd-color-text);
   background: var(--wd-color-surface);
-  font-family: var(--wd-font-sans);
+  font-family: var(--docs-body);
 }
 
 html,
@@ -47,7 +60,6 @@ a:focus-visible {
   outline-offset: 3px;
 }
 
-/* 组合控件由自身壳层画聚焦环，避免 input 单独 outline 在中间露竖条 */
 .wd-autocomplete__input:focus-visible,
 .wd-autocomplete__dropdown:focus-visible,
 .wd-select:focus-visible,
@@ -62,6 +74,52 @@ a:focus-visible {
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+  position: relative;
+}
+
+.site-atmosphere {
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: absolute;
+  z-index: 0;
+}
+
+.site-atmosphere__glow {
+  border-radius: 50%;
+  filter: blur(48px);
+  opacity: 0.42;
+  position: absolute;
+}
+
+.site-atmosphere__glow--a {
+  background: radial-gradient(circle, var(--docs-glow) 0%, transparent 68%);
+  height: 28rem;
+  left: -8rem;
+  top: -10rem;
+  width: 28rem;
+  animation: docs-drift 18s ease-in-out infinite alternate;
+}
+
+.site-atmosphere__glow--b {
+  background: radial-gradient(circle, color-mix(in srgb, var(--wd-color-primary) 45%, #0ea5e9) 0%, transparent 70%);
+  bottom: -12rem;
+  height: 32rem;
+  opacity: 0.28;
+  right: -10rem;
+  width: 32rem;
+  animation: docs-drift 22s ease-in-out infinite alternate-reverse;
+}
+
+.site-atmosphere__grid {
+  background-image:
+    linear-gradient(var(--docs-edge) 1px, transparent 1px),
+    linear-gradient(90deg, var(--docs-edge) 1px, transparent 1px);
+  background-size: 48px 48px;
+  inset: 0;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 0%, #000 20%, transparent 75%);
+  opacity: 0.35;
+  position: absolute;
 }
 
 .site-shell__body {
@@ -70,6 +128,24 @@ a:focus-visible {
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes docs-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(2rem, 1.5rem, 0) scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-atmosphere__glow--a,
+  .site-atmosphere__glow--b {
+    animation: none;
+  }
 }
 
 @media (max-width: 700px) {

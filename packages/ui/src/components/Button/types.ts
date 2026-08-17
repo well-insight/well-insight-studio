@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, Component } from 'vue'
 import type { IconName } from '../Icon/types'
 
-/** Color tone aligned with PrimeVue `severity`. Omit for primary. */
+/** Color tone aligned with `severity`. Omit for primary. */
 export type ButtonSeverity =
   | 'secondary'
   | 'success'
@@ -11,7 +11,7 @@ export type ButtonSeverity =
   | 'danger'
   | 'contrast'
 
-/** Visual variant aligned with PrimeVue `variant`. */
+/** Visual variant aligned with `variant`. */
 export type ButtonVariant = 'outlined' | 'text' | 'link'
 
 export type ButtonSize = 'small' | 'large'

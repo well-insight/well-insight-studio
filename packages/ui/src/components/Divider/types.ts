@@ -4,7 +4,7 @@ export type DividerAlign = 'left' | 'center' | 'right'
 
 export interface DividerProps {
   /**
-   * PrimeVue `layout`. Preferred over `orientation`.
+   * `layout`. Preferred over `orientation`.
    * @default 'horizontal'
    */
   layout?: DividerLayout

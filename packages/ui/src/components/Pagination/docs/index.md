@@ -1,12 +1,12 @@
 ---
 title: Pagination
 category: 06 / DATA
-description: 分页器，对齐 PrimeVue Paginator。v-model 为页码；实例暴露 first（零基首条索引）。
+description: 分页器，v-model 为页码；实例暴露 first（零基首条索引）。
 ---
 
 # Pagination
 
-分页导航，对齐 [PrimeVue Paginator](https://primevue.org/paginator/)。`v-model` 使用 **1-based 页码**；实例属性 `first` 对应零基首条记录索引 `(page - 1) * rows`。
+分页导航，`v-model` 使用 **1-based 页码**；实例属性 `first` 对应零基首条记录索引 `(page - 1) * rows`。
 
 ## 引入
 

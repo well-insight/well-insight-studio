@@ -21,8 +21,10 @@ const activeSection = computed(() => {
   <header class="site-header">
     <RouterLink class="site-brand" :to="{ name: 'home' }" aria-label="Well Design 首页">
       <span class="site-brand__mark" aria-hidden="true">W</span>
-      <span class="site-brand__name">well design</span>
-      <span class="site-brand__version">v0.1.0</span>
+      <span class="site-brand__text">
+        <span class="site-brand__name">Well Design</span>
+        <span class="site-brand__version">UI · v0.1.0</span>
+      </span>
     </RouterLink>
 
     <nav class="site-nav" aria-label="站点导航">
@@ -80,117 +82,141 @@ const activeSection = computed(() => {
 <style scoped>
 .site-header {
   align-items: center;
-  background: color-mix(in srgb, var(--wd-color-surface) 92%, transparent);
-  border-bottom: 1px solid var(--wd-color-border);
+  background: color-mix(in srgb, var(--wd-color-surface) 72%, transparent);
+  border-bottom: 1px solid var(--docs-edge);
   display: grid;
   flex: 0 0 auto;
   gap: 1rem;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  height: 3.75rem;
+  height: 4rem;
   padding: 0 clamp(1rem, 3vw, 2.5rem);
   position: sticky;
   top: 0;
   width: 100%;
   z-index: 200;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(16px) saturate(1.2);
 }
 
 .site-brand {
   align-items: center;
   color: var(--wd-color-text);
   display: inline-flex;
-  font-size: 0.95rem;
-  font-weight: 750;
-  gap: 0.65rem;
-  letter-spacing: -0.03em;
+  gap: 0.75rem;
   text-decoration: none;
   width: max-content;
 }
 
 .site-brand__mark {
   align-items: center;
-  background: var(--wd-color-primary);
-  border-radius: var(--wd-radius-sm);
+  background:
+    linear-gradient(140deg, var(--wd-color-primary), color-mix(in srgb, var(--wd-color-primary) 40%, #22d3ee));
+  border-radius: 0.55rem;
+  box-shadow: 0 0 0 1px color-mix(in srgb, #fff 18%, transparent), 0 10px 28px color-mix(in srgb, var(--wd-color-primary) 35%, transparent);
   color: #fff;
   display: inline-flex;
-  font-family: Georgia, serif;
+  font-family: var(--docs-display);
   font-size: 1.05rem;
-  height: 1.85rem;
+  font-weight: 700;
+  height: 2rem;
   justify-content: center;
-  width: 1.85rem;
+  width: 2rem;
+}
+
+.site-brand__text {
+  display: grid;
+  gap: 0.05rem;
+  line-height: 1.1;
+}
+
+.site-brand__name {
+  font-family: var(--docs-display);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
 }
 
 .site-brand__version {
   color: var(--wd-color-text-muted);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 0.65rem;
+  font-family: var(--docs-mono);
+  font-size: 0.62rem;
   font-weight: 500;
   letter-spacing: 0.04em;
 }
 
 .site-nav {
   align-items: center;
+  background: color-mix(in srgb, var(--wd-color-surface) 55%, transparent);
+  border: 1px solid var(--docs-edge);
+  border-radius: 999px;
   display: flex;
-  gap: 0.25rem;
+  gap: 0.15rem;
   justify-content: center;
+  padding: 0.2rem;
 }
 
 .site-nav__link {
-  border-radius: var(--wd-radius-sm);
+  border-radius: 999px;
   color: var(--wd-color-text-muted);
-  font-size: 0.875rem;
-  font-weight: 550;
-  padding: 0.45rem 0.9rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 0.42rem 0.95rem;
   text-decoration: none;
-  transition: color var(--wd-motion-fast) var(--wd-motion-ease), background var(--wd-motion-fast) var(--wd-motion-ease);
+  transition:
+    color var(--wd-motion-fast) var(--wd-motion-ease),
+    background var(--wd-motion-fast) var(--wd-motion-ease),
+    box-shadow var(--wd-motion-fast) var(--wd-motion-ease);
 }
 
 .site-nav__link:hover {
-  background: color-mix(in srgb, var(--wd-color-primary) 8%, transparent);
   color: var(--wd-color-text);
 }
 
 .site-nav__link.is-active {
-  background: color-mix(in srgb, var(--wd-color-primary) 12%, transparent);
+  background: color-mix(in srgb, var(--wd-color-primary) 16%, var(--wd-color-surface));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wd-color-primary) 30%, transparent);
   color: var(--wd-color-primary);
-  font-weight: 700;
 }
 
 .site-header__actions {
   align-items: center;
   display: flex;
-  gap: 0.35rem;
+  gap: 0.4rem;
   justify-content: flex-end;
 }
 
 .site-icon-btn {
   align-items: center;
-  background: transparent;
-  border: 1px solid var(--wd-color-border);
-  border-radius: var(--wd-radius-sm);
+  background: color-mix(in srgb, var(--wd-color-surface) 70%, transparent);
+  border: 1px solid var(--docs-edge);
+  border-radius: 0.65rem;
   color: var(--wd-color-text);
   cursor: pointer;
   display: inline-flex;
-  height: 2.1rem;
+  height: 2.2rem;
   justify-content: center;
   text-decoration: none;
-  width: 2.1rem;
+  transition:
+    border-color var(--wd-motion-fast) var(--wd-motion-ease),
+    color var(--wd-motion-fast) var(--wd-motion-ease),
+    transform var(--wd-motion-fast) var(--wd-motion-ease);
+  width: 2.2rem;
 }
 
 .site-icon-btn:hover {
   border-color: color-mix(in srgb, var(--wd-color-primary) 45%, var(--wd-color-border));
   color: var(--wd-color-primary);
+  transform: translateY(-1px);
 }
 
 @media (max-width: 700px) {
   .site-header {
     grid-template-columns: 1fr auto;
     height: auto;
-    padding: 0.65rem 0.85rem;
+    padding: 0.7rem 0.85rem;
     row-gap: 0.55rem;
   }
 
-  .site-brand__name {
+  .site-brand__version {
     display: none;
   }
 
@@ -199,6 +225,7 @@ const activeSection = computed(() => {
     justify-content: flex-start;
     order: 3;
     overflow-x: auto;
+    width: 100%;
   }
 
   .site-header__actions {

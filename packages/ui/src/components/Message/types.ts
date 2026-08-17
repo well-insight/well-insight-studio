@@ -1,6 +1,6 @@
 import type { WdToastSeverity } from '../../shared/types'
 
-/** PrimeVue message severities; `warning` kept as legacy alias for `warn`. */
+/** message severities; `warning` kept as legacy alias for `warn`. */
 export type MessageSeverity = WdToastSeverity | 'warning'
 
 export interface MessageProps {

@@ -1,12 +1,12 @@
 ---
 title: Badge
 category: 07 / MISC
-description: 状态角标或圆点。API 对齐 PrimeVue Badge：value、severity、size；兼容 warning → warn。
+description: 状态角标或圆点。
 ---
 
 # Badge
 
-状态角标或圆点，用于数量与状态提示。API 对齐 [PrimeVue Badge](https://primevue.org/badge/)。
+状态角标或圆点，用于数量与状态提示。
 
 ## 引入
 

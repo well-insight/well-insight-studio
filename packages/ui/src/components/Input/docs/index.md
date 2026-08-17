@@ -1,12 +1,12 @@
 ---
 title: Input
 category: 02 / FORM
-description: 文本输入框。API 对齐 PrimeVue InputText：size、invalid、variant、fluid、clearable、maxlength、showCount。
+description: 文本输入框。
 ---
 
 # Input
 
-单行文本输入。API 对齐 [PrimeVue InputText](https://primevue.org/inputtext/)。
+单行文本输入。
 
 ## 引入
 

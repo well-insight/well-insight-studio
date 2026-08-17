@@ -1,12 +1,12 @@
 ---
 title: Tag
 category: 01 / PRIMITIVE
-description: 标签用于展示状态或分类。API 对齐 PrimeVue：severity 表达语义色（默认 primary），rounded 控制圆角，icon 使用 WdIcon 名称。
+description: 标签用于展示状态或分类。
 ---
 
 # Tag
 
-标签用于展示状态或分类。API 对齐 [PrimeVue Tag](https://primevue.org/tag/)。
+标签用于展示状态或分类。
 
 ## 引入
 

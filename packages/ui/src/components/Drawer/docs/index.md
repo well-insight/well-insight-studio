@@ -1,12 +1,12 @@
 ---
 title: Drawer
 category: 04 / OVERLAY
-description: 侧边抽屉面板。API 对齐 PrimeVue Drawer：position、modal、dismissable、showCloseIcon；可见性使用 v-model。
+description: 侧边抽屉面板。
 ---
 
 # Drawer
 
-侧边抽屉，对齐 [PrimeVue Drawer](https://primevue.org/drawer/)。从屏幕边缘滑出，适合导航、筛选或详情面板。
+侧边抽屉，从屏幕边缘滑出，适合导航、筛选或详情面板。
 
 ## 引入
 

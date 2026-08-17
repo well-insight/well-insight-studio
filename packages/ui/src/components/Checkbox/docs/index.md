@@ -6,7 +6,7 @@ description: 复选框。二进制 modelValue，支持 invalid。
 
 # Checkbox
 
-二进制复选框。API 对齐 [PrimeVue Checkbox](https://primevue.org/checkbox/) 的 binary 用法。
+二进制复选框。 的 binary 用法。
 
 ## 引入
 

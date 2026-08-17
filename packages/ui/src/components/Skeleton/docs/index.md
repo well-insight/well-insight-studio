@@ -6,7 +6,7 @@ description: 加载占位骨架。支持矩形/圆形、自定义尺寸与 wave 
 
 # Skeleton
 
-加载占位骨架，用于内容尚未就绪时的视觉反馈。API 对齐 [PrimeVue Skeleton](https://primevue.org/skeleton/)。
+加载占位骨架，用于内容尚未就绪时的视觉反馈。
 
 ## 引入
 

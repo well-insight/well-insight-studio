@@ -1,12 +1,12 @@
 ---
 title: Scrollbar
 category: 01 / PRIMITIVE
-description: 可换肤自定义滚动条。API 对齐 Element Plus Scrollbar，体验对齐 PrimeVue ScrollPanel。
+description: 可换肤自定义滚动条，提供一致的滚动体验。
 ---
 
 # Scrollbar
 
-用于替换浏览器原生滚动条，提供跨浏览器一致的可换肤滚动体验。功能对齐 [Element Plus Scrollbar](https://element-plus.org/en-US/component/scrollbar) 与 [PrimeVue ScrollPanel](https://primevue.org/scrollpanel/)。
+用于替换浏览器原生滚动条，提供跨浏览器一致的可换肤滚动体验。
 
 ## 引入
 

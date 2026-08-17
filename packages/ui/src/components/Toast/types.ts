@@ -1,7 +1,7 @@
 import type { WdAppendTo } from '../../shared/overlay'
 import type { WdToastSeverity } from '../../shared/types'
 
-/** PrimeVue toast severities; `warning` kept as legacy alias for `warn`. */
+/** toast severities; `warning` kept as legacy alias for `warn`. */
 export type ToastSeverity = WdToastSeverity | 'warning'
 
 export interface ToastMessage {

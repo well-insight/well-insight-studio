@@ -17,7 +17,7 @@ export interface TableColumn<Row extends Record<string, unknown> = Record<string
   align?: 'start' | 'center' | 'end'
   sortable?: boolean
   width?: string | number
-  /** Column min width; used when `width` is omitted (Element Plus: default 80). */
+  /** Column min width; used when `width` is omitted (: default 80). */
   minWidth?: string | number
   fixed?: TableFixed
   filterable?: boolean
@@ -42,7 +42,7 @@ export interface TableProps {
   sortMode?: TableSortMode
   /**
    * When true (default), columns without `width` share leftover space
-   * proportionally by `minWidth` (Element Plus `fit`).
+   * proportionally by `minWidth` ( `fit`).
    */
   fit?: boolean
   striped?: boolean

@@ -1,12 +1,12 @@
 ---
 title: Table
 category: 06 / DATA
-description: 数据表格。支持排序、筛选、选择、分页、固定列与空/加载态。列宽对齐 Element Plus（width / minWidth / fit）。
+description: 数据表格。支持排序、筛选、选择、分页、固定列与空/加载态。列宽支持 width / minWidth / fit。
 ---
 
 # Table
 
-数据表格。列宽逻辑对齐 Element Plus：
+数据表格。列宽逻辑：
 
 - 设置了 `width` 的列固定宽度
 - 未设 `width` 的列按 `minWidth`（默认 `80`）作为弹性列，在 `fit`（默认 `true`）时按比例分配剩余宽度
@@ -211,7 +211,7 @@ const columns = [
 | 参数 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
 | `columns` | `TableColumn[]` | — | 列定义：`width` 固定；`minWidth` 弹性下限（默认 80）。 |
-| `fit` | `boolean` | `true` | 弹性列是否分配剩余宽度（对齐 Element Plus）。 |
+| `fit` | `boolean` | `true` | 弹性列是否按比例分配剩余宽度。 |
 | `rows` | `Record[]` | — | 行数据。 |
 | `selectionMode` | `'single' \| 'multiple'` | — | 行选择。 |
 | `selection` | — | — | `v-model:selection`。 |

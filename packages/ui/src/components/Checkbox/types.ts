@@ -1,5 +1,5 @@
 export interface CheckboxProps {
-  /** Binary checked state (PrimeVue binary mode). */
+  /** Binary checked state . */
   modelValue?: boolean
   label?: string
   id?: string

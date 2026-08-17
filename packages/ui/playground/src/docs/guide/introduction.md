@@ -1,7 +1,7 @@
 ---
 title: 介绍
 order: 1
-description: Well Design 是什么、适合谁用、与 PrimeVue 的关系。
+description: Well Design 是什么、适合谁用。
 ---
 
 # 介绍
@@ -11,7 +11,7 @@ description: Well Design 是什么、适合谁用、与 PrimeVue 的关系。
 ## 设计目标
 
 - **可独立复用**：业务应用通过包入口引入组件与样式；发布产物为 ESM + 类型 + CSS。
-- **API 对齐**：命名与交互尽量贴近 PrimeVue，降低迁移与记忆成本。
+- **一致体验**：尺寸、语义色、浮层行为在组件间保持同一套约定。
 - **主题一体**：颜色、圆角、间距、动效走 `--wd-*` CSS 变量；`useTheme` / `useMotion` / `useDensity` 与组件同包导出。
 - **文档即预览**：每个组件目录下的 `docs/index.md` 支持 Markdown + 可交互 `vue preview`。
 

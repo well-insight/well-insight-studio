@@ -6,7 +6,7 @@ description: 相对触发元素定位的浮层面板。支持 placement、Telepo
 
 # Popover
 
-相对触发元素显示的浮层，对齐 [PrimeVue Popover](https://primevue.org/popover/)。适合筛选、快捷操作或轻量表单。
+相对触发元素显示的浮层，适合筛选、快捷操作或轻量表单。
 
 ## 引入
 

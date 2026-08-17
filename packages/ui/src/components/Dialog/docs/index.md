@@ -1,12 +1,12 @@
 ---
 title: Dialog
 category: 04 / OVERLAY
-description: 模态对话框。API 对齐 PrimeVue Dialog：header / dismissableMask 别名、多位置、modal / closable / maximizable；可见性仍使用 v-model（modelValue）。
+description: 模态对话框。
 ---
 
 # Dialog
 
-模态对话框。API 对齐 [PrimeVue Dialog](https://primevue.org/dialog/)。可见性使用 `v-model`（`modelValue`），对应 PrimeVue 的 `visible`。
+模态对话框。可见性使用 `v-model`（`modelValue`），对应 的 `visible`。
 
 ## 引入
 
@@ -139,13 +139,13 @@ const open = ref(false)
 
 | 参数 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `modelValue` | `boolean` | `false` | 可见性。配合 `v-model` 使用（PrimeVue 对应 `visible`）。 |
+| `modelValue` | `boolean` | `false` | 可见性。配合 `v-model` 使用（对应 `visible`）。 |
 | `title` | `string` | — | 标题文案。 |
-| `header` | `string` | — | `title` 的 PrimeVue 别名。 |
+| `header` | `string` | — | `title` 的 别名。 |
 | `closeOnEsc` | `boolean` | `true` | 按 Esc 关闭。 |
 | `blockScroll` | `boolean` | `true` | 打开时锁定页面滚动（`modal` 时生效）。 |
 | `closeOnOutsideClick` | `boolean` | `true` | 点击遮罩关闭。 |
-| `dismissableMask` | `boolean` | — | `closeOnOutsideClick` 的 PrimeVue 别名。 |
+| `dismissableMask` | `boolean` | — | `closeOnOutsideClick` 的 别名。 |
 | `closable` | `boolean` | `true` | 显示关闭按钮。 |
 | `maximizable` | `boolean` | `false` | 显示最大化 / 还原按钮。 |
 | `modal` | `boolean` | `true` | 遮罩层。 |

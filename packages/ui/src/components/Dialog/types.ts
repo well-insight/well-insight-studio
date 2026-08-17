@@ -12,16 +12,16 @@ export type DialogPosition =
   | 'bottomright'
 
 export interface DialogProps {
-  /** Visibility. Use with `v-model` (PrimeVue uses `visible`; Well Design keeps `modelValue`). */
+  /** Visibility. Use with `v-model`. */
   modelValue?: boolean
-  /** Dialog title text. Alias of PrimeVue `header`. */
+  /** Dialog title text. Alias of `header`. */
   title?: string
-  /** PrimeVue-aligned alias for `title`. */
+  /** Alias for `title`. */
   header?: string
   closeOnEsc?: boolean
-  /** Close when clicking the mask. Alias of PrimeVue `dismissableMask`. */
+  /** Close when clicking the mask. Alias of `dismissableMask`. */
   closeOnOutsideClick?: boolean
-  /** PrimeVue-aligned alias for `closeOnOutsideClick`. */
+  /** alias for `closeOnOutsideClick`. */
   dismissableMask?: boolean
   closable?: boolean
   /** Show maximize / restore toggle in the header. */

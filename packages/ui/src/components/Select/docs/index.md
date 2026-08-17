@@ -1,12 +1,12 @@
 ---
 title: Select
 category: 02 / FORM
-description: 表单选择器，对齐 PrimeVue Select。支持 invalid、size、fluid、showClear、filter、emptyMessage；选项禁用；与动作菜单 Dropdown 不同。
+description: 表单选择器，支持 invalid、size、fluid、showClear、filter、emptyMessage；选项禁用；与动作菜单 Dropdown 不同。
 ---
 
 # Select
 
-表单选择器，对齐 [PrimeVue Select](https://primevue.org/select/)。用于从选项列表中选择单个值。
+表单选择器，用于从选项列表中选择单个值。
 
 **与 Dropdown 的区别：** `WdSelect` 是表单控件；动作菜单请使用 `WdDropdown`。
 

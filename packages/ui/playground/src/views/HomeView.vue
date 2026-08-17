@@ -1,23 +1,22 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { WdButton, WdCard, WdScrollbar } from '@well-design/ui'
+import { WdButton, WdScrollbar } from '@well-design/ui'
 
-const highlights = [
+const pillars = [
   {
-    title: 'PrimeVue 风格 API',
-    body: '命名、尺寸、severity、浮层挂载等尽量对齐，降低学习与迁移成本。',
+    label: 'System',
+    title: '语义化设计令牌',
+    body: '颜色、圆角、间距与动效统一走 --wd-* 变量，主题切换不改组件结构。',
   },
   {
-    title: '主题与令牌一体',
-    body: '组件只消费 --wd-* 变量；亮暗色与动效由 @well-design/ui 的主题 API 统一管理。',
-  },
-  {
+    label: 'Craft',
     title: '文档即预览',
-    body: '每个组件自带 Markdown + vue preview，支持查看源码与交互演示。',
+    body: '每个组件自带 Markdown + 可交互示例，边看 API 边验证真实交互。',
   },
   {
-    title: '全局配置',
-    body: 'WdConfigProvider / createWellDesign 可统一浮层、尺寸、文案与 zIndex。',
+    label: 'Control',
+    title: '全局配置入口',
+    body: 'WdConfigProvider / createWellDesign 统一浮层挂载、尺寸、密度与文案。',
   },
 ]
 </script>
@@ -26,46 +25,45 @@ const highlights = [
   <WdScrollbar class="home-scroll">
     <div class="home-page">
       <section class="home-hero">
-        <p class="home-kicker">WELL DESIGN / UI</p>
-        <h1>面向 Vue 3 的<br />本地组件库<span>。</span></h1>
+        <p class="home-kicker">WELL DESIGN · UI SYSTEM</p>
+        <h1 class="home-brand">Well Design</h1>
+        <p class="home-headline">为自己的产品打造的 Vue 3 界面系统。</p>
         <p class="home-lead">
-          `@well-design/ui` 提供可复用的基础、表单、浮层与数据展示组件，配套主题包与全局配置，适合在 monorepo 或独立应用中落地统一的产品语言。
+          基础控件、表单、浮层与数据展示同构于一套视觉语法。安装一个包即可接入组件、主题与文档约定。
         </p>
         <div class="home-actions">
           <RouterLink :to="{ name: 'docs', params: { slug: 'quick-start' } }">
-            <WdButton label="快速上手" />
+            <WdButton label="开始使用" />
           </RouterLink>
           <RouterLink :to="{ name: 'components' }">
             <WdButton label="浏览组件" outlined />
           </RouterLink>
-          <RouterLink :to="{ name: 'docs', params: { slug: 'introduction' } }">
-            <WdButton label="阅读文档" text />
-          </RouterLink>
         </div>
-        <div class="home-meta">
+        <div class="home-meta" aria-label="技术标签">
           <span>Vue 3</span>
           <span>TypeScript</span>
-          <span>PrimeVue-aligned</span>
-          <span>Theme tokens</span>
+          <span>Design Tokens</span>
+          <span>ESM</span>
         </div>
       </section>
 
-      <section class="home-grid" aria-label="能力亮点">
-        <WdCard v-for="item in highlights" :key="item.title" class="home-card">
+      <section class="home-pillars" aria-label="产品能力">
+        <article v-for="item in pillars" :key="item.title" class="home-pillar">
+          <span class="home-pillar__label">{{ item.label }}</span>
           <h2>{{ item.title }}</h2>
           <p>{{ item.body }}</p>
-        </WdCard>
+        </article>
       </section>
 
       <section class="home-cta">
         <div>
-          <h2>从文档或组件开始</h2>
-          <p>介绍与主题配置在「文档」；交互示例与 API 表在「组件」。</p>
+          <h2>下一步</h2>
+          <p>文档讲清接入方式；组件实验室提供实时预览与 API。</p>
         </div>
         <div class="home-cta__links">
-          <RouterLink class="home-text-link" :to="{ name: 'docs', params: { slug: 'theme' } }">主题与动效 →</RouterLink>
-          <RouterLink class="home-text-link" :to="{ name: 'docs', params: { slug: 'config' } }">全局配置 →</RouterLink>
-          <RouterLink class="home-text-link" :to="{ name: 'components' }">全部组件 →</RouterLink>
+          <RouterLink class="home-text-link" :to="{ name: 'docs', params: { slug: 'theme' } }">主题与动效</RouterLink>
+          <RouterLink class="home-text-link" :to="{ name: 'docs', params: { slug: 'config' } }">全局配置</RouterLink>
+          <RouterLink class="home-text-link" :to="{ name: 'components' }">全部组件</RouterLink>
         </div>
       </section>
     </div>
@@ -81,47 +79,66 @@ const highlights = [
 
 .home-page {
   margin: 0 auto;
-  max-width: 64rem;
-  padding: clamp(2rem, 5vw, 4rem) clamp(1.25rem, 4vw, 3rem) 4rem;
+  max-width: 68rem;
+  padding: clamp(2.5rem, 7vw, 5.5rem) clamp(1.25rem, 4vw, 3rem) 4.5rem;
   width: 100%;
 }
 
+.home-hero {
+  animation: home-rise 0.7s var(--wd-motion-ease) both;
+  max-width: 46rem;
+  position: relative;
+}
+
 .home-kicker {
-  color: var(--wd-color-primary);
-  font-family: ui-monospace, monospace;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  color: var(--docs-glow);
+  font-family: var(--docs-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  margin: 0 0 1.1rem;
+}
+
+.home-brand {
+  background: linear-gradient(
+    120deg,
+    var(--wd-color-text) 10%,
+    color-mix(in srgb, var(--wd-color-primary) 75%, #22d3ee) 55%,
+    var(--wd-color-primary) 100%
+  );
+  background-clip: text;
+  color: transparent;
+  font-family: var(--docs-display);
+  font-size: clamp(3.2rem, 9vw, 6.4rem);
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  line-height: 0.92;
   margin: 0 0 1rem;
 }
 
-.home-hero h1 {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(2.6rem, 6vw, 4.6rem);
-  font-weight: 400;
-  letter-spacing: -0.06em;
-  line-height: 1.05;
-  margin: 0 0 1.25rem;
-}
-
-.home-hero h1 span {
-  color: var(--wd-color-primary);
+.home-headline {
+  color: var(--wd-color-text);
+  font-family: var(--docs-display);
+  font-size: clamp(1.35rem, 2.6vw, 1.85rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+  margin: 0 0 1rem;
 }
 
 .home-lead {
-  color: var(--wd-color-text);
+  color: var(--wd-color-text-muted);
   font-size: 1.05rem;
   line-height: 1.7;
   margin: 0;
-  max-width: 40rem;
-  opacity: 0.9;
+  max-width: 38rem;
 }
 
 .home-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  margin-top: 2rem;
+  margin-top: 2.1rem;
 }
 
 .home-actions a {
@@ -136,40 +153,77 @@ const highlights = [
 }
 
 .home-meta span {
-  border: 1px solid var(--wd-color-border);
-  border-radius: var(--wd-radius-full);
+  background: color-mix(in srgb, var(--wd-color-surface) 65%, transparent);
+  border: 1px solid var(--docs-edge);
+  border-radius: 999px;
   color: var(--wd-color-text-muted);
-  font-family: ui-monospace, monospace;
-  font-size: 0.65rem;
-  padding: 0.3rem 0.6rem;
+  font-family: var(--docs-mono);
+  font-size: 0.68rem;
+  padding: 0.35rem 0.7rem;
 }
 
-.home-grid {
+.home-pillars {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin-top: 3.5rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: clamp(3rem, 8vw, 5rem);
 }
 
-.home-card h2 {
-  font-family: Georgia, serif;
+.home-pillar {
+  animation: home-rise 0.8s var(--wd-motion-ease) both;
+  background: color-mix(in srgb, var(--wd-color-surface) 70%, transparent);
+  border: 1px solid var(--docs-edge);
+  border-radius: 1.1rem;
+  padding: 1.35rem 1.25rem 1.45rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.home-pillar:nth-child(2) {
+  animation-delay: 0.08s;
+}
+
+.home-pillar:nth-child(3) {
+  animation-delay: 0.16s;
+}
+
+.home-pillar::before {
+  background: linear-gradient(120deg, transparent, color-mix(in srgb, var(--wd-color-primary) 35%, transparent));
+  content: '';
+  height: 1px;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.home-pillar__label {
+  color: var(--docs-glow);
+  font-family: var(--docs-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.home-pillar h2 {
+  font-family: var(--docs-display);
   font-size: 1.35rem;
-  font-weight: 400;
+  font-weight: 700;
   letter-spacing: -0.03em;
-  margin: 0 0 0.6rem;
+  margin: 0.7rem 0 0.55rem;
 }
 
-.home-card p {
-  color: var(--wd-color-text);
-  font-size: 0.9rem;
+.home-pillar p {
+  color: var(--wd-color-text-muted);
+  font-size: 0.92rem;
   line-height: 1.6;
   margin: 0;
-  opacity: 0.88;
 }
 
 .home-cta {
   align-items: end;
-  border-top: 1px solid var(--wd-color-border);
+  border-top: 1px solid var(--docs-edge);
   display: flex;
   flex-wrap: wrap;
   gap: 1.5rem;
@@ -179,10 +233,11 @@ const highlights = [
 }
 
 .home-cta h2 {
-  font-family: Georgia, serif;
-  font-size: 1.6rem;
-  font-weight: 400;
-  margin: 0 0 0.5rem;
+  font-family: var(--docs-display);
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin: 0 0 0.45rem;
 }
 
 .home-cta p {
@@ -192,13 +247,15 @@ const highlights = [
 
 .home-cta__links {
   display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
 }
 
 .home-text-link {
   color: var(--wd-color-primary);
-  font-size: 0.9rem;
+  font-family: var(--docs-display);
+  font-size: 0.95rem;
+  font-weight: 600;
   text-decoration: none;
 }
 
@@ -206,8 +263,26 @@ const highlights = [
   text-decoration: underline;
 }
 
-@media (max-width: 700px) {
-  .home-grid {
+@keyframes home-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.8rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hero,
+  .home-pillar {
+    animation: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .home-pillars {
     grid-template-columns: 1fr;
   }
 }

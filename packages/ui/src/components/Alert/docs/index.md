@@ -6,7 +6,7 @@ description: 告警条。带标题、描述与操作区，适合页面级提示�
 
 # Alert
 
-页面级告警条，对齐 Element Plus Alert 的能力面（标题 / 描述 / 操作），视觉使用 `--wd-*`。
+页面级告警条，带标题、描述与操作区，视觉使用 `--wd-*`。
 
 与 [Message](/components/Message) 的分工：
 

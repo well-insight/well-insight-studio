@@ -31,7 +31,7 @@ describe('WdButton', () => {
     expect(loading.find('.wd-button__spinner').exists()).toBe(true)
   })
 
-  it('applies PrimeVue-aligned severity and style modifiers', () => {
+  it('applies severity and style modifiers', () => {
     const wrapper = mount(WdButton, {
       props: {
         label: 'Warn',

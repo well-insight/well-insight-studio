@@ -10,7 +10,7 @@ export interface ScrollbarScrollPayload {
 }
 
 export interface ScrollbarProps {
-  /** Viewport height (Element Plus). Also usable like PrimeVue ScrollPanel dimensions. */
+  /** Viewport height. */
   height?: string | number
   /** Max viewport height; scrollbar appears only when content exceeds it. */
   maxHeight?: string | number

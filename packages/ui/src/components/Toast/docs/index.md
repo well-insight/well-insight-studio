@@ -1,12 +1,12 @@
 ---
 title: Toast
 category: 04 / OVERLAY
-description: 轻量消息反馈。API 对齐 PrimeVue Toast severity：success、info、warn、error；兼容 warning → warn。
+description: 轻量消息反馈。
 ---
 
 # Toast
 
-轻量消息反馈，用于操作结果提示。Severity 对齐 [PrimeVue Toast](https://primevue.org/toast/)。
+轻量消息反馈，用于操作结果提示。Severity 
 
 ## 引入
 

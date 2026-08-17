@@ -8,7 +8,7 @@ description: 动作菜单覆盖层（非表单选择器）。与 Select 不同�
 
 动作菜单（action menu overlay）。用于从触发器打开一组操作项。
 
-**与 Select 的区别：** `WdDropdown` 是菜单覆盖层；表单选项选择请使用 `WdSelect`（对齐 PrimeVue Select）。
+**与 Select 的区别：** `WdDropdown` 是菜单覆盖层；表单选项选择请使用 `WdSelect`（
 
 ## 引入
 

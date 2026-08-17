@@ -13,9 +13,9 @@ export interface TextareaProps {
   id?: string
   rows?: number
   resize?: 'none' | 'vertical' | 'horizontal' | 'both'
-  /** Grow height to fit content (PrimeVue autoResize). */
+  /** Grow height to fit content . */
   autoResize?: boolean
-  /** Size aligned with PrimeVue Textarea; also accepts legacy sm/md/lg. */
+  /** Size aligned with Textarea; also accepts legacy sm/md/lg. */
   size?: WdSizeInput
   /** Visual variant; default outlined. */
   variant?: WdInputVariant
