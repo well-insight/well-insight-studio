@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { useTheme } from '@well-design/theme'
+import { useTheme } from '@well-design/ui'
 
 const GIT_REPO = 'https://gitcode.com/Wayne1308/well-design'
 

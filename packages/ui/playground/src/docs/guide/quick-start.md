@@ -11,10 +11,10 @@ description: 安装依赖、引入样式，并渲染第一个组件。
 **在应用项目中（npm / pnpm / yarn）：**
 
 ```bash
-pnpm add @well-design/ui @well-design/theme vue
+pnpm add @well-design/ui vue
 ```
 
-需要 Vue 3.5+。`@well-design/theme` 提供主题 JS API；组件样式里的 CSS 变量已打进 `@well-design/ui/styles.css`。
+需要 Vue 3.5+。主题 token、亮暗切换与动效 API 均包含在 `@well-design/ui` 中。
 
 **在本 Monorepo 内**已作为 workspace 包存在，直接依赖即可，开发态走源码热更新。
 
@@ -29,8 +29,6 @@ import '@well-design/ui/styles.css'
 
 createApp(App).mount('#app')
 ```
-
-无需再单独引入 `@well-design/theme/styles.css`（除非你只用 theme、不装 UI）。
 
 ## 使用组件
 
@@ -73,10 +71,10 @@ createApp(App)
 
 ## 主题 API
 
-亮暗切换等能力来自 `@well-design/theme`：
+亮暗切换等能力从同一包引入：
 
 ```ts
-import { useTheme } from '@well-design/theme'
+import { useTheme } from '@well-design/ui'
 
 const { toggleTheme } = useTheme()
 ```

@@ -9,7 +9,6 @@
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "@well-design/theme": "workspace:*",
     "@well-design/ui": "workspace:*",
     "vue": "^3.5.41",
     "vue-router": "^5.2.0"

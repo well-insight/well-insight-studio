@@ -10,8 +10,8 @@
     "dev:web": "pnpm --filter @well-design/web dev",
     "dev:ui": "pnpm --filter @well-design/ui dev",
     "dev:api": "pnpm --filter @well-design/api dev",
-    "build": "pnpm --filter @well-design/theme build && pnpm --filter @well-design/ui build && pnpm --filter @well-design/shared --filter @well-design/web --filter @well-design/api run build",
-    "build:ui": "pnpm --filter @well-design/theme build && pnpm --filter @well-design/ui build",
+    "build": "pnpm --filter @well-design/ui build && pnpm --filter @well-design/shared --filter @well-design/web --filter @well-design/api run build",
+    "build:ui": "pnpm --filter @well-design/ui build",
     "test": "pnpm -r test",
     "test:coverage": "pnpm -r test:coverage",
     "typecheck": "pnpm -r typecheck"

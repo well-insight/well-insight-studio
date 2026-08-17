@@ -17,14 +17,6 @@ export default defineConfig({
       cleanVueFileName: false,
     }),
   ],
-  resolve: {
-    alias: [
-      {
-        find: '@well-design/theme/styles.css',
-        replacement: fileURLToPath(new URL('../theme/src/styles.css', import.meta.url)),
-      },
-    ],
-  },
   build: {
     emptyOutDir: true,
     cssCodeSplit: false,
@@ -34,11 +26,7 @@ export default defineConfig({
       fileName: 'index',
     },
     rollupOptions: {
-      external: [
-        'vue',
-        '@well-design/theme',
-        /^@well-design\/theme\/.*/,
-      ],
+      external: ['vue'],
       output: {
         assetFileNames: (assetInfo) => {
           if (assetInfo.name && assetInfo.name.endsWith('.css')) {

@@ -1,5 +1,5 @@
 import { computed, inject, provide, type App, type InjectionKey, type MaybeRefOrGetter, toValue } from 'vue'
-import { applyDensity, type DensityPreference } from '@well-design/theme'
+import { applyDensity, type DensityPreference } from '../theme'
 import type { WdAppendTo } from './overlay'
 import type { WdInputVariant, WdSizeInput } from './types'
 

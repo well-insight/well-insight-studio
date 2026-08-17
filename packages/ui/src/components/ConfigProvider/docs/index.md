@@ -168,16 +168,16 @@ const config = useWdConfig()
 | `locale` | `locale` | `locale` / `PrimeVue.locale` |
 | `size` / `inputVariant` | `size` | `inputStyle` 等 |
 | `zIndex` | `zIndex` | `zIndex` |
-| `@well-design/theme` `useTheme` / `useMotion` | — | 主题 / 动效配置 |
+| `@well-design/ui` `useTheme` / `useMotion` | — | 主题 / 动效配置 |
 
 优先级：**组件 Props > `WdConfigProvider` > `createWellDesign()` > 内置默认值**。
 
 ## 主题与动效（配套）
 
-主题与动效由 `@well-design/theme` 提供，可与 ConfigProvider 并用：
+主题与动效 API 由 `@well-design/ui` 一并导出，可与 ConfigProvider 并用：
 
 ```ts
-import { useTheme, useMotion } from '@well-design/theme'
+import { useTheme, useMotion } from '@well-design/ui'
 
 const { setTheme, toggleTheme } = useTheme()
 const { setMotion } = useMotion() // 'full' | 'reduced' | 'none'

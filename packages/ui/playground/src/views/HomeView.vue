@@ -9,7 +9,7 @@ const highlights = [
   },
   {
     title: '主题与令牌一体',
-    body: '组件只消费 --wd-* 变量；亮暗色与动效由 @well-design/theme 统一管理。',
+    body: '组件只消费 --wd-* 变量；亮暗色与动效由 @well-design/ui 的主题 API 统一管理。',
   },
   {
     title: '文档即预览',

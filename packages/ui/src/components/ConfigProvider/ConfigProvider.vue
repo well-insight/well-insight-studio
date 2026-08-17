@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, watchEffect } from 'vue'
-import { applyDensity } from '@well-design/theme'
+import { applyDensity } from '../../theme'
 import { provideWdConfig, type WdGlobalConfig } from '../../shared/config'
 
 const props = defineProps<{

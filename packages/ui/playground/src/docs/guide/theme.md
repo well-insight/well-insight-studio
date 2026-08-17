@@ -6,14 +6,14 @@ description: 亮暗主题、设计令牌与动效偏好。
 
 # 主题
 
-主题能力由 `@well-design/theme` 提供。组件只消费语义化 CSS 变量（`--wd-*`），不自行维护第二套色板。
+主题能力内置于 `@well-design/ui`。组件只消费语义化 CSS 变量（`--wd-*`），不自行维护第二套色板。
 
-引入 `@well-design/ui/styles.css` 时已包含这些变量；主题 JS API（`useTheme` 等）仍从 `@well-design/theme` 导入。
+引入 `@well-design/ui/styles.css` 时已包含这些变量；主题 JS API（`useTheme` 等）从同一包导入。
 
 ## 亮 / 暗色
 
 ```ts
-import { useTheme } from '@well-design/theme'
+import { useTheme } from '@well-design/ui'
 
 const { isDark, setTheme, toggleTheme } = useTheme()
 
@@ -44,7 +44,7 @@ toggleTheme()
 ## 内容密度
 
 ```ts
-import { useDensity } from '@well-design/theme'
+import { useDensity } from '@well-design/ui'
 
 const { preference, setDensity } = useDensity()
 setDensity('compact') // 'compact' | 'comfortable' | 'spacious'
@@ -58,7 +58,7 @@ setDensity('compact') // 'compact' | 'comfortable' | 'spacious'
 ## 动效偏好
 
 ```ts
-import { useMotion } from '@well-design/theme'
+import { useMotion } from '@well-design/ui'
 
 const { preference, setMotion } = useMotion()
 setMotion('full') // 'full' | 'reduced' | 'none'

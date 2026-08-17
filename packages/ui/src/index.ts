@@ -276,3 +276,27 @@ export type { WdAppendTo, WdOverlayMountProps } from './shared/overlay'
 export { isOverlayTeleported, resolveOverlayTeleport } from './shared/overlay'
 export { useModalOverlay } from './shared/useModalOverlay'
 export type { UseModalOverlayOptions } from './shared/useModalOverlay'
+
+export {
+  applyDensity,
+  applyMotion,
+  applyTheme,
+  darkTokens,
+  getPreferredMotion,
+  getPreferredTheme,
+  lightTokens,
+  themeNames,
+  useDensity,
+  useMotion,
+  useTheme,
+} from './theme'
+export type {
+  ColorTokens,
+  DensityPreference,
+  DesignTokens,
+  MotionPreference,
+  MotionTokens,
+  RadiusTokens,
+  SpacingTokens,
+  ThemeName,
+} from './theme'

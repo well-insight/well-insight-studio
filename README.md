@@ -1,13 +1,12 @@
 # Well Design
 
-Vue 3 + TypeScript + Hono 的可复用前后端 Monorepo。组件库（`@well-design/ui` / `@well-design/theme`）可对内源码消费，也可构建为可发布的 ESM 包。
+Vue 3 + TypeScript + Hono 的可复用前后端 Monorepo。组件库 `@well-design/ui`（含主题）可对内源码消费，也可构建为可发布的 ESM 包。
 
 ## Workspace
 
 - `apps/web`：业务前端应用
 - `apps/api`：Hono + TypeScript API 服务
-- `packages/ui`：Vue 组件库（文档站 + 可发布构建）
-- `packages/theme`：设计令牌与主题样式 / API
+- `packages/ui`：Vue 组件库（组件、主题、文档站 + 可发布构建）
 - `packages/shared`：前后端共享类型
 
 ## Commands
@@ -20,18 +19,18 @@ pnpm dev:ui       # 仅组件库文档站 http://localhost:5182
 pnpm dev:api      # 仅 API
 pnpm typecheck
 pnpm test
-pnpm build        # 先构建 theme / ui，再构建其余包
-pnpm build:ui     # 仅构建 theme + ui
+pnpm build        # 先构建 ui，再构建其余包
+pnpm build:ui     # 仅构建 ui
 ```
 
 ## 组件库（对外）
 
 ```bash
-pnpm add @well-design/ui @well-design/theme vue
+pnpm add @well-design/ui vue
 ```
 
 ```ts
-import { WdButton } from '@well-design/ui'
+import { WdButton, useTheme } from '@well-design/ui'
 import '@well-design/ui/styles.css'
 ```
 

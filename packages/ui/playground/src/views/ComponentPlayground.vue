@@ -7,7 +7,7 @@ import {
   resolveComponentDoc,
   type DocumentedComponentMeta,
 } from '../docs/loadComponentDocs'
-import { useDensity, useMotion, useTheme } from '@well-design/theme'
+import { useDensity, useMotion, useTheme } from '@well-design/ui'
 import { WdCard, WdIcon, WdScrollbar } from '@well-design/ui'
 
 const OVERVIEW = '全部组件'
