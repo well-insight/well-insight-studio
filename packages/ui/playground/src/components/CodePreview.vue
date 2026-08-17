@@ -1,9 +1,38 @@
 <script setup lang="ts">
-defineProps<{
+import { computed, onBeforeUnmount, ref } from 'vue'
+import { WdIcon } from '@well-design/ui'
+import { copyText } from '../utils/copyText'
+
+const props = defineProps<{
   lang?: string
   meta?: string
   code?: string
 }>()
+
+const highlightEl = ref<HTMLElement | null>(null)
+const copied = ref(false)
+let resetTimer = 0
+
+const label = computed(() => (copied.value ? '已复制' : '复制'))
+
+async function onCopy(event: MouseEvent) {
+  event.preventDefault()
+  event.stopPropagation()
+
+  const fromSlot = highlightEl.value?.textContent ?? ''
+  const ok = await copyText(props.code || fromSlot)
+  if (!ok) return
+
+  copied.value = true
+  window.clearTimeout(resetTimer)
+  resetTimer = window.setTimeout(() => {
+    copied.value = false
+  }, 1600)
+}
+
+onBeforeUnmount(() => {
+  window.clearTimeout(resetTimer)
+})
 </script>
 
 <template>
@@ -12,8 +41,20 @@ defineProps<{
       <slot />
     </div>
     <details class="code-preview__code">
-      <summary>查看代码 <span>{{ lang || 'vue' }}</span></summary>
-      <div v-if="$slots.code" class="code-preview__highlight">
+      <summary>
+        <span class="code-preview__summary-label">查看代码 <em>{{ lang || 'vue' }}</em></span>
+        <button
+          type="button"
+          class="code-preview__copy"
+          :data-copied="copied ? 'true' : 'false'"
+          :aria-label="label"
+          @click="onCopy"
+        >
+          <WdIcon :name="copied ? 'check' : 'copy'" size="sm" />
+          <span>{{ label }}</span>
+        </button>
+      </summary>
+      <div v-if="$slots.code" ref="highlightEl" class="code-preview__highlight">
         <slot name="code" />
       </div>
       <pre v-else class="code-preview__fallback"><code>{{ code }}</code></pre>
@@ -49,14 +90,45 @@ defineProps<{
   cursor: pointer;
   display: flex;
   font-size: 0.78rem;
+  gap: 0.75rem;
   justify-content: space-between;
+  list-style: none;
   padding: var(--wd-space-3) var(--wd-space-4);
 }
-.code-preview__code summary span {
+.code-preview__code summary::-webkit-details-marker {
+  display: none;
+}
+.code-preview__summary-label {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.55rem;
+}
+.code-preview__summary-label em {
   color: var(--wd-color-text-muted);
   font-family: ui-monospace, monospace;
   font-size: 0.65rem;
+  font-style: normal;
   text-transform: uppercase;
+}
+.code-preview__copy {
+  align-items: center;
+  background: color-mix(in srgb, var(--wd-color-surface) 80%, transparent);
+  border: 1px solid var(--wd-color-border);
+  border-radius: var(--wd-radius-sm);
+  color: var(--wd-color-text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.72rem;
+  gap: 0.3rem;
+  padding: 0.28rem 0.55rem;
+}
+.code-preview__copy:hover {
+  border-color: color-mix(in srgb, var(--wd-color-primary) 40%, var(--wd-color-border));
+  color: var(--wd-color-primary);
+}
+.code-preview__copy[data-copied='true'] {
+  border-color: color-mix(in srgb, var(--wd-color-success, #16a34a) 45%, var(--wd-color-border));
+  color: var(--wd-color-success, #16a34a);
 }
 .code-preview__highlight,
 .code-preview__fallback {

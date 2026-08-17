@@ -1,9 +1,15 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import type { ResolvedComponentDoc } from '../docs/loadComponentDocs'
+import { useDocCodeCopy } from '../composables/useDocCodeCopy'
 
-defineProps<{
+const props = defineProps<{
   doc: ResolvedComponentDoc
 }>()
+
+const bodyRef = ref<HTMLElement | null>(null)
+const docSource = computed(() => props.doc)
+useDocCodeCopy(bodyRef, docSource)
 </script>
 
 <template>
@@ -13,7 +19,9 @@ defineProps<{
       <h2>{{ doc.frontmatter.title || doc.name }}</h2>
       <p v-if="doc.frontmatter.description">{{ doc.frontmatter.description }}</p>
     </div>
-    <component :is="doc.component" class="component-doc-viewer__body" />
+    <div ref="bodyRef" class="component-doc-viewer__body">
+      <component :is="doc.component" />
+    </div>
   </section>
 </template>
 
@@ -104,6 +112,37 @@ defineProps<{
   border-radius: var(--wd-radius-md);
   overflow-x: auto;
   padding: var(--wd-space-4);
+}
+.wd-markdown-doc .wd-code-block {
+  margin: 1rem 0 1.5rem;
+  position: relative;
+}
+.wd-markdown-doc .wd-code-block > pre {
+  margin: 0;
+  padding-right: 4.25rem;
+}
+.wd-markdown-doc .wd-code-block__copy {
+  background: color-mix(in srgb, var(--wd-color-surface) 88%, transparent);
+  border: 1px solid var(--wd-color-border);
+  border-radius: var(--wd-radius-sm);
+  color: var(--wd-color-text-muted);
+  cursor: pointer;
+  font-family: var(--docs-body);
+  font-size: 0.72rem;
+  line-height: 1;
+  padding: 0.35rem 0.55rem;
+  position: absolute;
+  right: 0.55rem;
+  top: 0.55rem;
+  z-index: 1;
+}
+.wd-markdown-doc .wd-code-block__copy:hover {
+  border-color: color-mix(in srgb, var(--wd-color-primary) 40%, var(--wd-color-border));
+  color: var(--wd-color-primary);
+}
+.wd-markdown-doc .wd-code-block__copy[data-copied='true'] {
+  border-color: color-mix(in srgb, var(--wd-color-success, #16a34a) 45%, var(--wd-color-border));
+  color: var(--wd-color-success, #16a34a);
 }
 .wd-markdown-doc pre code {
   background: transparent;
