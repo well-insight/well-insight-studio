@@ -39,9 +39,10 @@ pnpm release
 
 1. 交互选 CHANGELOG 条目与版本 bump
 2. 更新 `packages/ui/package.json` 与 `CHANGELOG.md` / `CHANGELOG.en.md`
-3. 切到（或新建）`release/{version}` 并提交
-4. 构建、npm publish
-5. 打 `v{version}` 标签并推送
+3. 在**当前分支**提交 `release: @well-design/ui v{version}`
+4. 从该提交新建（不切换）`release/{version}` 分支
+5. 构建、npm publish
+6. 打 `v{version}` 标签，并推送当前分支、发版分支和 tag
 
 只预览、不写文件不发版：
 

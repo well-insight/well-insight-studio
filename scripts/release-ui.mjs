@@ -39,6 +39,32 @@ function hasStagedChanges() {
   return Boolean(git(['diff', '--cached', '--name-only'], { allowFail: true }))
 }
 
+function currentBranch() {
+  return git(['symbolic-ref', '--short', 'HEAD'], { allowFail: true })
+}
+
+function commitReleaseFiles(version) {
+  const existing = git(['ls-files', '--others', '--modified', '--exclude-standard'], { allowFail: true })
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+  const unexpected = existing.filter(
+    (file) => !releasePaths.some((path) => file === path || file.startsWith(`${path}/`)),
+  )
+  if (unexpected.length) {
+    console.warn('Uncommitted files outside the release bump (left unstaged):')
+    for (const file of unexpected) console.warn(`  ${file}`)
+  }
+
+  git(['add', '--', ...releasePaths.filter((path) => existsSync(join(root, path)))], { allowFail: true })
+  if (hasStagedChanges()) {
+    git(['commit', '-m', `release: @well-design/ui v${version}`], { stdio: 'inherit' })
+    return true
+  }
+  console.log('No version files to commit')
+  return false
+}
+
 console.log('Releasing @well-design/ui')
 
 const dirtyUi = git(['status', '--porcelain', '--', 'packages/ui'], { allowFail: true })
@@ -63,33 +89,29 @@ if (dryRun) {
   process.exit(0)
 }
 
-run('node scripts/release-git.mjs --branch --checkout')
-
-const existing = git(['ls-files', '--others', '--modified', '--exclude-standard'], { allowFail: true })
-  .split(/\r?\n/)
-  .map((line) => line.trim())
-  .filter(Boolean)
-const unexpected = existing.filter((file) => !releasePaths.some((path) => file === path || file.startsWith(`${path}/`)))
-if (unexpected.length) {
-  console.warn('Uncommitted files outside the release bump (left unstaged):')
-  for (const file of unexpected) console.warn(`  ${file}`)
+const sourceBranch = currentBranch()
+if (!sourceBranch) {
+  throw new Error('Detached HEAD: checkout a branch before releasing.')
 }
 
-git(['add', '--', ...releasePaths.filter((path) => existsSync(join(root, path)))], { allowFail: true })
-if (hasStagedChanges()) {
-  git(['commit', '-m', `release: @well-design/ui v${plan.version}`], { stdio: 'inherit' })
-} else {
-  console.log('No version files to commit')
-}
+commitReleaseFiles(plan.version)
+run('node scripts/release-git.mjs --branch')
 
 run('pnpm --filter @well-design/ui build')
 run('pnpm --filter @well-design/ui publish --access public --no-git-checks')
 run('node scripts/release-git.mjs --tag --branch')
 
+const releaseBranch = `release/${plan.version}`
+
 if (noPush) {
-  console.log(`Released v${plan.version} locally. Push with:\n  git push -u origin HEAD --follow-tags`)
+  console.log(
+    `Released v${plan.version} locally. Push with:\n  git push -u origin ${sourceBranch} --follow-tags\n  git push -u origin ${releaseBranch} --follow-tags`,
+  )
   process.exit(0)
 }
 
+git(['push', '-u', 'origin', sourceBranch, '--follow-tags'], { stdio: 'inherit' })
 run('node scripts/release-git.mjs --tag --branch --push')
-console.log(`Released @well-design/ui v${plan.version} (tag v${plan.version}, branch release/${plan.version})`)
+console.log(
+  `Released @well-design/ui v${plan.version} (tag v${plan.version}, committed on ${sourceBranch} and ${releaseBranch})`,
+)

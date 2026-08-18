@@ -89,7 +89,7 @@ pnpm release
 
 详见 [`scripts/README.md`](../../scripts/README.md)。
 
-文档站「更新日志」页读取 `packages/ui/CHANGELOG.md`，与发版记录同步。Git 上每次发版会有 `v{version}` 标签和 `release/{version}` 分支。
+文档站「更新日志」页读取 `packages/ui/CHANGELOG.md`，与发版记录同步。Git 上每次发版会在当前分支提交版本改动，并另建 `v{version}` 标签和 `release/{version}` 分支。
 
 发布前检查：
 
