@@ -1,95 +1,113 @@
 ---
 title: Message
-category: 08 / MESSAGE
-description: Inline message. Supports severity, closable, auto-dismiss via life, and an optional icon.
+category: 04 / OVERLAY
+description: Top-center floating notice with an imperative API.
 ---
 
 # Message
 
-Inline message for in-page feedback.
+A lightweight notice that slides in from the top center — good for short action feedback. Prefer the `message` API; you can also mount `<WdMessage />` as a custom host.
 
-For page-level alerts that need a title, description, and action area, use [Alert](/components/Alert).
+Vs [Toast](/components/Toast):
+
+- **Message**: top-center, single-line copy.
+- **Toast**: corner notifications with a title and optional detail.
 
 ## Import
 
 ```ts
-import { WdMessage } from '@well-design/ui'
+import { message, useMessage, WdMessage } from '@well-design/ui'
 ```
 
-## Basic
+## API
 
-Defaults to `info` severity. Pass content through the default slot.
+The first call auto-mounts a floating host; no template component is required.
 
 ```vue preview
 <script setup lang="ts">
-import { WdMessage } from '@well-design/ui'
+import { WdButton, message } from '@well-design/ui'
 </script>
 
 <template>
-  <div style="display:grid;gap:0.75rem;width:min(32rem,100%)">
-    <WdMessage>The action is complete. You can continue.</WdMessage>
+  <div style="display:flex;flex-wrap:wrap;gap:0.75rem">
+    <WdButton label="Success" severity="success" @click="message.success('Saved')" />
+    <WdButton label="Info" severity="info" @click="message.info('A short tip')" />
+    <WdButton label="Warn" severity="warn" @click="message.warn('Please double-check')" />
+    <WdButton label="Error" severity="danger" @click="message.error('Request failed')" />
+    <WdButton
+      label="Closable"
+      @click="message.info({ content: 'Dismiss manually', closable: true, life: 0 })"
+    />
   </div>
 </template>
 ```
 
-## Severity
+## Custom content
 
-Supports `success`, `info`, `warn`, `error`, `secondary`, and `contrast`. The legacy value `warning` maps to `warn`.
-
-```vue preview
-<script setup lang="ts">
-import { WdMessage } from '@well-design/ui'
-</script>
-
-<template>
-  <div style="display:grid;gap:0.75rem;width:min(32rem,100%)">
-    <WdMessage severity="success">Saved successfully.</WdMessage>
-    <WdMessage severity="info">This is an informational message.</WdMessage>
-    <WdMessage severity="warn">Please review before submitting.</WdMessage>
-    <WdMessage severity="error">The request failed. Please try again.</WdMessage>
-    <WdMessage severity="secondary">Secondary note.</WdMessage>
-    <WdMessage severity="contrast">High-contrast message.</WdMessage>
-  </div>
-</template>
-```
-
-## Closable
-
-Set `closable` to show a close button. Closing emits `close`.
+`content` (and Toast `summary` / `detail`) accepts a string, a VNode from `h()`, a component, or a `() => VNode` factory.
 
 ```vue preview
 <script setup lang="ts">
-import { ref } from 'vue'
-import { WdMessage } from '@well-design/ui'
+import { h } from 'vue'
+import { WdButton, WdIcon, message } from '@well-design/ui'
 
-const closed = ref(false)
+function showVNode() {
+  message.info({
+    content: () =>
+      h('span', [
+        h(WdIcon, { name: 'check-circle', size: 'sm' }),
+        ' Built with ',
+        h('strong', 'h()'),
+        ' render',
+      ]),
+    life: 4000,
+  })
+}
 </script>
 
 <template>
-  <div style="display:grid;gap:0.75rem;width:min(32rem,100%)">
-    <WdMessage v-if="!closed" closable @close="closed = true">Closable message.</WdMessage>
-    <p v-else style="margin:0;color:var(--wd-color-text-muted)">Message closed</p>
-  </div>
+  <WdButton label="VNode content" @click="showVNode" />
 </template>
 ```
 
-## Props
+## Methods
+
+| Method | Description |
+| --- | --- |
+| `message.success(content \| options)` | Success |
+| `message.info(content \| options)` | Info |
+| `message.warn(content \| options)` | Warn (`warning` alias) |
+| `message.error(content \| options)` | Error |
+| `message.open(content \| options)` | Open with options |
+| `message.close(id?)` | Close one / all |
+| `message.closeAll()` | Close all |
+
+Returns `{ id, close }`.
+
+### MessageOptions
+
+| Field | Type | Default | Description |
+| --- | --- | --- | --- |
+| `content` | `string \| number \| VNode \| Component \| (() => VNodeChild)` | — | Body; a renderable value may also be passed directly |
+| `severity` | `'success' \| 'info' \| 'warn' \| 'error' \| 'secondary' \| 'contrast'` | `'info'` | Tone |
+| `closable` | `boolean` | `false` | Show close button |
+| `life` | `number` | `3000` | Auto-close ms; `0` keeps open |
+| `icon` | `boolean` | `true` | Show severity icon |
+| `id` | `string \| number` | auto | Unique key |
+
+## Optional host
+
+For a custom `appendTo`, place this at the app root:
+
+```vue
+<WdMessage append-to="body" />
+```
+
+When a manual host exists, the API will not mount a second one.
+
+## Props (`WdMessage`)
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `severity` | `'success' \| 'info' \| 'warn' \| 'error' \| 'secondary' \| 'contrast' \| 'warning'` | `'info'` | Semantic color. `warning` maps to `warn`. |
-| `closable` | `boolean` | `false` | Whether to show the close button. |
-| `life` | `number` | — | Auto-dismiss delay in milliseconds. Omit to keep the message open. |
-| `icon` | `boolean` | `true` | Whether to show the severity icon. |
-
-## Events
-
-| Event | Prop | Description |
-| --- | --- | --- |
-| `close` | — | Emitted when the close button is clicked or `life` elapses. |
-
-## Slots
-
-| Slot | Description |
-| --- | --- |
-| `default` | Message body. |
+| `teleport` | `boolean` | `true` | Whether to Teleport |
+| `appendTo` | `string \| HTMLElement \| 'self' \| false` | `'body'` | Mount target |

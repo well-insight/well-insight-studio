@@ -47,7 +47,17 @@ export type { TagProps, TagSeverity } from './components/Tag/types'
 export { default as WdTooltip } from './components/Tooltip/Tooltip.vue'
 export type { TooltipProps } from './components/Tooltip/types'
 export { default as WdToast } from './components/Toast/Toast.vue'
-export type { ToastEmits, ToastMessage, ToastProps, ToastSeverity } from './components/Toast/types'
+export { toast, useToast } from './components/Toast/toast'
+export type {
+  ToastEmits,
+  ToastHandle,
+  ToastInput,
+  ToastMessage,
+  ToastOptions,
+  ToastPosition,
+  ToastProps,
+  ToastSeverity,
+} from './components/Toast/types'
 export { default as WdTable } from './components/Table/Table.vue'
 export type {
   TableColumn,
@@ -81,9 +91,16 @@ export type { AccordionEmits, AccordionProps, AccordionTab } from './components/
 export { default as WdBadge } from './components/Badge/Badge.vue'
 export type { BadgeProps, BadgeSeverity, BadgeSize } from './components/Badge/types'
 export { default as WdMessage } from './components/Message/Message.vue'
-export type { MessageEmits, MessageProps, MessageSeverity } from './components/Message/types'
-export { default as WdAlert } from './components/Alert/Alert.vue'
-export type { AlertEffect, AlertEmits, AlertProps, AlertSeverity } from './components/Alert/types'
+export { message, useMessage } from './components/Message/message'
+export type {
+  MessageHandle,
+  MessageInput,
+  MessageItem,
+  MessageOptions,
+  MessageProps,
+  MessageSeverity,
+} from './components/Message/types'
+export type { WdRenderable } from './shared/content'
 export { default as WdSkeleton } from './components/Skeleton/Skeleton.vue'
 export type { SkeletonAnimation, SkeletonProps, SkeletonShape } from './components/Skeleton/types'
 export { default as WdAvatar } from './components/Avatar/Avatar.vue'

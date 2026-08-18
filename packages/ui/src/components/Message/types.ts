@@ -1,22 +1,43 @@
+import type { WdAppendTo } from '../../shared/overlay'
+import type { WdRenderable } from '../../shared/content'
 import type { WdToastSeverity } from '../../shared/types'
+
+export type { WdRenderable }
 
 /** message severities; `warning` kept as legacy alias for `warn`. */
 export type MessageSeverity = WdToastSeverity | 'warning'
 
-export interface MessageProps {
-  /**
-   * Semantic tone. Default `info`.
-   * Legacy `warning` is normalized to `warn`.
-   */
+export interface MessageItem {
+  id: string | number
+  content: WdRenderable
   severity?: MessageSeverity
-  /** Show close button. */
   closable?: boolean
-  /** Auto-close delay in ms. Omit to keep open. */
+  /** Auto-close delay in ms. `0` keeps it open. Default `3000` for API calls. */
   life?: number
-  /** Show severity icon. Defaults to `true`. */
   icon?: boolean
 }
 
-export interface MessageEmits {
-  (event: 'close'): void
+export type MessageOptions = Omit<MessageItem, 'id' | 'content'> & {
+  id?: string | number
+  content: WdRenderable
+}
+
+/** String / VNode / component / render factory, or a full options object. */
+export type MessageInput = WdRenderable | MessageOptions
+
+export interface MessageProps {
+  /** Teleport overlay. Defaults to `true`. */
+  teleport?: boolean
+  /** Mount target. Defaults to `'body'`. */
+  appendTo?: WdAppendTo
+  /**
+   * Internal: auto-mounted service host.
+   * Manual `<WdMessage />` claims the host and disables auto-mount.
+   */
+  auto?: boolean
+}
+
+export interface MessageHandle {
+  id: string | number
+  close: () => void
 }

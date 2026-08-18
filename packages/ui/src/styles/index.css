@@ -2404,18 +2404,35 @@
     color: var(--wd-color-on-emphasis);
 }
 
+
+.wd-message-host {
+    display: flex;
+    flex-direction: column;
+    gap: var(--wd-space-2);
+    left: 50%;
+    max-width: min(28rem, calc(100vw - 2 * var(--wd-space-4)));
+    pointer-events: none;
+    position: fixed;
+    top: var(--wd-space-4);
+    transform: translateX(-50%);
+    width: max-content;
+    z-index: var(--wd-z-toast);
+}
 .wd-message {
     align-items: flex-start;
     background: color-mix(in srgb, var(--wd-color-info) 10%, var(--wd-color-surface));
     border: 1px solid color-mix(in srgb, var(--wd-color-info) 28%, var(--wd-color-border));
     border-radius: var(--wd-radius-md);
+    box-shadow: var(--wd-shadow-md);
     color: var(--wd-color-text);
     display: flex;
     font-family: var(--wd-font-sans);
     font-size: var(--wd-font-size-md);
     gap: var(--wd-space-3);
     line-height: 1.45;
+    min-width: 16rem;
     padding: var(--wd-space-3) var(--wd-space-4);
+    pointer-events: auto;
 }
 .wd-message__icon {
     color: var(--wd-color-info);
@@ -2488,148 +2505,23 @@
 .wd-message--contrast .wd-message__close {
     color: var(--wd-color-contrast-fg);
 }
-
-.wd-alert {
-    align-items: flex-start;
-    background: color-mix(in srgb, var(--wd-color-info) 10%, var(--wd-color-surface));
-    border: 1px solid color-mix(in srgb, var(--wd-color-info) 28%, var(--wd-color-border));
-    border-left: 3px solid var(--wd-color-info);
-    border-radius: var(--wd-radius-md);
-    color: var(--wd-color-text);
-    display: flex;
-    font-family: var(--wd-font-sans);
-    font-size: var(--wd-font-size-md);
-    gap: var(--wd-space-3);
-    line-height: 1.45;
-    padding: var(--wd-space-3) var(--wd-space-4);
+.wd-message-slide-enter-active {
+    transition:
+        opacity var(--wd-motion-enter) var(--wd-motion-ease),
+        transform var(--wd-motion-enter) var(--wd-motion-ease);
 }
-.wd-alert__icon {
-    color: var(--wd-color-info);
-    flex-shrink: 0;
-    margin-top: 0.15rem;
+.wd-message-slide-leave-active {
+    transition:
+        opacity var(--wd-motion-exit) var(--wd-motion-ease),
+        transform var(--wd-motion-exit) var(--wd-motion-ease);
 }
-.wd-alert__body {
-    display: grid;
-    flex: 1 1 auto;
-    gap: var(--wd-space-1);
-    min-width: 0;
+.wd-message-slide-enter-from,
+.wd-message-slide-leave-to {
+    opacity: 0;
+    transform: translateY(calc(var(--wd-motion-distance) * -1));
 }
-.wd-alert__title {
-    font-weight: 650;
-    line-height: 1.35;
-}
-.wd-alert__description {
-    color: var(--wd-color-text-muted);
-    font-size: var(--wd-font-size-sm);
-}
-.wd-alert__action {
-    margin-top: var(--wd-space-2);
-}
-.wd-alert__close {
-    align-items: center;
-    background: transparent;
-    border: 0;
-    color: var(--wd-color-text-muted);
-    cursor: pointer;
-    display: inline-flex;
-    flex-shrink: 0;
-    font: inherit;
-    line-height: 1;
-    padding: 0;
-}
-.wd-alert__close:focus-visible {
-    box-shadow: var(--wd-focus-shadow);
-    outline: none;
-}
-.wd-alert--success {
-    background: color-mix(in srgb, var(--wd-color-success) 10%, var(--wd-color-surface));
-    border-color: color-mix(in srgb, var(--wd-color-success) 28%, var(--wd-color-border));
-    border-left-color: var(--wd-color-success);
-}
-.wd-alert--success .wd-alert__icon {
-    color: var(--wd-color-success);
-}
-.wd-alert--info {
-    background: color-mix(in srgb, var(--wd-color-info) 10%, var(--wd-color-surface));
-    border-color: color-mix(in srgb, var(--wd-color-info) 28%, var(--wd-color-border));
-    border-left-color: var(--wd-color-info);
-}
-.wd-alert--warn,
-.wd-alert--warning {
-    background: color-mix(in srgb, var(--wd-color-warn) 10%, var(--wd-color-surface));
-    border-color: color-mix(in srgb, var(--wd-color-warn) 28%, var(--wd-color-border));
-    border-left-color: var(--wd-color-warn);
-}
-.wd-alert--warn .wd-alert__icon,
-.wd-alert--warning .wd-alert__icon {
-    color: var(--wd-color-warn);
-}
-.wd-alert--error {
-    background: color-mix(in srgb, var(--wd-color-danger) 10%, var(--wd-color-surface));
-    border-color: color-mix(in srgb, var(--wd-color-danger) 28%, var(--wd-color-border));
-    border-left-color: var(--wd-color-danger);
-}
-.wd-alert--error .wd-alert__icon {
-    color: var(--wd-color-danger);
-}
-.wd-alert--help {
-    background: color-mix(in srgb, var(--wd-color-help) 10%, var(--wd-color-surface));
-    border-color: color-mix(in srgb, var(--wd-color-help) 28%, var(--wd-color-border));
-    border-left-color: var(--wd-color-help);
-}
-.wd-alert--help .wd-alert__icon {
-    color: var(--wd-color-help);
-}
-.wd-alert--secondary {
-    background: color-mix(in srgb, var(--wd-color-text-muted) 10%, var(--wd-color-surface));
-    border-color: color-mix(in srgb, var(--wd-color-text-muted) 22%, var(--wd-color-border));
-    border-left-color: var(--wd-color-text-muted);
-}
-.wd-alert--secondary .wd-alert__icon {
-    color: var(--wd-color-text-muted);
-}
-.wd-alert--contrast {
-    background: var(--wd-color-contrast);
-    border-color: var(--wd-color-contrast);
-    border-left-color: var(--wd-color-contrast-fg);
-    color: var(--wd-color-contrast-fg);
-}
-.wd-alert--contrast .wd-alert__icon,
-.wd-alert--contrast .wd-alert__close,
-.wd-alert--contrast .wd-alert__description {
-    color: color-mix(in srgb, var(--wd-color-contrast-fg) 82%, transparent);
-}
-.wd-alert--dark.wd-alert--success {
-    background: var(--wd-color-success);
-    border-color: var(--wd-color-success);
-    color: var(--wd-color-on-emphasis);
-}
-.wd-alert--dark.wd-alert--info {
-    background: var(--wd-color-info);
-    border-color: var(--wd-color-info);
-    color: var(--wd-color-on-emphasis);
-}
-.wd-alert--dark.wd-alert--warn,
-.wd-alert--dark.wd-alert--warning {
-    background: var(--wd-color-warn);
-    border-color: var(--wd-color-warn);
-    color: var(--wd-color-on-emphasis);
-}
-.wd-alert--dark.wd-alert--error {
-    background: var(--wd-color-danger);
-    border-color: var(--wd-color-danger);
-    color: var(--wd-color-on-emphasis);
-}
-.wd-alert--dark.wd-alert--help {
-    background: var(--wd-color-help);
-    border-color: var(--wd-color-help);
-    color: var(--wd-color-on-emphasis);
-}
-.wd-alert--dark .wd-alert__icon,
-.wd-alert--dark .wd-alert__close,
-.wd-alert--dark .wd-alert__description {
-    color: inherit;
-    opacity: 0.92;
+.wd-message-slide-move {
+    transition: transform var(--wd-motion-enter) var(--wd-motion-ease);
 }
 
 .wd-skeleton {

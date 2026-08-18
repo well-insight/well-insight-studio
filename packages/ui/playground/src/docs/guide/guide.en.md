@@ -64,6 +64,7 @@ Shared motion names:
 - Modal: `wd-fade`
 - Anchored menus: `wd-scale-fade`
 - Toast: `wd-slide-fade`
+- Message: `wd-message-slide` (from top)
 
 Set a global mount target with `appendTo` on [ConfigProvider](/docs/config).
 

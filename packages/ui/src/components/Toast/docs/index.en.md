@@ -1,22 +1,80 @@
 ---
 title: Toast
 category: 04 / OVERLAY
-description: Lightweight message feedback.
+description: Corner floating notifications with API and controlled lists.
 ---
 
 # Toast
 
-Lightweight message feedback for operation results.
+Corner notifications with a title and optional detail. Use the `toast` API, or keep rendering with a controlled `:messages` list.
+
+Vs [Message](/components/Message): Message is top-center short copy; Toast is corner notices.
 
 ## Import
 
 ```ts
-import { WdToast } from '@well-design/ui'
+import { toast, useToast, WdToast } from '@well-design/ui'
 ```
 
-## Basic
+## API
 
-Pass the message list via `messages`; closing emits `close`.
+```vue preview
+<script setup lang="ts">
+import { WdButton, toast } from '@well-design/ui'
+</script>
+
+<template>
+  <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center">
+    <WdButton
+      label="Success"
+      severity="success"
+      @click="toast.success({ summary: 'Saved', detail: 'Your changes are live.' })"
+    />
+    <WdButton
+      label="Info"
+      severity="info"
+      @click="toast.info({ summary: 'Tip', detail: 'You can continue.' })"
+    />
+    <WdButton
+      label="Warn"
+      severity="warn"
+      @click="toast.warn({ summary: 'Caution', detail: 'Please double-check.' })"
+    />
+    <WdButton
+      label="Error"
+      severity="danger"
+      @click="toast.error({ summary: 'Failed', detail: 'Try again later.' })"
+    />
+  </div>
+</template>
+```
+
+## Custom content
+
+`summary` / `detail` also accept strings, `h()` VNodes, components, or render factories.
+
+```vue preview
+<script setup lang="ts">
+import { h } from 'vue'
+import { WdButton, toast } from '@well-design/ui'
+
+function showRich() {
+  toast.info({
+    summary: () => h('span', [h('strong', 'Custom title')]),
+    detail: () => h('em', 'Detail can be a VNode too'),
+    life: 4000,
+  })
+}
+</script>
+
+<template>
+  <WdButton label="Rich Toast" @click="showRich" />
+</template>
+```
+
+## Controlled
+
+You can still manage the list yourself with `messages` + `close`.
 
 ```vue preview
 <script setup lang="ts">
@@ -30,7 +88,7 @@ let seq = 0
 function push(severity: ToastMessage['severity'], summary: string, detail?: string) {
   messages.value = [
     ...messages.value,
-    { id: `toast-${++seq}`, summary, detail, severity },
+    { id: `toast-${++seq}`, summary, detail, severity, life: 0 },
   ]
 }
 
@@ -43,59 +101,45 @@ function onClose(message: ToastMessage) {
   <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center">
     <WdButton label="Success" severity="success" @click="push('success', 'Saved', 'Your changes are live.')" />
     <WdButton label="Info" severity="info" @click="push('info', 'Tip', 'Something to know.')" />
-    <WdButton label="Warn" severity="warn" @click="push('warn', 'Caution', 'Please double-check.')" />
-    <WdButton label="Error" severity="danger" @click="push('error', 'Failed', 'Please try again.')" />
   </div>
   <WdToast :messages="messages" position="top-right" @close="onClose" />
 </template>
 ```
 
-## Severity
+## Methods
 
-Supports `success`, `info`, `warn`, and `error`; the legacy value `warning` maps to `warn`.
+| Method | Description |
+| --- | --- |
+| `toast.success / info / warn / error` | Add by severity |
+| `toast.add(options)` | Add one |
+| `toast.remove(id)` / `toast.close(id)` | Remove |
+| `toast.clear()` / `toast.closeAll()` | Clear all |
+| `toast.setDefaults({ position })` | Default corner position |
 
-```vue preview
-<script setup lang="ts">
-import { ref } from 'vue'
-import { WdToast } from '@well-design/ui'
-import type { ToastMessage } from '@well-design/ui'
-
-const messages = ref<ToastMessage[]>([
-  { id: 1, summary: 'Success', detail: 'Operation completed.', severity: 'success', closable: false },
-  { id: 2, summary: 'Info', detail: 'Neutral notice.', severity: 'info', closable: false },
-  { id: 3, summary: 'Warn', detail: 'Needs attention.', severity: 'warn', closable: false },
-  { id: 4, summary: 'Error', detail: 'Something failed.', severity: 'error', closable: false },
-])
-</script>
-
-<template>
-  <div style="min-height:14rem;position:relative">
-    <WdToast :messages="messages" position="top-left" />
-  </div>
-</template>
-```
+A string argument is treated as `summary`. Default `life` is `3000`; use `0` to keep open.
 
 ## Props
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `messages` | `ToastMessage[]` | `[]` | Currently displayed messages. |
-| `position` | `'top-right' \| 'top-left' \| 'bottom-right' \| 'bottom-left'` | `'top-right'` | Container position. |
-| `teleport` | `boolean` | `true` | Overlay Teleport; defaults to `body`. |
-| `appendTo` | `string \| HTMLElement \| 'self' \| false` | `'body'` | Mount target; `'self'` / `false` renders in place. |
+| `messages` | `ToastMessage[]` | — | Controlled list; omit to bind the `toast` service queue |
+| `position` | `'top-right' \| 'top-left' \| 'bottom-right' \| 'bottom-left'` | `'top-right'` | Container placement |
+| `teleport` | `boolean` | `true` | Whether to Teleport |
+| `appendTo` | `string \| HTMLElement \| 'self' \| false` | `'body'` | Mount target |
 
 ### ToastMessage
 
 | Field | Type | Default | Description |
 | --- | --- | --- | --- |
-| `id` | `string \| number` | — | Unique key. |
-| `summary` | `string` | — | Title. |
-| `detail` | `string` | — | Detail. |
-| `severity` | `'success' \| 'info' \| 'warn' \| 'error' \| 'secondary' \| 'contrast' \| 'warning'` | `'info'` | Semantic color. `warning` maps to `warn`. |
-| `closable` | `boolean` | `true` | Whether to show the close button. |
+| `id` | `string \| number` | — | Unique key |
+| `summary` | `string \| number \| VNode \| Component \| (() => VNodeChild)` | — | Title |
+| `detail` | same as above | — | Detail |
+| `severity` | `'success' \| 'info' \| 'warn' \| 'error' \| …` | `'info'` | Tone |
+| `closable` | `boolean` | `true` | Close button |
+| `life` | `number` | API default `3000` | Auto-close ms |
 
 ## Events
 
-| Event | Prop | Description |
+| Event | Payload | Description |
 | --- | --- | --- |
-| `close` | `ToastMessage` | Emitted when the close button is clicked; the caller should remove the item from `messages`. |
+| `close` | `ToastMessage` | Close clicked; remove it yourself in controlled mode |

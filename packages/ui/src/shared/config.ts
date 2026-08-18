@@ -3,6 +3,7 @@ import { zhCN } from '../locale/zh-CN'
 import type { WdLocaleConfig } from '../locale/types'
 import { applyDensity, type DensityPreference } from '../theme'
 import type { WdAppendTo } from './overlay'
+import { setWdOverlayAppContext } from './overlayHost'
 import type { WdInputVariant, WdSizeInput } from './types'
 
 export type WdDensity = DensityPreference
@@ -92,6 +93,7 @@ export function createWellDesign(options: WdGlobalConfig = {}) {
     install(app: App) {
       app.provide(WD_CONFIG_KEY, options)
       app.config.globalProperties.$wd = options
+      setWdOverlayAppContext(app._context)
       if (typeof document !== 'undefined') {
         if (options.density) applyDensity(options.density)
         if (options.zIndex != null) {

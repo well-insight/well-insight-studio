@@ -62,6 +62,7 @@ description: 触发动作的按钮
 - 模态：`wd-fade`
 - 锚定菜单：`wd-scale-fade`
 - Toast：`wd-slide-fade`
+- Message：`wd-message-slide`（顶部滑入）
 
 全局默认挂载点可通过 [ConfigProvider](/docs/config) 的 `appendTo` 统一设置。
 

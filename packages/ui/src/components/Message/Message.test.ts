@@ -1,45 +1,52 @@
-import { mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import WdMessage from './Message.vue'
+import { message, messageState, resetMessageService } from './message'
 
-describe('WdMessage', () => {
+describe('message API', () => {
   afterEach(() => {
     vi.useRealTimers()
+    resetMessageService()
   })
 
-  it('renders with severity class and default info tone', () => {
-    const wrapper = mount(WdMessage, { slots: { default: 'Hello' } })
-    expect(wrapper.classes()).toContain('wd-message--info')
-    expect(wrapper.attributes('role')).toBe('status')
-    expect(wrapper.text()).toContain('Hello')
-    expect(wrapper.find('.wd-message__icon').exists()).toBe(true)
-  })
-
-  it('normalizes legacy warning severity to warn', () => {
-    const wrapper = mount(WdMessage, { props: { severity: 'warning' }, slots: { default: 'Caution' } })
-    expect(wrapper.classes()).toContain('wd-message--warn')
-    expect(wrapper.classes()).not.toContain('wd-message--warning')
-  })
-
-  it('emits close when closable button is clicked', async () => {
-    const wrapper = mount(WdMessage, {
-      props: { closable: true },
-      slots: { default: 'Dismiss me' },
+  it('opens a success message at the top host', async () => {
+    const handle = message.success('Saved')
+    expect(messageState.items).toHaveLength(1)
+    expect(messageState.items[0]).toMatchObject({
+      id: handle.id,
+      content: 'Saved',
+      severity: 'success',
     })
-    await wrapper.find('.wd-message__close').trigger('click')
-    expect(wrapper.emitted('close')).toEqual([[]])
-    expect(wrapper.find('.wd-message').exists()).toBe(false)
+    await nextTick()
+    expect(document.body.querySelector('.wd-message-host')).toBeTruthy()
+    expect(document.body.textContent).toContain('Saved')
+  })
+
+  it('normalizes warning to warn', () => {
+    message.warning('Careful')
+    expect(messageState.items[0]?.severity).toBe('warn')
   })
 
   it('auto-closes after life ms', async () => {
     vi.useFakeTimers()
-    const wrapper = mount(WdMessage, {
-      props: { life: 1000 },
-      slots: { default: 'Timed' },
-    })
-    expect(wrapper.find('.wd-message').exists()).toBe(true)
+    message.info({ content: 'Timed', life: 1000 })
+    expect(messageState.items).toHaveLength(1)
     await vi.advanceTimersByTimeAsync(1000)
-    expect(wrapper.emitted('close')).toEqual([[]])
-    expect(wrapper.find('.wd-message').exists()).toBe(false)
+    expect(messageState.items).toHaveLength(0)
+  })
+
+  it('closes by handle and closeAll', () => {
+    const first = message.info({ content: 'One', life: 0 })
+    message.info({ content: 'Two', life: 0 })
+    first.close()
+    expect(messageState.items).toHaveLength(1)
+    message.closeAll()
+    expect(messageState.items).toHaveLength(0)
+  })
+
+  it('renders VNode content from h()', async () => {
+    const { h } = await import('vue')
+    message.info({ content: () => h('strong', 'Rich node'), life: 0 })
+    await nextTick()
+    expect(document.body.querySelector('.wd-message__content strong')?.textContent).toBe('Rich node')
   })
 })

@@ -1,27 +1,39 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useWdLocale } from '../../locale'
+import { useWdConfig } from '../../shared/config'
+import { resolveOverlayTeleport } from '../../shared/overlay'
+import { WdRenderableView } from '../../shared/Renderable'
 import { normalizeSeverity } from '../../shared/types'
 import WdIcon from '../Icon/Icon.vue'
 import type { IconName } from '../Icon/types'
-import type { MessageProps } from './types'
+import {
+  closeMessageItem,
+  messageState,
+  registerMessageManualHost,
+  unregisterMessageManualHost,
+} from './messageState'
+import type { MessageItem, MessageProps } from './types'
 
 const props = withDefaults(defineProps<MessageProps>(), {
-  severity: 'info',
-  closable: false,
-  icon: true,
+  teleport: true,
+  auto: false,
 })
 
-const emit = defineEmits<{ (event: 'close'): void }>()
+const config = useWdConfig()
 const locale = useWdLocale()
+const teleportTarget = computed(() => resolveOverlayTeleport(props, config.value.appendTo))
 
-const visible = ref(true)
-let lifeTimer: ReturnType<typeof setTimeout> | undefined
+onMounted(() => {
+  if (!props.auto) registerMessageManualHost()
+})
 
-const severityTone = computed(() => normalizeSeverity(props.severity) ?? 'info')
+onBeforeUnmount(() => {
+  if (!props.auto) unregisterMessageManualHost()
+})
 
-const iconName = computed<IconName>(() => {
-  switch (severityTone.value) {
+function iconName(severity?: MessageItem['severity']): IconName {
+  switch (normalizeSeverity(severity) ?? 'info') {
     case 'success':
       return 'check-circle'
     case 'warn':
@@ -31,64 +43,45 @@ const iconName = computed<IconName>(() => {
     default:
       return 'info'
   }
-})
-
-const rootClass = computed(() => ['wd-message', `wd-message--${severityTone.value}`])
-
-function clearLifeTimer() {
-  if (lifeTimer != null) {
-    clearTimeout(lifeTimer)
-    lifeTimer = undefined
-  }
 }
 
-function close() {
-  if (!visible.value) return
-  clearLifeTimer()
-  visible.value = false
-  emit('close')
+function severityClass(severity?: MessageItem['severity']) {
+  return `wd-message--${normalizeSeverity(severity) ?? 'info'}`
 }
 
-function scheduleLife() {
-  clearLifeTimer()
-  if (props.life == null || props.life <= 0 || !visible.value) return
-  lifeTimer = setTimeout(() => {
-    close()
-  }, props.life)
+function onClose(item: MessageItem) {
+  closeMessageItem(item.id)
 }
-
-onMounted(() => {
-  scheduleLife()
-})
-
-watch(
-  () => props.life,
-  () => {
-    scheduleLife()
-  },
-)
-
-onBeforeUnmount(() => {
-  clearLifeTimer()
-})
 </script>
 
 <template>
-  <div v-if="visible" :class="rootClass" role="status">
-    <span v-if="icon" class="wd-message__icon" aria-hidden="true">
-      <WdIcon :name="iconName" size="sm" />
-    </span>
-    <div class="wd-message__content">
-      <slot />
+  <Teleport :to="teleportTarget.to" :disabled="teleportTarget.disabled">
+    <div class="wd-message-host" aria-live="polite" aria-atomic="false">
+      <TransitionGroup name="wd-message-slide">
+        <div
+          v-for="item in messageState.items"
+          :key="item.id"
+          class="wd-message"
+          :class="severityClass(item.severity)"
+          role="status"
+        >
+          <span v-if="item.icon !== false" class="wd-message__icon" aria-hidden="true">
+            <WdIcon :name="iconName(item.severity)" size="sm" />
+          </span>
+          <div class="wd-message__content">
+            <WdRenderableView :value="item.content" />
+          </div>
+          <button
+            v-if="item.closable"
+            type="button"
+            class="wd-message__close"
+            :aria-label="locale.close"
+            @click="onClose(item)"
+          >
+            <WdIcon name="close" size="sm" />
+          </button>
+        </div>
+      </TransitionGroup>
     </div>
-    <button
-      v-if="closable"
-      type="button"
-      class="wd-message__close"
-      :aria-label="locale.close"
-      @click="close"
-    >
-      <WdIcon name="close" size="sm" />
-    </button>
-  </div>
+  </Teleport>
 </template>
