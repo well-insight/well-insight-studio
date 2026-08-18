@@ -14,21 +14,33 @@ pnpm changeset
 
 ## 发版
 
-```bash
-# 1. 汇总 changeset → bump package.json + 写入 CHANGELOG.md
-pnpm version-packages
+日常先记变更：
 
-# 2. 构建并发布到 npm（仅非 private 包）
+```bash
+pnpm changeset
+```
+
+然后一条命令完成 UI 发版（bump CHANGELOG → `release/{version}` 分支 → 提交 → 构建 → npm publish → `v{version}` 标签 → 推送）：
+
+```bash
 pnpm release
 ```
 
-首次发布 `0.1.0`（版本号已在 package.json，且 CHANGELOG 已有初版条目）可直接：
+只要本地打 tag / 建分支、不推远程：
 
 ```bash
-pnpm build:ui
-pnpm --filter @well-design/ui publish --access public
+pnpm release -- --no-push
 ```
 
-之后请走 `changeset` → `version-packages` → `release` 流程，保证「更新日志」页与 npm 版本同步。
+`changeset publish` 仍会打 `@well-design/ui@X.Y.Z`；另外还有友好标签 `vX.Y.Z` 和分支 `release/X.Y.Z`（标签与分支不能同名）。
+
+只补 git 引用、不重新 publish：
+
+```bash
+pnpm release:git
+node scripts/release-git.mjs --tag --branch --push
+```
+
+没有待处理 changeset 时，`pnpm release` 会发布当前 `packages/ui` 版本（适合首次 `0.1.0`）。
 
 `changeset status` 的对比基线分支为 `master`（见 `.changeset/config.json` 的 `baseBranch`）。

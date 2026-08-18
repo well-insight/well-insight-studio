@@ -22,8 +22,7 @@ pnpm test
 pnpm build        # 先构建 ui，再构建其余包
 pnpm build:ui     # 仅构建 ui
 pnpm changeset    # 记录 UI 包变更（Changesets）
-pnpm version-packages  # bump 版本并写入 CHANGELOG
-pnpm release      # 构建 UI 并 publish
+pnpm release      # UI 发版：bump、分支、提交、构建、publish、打 tag、推送
 ```
 
 ## 组件库（对外）
@@ -44,7 +43,7 @@ pnpm --filter @well-design/ui dev          # http://localhost:5182
 pnpm --filter @well-design/ui build:docs
 ```
 
-组件文档写在各组件目录的 `docs/index.md`，支持 `vue preview` 代码块。更多说明见 [`packages/ui/README.md`](packages/ui/README.md)。发版与变更记录见 [`.changeset/README.md`](.changeset/README.md)；文档站「更新日志」对应 `packages/ui/CHANGELOG.md`。
+组件文档写在各组件目录的 `docs/index.md`（中文）与 `docs/index.en.md`（英文），支持 `vue preview` 代码块。更多说明见 [`packages/ui/README.md`](packages/ui/README.md)。发版与变更记录见 [`.changeset/README.md`](.changeset/README.md)；文档站「更新日志」对应 `packages/ui/CHANGELOG.md` / `CHANGELOG.en.md`。
 
 ## API documentation
 

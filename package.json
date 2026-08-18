@@ -17,8 +17,9 @@
     "test:coverage": "pnpm -r test:coverage",
     "typecheck": "pnpm -r typecheck",
     "changeset": "changeset",
-    "version-packages": "changeset version",
-    "release": "pnpm build:ui && changeset publish"
+    "version-packages": "changeset version && node scripts/release-git.mjs --branch --checkout",
+    "release": "node scripts/release-ui.mjs",
+    "release:git": "node scripts/release-git.mjs --tag --branch"
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.0",
