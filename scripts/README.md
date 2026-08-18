@@ -18,6 +18,19 @@ docs(api): 补充鉴权说明
 
 ## 发版
 
+### 仅发布到 npm（在 UI 包内）
+
+不写 CHANGELOG、不打 tag。先改好 `packages/ui/package.json` 的 `version`，再执行：
+
+```bash
+pnpm --filter @well-design/ui release
+# 或 cd packages/ui && pnpm release
+```
+
+等价于：`build` + `pnpm publish --access public --no-git-checks`。
+
+### 完整发版（仓库根目录）
+
 ```bash
 pnpm release
 ```

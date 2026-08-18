@@ -21,7 +21,8 @@ pnpm typecheck
 pnpm test
 pnpm build        # 先构建 ui，再构建其余包
 pnpm build:ui     # 仅构建 ui
-pnpm release      # UI 发版：交互勾选 CHANGELOG 条目、选择 bump、publish、打 tag
+pnpm release                          # UI 完整发版：CHANGELOG、bump、publish、打 tag
+pnpm --filter @well-design/ui release # 仅 build + npm publish（需先改好 version）
 ```
 
 提交规范见 [`docs/COMMIT_CONVENTION.md`](docs/COMMIT_CONVENTION.md)。发版细节见 [`scripts/README.md`](scripts/README.md)。

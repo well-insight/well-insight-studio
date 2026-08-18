@@ -72,7 +72,15 @@ pnpm build:ui
 
 ### 发版
 
-按 [提交规范](../../docs/COMMIT_CONVENTION.md) 提交。发版时会列出上一个 `v*` 以来的全部提交，**交互勾选**写入 CHANGELOG 的条目，并**由你选择** `patch` / `minor` / `major`（不会按 commit type 自动升版）。
+**仅构建并发布到 npm**（不写 CHANGELOG、不打 git tag；请先自行改好 `version`）：
+
+```bash
+pnpm --filter @well-design/ui release
+# 或在 packages/ui 目录下：
+pnpm release
+```
+
+**完整发版**（交互勾选 CHANGELOG、选择 bump、打 tag / 分支）在仓库根目录：
 
 ```bash
 pnpm release -- --dry-run
