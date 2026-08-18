@@ -76,14 +76,20 @@ const plan = await prepareUiRelease({ bump, dryRun, allowEmpty: force, commitMod
 
 if (plan.firstRelease) {
   console.log(`First release of current version ${plan.version} (no v* tag yet)`)
+} else if (plan.resume) {
+  console.log(
+    `Resuming v${plan.version}: package.json / CHANGELOG already at this version, tag ${plan.previousTag || '(none)'} is behind`,
+  )
 } else {
   console.log(
-    `${plan.previousTag} → v${plan.version} (${plan.bump}, ${plan.commits.length} changelog entr${plan.commits.length === 1 ? 'y' : 'ies'})`,
+    `${plan.previousVersion} → v${plan.version} (${plan.bump}, ${plan.commits.length} changelog entr${plan.commits.length === 1 ? 'y' : 'ies'})`,
   )
 }
 
 if (dryRun) {
-  if (!plan.firstRelease) {
+  if (plan.resume) {
+    console.log('No CHANGELOG rewrite; would tag / publish this version.')
+  } else if (!plan.firstRelease) {
     console.log(`\nCHANGELOG.md preview:\n\n## ${plan.version}\n\n${formatChangelogBody(plan.commits, 'zh-CN')}\n`)
   }
   process.exit(0)

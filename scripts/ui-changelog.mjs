@@ -44,6 +44,7 @@ export function readUiPackage() {
 
 export function writeUiVersion(version) {
   const pkg = readUiPackage()
+  if (pkg.version === version) return
   pkg.version = version
   writeFileSync(uiPackagePath, `${JSON.stringify(pkg, null, 2)}\n`)
 }
@@ -54,6 +55,58 @@ export function lastVersionTag() {
     .map((tag) => tag.trim())
     .filter((tag) => /^v\d+\.\d+\.\d+/.test(tag))
   return tags[0] ?? ''
+}
+
+export function parseSemver(version) {
+  const match = String(version ?? '').match(/^v?(\d+)\.(\d+)\.(\d+)/)
+  if (!match) return null
+  return {
+    major: Number(match[1]),
+    minor: Number(match[2]),
+    patch: Number(match[3]),
+    raw: `${match[1]}.${match[2]}.${match[3]}`,
+  }
+}
+
+export function compareSemver(a, b) {
+  const pa = parseSemver(a)
+  const pb = parseSemver(b)
+  if (!pa && !pb) return 0
+  if (!pa) return -1
+  if (!pb) return 1
+  return pa.major - pb.major || pa.minor - pb.minor || pa.patch - pb.patch
+}
+
+export function lastChangelogVersion(filePath) {
+  const raw = readFileSync(filePath, 'utf8').replace(/^\uFEFF/, '')
+  const match = raw.match(/^## (\d+\.\d+\.\d+)\s*$/m)
+  return match?.[1] ?? ''
+}
+
+export function latestKnownVersion() {
+  const versions = [
+    readUiPackage().version,
+    lastVersionTag().replace(/^v/, ''),
+    lastChangelogVersion(changelogZhPath),
+    lastChangelogVersion(changelogEnPath),
+  ].filter((version) => parseSemver(version))
+  return versions.sort(compareSemver).at(-1) ?? ''
+}
+
+export function lastReleaseRef(version) {
+  if (!version) return lastVersionTag()
+  const tag = `v${version}`
+  if (git(['rev-parse', '--verify', '--quiet', tag], { allowFail: true })) return tag
+  const hash = git(
+    ['log', '-1', '--fixed-strings', `--grep=release: @well-design/ui v${version}`, '--pretty=format:%H'],
+    { allowFail: true },
+  )
+  return hash || lastVersionTag()
+}
+
+export function changelogHasVersion(filePath, version) {
+  const raw = readFileSync(filePath, 'utf8').replace(/^\uFEFF/, '')
+  return new RegExp(`^## ${String(version).replace(/\./g, '\\.')}\\s*$`, 'm').test(raw)
 }
 
 export function parseCommit(subject) {
@@ -157,8 +210,9 @@ export function formatChangelogBody(commits, lang) {
 export function prependChangelog(filePath, version, body) {
   const raw = readFileSync(filePath, 'utf8').replace(/^\uFEFF/, '')
   const heading = `## ${version}`
-  if (new RegExp(`^## ${version.replace(/\./g, '\\.')}\\s*$`, 'm').test(raw)) {
-    throw new Error(`${filePath} already contains ${heading}`)
+  if (changelogHasVersion(filePath, version)) {
+    console.log(`${filePath} already contains ${heading}, skip`)
+    return false
   }
   const prefixMatch = raw.match(/^(# [^\n]+\r?\n\r?\n)/)
   const block = `${heading}\n\n${body}\n\n`
@@ -205,13 +259,17 @@ export async function prepareUiRelease({
 } = {}) {
   const pkg = readUiPackage()
   const previousTag = lastVersionTag()
-  const previousVersion = previousTag.replace(/^v/, '') || pkg.version
-  const allCommits = collectCommits(previousTag)
+  const previousVersion = latestKnownVersion() || previousTag.replace(/^v/, '') || pkg.version
+  const sinceRef = lastReleaseRef(previousVersion) || previousTag
+  const allCommits = collectCommits(sinceRef)
   const interactive = commitMode === 'interactive' && isInteractive()
+  const tagVersion = previousTag.replace(/^v/, '')
+  const canResume = Boolean(previousVersion && tagVersion !== previousVersion)
 
-  if (!previousTag) {
+  if (!previousTag && !changelogHasVersion(changelogZhPath, pkg.version)) {
     return {
       firstRelease: true,
+      resume: false,
       previousTag: '',
       previousVersion,
       version: pkg.version,
@@ -221,8 +279,22 @@ export async function prepareUiRelease({
     }
   }
 
+  if (allCommits.length === 0 && canResume) {
+    if (!dryRun) writeUiVersion(previousVersion)
+    return {
+      firstRelease: false,
+      resume: true,
+      previousTag,
+      previousVersion,
+      version: previousVersion,
+      bump: null,
+      commits: [],
+      allCommits,
+    }
+  }
+
   if (allCommits.length === 0 && !allowEmpty) {
-    throw new Error(`No commits since ${previousTag}. Commit changes first, or pass --force.`)
+    throw new Error(`No commits since ${sinceRef || previousTag || previousVersion}. Commit changes first, or pass --force.`)
   }
 
   if (commitMode === 'interactive' && !isInteractive() && !bump) {
@@ -261,6 +333,7 @@ export async function prepareUiRelease({
 
   return {
     firstRelease: false,
+    resume: false,
     previousTag,
     previousVersion,
     version,

@@ -5,10 +5,20 @@ export function isInteractive() {
   return Boolean(input.isTTY && output.isTTY)
 }
 
+function exitOnAbort(error) {
+  if (error?.code === 'ABORT_ERR' || error?.name === 'AbortError') {
+    console.log('\nCancelled')
+    process.exit(130)
+  }
+  throw error
+}
+
 async function withRl(fn) {
   const rl = readline.createInterface({ input, output })
   try {
     return await fn(rl)
+  } catch (error) {
+    exitOnAbort(error)
   } finally {
     rl.close()
   }
