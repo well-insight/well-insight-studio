@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, ref, useAttrs } from 'vue'
+import { computed, ref, useAttrs, type Component } from 'vue'
 import { formatLocale, useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
 import { resolveSizeClass } from '../../shared/types'
-import type { InputPasswordProps, PasswordStrength } from './types'
+import WdIcon from '../Icon/Icon.vue'
+import type { IconName } from '../Icon/types'
+import type { InputPasswordProps } from './types'
 
 defineOptions({ inheritAttrs: false })
 
@@ -15,6 +17,8 @@ const props = withDefaults(defineProps<InputPasswordProps>(), {
   fluid: false,
   feedback: false,
   toggleMask: true,
+  showIcon: 'eye',
+  hideIcon: 'eye-off',
 })
 const emit = defineEmits<{ (event: 'update:modelValue', value: string): void }>()
 
@@ -24,7 +28,16 @@ const unmasked = ref(false)
 const inputId = computed(() => props.id ?? `wd-password-${Math.random().toString(36).slice(2, 8)}`)
 const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
 
-const strength = computed<PasswordStrength>(() => {
+const showIconName = computed(() => (typeof props.showIcon === 'string' ? (props.showIcon as IconName) : undefined))
+const showIconComponent = computed(() =>
+  typeof props.showIcon === 'string' || !props.showIcon ? undefined : (props.showIcon as Component),
+)
+const hideIconName = computed(() => (typeof props.hideIcon === 'string' ? (props.hideIcon as IconName) : undefined))
+const hideIconComponent = computed(() =>
+  typeof props.hideIcon === 'string' || !props.hideIcon ? undefined : (props.hideIcon as Component),
+)
+
+const strength = computed(() => {
   const value = props.modelValue ?? ''
   if (!value) return 'empty'
   let score = 0
@@ -51,6 +64,7 @@ const rootClass = computed(() => [
     'wd-password--fluid': props.fluid,
     'wd-password--invalid': props.invalid,
     'wd-password--disabled': props.disabled,
+    'wd-password--toggle': props.toggleMask,
   },
 ])
 
@@ -80,10 +94,18 @@ function updateValue(event: Event) {
         class="wd-password__toggle"
         type="button"
         :aria-label="unmasked ? locale.hidePassword : locale.showPassword"
+        :aria-pressed="unmasked"
         :disabled="disabled"
         @click="unmasked = !unmasked"
       >
-        {{ unmasked ? locale.hidePassword : locale.showPassword }}
+        <slot v-if="unmasked" name="hideIcon" :unmasked="unmasked">
+          <WdIcon v-if="hideIconName" :name="hideIconName" size="sm" />
+          <component :is="hideIconComponent" v-else-if="hideIconComponent" />
+        </slot>
+        <slot v-else name="showIcon" :unmasked="unmasked">
+          <WdIcon v-if="showIconName" :name="showIconName" size="sm" />
+          <component :is="showIconComponent" v-else-if="showIconComponent" />
+        </slot>
       </button>
     </div>
     <span

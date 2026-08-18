@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
+import { isOverlayTeleported, resolveOverlayTeleport } from '../../shared/overlay'
 import { resolveSizeClass } from '../../shared/types'
 import type { SplitButtonItem, SplitButtonProps } from './types'
 
@@ -9,6 +10,7 @@ const props = withDefaults(defineProps<SplitButtonProps>(), {
   model: () => [],
   disabled: false,
   outlined: false,
+  teleport: true,
 })
 
 const emit = defineEmits<{
@@ -20,7 +22,11 @@ const config = useWdConfig()
 const locale = useWdLocale()
 const open = ref(false)
 const root = ref<HTMLElement | null>(null)
+const menu = ref<HTMLElement | null>(null)
+const menuStyle = ref<Record<string, string>>({})
 const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
+const teleportTarget = computed(() => resolveOverlayTeleport(props, config.value.appendTo))
+const teleported = computed(() => isOverlayTeleported(props, config.value.appendTo))
 
 const rootClass = computed(() => [
   'wd-splitbutton',
@@ -32,6 +38,21 @@ const rootClass = computed(() => [
     'wd-splitbutton--open': open.value,
   },
 ])
+
+function updateMenuPosition() {
+  if (!teleported.value || !root.value) return
+  const rect = root.value.getBoundingClientRect()
+  menuStyle.value = {
+    left: 'auto',
+    minWidth: `${rect.width}px`,
+    right: `${document.documentElement.clientWidth - rect.right}px`,
+    top: `${rect.bottom + 4}px`,
+  }
+}
+
+function onViewportChange() {
+  if (open.value) updateMenuPosition()
+}
 
 function onMainClick(event: MouseEvent) {
   if (props.disabled) return
@@ -51,15 +72,31 @@ function activate(item: SplitButtonItem) {
 }
 
 function onDocumentClick(event: MouseEvent) {
-  if (!root.value?.contains(event.target as Node)) open.value = false
+  const target = event.target as Node
+  if (root.value?.contains(target) || menu.value?.contains(target)) return
+  open.value = false
 }
 
 watch(open, (isOpen) => {
-  if (isOpen) document.addEventListener('click', onDocumentClick)
-  else document.removeEventListener('click', onDocumentClick)
+  if (isOpen) {
+    document.addEventListener('click', onDocumentClick)
+    void nextTick(() => updateMenuPosition())
+    if (teleported.value) {
+      window.addEventListener('resize', onViewportChange)
+      window.addEventListener('scroll', onViewportChange, true)
+    }
+  } else {
+    document.removeEventListener('click', onDocumentClick)
+    window.removeEventListener('resize', onViewportChange)
+    window.removeEventListener('scroll', onViewportChange, true)
+  }
 })
 
-onBeforeUnmount(() => document.removeEventListener('click', onDocumentClick))
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocumentClick)
+  window.removeEventListener('resize', onViewportChange)
+  window.removeEventListener('scroll', onViewportChange, true)
+})
 </script>
 
 <template>
@@ -78,23 +115,35 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocumentClick))
       class="wd-splitbutton__trigger"
       :aria-label="locale.moreActions"
       :aria-expanded="open"
+      aria-haspopup="menu"
       :disabled="disabled"
       @click="toggleMenu"
     >
       ▾
     </button>
-    <ul v-if="open" class="wd-splitbutton__menu" role="menu">
-      <li v-for="(item, index) in model" :key="`${item.label}-${index}`" role="presentation">
-        <button
-          type="button"
-          class="wd-splitbutton__item"
-          role="menuitem"
-          :disabled="item.disabled"
-          @click="activate(item)"
+    <Teleport :to="teleportTarget.to" :disabled="teleportTarget.disabled">
+      <Transition name="wd-scale-fade">
+        <ul
+          v-if="open"
+          ref="menu"
+          class="wd-splitbutton__menu"
+          :class="{ 'wd-splitbutton__menu--teleported': teleported }"
+          :style="teleported ? menuStyle : undefined"
+          role="menu"
         >
-          {{ item.label }}
-        </button>
-      </li>
-    </ul>
+          <li v-for="(item, index) in model" :key="`${item.label}-${index}`" role="presentation">
+            <button
+              type="button"
+              class="wd-splitbutton__item"
+              role="menuitem"
+              :disabled="item.disabled"
+              @click="activate(item)"
+            >
+              {{ item.label }}
+            </button>
+          </li>
+        </ul>
+      </Transition>
+    </Teleport>
   </div>
 </template>

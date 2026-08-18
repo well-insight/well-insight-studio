@@ -40,6 +40,8 @@ const items = [
 | `model` | `{ label, command?, disabled? }[]` | `[]` | Menu items. |
 | `severity` / `outlined` / `size` | — | — | Visual variants. |
 | `disabled` | `boolean` | `false` | Disabled. |
+| `teleport` | `boolean` | `true` | Whether to Teleport the menu. |
+| `appendTo` | `string \| HTMLElement \| 'self'` | `'body'` | Mount target; `'self'` keeps it in place. |
 
 ## Events
 

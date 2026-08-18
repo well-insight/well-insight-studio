@@ -1,6 +1,12 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
+import { nextTick } from 'vue'
 import WdSplitButton from './SplitButton.vue'
+
+const items = [
+  { label: 'Save As', command: vi.fn() },
+  { label: 'Export', disabled: true },
+]
 
 describe('WdSplitButton', () => {
   it('emits click from main button', async () => {
@@ -9,11 +15,33 @@ describe('WdSplitButton', () => {
     expect(wrapper.emitted('click')).toHaveLength(1)
   })
 
+  it('teleports the menu to body by default', async () => {
+    const wrapper = mount(WdSplitButton, {
+      attachTo: document.body,
+      props: { label: 'Save', model: items },
+    })
+    await wrapper.find('.wd-splitbutton__trigger').trigger('click')
+    await nextTick()
+    expect(document.body.querySelector('.wd-splitbutton__menu--teleported')).toBeTruthy()
+    wrapper.unmount()
+  })
+
+  it('keeps the menu in place when teleport is disabled', async () => {
+    const wrapper = mount(WdSplitButton, {
+      props: { label: 'Save', model: items, teleport: false },
+    })
+    await wrapper.find('.wd-splitbutton__trigger').trigger('click')
+    await nextTick()
+    expect(wrapper.find('.wd-splitbutton__menu--teleported').exists()).toBe(false)
+    expect(wrapper.find('[role="menu"]').exists()).toBe(true)
+  })
+
   it('opens menu and emits command', async () => {
     const command = vi.fn()
     const wrapper = mount(WdSplitButton, {
       props: {
         label: 'Save',
+        teleport: false,
         model: [{ label: 'Save As', command }, { label: 'Export', disabled: true }],
       },
     })

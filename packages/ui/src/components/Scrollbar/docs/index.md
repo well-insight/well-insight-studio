@@ -24,7 +24,7 @@ import { WdScrollbar } from '@well-design/ui'
 </script>
 
 <template>
-  <WdScrollbar height="240px" always>
+  <WdScrollbar height="240px" always style="width: 200px">
     <p
       v-for="item in 20"
       :key="item"
@@ -59,7 +59,7 @@ const count = ref(3)
       <WdButton label="Add" size="small" @click="count++" />
       <WdButton label="Remove" severity="secondary" size="small" @click="count = Math.max(0, count - 1)" />
     </div>
-    <WdScrollbar max-height="220px" always>
+    <WdScrollbar max-height="220px" always style="width: 200px">
       <p
         v-for="item in count"
         :key="item"
@@ -125,7 +125,7 @@ import { WdScrollbar } from '@well-design/ui'
     </div>
     <div>
       <p style="margin:0 0 0.5rem;color:var(--wd-color-text-muted)">native</p>
-      <WdScrollbar height="160px" native>
+      <WdScrollbar height="160px" native  style="width: 200px">
         <p v-for="n in 12" :key="n" style="margin:0.5rem 0">Line {{ n }}</p>
       </WdScrollbar>
     </div>
@@ -163,7 +163,7 @@ function onScroll(payload: { scrollTop: number }) {
       <WdButton label="Bottom" size="small" severity="secondary" @click="jump(9999)" />
       <span style="color:var(--wd-color-text-muted);font-size:0.875rem">scrollTop: {{ scrollTop }}</span>
     </div>
-    <WdScrollbar ref="scrollbarRef" height="200px" always @scroll="onScroll">
+    <WdScrollbar ref="scrollbarRef" height="200px" style="width: 200px" always @scroll="onScroll">
       <p
         v-for="item in 24"
         :key="item"
@@ -199,7 +199,7 @@ function loadMore(direction: ScrollbarDirection) {
 </script>
 
 <template>
-  <WdScrollbar height="220px" always @end-reached="loadMore">
+  <WdScrollbar height="220px" always @end-reached="loadMore" style="width: 200px">
     <p
       v-for="item in num"
       :key="item"
