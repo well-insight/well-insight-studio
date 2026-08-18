@@ -46,7 +46,7 @@ useModalOverlay({
 
 <template>
   <Teleport :to="teleportTarget.to" :disabled="teleportTarget.disabled">
-    <Transition name="wd-fade">
+    <Transition name="wd-drawer">
       <div
         v-if="modelValue"
         class="wd-drawer-backdrop"
