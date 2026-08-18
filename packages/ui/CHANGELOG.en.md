@@ -1,5 +1,12 @@
 # @well-design/ui
 
+## 0.1.1
+
+### Features
+
+- 更新发版流程，添加 UI 组件的发布命令和文档说明
+- 添加 commitlint 配置和 husky 钩子，优化发版流程和提交规范文档
+
 ## 0.1.0
 
 ### Minor Changes
