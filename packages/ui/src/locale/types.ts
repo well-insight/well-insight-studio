@@ -27,6 +27,14 @@ export interface WdLocaleConfig {
   monthNames?: string[]
   monthYear?: string
   chooseFile?: string
+  dropFileHere?: string
+  clickToUpload?: string
+  previewFile?: string
+  removeFile?: string
+  retryUpload?: string
+  uploadFile?: string
+  addFile?: string
+  uploadFailed?: string
   showPassword?: string
   hidePassword?: string
   passwordWeak?: string

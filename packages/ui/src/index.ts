@@ -100,6 +100,7 @@ export { default as WdInputPassword } from './components/InputPassword/InputPass
 export type {
   InputPasswordEmits,
   InputPasswordProps,
+  InputPasswordSlots,
   PasswordStrength,
 } from './components/InputPassword/types'
 export { default as WdFloatLabel } from './components/FloatLabel/FloatLabel.vue'
@@ -235,7 +236,18 @@ export type {
   CommandMenuProps,
 } from './components/CommandMenu/types'
 export { default as WdFileUpload } from './components/FileUpload/FileUpload.vue'
-export type { FileUploadEmits, FileUploadMode, FileUploadProps } from './components/FileUpload/types'
+export type {
+  FileUploadEmits,
+  FileUploadExpose,
+  FileUploadFile,
+  FileUploadInstance,
+  FileUploadListType,
+  FileUploadMode,
+  FileUploadProps,
+  FileUploadRequestOptions,
+  FileUploadSlots,
+  FileUploadStatus,
+} from './components/FileUpload/types'
 export { default as WdCarousel } from './components/Carousel/Carousel.vue'
 export type { CarouselEmits, CarouselProps } from './components/Carousel/types'
 export { default as WdGallery } from './components/Gallery/Gallery.vue'
