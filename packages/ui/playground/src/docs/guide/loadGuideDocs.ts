@@ -1,4 +1,5 @@
 import type { Component } from 'vue'
+import type { DocsLang } from '../../i18n'
 
 export interface GuideDocFrontmatter {
   title?: string
@@ -19,10 +20,12 @@ export interface ResolvedGuideDoc {
   component: Component
 }
 
-const guideModules = import.meta.glob<{
+type GuideModule = {
   default: Component
   frontmatter?: GuideDocFrontmatter
-}>('./*.md', { eager: true })
+}
+
+const guideModules = import.meta.glob<GuideModule>('./*.md', { eager: true })
 
 const rawGuideModules = import.meta.glob<string>('./*.md', {
   eager: true,
@@ -30,10 +33,14 @@ const rawGuideModules = import.meta.glob<string>('./*.md', {
   import: 'default',
 })
 
-function slugFromPath(path: string): string | null {
+function parseGuidePath(path: string): { slug: string; lang: DocsLang } | null {
   const normalized = path.replace(/\\/g, '/')
-  const match = normalized.match(/\/([^/]+)\.md$/)
-  return match?.[1] ?? null
+  const match = normalized.match(/\/([^/]+?)(?:\.(en))?\.md$/)
+  if (!match?.[1]) return null
+  return {
+    slug: match[1],
+    lang: match[2] === 'en' ? 'en-US' : 'zh-CN',
+  }
 }
 
 function parseFrontmatterFromRaw(raw: string): GuideDocFrontmatter {
@@ -62,15 +69,30 @@ function resolveFrontmatter(path: string, mod: { frontmatter?: GuideDocFrontmatt
   } satisfies GuideDocFrontmatter
 }
 
-export function listGuideDocs(): GuideDocMeta[] {
+function findGuideEntry(slug: string, lang: DocsLang = 'zh-CN') {
+  const entries = Object.entries(guideModules)
+  const matchLang = (target: DocsLang) =>
+    entries.find(([path]) => {
+      const parsed = parseGuidePath(path)
+      return parsed?.slug === slug && parsed.lang === target
+    })
+
+  const primary = matchLang(lang) ?? (lang === 'en-US' ? matchLang('zh-CN') : undefined)
+  if (!primary) return null
+  return { path: primary[0], mod: primary[1] }
+}
+
+export function listGuideDocs(lang: DocsLang = 'zh-CN'): GuideDocMeta[] {
   const items: GuideDocMeta[] = []
-  for (const [path, mod] of Object.entries(guideModules)) {
-    const slug = slugFromPath(path)
-    if (!slug) continue
-    const frontmatter = resolveFrontmatter(path, mod, slug)
+  for (const [path] of Object.entries(guideModules)) {
+    const parsed = parseGuidePath(path)
+    if (!parsed || parsed.lang !== 'zh-CN') continue
+    const resolved = findGuideEntry(parsed.slug, lang)
+    if (!resolved) continue
+    const frontmatter = resolveFrontmatter(resolved.path, resolved.mod, parsed.slug)
     items.push({
-      slug,
-      title: frontmatter.title ?? slug,
+      slug: parsed.slug,
+      title: frontmatter.title ?? parsed.slug,
       order: Number(frontmatter.order ?? 99),
       description: frontmatter.description,
     })
@@ -78,13 +100,12 @@ export function listGuideDocs(): GuideDocMeta[] {
   return items.sort((a, b) => a.order - b.order || a.slug.localeCompare(b.slug))
 }
 
-export function resolveGuideDoc(slug: string): ResolvedGuideDoc | null {
-  const entry = Object.entries(guideModules).find(([path]) => slugFromPath(path) === slug)
-  if (!entry) return null
-  const [path, mod] = entry
+export function resolveGuideDoc(slug: string, lang: DocsLang = 'zh-CN'): ResolvedGuideDoc | null {
+  const resolved = findGuideEntry(slug, lang)
+  if (!resolved) return null
   return {
     slug,
-    frontmatter: resolveFrontmatter(path, mod, slug),
-    component: mod.default,
+    frontmatter: resolveFrontmatter(resolved.path, resolved.mod, slug),
+    component: resolved.mod.default,
   }
 }

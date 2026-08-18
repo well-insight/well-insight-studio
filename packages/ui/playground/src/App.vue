@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
+import { WdConfigProvider } from '@well-design/ui'
 import SiteHeader from './components/SiteHeader.vue'
+import { useDocsI18n } from './i18n'
+
+const { componentLocale } = useDocsI18n()
 </script>
 
 <template>
-  <div class="site-shell">
+  <WdConfigProvider class="site-config" :locale="componentLocale" :global-density="false">
+    <div class="site-shell">
     <div class="site-atmosphere" aria-hidden="true">
       <div class="site-atmosphere__glow site-atmosphere__glow--a" />
       <div class="site-atmosphere__glow site-atmosphere__glow--b" />
@@ -14,7 +19,8 @@ import SiteHeader from './components/SiteHeader.vue'
     <div class="site-shell__body">
       <RouterView />
     </div>
-  </div>
+    </div>
+  </WdConfigProvider>
 </template>
 
 <style>
@@ -66,6 +72,13 @@ a:focus-visible {
 .wd-icon-field input:focus-visible {
   outline: none;
   outline-offset: 0;
+}
+
+.site-config {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
 }
 
 .site-shell {
@@ -157,6 +170,11 @@ a:focus-visible {
     height: auto;
     min-height: 100vh;
     overflow: visible;
+  }
+
+  .site-config {
+    height: auto;
+    min-height: 100vh;
   }
 
   .site-shell__body {

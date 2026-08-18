@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, toRef } from 'vue'
+import { useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
 import { resolveOverlayTeleport } from '../../shared/overlay'
 import { useModalOverlay } from '../../shared/useModalOverlay'
@@ -21,6 +22,7 @@ const emit = defineEmits<{
 }>()
 
 const config = useWdConfig()
+const locale = useWdLocale()
 const drawerElement = ref<HTMLElement | null>(null)
 const teleportTarget = computed(() => resolveOverlayTeleport(props, config.value.appendTo))
 
@@ -66,7 +68,7 @@ useModalOverlay({
               v-if="showCloseIcon"
               type="button"
               class="wd-drawer__close"
-              aria-label="关闭"
+              :aria-label="locale.close"
               @click="close"
             >
               ×

@@ -17,9 +17,33 @@ Well Design 提供应用级 / 页面级默认值，用于统一浮层挂载、�
 | `density` | `compact` / `comfortable` / `spacious`，缩放间距与控件高度 |
 | `inputVariant` | 输入框 `outlined` / `filled` |
 | `zIndex` | 浮层基准层级 |
-| `locale` | 确认、空态、加载、占位等文案 |
+| `locale` | 确认、空态、加载、占位等文案。可传入内置语言包 `zhCN` / `enUS` |
 
-优先级：**组件 Props > `WdConfigProvider` > `createWellDesign` > 内置默认**。
+优先级：**组件 Props > `WdConfigProvider` > `createWellDesign` > 内置默认（中文）**。
+
+## 语言包
+
+组件内置文案默认中文。切换英文时传入 `enUS`：
+
+```ts
+import { createApp } from 'vue'
+import { createWellDesign, enUS, zhCN } from '@well-design/ui'
+
+createApp(App).use(createWellDesign({ locale: enUS })).mount('#app')
+```
+
+也可以只覆盖部分文案：
+
+```ts
+createWellDesign({
+  locale: {
+    ...zhCN,
+    accept: '确定',
+  },
+})
+```
+
+文档站右上角的「中 / EN」会把同一套语言包注入 `WdConfigProvider`，因此示例里的空态、确认、日期等文案会跟着切换。指南与组件 Markdown 在英文下会加载对应的 `*.en.md`。
 
 ## Size
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
 import { isOverlayTeleported, resolveOverlayTeleport } from '../../shared/overlay'
 import type { MenubarItem, MenubarProps } from './types'
@@ -9,6 +10,7 @@ const props = withDefaults(defineProps<MenubarProps>(), {
 })
 
 const config = useWdConfig()
+const locale = useWdLocale()
 const openIndex = ref<number | null>(null)
 const root = ref<HTMLElement | null>(null)
 const triggerEls = ref<(HTMLElement | null)[]>([])
@@ -79,7 +81,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <nav ref="root" class="wd-menubar" aria-label="菜单栏">
+  <nav ref="root" class="wd-menubar" :aria-label="locale.menubar">
     <div
       v-for="(item, index) in model"
       :key="`${item.label}-${index}`"

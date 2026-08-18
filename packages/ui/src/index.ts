@@ -263,6 +263,8 @@ export {
   useWdConfig,
   WD_CONFIG_KEY,
 } from './shared/config'
+export { enUS, formatLocale, mergeLocale, useWdLocale, zhCN } from './locale'
+export type { WdLocaleMessages, WdLocaleName } from './locale'
 export type {
   WdInputVariant,
   WdSeverity,

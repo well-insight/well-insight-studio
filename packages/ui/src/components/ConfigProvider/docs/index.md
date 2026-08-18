@@ -17,7 +17,7 @@ description: 全局配置入口。统一浮层挂载、尺寸、密度、文案�
 | `density` | 全局内容密度 `compact` / `comfortable` / `spacious` |
 | `inputVariant` | 输入框默认 `outlined` / `filled` |
 | `zIndex` | 浮层基础层级 |
-| `locale` | 确认 / 空态 / 加载 / 占位等文案 |
+| `locale` | 确认 / 空态 / 加载 / 占位等文案。可传入内置语言包 `zhCN` / `enUS` |
 
 ## Size
 
@@ -102,7 +102,7 @@ const options = [
 
 ```ts
 import { createApp } from 'vue'
-import { createWellDesign } from '@well-design/ui'
+import { createWellDesign, enUS } from '@well-design/ui'
 import App from './App.vue'
 import '@well-design/ui/styles.css'
 
@@ -113,6 +113,7 @@ createApp(App)
       size: 'small',
       density: 'comfortable',
       zIndex: 1100,
+      locale: enUS,
     }),
   )
   .mount('#app')

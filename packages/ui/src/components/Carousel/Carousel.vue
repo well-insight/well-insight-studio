@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useWdLocale } from '../../locale'
 import type { CarouselProps } from './types'
 
 const props = withDefaults(defineProps<CarouselProps>(), {
@@ -12,6 +13,7 @@ const emit = defineEmits<{
 }>()
 
 const page = ref(0)
+const locale = useWdLocale()
 
 const maxPage = computed(() => Math.max(0, props.value.length - props.numVisible))
 
@@ -49,7 +51,7 @@ function next() {
     <button
       type="button"
       class="wd-carousel__nav wd-carousel__nav--prev"
-      aria-label="上一页"
+      :aria-label="locale.prev"
       :disabled="!circular && page <= 0"
       @click="prev"
     >
@@ -70,7 +72,7 @@ function next() {
     <button
       type="button"
       class="wd-carousel__nav wd-carousel__nav--next"
-      aria-label="下一页"
+      :aria-label="locale.next"
       :disabled="!circular && page >= maxPage"
       @click="next"
     >

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
 import { isOverlayTeleported, resolveOverlayTeleport } from '../../shared/overlay'
 import { resolveSizeClass } from '../../shared/types'
@@ -26,6 +27,7 @@ const emit = defineEmits<{
 }>()
 
 const config = useWdConfig()
+const locale = useWdLocale()
 const root = ref<HTMLElement | null>(null)
 const trigger = ref<HTMLButtonElement | null>(null)
 const menu = ref<HTMLElement | null>(null)
@@ -36,7 +38,7 @@ const highlightedIndex = ref(-1)
 const menuStyle = ref<Record<string, string>>({})
 const selectId = computed(() => props.id ?? `wd-select-${Math.random().toString(36).slice(2, 8)}`)
 const resolvedEmptyMessage = computed(
-  () => props.emptyMessage ?? config.value.locale?.emptyMessage ?? '暂无选项',
+  () => props.emptyMessage ?? locale.value.emptyOptions,
 )
 const filteredOptions = computed(() => {
   const query = filterQuery.value.trim().toLowerCase()
@@ -46,7 +48,7 @@ const filteredOptions = computed(() => {
 const enabledOptions = computed(() => filteredOptions.value.filter((option) => !option.disabled))
 const selectedOption = computed(() => props.options.find((option) => option.value === props.modelValue))
 const displayLabel = computed(
-  () => selectedOption.value?.label ?? props.placeholder ?? config.value.locale?.selectPlaceholder ?? '请选择',
+  () => selectedOption.value?.label ?? props.placeholder ?? locale.value.selectPlaceholder,
 )
 const isInvalid = computed(() => props.error || props.invalid || Boolean(props.errorMessage))
 const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
@@ -216,7 +218,7 @@ onBeforeUnmount(() => {
         v-if="showClearButton"
         class="wd-select__clear"
         type="button"
-        :aria-label="config.locale?.clear ?? '清除'"
+        :aria-label="locale.clear"
         @click="clear"
       >
         ×
@@ -233,7 +235,7 @@ onBeforeUnmount(() => {
           :style="teleported ? menuStyle : undefined"
           role="listbox"
           tabindex="-1"
-          :aria-label="label ?? placeholder ?? '选择选项'"
+          :aria-label="label ?? placeholder ?? locale.selectOption"
           @keydown="onMenuKeydown"
         >
           <input
@@ -242,8 +244,8 @@ onBeforeUnmount(() => {
             v-model="filterQuery"
             class="wd-select__filter"
             type="search"
-            :placeholder="config.locale?.searchPlaceholder ?? '搜索'"
-            aria-label="筛选选项"
+            :placeholder="locale.searchPlaceholder"
+            :aria-label="locale.filterOptions"
             @click.stop
             @keydown.stop="onMenuKeydown"
           />

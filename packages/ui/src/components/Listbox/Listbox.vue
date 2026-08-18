@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useWdLocale } from '../../locale'
 import type { ListboxOption, ListboxProps, ListboxValue } from './types'
 
 const props = withDefaults(defineProps<ListboxProps>(), {
@@ -13,6 +14,7 @@ const emit = defineEmits<{
 }>()
 
 const filterQuery = ref('')
+const locale = useWdLocale()
 
 const filteredOptions = computed(() => {
   const query = filterQuery.value.trim().toLowerCase()
@@ -57,9 +59,9 @@ function select(option: ListboxOption) {
       v-model="filterQuery"
       class="wd-listbox__filter"
       type="search"
-      placeholder="筛选…"
+      :placeholder="locale.filterOptions"
       :disabled="disabled"
-      aria-label="筛选选项"
+      :aria-label="locale.filterOptions"
     />
     <ul class="wd-listbox__list" role="listbox" :aria-multiselectable="multiple || undefined" :style="listStyle">
       <li v-for="option in filteredOptions" :key="String(option.value)" role="presentation">
@@ -75,7 +77,7 @@ function select(option: ListboxOption) {
           {{ option.label }}
         </button>
       </li>
-      <li v-if="!filteredOptions.length" class="wd-listbox__empty">无匹配项</li>
+      <li v-if="!filteredOptions.length" class="wd-listbox__empty">{{ locale.emptyOptions }}</li>
     </ul>
   </div>
 </template>

@@ -3,12 +3,14 @@ import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useTheme } from '@well-design/ui'
 import { getUiPackageMeta } from '../docs/loadChangelog'
+import { useDocsI18n } from '../i18n'
 
 const GIT_REPO = 'https://gitcode.com/Wayne1308/well-design'
 const uiMeta = getUiPackageMeta()
 
 const route = useRoute()
 const { isDark, toggleTheme } = useTheme()
+const { lang, t, setLang } = useDocsI18n()
 
 const activeSection = computed(() => {
   const name = String(route.name ?? '')
@@ -22,7 +24,7 @@ const activeSection = computed(() => {
 
 <template>
   <header class="site-header">
-    <RouterLink class="site-brand" :to="{ name: 'home' }" aria-label="Well Design 首页">
+    <RouterLink class="site-brand" :to="{ name: 'home' }" :aria-label="t.homeAria">
       <span class="site-brand__mark" aria-hidden="true">W</span>
       <span class="site-brand__text">
         <span class="site-brand__name">Well Design</span>
@@ -30,43 +32,63 @@ const activeSection = computed(() => {
       </span>
     </RouterLink>
 
-    <nav class="site-nav" aria-label="站点导航">
+    <nav class="site-nav" :aria-label="t.navAria">
       <RouterLink
         class="site-nav__link"
         :class="{ 'is-active': activeSection === 'home' }"
         :to="{ name: 'home' }"
       >
-        首页
+        {{ t.home }}
       </RouterLink>
       <RouterLink
         class="site-nav__link"
         :class="{ 'is-active': activeSection === 'docs' }"
         :to="{ name: 'docs', params: { slug: 'introduction' } }"
       >
-        文档
+        {{ t.docs }}
       </RouterLink>
       <RouterLink
         class="site-nav__link"
         :class="{ 'is-active': activeSection === 'components' }"
         :to="{ name: 'components' }"
       >
-        组件
+        {{ t.components }}
       </RouterLink>
       <RouterLink
         class="site-nav__link"
         :class="{ 'is-active': activeSection === 'changelog' }"
         :to="{ name: 'changelog' }"
       >
-        更新日志
+        {{ t.changelog }}
       </RouterLink>
     </nav>
 
     <div class="site-header__actions">
+      <div class="site-lang" role="group" :aria-label="t.langSwitch">
+        <button
+          class="site-lang__btn"
+          type="button"
+          :class="{ 'is-active': lang === 'zh-CN' }"
+          :aria-pressed="lang === 'zh-CN'"
+          @click="setLang('zh-CN')"
+        >
+          中
+        </button>
+        <button
+          class="site-lang__btn"
+          type="button"
+          :class="{ 'is-active': lang === 'en-US' }"
+          :aria-pressed="lang === 'en-US'"
+          @click="setLang('en-US')"
+        >
+          EN
+        </button>
+      </div>
       <button
         class="site-icon-btn"
         type="button"
-        :aria-label="isDark ? '切换到浅色模式' : '切换到暗色模式'"
-        :title="isDark ? '浅色模式' : '暗色模式'"
+        :aria-label="isDark ? t.switchToLight : t.switchToDark"
+        :title="isDark ? t.lightMode : t.darkMode"
         @click="toggleTheme"
       >
         <span aria-hidden="true">{{ isDark ? '☀' : '☾' }}</span>
@@ -76,8 +98,8 @@ const activeSection = computed(() => {
         :href="GIT_REPO"
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="打开 Git 仓库"
-        title="Git 仓库"
+        :aria-label="t.openGit"
+        :title="t.gitRepo"
       >
         <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor">
           <path
@@ -192,6 +214,38 @@ const activeSection = computed(() => {
   display: flex;
   gap: 0.4rem;
   justify-content: flex-end;
+}
+
+.site-lang {
+  background: color-mix(in srgb, var(--wd-color-surface) 70%, transparent);
+  border: 1px solid var(--docs-edge);
+  border-radius: 0.65rem;
+  display: inline-flex;
+  overflow: hidden;
+  padding: 0.12rem;
+}
+
+.site-lang__btn {
+  background: transparent;
+  border: 0;
+  border-radius: 0.5rem;
+  color: var(--wd-color-text-muted);
+  cursor: pointer;
+  font-family: var(--docs-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  min-width: 1.85rem;
+  padding: 0.28rem 0.4rem;
+}
+
+.site-lang__btn:hover {
+  color: var(--wd-color-text);
+}
+
+.site-lang__btn.is-active {
+  background: color-mix(in srgb, var(--wd-color-primary) 16%, var(--wd-color-surface));
+  color: var(--wd-color-primary);
 }
 
 .site-icon-btn {

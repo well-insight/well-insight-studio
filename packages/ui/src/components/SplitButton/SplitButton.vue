@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
 import { resolveSizeClass } from '../../shared/types'
 import type { SplitButtonItem, SplitButtonProps } from './types'
@@ -16,6 +17,7 @@ const emit = defineEmits<{
 }>()
 
 const config = useWdConfig()
+const locale = useWdLocale()
 const open = ref(false)
 const root = ref<HTMLElement | null>(null)
 const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
@@ -74,7 +76,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocumentClick))
     <button
       type="button"
       class="wd-splitbutton__trigger"
-      aria-label="更多操作"
+      :aria-label="locale.moreActions"
       :aria-expanded="open"
       :disabled="disabled"
       @click="toggleMenu"

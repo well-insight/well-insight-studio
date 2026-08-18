@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue'
+import { useWdLocale } from '../../locale'
 import WdCheckbox from '../Checkbox/Checkbox.vue'
 import WdIcon from '../Icon/Icon.vue'
 import { isIconName } from '../Icon/icons'
@@ -11,6 +12,7 @@ import TreeNodeItem from './TreeNodeItem.vue'
 const props = defineProps<{ node: TreeNode }>()
 const tree = inject(WD_TREE_KEY)!
 const nodeSlot = inject(WD_TREE_NODE_SLOT, undefined)
+const locale = useWdLocale()
 
 const expanded = computed(() => tree.isExpanded(props.node.key))
 const selected = computed(() => tree.isSelected(props.node.key))
@@ -59,7 +61,7 @@ const customContent = computed(() =>
         v-if="hasChildren"
         type="button"
         class="wd-tree__toggler"
-        :aria-label="expanded ? '折叠' : '展开'"
+        :aria-label="expanded ? locale.collapse : locale.expand"
         :disabled="disabled"
         @click="tree.toggleExpand(node)"
       >

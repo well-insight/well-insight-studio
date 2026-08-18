@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useWdLocale } from '../../locale'
 import type { PanelProps } from './types'
 
 const props = withDefaults(defineProps<PanelProps>(), {
@@ -10,6 +11,8 @@ const emit = defineEmits<{
   (event: 'update:collapsed', value: boolean): void
   (event: 'update:modelValue', value: boolean): void
 }>()
+
+const locale = useWdLocale()
 
 const isCollapsed = computed(() => props.modelValue ?? props.collapsed ?? false)
 
@@ -32,7 +35,7 @@ function toggle() {
         type="button"
         class="wd-panel__toggler"
         :aria-expanded="!isCollapsed"
-        :aria-label="isCollapsed ? '展开' : '折叠'"
+        :aria-label="isCollapsed ? locale.expand : locale.collapse"
         @click="toggle"
       >
         <span aria-hidden="true">{{ isCollapsed ? '▸' : '▾' }}</span>

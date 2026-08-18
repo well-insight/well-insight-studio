@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
 import { isOverlayTeleported, resolveOverlayTeleport } from '../../shared/overlay'
 import type { SpeedDialItem, SpeedDialProps } from './types'
@@ -9,7 +10,6 @@ const props = withDefaults(defineProps<SpeedDialProps>(), {
   direction: 'up',
   modelValue: false,
   disabled: false,
-  ariaLabel: '快捷操作',
   teleport: true,
 })
 
@@ -18,6 +18,8 @@ const emit = defineEmits<{
 }>()
 
 const config = useWdConfig()
+const locale = useWdLocale()
+const speedDialLabel = computed(() => props.ariaLabel ?? locale.value.speedDial)
 const root = ref<HTMLElement | null>(null)
 const button = ref<HTMLElement | null>(null)
 const list = ref<HTMLElement | null>(null)
@@ -135,7 +137,7 @@ onBeforeUnmount(() => {
       ref="button"
       type="button"
       class="wd-speeddial__button"
-      :aria-label="ariaLabel"
+      :aria-label="speedDialLabel"
       :aria-expanded="modelValue"
       :disabled="disabled"
       @click="toggle"

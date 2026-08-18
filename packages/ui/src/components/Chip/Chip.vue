@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useWdLocale } from '../../locale'
 import WdIcon from '../Icon/Icon.vue'
 import type { ChipProps } from './types'
 
@@ -9,6 +10,7 @@ const props = withDefaults(defineProps<ChipProps>(), {
 })
 
 const emit = defineEmits<{ (event: 'remove', value: MouseEvent): void }>()
+const locale = useWdLocale()
 
 const chipClass = computed(() => [
   'wd-chip',
@@ -34,7 +36,7 @@ function handleRemove(event: MouseEvent) {
       type="button"
       class="wd-chip__remove"
       :disabled="disabled"
-      aria-label="移除"
+      :aria-label="locale.remove"
       @click="handleRemove"
     >
       ×

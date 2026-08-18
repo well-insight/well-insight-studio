@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useWdLocale } from '../../locale'
 import type { InputColorProps } from './types'
 
 const props = withDefaults(defineProps<InputColorProps>(), {
@@ -10,6 +11,7 @@ const props = withDefaults(defineProps<InputColorProps>(), {
 const emit = defineEmits<{
   (event: 'update:modelValue', value: string): void
 }>()
+const locale = useWdLocale()
 
 const hexValue = computed(() => {
   const raw = props.modelValue?.trim() || '#000000'
@@ -35,7 +37,7 @@ function onTextInput(event: Event) {
       :id="id"
       :value="hexValue"
       :disabled="disabled"
-      aria-label="选择颜色"
+      :aria-label="locale.selectColor"
       @input="onColorInput"
     />
     <input

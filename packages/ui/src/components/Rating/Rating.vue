@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { formatLocale, useWdLocale } from '../../locale'
 import type { RatingProps } from './types'
 
 const props = withDefaults(defineProps<RatingProps>(), {
@@ -10,6 +11,7 @@ const props = withDefaults(defineProps<RatingProps>(), {
   cancel: true,
 })
 const emit = defineEmits<{ (event: 'update:modelValue', value: number): void }>()
+const locale = useWdLocale()
 
 const starList = computed(() => Array.from({ length: Math.max(1, props.stars) }, (_, index) => index + 1))
 
@@ -38,7 +40,7 @@ function clearRating() {
       v-if="cancel"
       type="button"
       class="wd-rating__cancel"
-      aria-label="清除评分"
+      :aria-label="locale.clearRating"
       :disabled="disabled || readonly"
       @click="clearRating"
     >
@@ -50,7 +52,7 @@ function clearRating() {
       type="button"
       class="wd-rating__star"
       :class="{ 'wd-rating__star--on': star <= modelValue }"
-      :aria-label="`${star} 星`"
+      :aria-label="formatLocale(locale.star, { value: star })"
       :disabled="disabled || readonly"
       @click="setValue(star)"
     >

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { formatLocale, useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
 import { resolveOverlayTeleport } from '../../shared/overlay'
 import { normalizeSeverity } from '../../shared/types'
@@ -12,6 +13,7 @@ const props = withDefaults(defineProps<ToastProps>(), {
 })
 const emit = defineEmits<{ (event: 'close', message: ToastMessage): void }>()
 const config = useWdConfig()
+const locale = useWdLocale()
 const teleportTarget = computed(() => resolveOverlayTeleport(props, config.value.appendTo))
 
 function messageSeverityClass(severity?: ToastMessage['severity']) {
@@ -38,7 +40,7 @@ function messageSeverityClass(severity?: ToastMessage['severity']) {
             v-if="message.closable !== false"
             type="button"
             class="wd-toast__close"
-            :aria-label="`关闭：${message.summary}`"
+            :aria-label="formatLocale(locale.closeNamed, { summary: message.summary })"
             @click="emit('close', message)"
           >
             ×

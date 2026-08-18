@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useWdLocale } from '../../locale'
 import { normalizeSeverity } from '../../shared/types'
 import WdIcon from '../Icon/Icon.vue'
 import type { IconName } from '../Icon/types'
@@ -12,6 +13,7 @@ const props = withDefaults(defineProps<MessageProps>(), {
 })
 
 const emit = defineEmits<{ (event: 'close'): void }>()
+const locale = useWdLocale()
 
 const visible = ref(true)
 let lifeTimer: ReturnType<typeof setTimeout> | undefined
@@ -83,7 +85,7 @@ onBeforeUnmount(() => {
       v-if="closable"
       type="button"
       class="wd-message__close"
-      aria-label="关闭"
+      :aria-label="locale.close"
       @click="close"
     >
       <WdIcon name="close" size="sm" />

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, inject, onBeforeUnmount, useId, watch } from 'vue'
-import { useWdConfig } from '../../shared/config'
+import { useWdLocale } from '../../locale'
 import { WD_FORM_ERRORS_KEY, WD_FORM_KEY } from './context'
 import type { FormItemProps } from './types'
 
@@ -11,7 +11,7 @@ const props = withDefaults(defineProps<FormItemProps>(), {
 
 const form = inject(WD_FORM_KEY, null)
 const formErrors = inject(WD_FORM_ERRORS_KEY, null)
-const config = useWdConfig()
+const locale = useWdLocale()
 const autoId = useId()
 
 const labelPosition = computed(() => props.labelPosition ?? form?.value.labelPosition ?? 'top')
@@ -27,7 +27,7 @@ const displayError = computed(() => props.error ?? internalError.value)
 const isInvalid = computed(() => props.invalid || Boolean(displayError.value))
 const controlId = computed(() => props.for ?? `wd-form-item-${autoId}`)
 const messageId = computed(() => `${controlId.value}-message`)
-const requiredLabel = computed(() => config.value.locale?.required ?? '必填')
+const requiredLabel = computed(() => locale.value.required)
 
 const rootClass = computed(() => [
   'wd-form-item',

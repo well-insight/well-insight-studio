@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, toRef } from 'vue'
+import { useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
 import { resolveOverlayTeleport } from '../../shared/overlay'
 import { useModalOverlay } from '../../shared/useModalOverlay'
@@ -19,11 +20,12 @@ const emit = defineEmits<{
 }>()
 
 const config = useWdConfig()
+const locale = useWdLocale()
 const dialogElement = ref<HTMLElement | null>(null)
 const teleportTarget = computed(() => resolveOverlayTeleport(props, config.value.appendTo))
-const title = computed(() => props.header ?? '确认')
-const acceptText = computed(() => props.acceptLabel ?? config.value.locale?.accept ?? '确认')
-const rejectText = computed(() => props.rejectLabel ?? config.value.locale?.reject ?? '取消')
+const title = computed(() => props.header ?? locale.value.confirm)
+const acceptText = computed(() => props.acceptLabel ?? locale.value.accept)
+const rejectText = computed(() => props.rejectLabel ?? locale.value.reject)
 
 function close() {
   emit('update:modelValue', false)

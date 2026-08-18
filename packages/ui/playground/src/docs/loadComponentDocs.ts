@@ -1,4 +1,5 @@
 import type { Component } from 'vue'
+import type { DocsLang } from '../i18n'
 
 export interface ComponentDocFrontmatter {
   title?: string
@@ -23,13 +24,20 @@ export interface DocumentedComponentMeta {
   description?: string
 }
 
-const docModules = import.meta.glob<{
+type DocModule = {
   default: Component
   frontmatter?: ComponentDocFrontmatter
-}>('../../../src/components/*/docs/index.md', { eager: true })
+}
 
-// unplugin-vue-markdown 在与 markdown-preview 联用时，named frontmatter 经常丢；改从源码解析
-const rawDocModules = import.meta.glob<string>('../../../src/components/*/docs/index.md', {
+const zhDocModules = import.meta.glob<DocModule>('../../../src/components/*/docs/index.md', { eager: true })
+const enDocModules = import.meta.glob<DocModule>('../../../src/components/*/docs/index.en.md', { eager: true })
+
+const zhRawDocModules = import.meta.glob<string>('../../../src/components/*/docs/index.md', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+})
+const enRawDocModules = import.meta.glob<string>('../../../src/components/*/docs/index.en.md', {
   eager: true,
   query: '?raw',
   import: 'default',
@@ -37,7 +45,7 @@ const rawDocModules = import.meta.glob<string>('../../../src/components/*/docs/i
 
 function componentNameFromPath(path: string): string | null {
   const normalized = path.replace(/\\/g, '/')
-  const match = normalized.match(/components\/([^/]+)\/docs\/index\.md$/)
+  const match = normalized.match(/components\/([^/]+)\/docs\/index(?:\.en)?\.md$/)
   return match?.[1] ?? null
 }
 
@@ -71,9 +79,14 @@ function parseCategory(raw?: string): Pick<DocumentedComponentMeta, 'category' |
   }
 }
 
-function resolveFrontmatter(path: string, mod: { frontmatter?: ComponentDocFrontmatter }, name: string) {
+function resolveFrontmatter(
+  path: string,
+  mod: { frontmatter?: ComponentDocFrontmatter },
+  name: string,
+  rawModules: Record<string, string>,
+) {
   const fromModule = mod.frontmatter
-  const fromRaw = rawDocModules[path] ? parseFrontmatterFromRaw(rawDocModules[path]) : {}
+  const fromRaw = rawModules[path] ? parseFrontmatterFromRaw(rawModules[path]) : {}
   return {
     title: fromModule?.title ?? fromRaw.title ?? name,
     category: fromModule?.category ?? fromRaw.category,
@@ -81,12 +94,27 @@ function resolveFrontmatter(path: string, mod: { frontmatter?: ComponentDocFront
   } satisfies ComponentDocFrontmatter
 }
 
-export function listDocumentedComponents(): DocumentedComponentMeta[] {
+function findDocEntry(name: string, lang: DocsLang = 'zh-CN') {
+  const preferEn = lang === 'en-US'
+  const primaryModules = preferEn ? enDocModules : zhDocModules
+  const primaryRaw = preferEn ? enRawDocModules : zhRawDocModules
+  const primary = Object.entries(primaryModules).find(([path]) => componentNameFromPath(path) === name)
+  if (primary) {
+    return { path: primary[0], mod: primary[1], raw: primaryRaw }
+  }
+  const fallback = Object.entries(zhDocModules).find(([path]) => componentNameFromPath(path) === name)
+  if (!fallback) return null
+  return { path: fallback[0], mod: fallback[1], raw: zhRawDocModules }
+}
+
+export function listDocumentedComponents(lang: DocsLang = 'zh-CN'): DocumentedComponentMeta[] {
   const items: DocumentedComponentMeta[] = []
-  for (const [path, mod] of Object.entries(docModules)) {
+  for (const [path, mod] of Object.entries(zhDocModules)) {
     const name = componentNameFromPath(path)
     if (!name) continue
-    const frontmatter = resolveFrontmatter(path, mod, name)
+    const resolved = findDocEntry(name, lang)
+    if (!resolved) continue
+    const frontmatter = resolveFrontmatter(resolved.path, resolved.mod, name, resolved.raw)
     const parsed = parseCategory(frontmatter.category)
     items.push({
       name,
@@ -101,14 +129,13 @@ export function listDocumentedComponentNames(): string[] {
   return listDocumentedComponents().map((item) => item.name)
 }
 
-export function resolveComponentDoc(name: string): ResolvedComponentDoc | null {
-  const entry = Object.entries(docModules).find(([path]) => componentNameFromPath(path) === name)
-  if (!entry) return null
+export function resolveComponentDoc(name: string, lang: DocsLang = 'zh-CN'): ResolvedComponentDoc | null {
+  const resolved = findDocEntry(name, lang)
+  if (!resolved) return null
 
-  const [path, mod] = entry
   return {
     name,
-    frontmatter: resolveFrontmatter(path, mod, name),
-    component: mod.default,
+    frontmatter: resolveFrontmatter(resolved.path, resolved.mod, name, resolved.raw),
+    component: resolved.mod.default,
   }
 }

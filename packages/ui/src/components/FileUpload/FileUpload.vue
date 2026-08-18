@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useWdLocale } from '../../locale'
 import type { FileUploadProps } from './types'
 
 const props = withDefaults(defineProps<FileUploadProps>(), {
   mode: 'basic',
   multiple: false,
   disabled: false,
-  chooseLabel: '选择文件',
 })
 
 const emit = defineEmits<{
@@ -15,6 +15,8 @@ const emit = defineEmits<{
 
 const inputRef = ref<HTMLInputElement | null>(null)
 const files = ref<File[]>([])
+const locale = useWdLocale()
+const chooseText = computed(() => props.chooseLabel ?? locale.value.chooseFile)
 
 const rootClass = computed(() => [
   'wd-fileupload',
@@ -57,7 +59,7 @@ function clear() {
       :disabled="disabled"
       @click="openPicker"
     >
-      {{ chooseLabel }}
+      {{ chooseText }}
     </button>
     <ul v-if="mode === 'advanced' && files.length" class="wd-fileupload__list">
       <li v-for="(file, index) in files" :key="`${file.name}-${index}`" class="wd-fileupload__file">
@@ -71,7 +73,7 @@ function clear() {
       class="wd-fileupload__clear"
       @click="clear"
     >
-      清除
+      {{ locale.clear }}
     </button>
   </div>
 </template>

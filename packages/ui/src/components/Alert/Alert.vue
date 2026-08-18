@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useWdLocale } from '../../locale'
 import { normalizeSeverity } from '../../shared/types'
 import WdIcon from '../Icon/Icon.vue'
 import type { IconName } from '../Icon/types'
@@ -14,6 +15,7 @@ const props = withDefaults(defineProps<AlertProps>(), {
 
 const emit = defineEmits<{ (event: 'close'): void }>()
 const visible = ref(true)
+const locale = useWdLocale()
 
 const severityTone = computed(() => {
   if (props.severity === 'help') return 'help'
@@ -74,7 +76,7 @@ function close() {
       v-if="closable"
       type="button"
       class="wd-alert__close"
-      aria-label="关闭"
+      :aria-label="locale.close"
       @click="close"
     >
       <WdIcon name="close" size="sm" />

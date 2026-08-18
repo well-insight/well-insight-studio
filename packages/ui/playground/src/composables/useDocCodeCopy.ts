@@ -1,4 +1,5 @@
 import { nextTick, onBeforeUnmount, watch, type Ref } from 'vue'
+import { useDocsI18n } from '../i18n'
 import { copyText } from '../utils/copyText'
 
 const READY = 'data-wd-copy-ready'
@@ -7,7 +8,10 @@ function extractCode(pre: HTMLElement) {
   return (pre.querySelector('code') ?? pre).textContent ?? ''
 }
 
-function mountCopyButton(pre: HTMLElement) {
+function mountCopyButton(
+  pre: HTMLElement,
+  labels: { copy: string; copied: string; copyCode: string },
+) {
   if (pre.getAttribute(READY) === '1') return () => undefined
   if (pre.closest('.code-preview')) return () => undefined
 
@@ -29,14 +33,14 @@ function mountCopyButton(pre: HTMLElement) {
     button = document.createElement('button')
     button.type = 'button'
     button.className = 'wd-code-block__copy'
-    button.setAttribute('aria-label', '复制代码')
     wrapper.appendChild(button)
   }
 
   let resetTimer = 0
   const setLabel = (copied: boolean) => {
-    button!.textContent = copied ? '已复制' : '复制'
+    button!.textContent = copied ? labels.copied : labels.copy
     button!.dataset.copied = copied ? 'true' : 'false'
+    button!.setAttribute('aria-label', labels.copyCode)
   }
   setLabel(false)
 
@@ -61,6 +65,7 @@ function mountCopyButton(pre: HTMLElement) {
 }
 
 export function useDocCodeCopy(root: Ref<HTMLElement | null | undefined>, source: Ref<unknown>) {
+  const { lang, t } = useDocsI18n()
   const cleanups: Array<() => void> = []
 
   const clear = () => {
@@ -73,11 +78,12 @@ export function useDocCodeCopy(root: Ref<HTMLElement | null | undefined>, source
     await nextTick()
     const el = root.value
     if (!el) return
+    const labels = { copy: t.value.copy, copied: t.value.copied, copyCode: t.value.copyCode }
     el.querySelectorAll('pre').forEach((pre) => {
-      cleanups.push(mountCopyButton(pre as HTMLElement))
+      cleanups.push(mountCopyButton(pre as HTMLElement, labels))
     })
   }
 
-  watch(source, () => void enhance(), { immediate: true })
+  watch([source, lang], () => void enhance(), { immediate: true })
   onBeforeUnmount(clear)
 }

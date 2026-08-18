@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useWdLocale } from '../../locale'
 import type { BreadcrumbItem, BreadcrumbProps } from './types'
 
 const props = defineProps<BreadcrumbProps>()
+const locale = useWdLocale()
 
 const items = computed(() => {
   const list: BreadcrumbItem[] = []
@@ -18,7 +20,7 @@ const items = computed(() => {
 </script>
 
 <template>
-  <nav class="wd-breadcrumb" aria-label="面包屑">
+  <nav class="wd-breadcrumb" :aria-label="locale.breadcrumb">
     <ol class="wd-breadcrumb__list">
       <li v-for="(item, index) in items" :key="`${item.label}-${index}`" class="wd-breadcrumb__item">
         <a

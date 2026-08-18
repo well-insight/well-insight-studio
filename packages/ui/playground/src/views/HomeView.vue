@@ -1,24 +1,28 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { WdButton, WdScrollbar } from '@well-design/ui'
+import { useDocsI18n } from '../i18n'
 
-const pillars = [
+const { t } = useDocsI18n()
+
+const pillars = computed(() => [
   {
     label: 'System',
-    title: '语义化设计令牌',
-    body: '颜色、圆角、间距与动效统一走 --wd-* 变量，主题切换不改组件结构。',
+    title: t.value.pillarSystemTitle,
+    body: t.value.pillarSystemBody,
   },
   {
     label: 'Craft',
-    title: '文档即预览',
-    body: '每个组件自带 Markdown + 可交互示例，边看 API 边验证真实交互。',
+    title: t.value.pillarCraftTitle,
+    body: t.value.pillarCraftBody,
   },
   {
     label: 'Control',
-    title: '全局配置入口',
-    body: 'WdConfigProvider / createWellDesign 统一浮层挂载、尺寸、密度与文案。',
+    title: t.value.pillarControlTitle,
+    body: t.value.pillarControlBody,
   },
-]
+])
 </script>
 
 <template>
@@ -27,22 +31,22 @@ const pillars = [
       <section class="home-hero">
         <p class="home-kicker">WELL DESIGN · UI SYSTEM</p>
         <h1 class="home-brand">Well Design</h1>
-        <p class="home-headline">为自己的产品打造的 Vue 3 界面系统。</p>
+        <p class="home-headline">{{ t.headline }}</p>
         <p class="home-lead">
-          基础控件、表单、浮层与数据展示同构于一套视觉语法。安装一个包即可接入组件、主题与文档约定。
+          {{ t.lead }}
         </p>
         <div class="home-actions">
           <RouterLink :to="{ name: 'docs', params: { slug: 'quick-start' } }">
-            <WdButton label="开始使用" />
+            <WdButton :label="t.start" />
           </RouterLink>
           <RouterLink :to="{ name: 'components' }">
-            <WdButton label="浏览组件" outlined />
+            <WdButton :label="t.browse" outlined />
           </RouterLink>
           <RouterLink :to="{ name: 'changelog' }">
-            <WdButton label="更新日志" text />
+            <WdButton :label="t.changelog" text />
           </RouterLink>
         </div>
-        <div class="home-meta" aria-label="技术标签">
+        <div class="home-meta" :aria-label="t.techTags">
           <span>Vue 3</span>
           <span>TypeScript</span>
           <span>Design Tokens</span>
@@ -50,7 +54,7 @@ const pillars = [
         </div>
       </section>
 
-      <section class="home-pillars" aria-label="产品能力">
+      <section class="home-pillars" :aria-label="t.capabilities">
         <article v-for="item in pillars" :key="item.title" class="home-pillar">
           <span class="home-pillar__label">{{ item.label }}</span>
           <h2>{{ item.title }}</h2>
@@ -60,13 +64,13 @@ const pillars = [
 
       <section class="home-cta">
         <div>
-          <h2>下一步</h2>
-          <p>文档讲清接入方式；组件实验室提供实时预览与 API。</p>
+          <h2>{{ t.next }}</h2>
+          <p>{{ t.nextBody }}</p>
         </div>
         <div class="home-cta__links">
-          <RouterLink class="home-text-link" :to="{ name: 'docs', params: { slug: 'theme' } }">主题与动效</RouterLink>
-          <RouterLink class="home-text-link" :to="{ name: 'docs', params: { slug: 'config' } }">全局配置</RouterLink>
-          <RouterLink class="home-text-link" :to="{ name: 'components' }">全部组件</RouterLink>
+          <RouterLink class="home-text-link" :to="{ name: 'docs', params: { slug: 'theme' } }">{{ t.themeMotion }}</RouterLink>
+          <RouterLink class="home-text-link" :to="{ name: 'docs', params: { slug: 'config' } }">{{ t.globalConfig }}</RouterLink>
+          <RouterLink class="home-text-link" :to="{ name: 'components' }">{{ t.allComponents }}</RouterLink>
         </div>
       </section>
     </div>

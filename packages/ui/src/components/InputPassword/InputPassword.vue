@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, useAttrs } from 'vue'
+import { formatLocale, useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
 import { resolveSizeClass } from '../../shared/types'
 import type { InputPasswordProps, PasswordStrength } from './types'
@@ -18,6 +19,7 @@ const props = withDefaults(defineProps<InputPasswordProps>(), {
 const emit = defineEmits<{ (event: 'update:modelValue', value: string): void }>()
 
 const config = useWdConfig()
+const locale = useWdLocale()
 const unmasked = ref(false)
 const inputId = computed(() => props.id ?? `wd-password-${Math.random().toString(36).slice(2, 8)}`)
 const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
@@ -36,9 +38,9 @@ const strength = computed<PasswordStrength>(() => {
 })
 
 const strengthLabel = computed(() => {
-  if (strength.value === 'weak') return '弱'
-  if (strength.value === 'medium') return '中'
-  if (strength.value === 'strong') return '强'
+  if (strength.value === 'weak') return locale.value.passwordWeak
+  if (strength.value === 'medium') return locale.value.passwordMedium
+  if (strength.value === 'strong') return locale.value.passwordStrong
   return ''
 })
 
@@ -77,11 +79,11 @@ function updateValue(event: Event) {
         v-if="toggleMask"
         class="wd-password__toggle"
         type="button"
-        :aria-label="unmasked ? '隐藏密码' : '显示密码'"
+        :aria-label="unmasked ? locale.hidePassword : locale.showPassword"
         :disabled="disabled"
         @click="unmasked = !unmasked"
       >
-        {{ unmasked ? '隐藏' : '显示' }}
+        {{ unmasked ? locale.hidePassword : locale.showPassword }}
       </button>
     </div>
     <span
@@ -89,7 +91,7 @@ function updateValue(event: Event) {
       class="wd-password__feedback"
       :class="`wd-password__feedback--${strength}`"
     >
-      强度：{{ strengthLabel }}
+      {{ formatLocale(locale.passwordStrength, { value: strengthLabel }) }}
     </span>
   </div>
 </template>

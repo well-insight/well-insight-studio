@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useWdLocale } from '../../locale'
 import type { InputTagsProps } from './types'
 
 const props = withDefaults(defineProps<InputTagsProps>(), {
   modelValue: () => [],
-  placeholder: '输入后回车添加',
   disabled: false,
   addOnBlur: false,
 })
@@ -13,7 +13,9 @@ const emit = defineEmits<{
   (event: 'update:modelValue', value: string[]): void
 }>()
 
+const locale = useWdLocale()
 const draft = ref('')
+const addPlaceholder = computed(() => props.placeholder ?? locale.value.addTag)
 
 function addTag(raw = draft.value) {
   if (props.disabled) return
@@ -61,7 +63,7 @@ function onBlur() {
         type="button"
         class="wd-inputtags__remove"
         :disabled="disabled"
-        aria-label="移除标签"
+        :aria-label="locale.removeTag"
         @click="removeTag(index)"
       >
         ×
@@ -71,7 +73,7 @@ function onBlur() {
       v-model="draft"
       class="wd-inputtags__input"
       type="text"
-      :placeholder="modelValue.length ? '' : placeholder"
+      :placeholder="modelValue.length ? '' : addPlaceholder"
       :disabled="disabled"
       @keydown="onKeydown"
       @blur="onBlur"

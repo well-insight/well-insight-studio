@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { nextTick, computed, ref, toRef, watch } from 'vue'
+import { useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
 import { resolveOverlayTeleport } from '../../shared/overlay'
 import { useModalOverlay } from '../../shared/useModalOverlay'
@@ -8,7 +9,6 @@ import type { CommandMenuItem, CommandMenuProps } from './types'
 const props = withDefaults(defineProps<CommandMenuProps>(), {
   model: () => [],
   modelValue: false,
-  placeholder: '搜索命令…',
   teleport: true,
 })
 
@@ -17,6 +17,8 @@ const emit = defineEmits<{
 }>()
 
 const config = useWdConfig()
+const locale = useWdLocale()
+const searchPlaceholder = computed(() => props.placeholder ?? locale.value.searchCommands)
 const query = ref('')
 const panelRef = ref<HTMLElement | null>(null)
 const inputRef = ref<HTMLInputElement | null>(null)
@@ -92,7 +94,7 @@ watch(filtered, () => {
           class="wd-commandmenu"
           role="dialog"
           aria-modal="true"
-          aria-label="命令面板"
+          :aria-label="locale.commandPalette"
           tabindex="-1"
           @keydown="onPanelKeydown"
         >
@@ -101,8 +103,8 @@ watch(filtered, () => {
             v-model="query"
             class="wd-commandmenu__input"
             type="search"
-            :placeholder="placeholder"
-            aria-label="搜索命令"
+            :placeholder="searchPlaceholder"
+            :aria-label="locale.searchCommands"
           />
           <ul class="wd-commandmenu__list" role="listbox">
             <li v-for="(item, index) in filtered" :key="`${item.label}-${index}`" role="presentation">
@@ -121,7 +123,7 @@ watch(filtered, () => {
                 <span v-if="item.shortcut" class="wd-commandmenu__shortcut">{{ item.shortcut }}</span>
               </button>
             </li>
-            <li v-if="!filtered.length" class="wd-commandmenu__empty">无匹配命令</li>
+            <li v-if="!filtered.length" class="wd-commandmenu__empty">{{ locale.noMatch }}</li>
           </ul>
         </div>
       </div>

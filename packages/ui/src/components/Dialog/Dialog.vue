@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, toRef } from 'vue'
+import { useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
 import { resolveOverlayTeleport } from '../../shared/overlay'
 import { useModalOverlay } from '../../shared/useModalOverlay'
@@ -24,6 +25,7 @@ const emit = defineEmits<{
   (event: 'unmaximize'): void
 }>()
 const config = useWdConfig()
+const locale = useWdLocale()
 const dialogElement = ref<HTMLElement | null>(null)
 const maximized = ref(false)
 
@@ -101,7 +103,7 @@ useModalOverlay({
                 v-if="maximizable"
                 type="button"
                 class="wd-dialog__action"
-                :aria-label="maximized ? '还原' : '最大化'"
+                :aria-label="maximized ? locale.restore : locale.maximize"
                 @click="toggleMaximize"
               >
                 {{ maximized ? '❐' : '▢' }}
@@ -110,7 +112,7 @@ useModalOverlay({
                 v-if="closable"
                 type="button"
                 class="wd-dialog__action"
-                :aria-label="config.locale?.close ?? '关闭'"
+                :aria-label="locale.close"
                 @click="close"
               >
                 ×

@@ -3,21 +3,23 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { WdScrollbar, WdTag } from '@well-design/ui'
 import { loadChangelog } from '../docs/loadChangelog'
+import { useDocsI18n } from '../i18n'
 
 const route = useRoute()
 const router = useRouter()
-const doc = loadChangelog()
+const { lang, t } = useDocsI18n()
+const doc = computed(() => loadChangelog(lang.value))
 
-const activeVersion = ref(doc.releases[0]?.version ?? doc.currentVersion)
+const activeVersion = ref(doc.value.releases[0]?.version ?? doc.value.currentVersion)
 
 const activeRelease = computed(
-  () => doc.releases.find((item) => item.version === activeVersion.value) ?? doc.releases[0] ?? null,
+  () => doc.value.releases.find((item) => item.version === activeVersion.value) ?? doc.value.releases[0] ?? null,
 )
 
 watch(
   () => route.query.v,
   (value) => {
-    if (typeof value === 'string' && doc.releases.some((item) => item.version === value)) {
+    if (typeof value === 'string' && doc.value.releases.some((item) => item.version === value)) {
       activeVersion.value = value
     }
   },
@@ -32,16 +34,16 @@ function selectVersion(version: string) {
 
 <template>
   <div class="changelog-shell">
-    <aside class="changelog-sidebar" aria-label="版本列表">
+    <aside class="changelog-sidebar" :aria-label="t.changelogNav">
       <WdScrollbar class="changelog-scroll">
         <div class="changelog-sidebar__body">
           <p class="changelog-kicker">RELEASES</p>
-          <h1 class="changelog-sidebar__title">更新日志</h1>
+          <h1 class="changelog-sidebar__title">{{ t.changelogTitle }}</h1>
           <p class="changelog-sidebar__meta">
             <span>{{ doc.packageName }}</span>
             <WdTag :value="`v${doc.currentVersion}`" severity="info" />
           </p>
-          <nav class="changelog-nav" aria-label="历史版本">
+          <nav class="changelog-nav" :aria-label="t.changelogHistory">
             <button
               v-for="release in doc.releases"
               :key="release.version"
@@ -51,7 +53,7 @@ function selectVersion(version: string) {
               @click="selectVersion(release.version)"
             >
               <span>v{{ release.version }}</span>
-              <span v-if="release.version === doc.currentVersion" class="changelog-nav__badge">当前</span>
+              <span v-if="release.version === doc.currentVersion" class="changelog-nav__badge">{{ t.current }}</span>
             </button>
           </nav>
         </div>
@@ -66,7 +68,7 @@ function selectVersion(version: string) {
               <p class="changelog-kicker">CHANGELOG</p>
               <h2>v{{ activeRelease.version }}</h2>
               <p v-if="activeRelease.version === doc.currentVersion" class="changelog-hero__hint">
-                当前已发布版本。后续改动请通过 Changesets 记录，发版后会自动出现在此。
+                {{ t.currentHint }}
               </p>
             </header>
 
@@ -84,13 +86,13 @@ function selectVersion(version: string) {
             </section>
 
             <p v-if="activeRelease.sections.length === 0" class="changelog-empty">
-              该版本暂无分类条目。
+              {{ t.emptySection }}
             </p>
           </template>
 
           <section v-else class="changelog-empty">
-            <h2>暂无版本记录</h2>
-            <p>请先在 <code>packages/ui/CHANGELOG.md</code> 写入发版说明，或运行 <code>pnpm version-packages</code>。</p>
+            <h2>{{ t.noReleases }}</h2>
+            <p>{{ t.noReleasesHint }}</p>
           </section>
         </div>
       </WdScrollbar>

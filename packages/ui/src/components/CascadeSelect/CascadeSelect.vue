@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
 import { isOverlayTeleported, resolveOverlayTeleport } from '../../shared/overlay'
 import { resolveSizeClass } from '../../shared/types'
@@ -7,7 +8,7 @@ import type { CascadeSelectOption, CascadeSelectProps, CascadeSelectValue } from
 
 const props = withDefaults(defineProps<CascadeSelectProps>(), {
   modelValue: null,
-  placeholder: '请选择',
+  placeholder: undefined,
   disabled: false,
   teleport: true,
 })
@@ -17,6 +18,7 @@ const emit = defineEmits<{
 }>()
 
 const config = useWdConfig()
+const locale = useWdLocale()
 const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
 const open = ref(false)
 const root = ref<HTMLElement | null>(null)
@@ -27,7 +29,7 @@ const path = ref<CascadeSelectOption[][]>([])
 const teleportTarget = computed(() => resolveOverlayTeleport(props, config.value.appendTo))
 const teleported = computed(() => isOverlayTeleported(props, config.value.appendTo))
 
-const displayLabel = computed(() => findLabel(props.options, props.modelValue) ?? props.placeholder)
+const displayLabel = computed(() => findLabel(props.options, props.modelValue) ?? props.placeholder ?? locale.value.selectPlaceholder)
 
 function findLabel(options: CascadeSelectOption[], value: CascadeSelectValue): string | null {
   for (const option of options) {

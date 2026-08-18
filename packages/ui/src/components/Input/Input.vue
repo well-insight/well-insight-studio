@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, useAttrs, useSlots } from 'vue'
+import { useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
 import { resolveSizeClass } from '../../shared/types'
 import type { InputProps } from './types'
@@ -23,6 +24,7 @@ const emit = defineEmits<{
   (event: 'clear'): void
 }>()
 const config = useWdConfig()
+const locale = useWdLocale()
 const inputElement = ref<HTMLInputElement | null>(null)
 const inputId = computed(() => props.id ?? `wd-input-${Math.random().toString(36).slice(2, 8)}`)
 const isInvalid = computed(() => props.invalid || props.error || Boolean(props.errorMessage))
@@ -109,7 +111,7 @@ defineExpose({ focus })
         v-if="clearable && modelValue"
         class="wd-input__clear"
         type="button"
-        aria-label="清除输入内容"
+        :aria-label="locale.clearInput"
         :disabled="disabled || readonly"
         @click="clear"
       >

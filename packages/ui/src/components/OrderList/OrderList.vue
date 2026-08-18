@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useWdLocale } from '../../locale'
 import WdIcon from '../Icon/Icon.vue'
 import type { OrderListProps } from './types'
 
@@ -13,6 +14,7 @@ const emit = defineEmits<{
   (event: 'update:modelValue', value: unknown[]): void
   (event: 'reorder', value: unknown[]): void
 }>()
+const locale = useWdLocale()
 
 const selectedIndex = ref<number | null>(null)
 const dragFrom = ref<number | null>(null)
@@ -102,10 +104,10 @@ function resetDrag() {
 <template>
   <div class="wd-orderlist">
     <div class="wd-orderlist__controls">
-      <button type="button" class="wd-orderlist__btn" aria-label="上移" @click="move(-1)">
+      <button type="button" class="wd-orderlist__btn" :aria-label="locale.moveUp" @click="move(-1)">
         <WdIcon name="chevron-up" size="sm" />
       </button>
-      <button type="button" class="wd-orderlist__btn" aria-label="下移" @click="move(1)">
+      <button type="button" class="wd-orderlist__btn" :aria-label="locale.moveDown" @click="move(1)">
         <WdIcon name="chevron-down" size="sm" />
       </button>
     </div>
@@ -133,7 +135,7 @@ function resetDrag() {
           v-if="dragdrop"
           type="button"
           class="wd-orderlist__handle"
-          aria-label="拖拽排序"
+          :aria-label="locale.dragToReorder"
           @click.stop
           @pointerdown="armHandle"
         >

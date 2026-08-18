@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
 import { isOverlayTeleported, resolveOverlayTeleport } from '../../shared/overlay'
 import WdButton from '../Button/Button.vue'
@@ -7,8 +8,6 @@ import type { ConfirmPopupProps } from './types'
 
 const props = withDefaults(defineProps<ConfirmPopupProps>(), {
   modelValue: false,
-  acceptLabel: '确认',
-  rejectLabel: '取消',
   target: null,
   position: null,
   teleport: true,
@@ -21,6 +20,7 @@ const emit = defineEmits<{
 }>()
 
 const config = useWdConfig()
+const locale = useWdLocale()
 const panel = ref<HTMLElement | null>(null)
 const panelStyle = ref<Record<string, string>>({})
 const teleportTarget = computed(() => resolveOverlayTeleport(props, config.value.appendTo))
@@ -111,6 +111,8 @@ onBeforeUnmount(() => {
 })
 
 const visible = computed(() => props.modelValue)
+const acceptText = computed(() => props.acceptLabel ?? locale.value.accept)
+const rejectText = computed(() => props.rejectLabel ?? locale.value.reject)
 </script>
 
 <template>
@@ -130,8 +132,8 @@ const visible = computed(() => props.modelValue)
           <slot>{{ message }}</slot>
         </div>
         <div class="wd-confirmpopup__footer">
-          <WdButton :label="rejectLabel" severity="secondary" size="small" @click="reject" />
-          <WdButton :label="acceptLabel" size="small" @click="accept" />
+          <WdButton :label="rejectText" severity="secondary" size="small" @click="reject" />
+          <WdButton :label="acceptText" size="small" @click="accept" />
         </div>
       </div>
     </Transition>

@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useWdLocale } from '../../locale'
 import type { SidebarItem, SidebarProps } from './types'
 
 const props = withDefaults(defineProps<SidebarProps>(), {
   model: () => [],
   collapsed: false,
 })
+const locale = useWdLocale()
 
 const rootClass = computed(() => [
   'wd-sidebar',
@@ -19,7 +21,7 @@ function activate(item: SidebarItem) {
 </script>
 
 <template>
-  <nav :class="rootClass" aria-label="侧边导航">
+  <nav :class="rootClass" :aria-label="locale.sidebar">
     <ul class="wd-sidebar__list">
       <li v-for="(item, index) in model" :key="`${item.label}-${index}`" class="wd-sidebar__item">
         <button

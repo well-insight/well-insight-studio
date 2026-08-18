@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
 import { isOverlayTeleported, resolveOverlayTeleport } from '../../shared/overlay'
 import type { DropdownItem, DropdownProps } from './types'
@@ -16,6 +17,7 @@ const emit = defineEmits<{
 }>()
 
 const config = useWdConfig()
+const locale = useWdLocale()
 const root = ref<HTMLElement | null>(null)
 const trigger = ref<HTMLElement | null>(null)
 const menu = ref<HTMLElement | null>(null)
@@ -152,7 +154,7 @@ onBeforeUnmount(() => {
       @click="toggle"
       @keydown="onTriggerKeydown"
     >
-      <slot name="trigger">打开菜单</slot>
+      <slot name="trigger">{{ locale.openMenu }}</slot>
     </span>
     <Teleport :to="teleportTarget.to" :disabled="teleportTarget.disabled">
       <Transition name="wd-scale-fade">

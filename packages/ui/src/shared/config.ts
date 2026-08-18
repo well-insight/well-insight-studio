@@ -1,9 +1,12 @@
 import { computed, inject, provide, type App, type InjectionKey, type MaybeRefOrGetter, toValue } from 'vue'
+import { zhCN } from '../locale/zh-CN'
+import type { WdLocaleConfig } from '../locale/types'
 import { applyDensity, type DensityPreference } from '../theme'
 import type { WdAppendTo } from './overlay'
 import type { WdInputVariant, WdSizeInput } from './types'
 
 export type WdDensity = DensityPreference
+export type { WdLocaleConfig }
 
 /** Application-level default configuration. */
 export interface WdGlobalConfig {
@@ -20,21 +23,8 @@ export interface WdGlobalConfig {
    * Local ConfigProvider scopes to its subtree; plugin applies on `documentElement`.
    */
   density?: WdDensity
-  /** Shared UI copy; components fall back to built-in Chinese defaults. */
+  /** Shared UI copy. Pass `zhCN` / `enUS` or a partial override. Default is Chinese. */
   locale?: WdLocaleConfig
-}
-
-export interface WdLocaleConfig {
-  accept?: string
-  reject?: string
-  emptyMessage?: string
-  searchPlaceholder?: string
-  datePickerPlaceholder?: string
-  selectPlaceholder?: string
-  clear?: string
-  close?: string
-  loading?: string
-  required?: string
 }
 
 export const WD_CONFIG_KEY: InjectionKey<MaybeRefOrGetter<WdGlobalConfig>> = Symbol('wdConfig')
@@ -44,18 +34,7 @@ const defaultConfig: Required<Pick<WdGlobalConfig, 'appendTo' | 'zIndex' | 'dens
   zIndex: 1000,
   density: 'comfortable',
   inputVariant: 'outlined',
-  locale: {
-    accept: '确认',
-    reject: '取消',
-    emptyMessage: '暂无数据',
-    searchPlaceholder: '搜索',
-    datePickerPlaceholder: '选择日期',
-    selectPlaceholder: '请选择',
-    clear: '清除',
-    close: '关闭',
-    loading: '加载中',
-    required: '必填',
-  },
+  locale: { ...zhCN },
 }
 
 export function getDefaultWdConfig(): WdGlobalConfig {

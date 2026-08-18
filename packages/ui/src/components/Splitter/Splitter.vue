@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Comment, Fragment, Text, computed, onBeforeUnmount, ref, useSlots, watch, type VNode } from 'vue'
+import { useWdLocale } from '../../locale'
 import type { SplitterProps } from './types'
 
 const props = withDefaults(defineProps<SplitterProps>(), {
@@ -14,6 +15,7 @@ const emit = defineEmits<{
   (event: 'resize', value: number): void
 }>()
 
+const locale = useWdLocale()
 const slots = useSlots()
 const root = ref<HTMLElement | null>(null)
 const dragging = ref(false)
@@ -157,7 +159,7 @@ onBeforeUnmount(() => {
       :aria-valuenow="Math.round(primarySize)"
       :aria-valuemin="min"
       :aria-valuemax="max"
-      :aria-label="isVertical ? '调整上下分割' : '调整左右分割'"
+      :aria-label="isVertical ? locale.resizeVertical : locale.resizeHorizontal"
       @pointerdown="startDrag"
       @mousedown="startDrag"
       @keydown="onGutterKeydown"

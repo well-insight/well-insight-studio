@@ -3,24 +3,26 @@ import { computed, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import ComponentDocViewer from '../components/ComponentDocViewer.vue'
 import { listGuideDocs, resolveGuideDoc } from '../docs/guide/loadGuideDocs'
+import { useDocsI18n } from '../i18n'
 import { WdScrollbar } from '@well-design/ui'
 
 const route = useRoute()
 const router = useRouter()
-const guides = listGuideDocs()
+const { lang, t } = useDocsI18n()
+const guides = computed(() => listGuideDocs(lang.value))
 
 const activeSlug = computed(() => {
   const slug = route.params.slug
   return typeof slug === 'string' && slug ? slug : 'introduction'
 })
 
-const activeDoc = computed(() => resolveGuideDoc(activeSlug.value))
+const activeDoc = computed(() => resolveGuideDoc(activeSlug.value, lang.value))
 
 watch(
   activeSlug,
   (slug) => {
-    if (!resolveGuideDoc(slug) && guides[0]) {
-      void router.replace({ name: 'docs', params: { slug: guides[0].slug } })
+    if (!resolveGuideDoc(slug, lang.value) && guides.value[0]) {
+      void router.replace({ name: 'docs', params: { slug: guides.value[0].slug } })
     }
   },
   { immediate: true },
@@ -29,11 +31,11 @@ watch(
 
 <template>
   <div class="docs-shell">
-    <aside class="docs-sidebar" aria-label="文档导航">
+    <aside class="docs-sidebar" :aria-label="t.docsNav">
       <WdScrollbar class="docs-scroll">
         <div class="docs-sidebar__body">
           <p class="docs-kicker">DOCUMENTATION</p>
-          <h1 class="docs-sidebar__title">文档</h1>
+          <h1 class="docs-sidebar__title">{{ t.docsTitle }}</h1>
           <nav class="docs-nav">
             <RouterLink
               v-for="item in guides"
@@ -42,7 +44,7 @@ watch(
               :class="{ 'is-active': activeSlug === item.slug }"
               :to="{ name: 'docs', params: { slug: item.slug } }"
             >
-              <span>{{ item.title }}</span>
+              <span>{{ t.guideTitles[item.slug] ?? item.title }}</span>
             </RouterLink>
           </nav>
         </div>
@@ -52,10 +54,10 @@ watch(
     <main class="docs-main">
       <WdScrollbar class="docs-scroll">
         <div class="docs-main__body">
-          <ComponentDocViewer v-if="activeDoc" :doc="{ name: activeDoc.slug, frontmatter: activeDoc.frontmatter, component: activeDoc.component }" />
+          <ComponentDocViewer v-if="activeDoc" :key="`${activeDoc.slug}-${lang}`" :doc="{ name: activeDoc.slug, frontmatter: activeDoc.frontmatter, component: activeDoc.component }" />
           <section v-else class="docs-missing">
-            <h2>未找到文档</h2>
-            <RouterLink :to="{ name: 'docs', params: { slug: 'introduction' } }">返回介绍</RouterLink>
+            <h2>{{ t.docsMissing }}</h2>
+            <RouterLink :to="{ name: 'docs', params: { slug: 'introduction' } }">{{ t.backIntro }}</RouterLink>
           </section>
         </div>
       </WdScrollbar>

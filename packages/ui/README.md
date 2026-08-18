@@ -28,6 +28,20 @@ createApp({ /* ... */ }).mount('#app')
 const { toggleTheme } = useTheme()
 ```
 
+## 中英文
+
+组件内置文案默认中文。切换英文时传入 `enUS`，也可通过 `WdConfigProvider` 覆盖：
+
+```ts
+import { createApp } from 'vue'
+import { createWellDesign, enUS } from '@well-design/ui'
+import '@well-design/ui/styles.css'
+
+createApp(App).use(createWellDesign({ locale: enUS })).mount('#app')
+```
+
+文档站右上角「中 / EN」会同步切换站点界面、组件内置文案，以及指南 / 组件 Markdown 正文（`docs/index.en.md`）。
+
 ## 文档站
 
 ```bash
@@ -38,7 +52,7 @@ pnpm --filter @well-design/ui build:docs
 pnpm --filter @well-design/ui preview
 ```
 
-组件文档写在各组件目录的 `docs/index.md`，支持 `vue preview` 代码块。
+组件文档写在各组件目录的 `docs/index.md`（中文）与 `docs/index.en.md`（英文），支持 `vue preview` 代码块。
 
 ## 构建与发布
 
@@ -64,21 +78,11 @@ pnpm build:ui
 # 有用户可见改动时先记一条
 pnpm changeset
 
-# 汇总 bump 版本并写入 CHANGELOG.md
-pnpm version-packages
-
-# 构建并 npm publish
+# bump、提交、构建、publish、打 tag、推送 release/{version}
 pnpm release
 ```
 
-首次发布 `0.1.0`（版本与 changelog 已就绪）可：
-
-```bash
-pnpm build:ui
-pnpm --filter @well-design/ui publish --access public
-```
-
-文档站「更新日志」页读取 `packages/ui/CHANGELOG.md`，与发版记录同步。
+文档站「更新日志」页读取 `packages/ui/CHANGELOG.md`，与发版记录同步。Git 上每次发版会有 `v{version}` 标签和 `release/{version}` 分支。
 
 发布前检查：
 

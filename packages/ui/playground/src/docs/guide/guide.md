@@ -16,7 +16,9 @@ packages/ui/src/components/Button/
 ├── types.ts
 ├── index.ts
 ├── Button.test.ts
-└── docs/index.md
+└── docs/
+    ├── index.md
+    └── index.en.md
 ```
 
 - **前缀**：组件导出为 `Wd*`，CSS 类为 `.wd-*`。
@@ -25,7 +27,7 @@ packages/ui/src/components/Button/
 
 ## 写文档
 
-在 `docs/index.md` 顶部写 frontmatter：
+在 `docs/index.md`（中文）和 `docs/index.en.md`（英文）顶部写 frontmatter：
 
 ```md
 ---
@@ -35,7 +37,7 @@ description: 触发动作的按钮
 ---
 ```
 
-正文使用 Markdown；可交互示例用 `vue preview` 代码块（文档站会渲染预览并支持查看代码）。
+正文使用 Markdown；可交互示例用 `vue preview` 代码块（文档站会渲染预览并支持查看代码）。两种语言的 `category` 保持一致，文档站切换英文时加载 `index.en.md`，缺失则回退到中文。
 
 分类前缀数字决定侧栏排序，例如：
 

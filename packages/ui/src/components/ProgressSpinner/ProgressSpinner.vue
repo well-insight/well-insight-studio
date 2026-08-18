@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useWdLocale } from '../../locale'
 import type { ProgressSpinnerProps } from './types'
 
 const props = withDefaults(defineProps<ProgressSpinnerProps>(), {
   strokeWidth: '2',
   animationDuration: '1s',
-  ariaLabel: '加载中',
 })
+
+const locale = useWdLocale()
+const label = computed(() => props.ariaLabel ?? locale.value.loading)
 
 const spinnerStyle = computed(() => ({
   animationDuration: props.animationDuration,
@@ -18,7 +21,7 @@ const spinnerStyle = computed(() => ({
     class="wd-progress-spinner"
     viewBox="0 0 50 50"
     role="status"
-    :aria-label="ariaLabel"
+    :aria-label="label"
     :style="spinnerStyle"
   >
     <circle

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
+import { formatLocale, useWdLocale } from '../../locale'
 import type { InputOtpProps } from './types'
 
 const props = withDefaults(defineProps<InputOtpProps>(), {
@@ -13,6 +14,7 @@ const emit = defineEmits<{
   (event: 'update:modelValue', value: string): void
 }>()
 
+const locale = useWdLocale()
 const inputs = ref<(HTMLInputElement | null)[]>([])
 
 const chars = computed(() => {
@@ -108,7 +110,7 @@ watch(
       autocomplete="one-time-code"
       :value="char"
       :disabled="disabled"
-      :aria-label="`第 ${index + 1} 位`"
+      :aria-label="formatLocale(locale.otpDigit, { index: index + 1 })"
       @input="onInput(index, $event)"
       @keydown="onKeydown(index, $event)"
     />

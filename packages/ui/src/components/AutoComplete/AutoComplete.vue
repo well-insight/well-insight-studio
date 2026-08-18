@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
 import { isOverlayTeleported, resolveOverlayTeleport } from '../../shared/overlay'
 import { resolveSizeClass } from '../../shared/types'
@@ -21,6 +22,7 @@ const emit = defineEmits<{
 }>()
 
 const config = useWdConfig()
+const locale = useWdLocale()
 const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
 const open = ref(false)
 const root = ref<HTMLElement | null>(null)
@@ -167,7 +169,7 @@ onBeforeUnmount(() => {
         v-if="dropdown"
         type="button"
         class="wd-autocomplete__dropdown"
-        aria-label="显示建议"
+        :aria-label="locale.showSuggestions"
         :disabled="disabled"
         @click="toggleDropdown"
       >

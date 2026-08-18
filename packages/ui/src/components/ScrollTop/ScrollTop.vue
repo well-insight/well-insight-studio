@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
 import { isOverlayTeleported, resolveOverlayTeleport } from '../../shared/overlay'
 import type { ScrollTopProps } from './types'
@@ -11,6 +12,7 @@ const props = withDefaults(defineProps<ScrollTopProps>(), {
 })
 
 const config = useWdConfig()
+const locale = useWdLocale()
 const anchor = ref<HTMLElement | null>(null)
 const root = ref<HTMLElement | null>(null)
 const visible = ref(false)
@@ -81,7 +83,7 @@ watch(
         ref="root"
         type="button"
         :class="rootClass"
-        aria-label="回到顶部"
+        :aria-label="locale.backToTop"
         :hidden="!visible"
         @click="scrollToTop"
       >

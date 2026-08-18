@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { formatLocale, useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
 import { isOverlayTeleported, resolveOverlayTeleport } from '../../shared/overlay'
 import { resolveSizeClass } from '../../shared/types'
@@ -10,7 +11,7 @@ const props = withDefaults(defineProps<DatePickerProps>(), {
   disabled: false,
   invalid: false,
   fluid: false,
-  placeholder: '选择日期',
+  placeholder: undefined,
   teleport: true,
 })
 
@@ -19,6 +20,7 @@ const emit = defineEmits<{
 }>()
 
 const config = useWdConfig()
+const locale = useWdLocale()
 const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
 const open = ref(false)
 const root = ref<HTMLElement | null>(null)
@@ -61,7 +63,13 @@ const displayValue = computed(() => {
   return toIso(selected.value)
 })
 
-const monthLabel = computed(() => `${viewYear.value}年 ${viewMonth.value + 1}月`)
+const monthLabel = computed(() =>
+  formatLocale(locale.value.monthYear, {
+    year: viewYear.value,
+    month: viewMonth.value + 1,
+    monthName: locale.value.monthNames[viewMonth.value] ?? String(viewMonth.value + 1),
+  }),
+)
 
 const calendarDays = computed(() => {
   const first = new Date(viewYear.value, viewMonth.value, 1)
@@ -215,7 +223,7 @@ onBeforeUnmount(() => {
         type="text"
         readonly
         :value="displayValue"
-        :placeholder="placeholder"
+        :placeholder="placeholder ?? locale.datePickerPlaceholder"
         :disabled="disabled"
         :aria-invalid="invalid || undefined"
         :aria-expanded="open"
@@ -228,7 +236,7 @@ onBeforeUnmount(() => {
         v-if="displayValue"
         type="button"
         class="wd-datepicker__clear"
-        aria-label="清除日期"
+        :aria-label="locale.clearDate"
         :disabled="disabled"
         @click="clear"
       >
@@ -244,15 +252,15 @@ onBeforeUnmount(() => {
           :class="{ 'wd-datepicker__panel--teleported': teleported }"
           :style="teleported ? panelStyle : undefined"
           role="dialog"
-          aria-label="日期选择"
+          :aria-label="locale.datePicker"
         >
           <div class="wd-datepicker__header">
-            <button type="button" class="wd-datepicker__nav" aria-label="上个月" @click="prevMonth">‹</button>
+            <button type="button" class="wd-datepicker__nav" :aria-label="locale.prevMonth" @click="prevMonth">‹</button>
             <span class="wd-datepicker__month">{{ monthLabel }}</span>
-            <button type="button" class="wd-datepicker__nav" aria-label="下个月" @click="nextMonth">›</button>
+            <button type="button" class="wd-datepicker__nav" :aria-label="locale.nextMonth" @click="nextMonth">›</button>
           </div>
           <div class="wd-datepicker__weekdays">
-            <span v-for="day in ['日', '一', '二', '三', '四', '五', '六']" :key="day">{{ day }}</span>
+            <span v-for="day in locale.weekdays" :key="day">{{ day }}</span>
           </div>
           <div class="wd-datepicker__grid">
             <button

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useWdLocale } from '../../locale'
 import type { GalleryProps } from './types'
 
 const props = withDefaults(defineProps<GalleryProps>(), {
@@ -9,6 +10,7 @@ const props = withDefaults(defineProps<GalleryProps>(), {
 const emit = defineEmits<{
   (event: 'update:activeIndex', value: number): void
 }>()
+const locale = useWdLocale()
 
 const current = computed(() => props.images[props.activeIndex] ?? props.images[0] ?? '')
 
@@ -32,7 +34,7 @@ function next() {
       <button
         type="button"
         class="wd-gallery__nav wd-gallery__nav--prev"
-        aria-label="上一张"
+        :aria-label="locale.prevImage"
         :disabled="activeIndex <= 0"
         @click="prev"
       >
@@ -42,14 +44,14 @@ function next() {
       <button
         type="button"
         class="wd-gallery__nav wd-gallery__nav--next"
-        aria-label="下一张"
+        :aria-label="locale.nextImage"
         :disabled="activeIndex >= images.length - 1"
         @click="next"
       >
         ›
       </button>
     </div>
-    <ul class="wd-gallery__thumbs" role="listbox" aria-label="缩略图">
+    <ul class="wd-gallery__thumbs" role="listbox" :aria-label="locale.thumbnails">
       <li v-for="(src, index) in images" :key="`${src}-${index}`">
         <button
           type="button"

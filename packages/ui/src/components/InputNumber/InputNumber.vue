@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue'
+import { useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
 import { resolveSizeClass } from '../../shared/types'
 import type { InputNumberProps } from './types'
@@ -18,6 +19,7 @@ const props = withDefaults(defineProps<InputNumberProps>(), {
 const emit = defineEmits<{ (event: 'update:modelValue', value: number | null): void }>()
 
 const config = useWdConfig()
+const locale = useWdLocale()
 const inputId = computed(() => props.id ?? `wd-inputnumber-${Math.random().toString(36).slice(2, 8)}`)
 const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
 
@@ -67,7 +69,7 @@ function stepBy(direction: 1 | -1) {
         v-if="showButtons"
         class="wd-inputnumber__button wd-inputnumber__button--decrement"
         type="button"
-        aria-label="减少"
+        :aria-label="locale.decrease"
         :disabled="disabled || (min != null && modelValue != null && modelValue <= min)"
         @click="stepBy(-1)"
       >
@@ -90,7 +92,7 @@ function stepBy(direction: 1 | -1) {
         v-if="showButtons"
         class="wd-inputnumber__button wd-inputnumber__button--increment"
         type="button"
-        aria-label="增加"
+        :aria-label="locale.increase"
         :disabled="disabled || (max != null && modelValue != null && modelValue >= max)"
         @click="stepBy(1)"
       >

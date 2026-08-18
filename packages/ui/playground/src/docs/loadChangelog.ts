@@ -1,5 +1,7 @@
 import changelogRaw from '../../../CHANGELOG.md?raw'
+import changelogEnRaw from '../../../CHANGELOG.en.md?raw'
 import packageJson from '../../../package.json' with { type: 'json' }
+import type { DocsLang } from '../i18n'
 
 type UiPackageJson = {
   name: string
@@ -59,8 +61,9 @@ function parseSections(body: string): ChangelogSection[] {
   return sections.filter((section) => section.items.length > 0 || section.heading)
 }
 
-export function loadChangelog(): ChangelogDocument {
-  const text = changelogRaw.replace(/^\uFEFF/, '')
+export function loadChangelog(lang: DocsLang = 'zh-CN'): ChangelogDocument {
+  const source = lang === 'en-US' ? changelogEnRaw : changelogRaw
+  const text = source.replace(/^\uFEFF/, '')
   const lines = text.split(/\r?\n/)
 
   let packageName = uiPackage.name

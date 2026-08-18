@@ -9,23 +9,10 @@ import {
 } from '../docs/loadComponentDocs'
 import { useDensity, useMotion, useTheme } from '@well-design/ui'
 import { WdCard, WdIcon, WdScrollbar } from '@well-design/ui'
+import { useDocsI18n } from '../i18n'
 
 const OVERVIEW = '全部组件'
-
-const categoryTitles: Record<string, string> = {
-  GUIDE: '指南',
-  PRIMITIVE: '基础',
-  FORM: '表单',
-  OVERLAY: '浮层',
-  PANEL: '面板',
-  DATA: '数据',
-  MISC: '杂项',
-  MESSAGE: '消息',
-  MENU: '菜单',
-  FILE: '文件',
-  MEDIA: '媒体',
-  OTHER: '其他',
-}
+const { lang, t, interpolate } = useDocsI18n()
 
 const route = useRoute()
 const search = ref('')
@@ -37,11 +24,11 @@ const contentScroll = ref<{ setScrollTop: (value: number) => void } | null>(null
 const { preference: motionPreference, setMotion } = useMotion()
 const { isDark, setTheme } = useTheme()
 
-const motionOptions = [
-  { name: 'full', label: '完整' },
-  { name: 'reduced', label: '减弱' },
-  { name: 'none', label: '关闭' },
-] as const
+const motionOptions = computed(() => [
+  { name: 'full', label: t.value.motionFull },
+  { name: 'reduced', label: t.value.motionReduced },
+  { name: 'none', label: t.value.motionNone },
+] as const)
 
 const accentOptions = [
   { name: 'blue', label: 'Ocean', color: '#2563eb', hover: '#1d4ed8' },
@@ -50,112 +37,25 @@ const accentOptions = [
   { name: 'orange', label: 'Ember', color: '#ea580c', hover: '#c2410c' },
 ] as const
 
-const radiusOptions = [
-  { name: 'sharp', label: '锐利', values: ['0.125rem', '0.25rem', '0.5rem'] },
-  { name: 'comfortable', label: '适中', values: ['0.25rem', '0.5rem', '0.75rem'] },
-  { name: 'soft', label: '柔和', values: ['0.5rem', '0.75rem', '1rem'] },
-] as const
+const radiusOptions = computed(() => [
+  { name: 'sharp', label: t.value.sharp, values: ['0.125rem', '0.25rem', '0.5rem'] },
+  { name: 'comfortable', label: t.value.comfortable, values: ['0.25rem', '0.5rem', '0.75rem'] },
+  { name: 'soft', label: t.value.soft, values: ['0.5rem', '0.75rem', '1rem'] },
+] as const)
 
-const densityOptions = [
-  { name: 'compact' as const, label: '紧凑' },
-  { name: 'comfortable' as const, label: '适中' },
-  { name: 'spacious' as const, label: '宽松' },
-]
+const densityOptions = computed(() => [
+  { name: 'compact' as const, label: t.value.compact },
+  { name: 'comfortable' as const, label: t.value.comfortable },
+  { name: 'spacious' as const, label: t.value.spacious },
+])
 
-const componentBlurbs: Record<string, string> = {
-  Button: '触发一个动作，反馈当前状态。',
-  Input: '接收用户输入，并提供校验提示。',
-  Textarea: '收集多行、可调整大小的文本。',
-  Select: '从一组预定义选项中选择一个值。',
-  Checkbox: '切换独立的二元选项。',
-  Radio: '在互斥选项中选择一个。',
-  Switch: '立即改变一个开关状态。',
-  Tabs: '在同一上下文中切换内容视图。',
-  Divider: '以清晰层级分隔内容区域。',
-  Tag: '展示简洁、语义化的状态标签。',
-  Tooltip: '在悬停或聚焦时补充说明。',
-  Toast: '以非阻断方式反馈操作结果。',
-  Table: '以可扩展的列和单元格插槽展示数据。',
-  Pagination: '控制长列表的数据分页状态。',
-  Card: '组织一组相关信息和操作。',
-  Dialog: '聚焦一件需要确认的事情。',
-  Dropdown: '在浮层菜单中选择一个动作。',
-  Icon: '传达轻量、明确的视觉信息。',
-  Scrollbar: '替换原生滚动条，提供可换肤滚动体验。',
-  ConfigProvider: '全局配置：浮层挂载、尺寸、密度、文案、zIndex。',
-  Form: '表单布局与字段错误反馈（校验状态由业务控制）。',
-  Drawer: '从屏幕边缘滑出的侧栏面板。',
-  Popover: '相对触发器展示的浮层内容。',
-  Accordion: '可折叠的内容分组面板。',
-  Badge: '展示计数或状态点。',
-  Message: '页面内联的提示消息。',
-  Skeleton: '内容加载时的占位骨架。',
-  Avatar: '展示用户头像、缩写或图标。',
-  Chip: '展示可移除的标签实体。',
-  ProgressBar: '展示任务完成进度。',
-  ProgressSpinner: '展示不确定的加载状态。',
-  InputNumber: '输入并约束数值，可带步进按钮。',
-  InputPassword: '密码输入，支持显示切换与强度提示。',
-  FloatLabel: '浮动标签包裹输入控件。',
-  IconField: '为输入框添加左/右侧图标。',
-  InputGroup: '组合输入与前后缀附加内容。',
-  SelectButton: '以按钮组进行单选或多选。',
-  Slider: '拖动选择数值或区间。',
-  Rating: '星级评分与清除。',
-  Breadcrumb: '展示页面层级路径。',
-  Panel: '带可选折叠的内容面板。',
-  Fieldset: '带图例的字段分组，可折叠。',
-  Splitter: '双栏水平或垂直分割布局。',
-  Stepper: '多步流程指示与切换。',
-  Toolbar: '工具栏 start / center / end 布局。',
-  Menu: '垂直菜单列表，支持 popup。',
-  Menubar: '水平菜单栏，支持一级下拉。',
-  ContextMenu: '右键上下文菜单。',
-  TieredMenu: '带一层子菜单的分层菜单。',
-  ConfirmDialog: '确认 / 取消模态对话框。',
-  DatePicker: '日历弹层选择日期。',
-  Listbox: '列表形式的单选或多选。',
-  ToggleButton: '开 / 关标签切换按钮。',
-  InputOtp: '多格验证码输入。',
-  Knob: '圆形旋钮选择数值。',
-  AutoComplete: '输入建议与补全。',
-  SplitButton: '主按钮附带下拉菜单。',
-  Tree: '可展开的树形选择。',
-  Timeline: '垂直时间轴事件流。',
-  DataView: '列表或网格数据展示。',
-  ConfirmPopup: '锚定目标的确认气泡。',
-  ScrollTop: '滚动后回到顶部。',
-  BlockUI: '遮罩阻止区域交互。',
-  Inplace: '点击切换为可编辑内容。',
-  CascadeSelect: '多级联级选择，分栏展开嵌套选项。',
-  TreeSelect: '下拉面板中的树形单选。',
-  InputColor: '色板与十六进制文本编辑颜色。',
-  InputTags: '回车添加、可移除的标签输入。',
-  Label: '可访问的表单标签。',
-  SpeedDial: '悬浮快捷操作按钮组。',
-  OrderList: '列表项上移下移排序。',
-  PickList: '双列表穿梭选择。',
-  VirtualScroller: '按可视窗口渲染长列表。',
-  TreeTable: '可展开的树形表格。',
-  MegaMenu: '水平菜单，子项按多列展示。',
-  Dock: 'macOS 风格图标坞。',
-  Sidebar: '可折叠的应用导航轨。',
-  CommandMenu: '可搜索的命令面板。',
-  FileUpload: '选择文件并展示列表。',
-  Carousel: '轮播展示一组内容。',
-  Gallery: '主图与缩略图画廊。',
-  MeterGroup: '多段占比计量条。',
-  Fluid: '让子元素宽度撑满。',
-  Terminal: '简易命令提示符界面。',
-}
-
-const documented = listDocumentedComponents()
-const documentedNames = documented.map((item) => item.name)
+const documented = computed(() => listDocumentedComponents(lang.value))
+const documentedNames = computed(() => documented.value.map((item) => item.name))
 
 const selectedComponent = computed(() => {
   const param = route.params.component
   if (typeof param !== 'string' || !param) return OVERVIEW
-  return documentedNames.find((name) => name.toLowerCase() === param.toLowerCase()) ?? param
+  return documentedNames.value.find((name) => name.toLowerCase() === param.toLowerCase()) ?? param
 })
 
 function componentRoute(name: string) {
@@ -165,7 +65,7 @@ function componentRoute(name: string) {
 }
 
 function categoryTitle(label: string) {
-  return categoryTitles[label] ?? label
+  return t.value.categories[label] ?? label
 }
 
 function groupByCategory(items: DocumentedComponentMeta[]) {
@@ -191,14 +91,15 @@ function groupByCategory(items: DocumentedComponentMeta[]) {
 function applyPlaygroundTheme() {
   const root = document.documentElement
   const selectedAccent = accentOptions.find((item) => item.name === accent.value) ?? accentOptions[0]
-  const selectedRadius = radiusOptions.find((item) => item.name === radius.value) ?? radiusOptions[1]
+  const selectedRadius = radiusOptions.value.find((item) => item.name === radius.value) ?? radiusOptions.value[1]
+  if (!selectedAccent || !selectedRadius) return
 
   root.style.setProperty('--wd-color-primary', selectedAccent.color)
   root.style.setProperty('--wd-color-primary-hover', selectedAccent.hover)
   root.style.setProperty('--wd-color-focus-ring', selectedAccent.color)
-  root.style.setProperty('--wd-radius-sm', selectedRadius.values[0])
-  root.style.setProperty('--wd-radius-md', selectedRadius.values[1])
-  root.style.setProperty('--wd-radius-lg', selectedRadius.values[2])
+  root.style.setProperty('--wd-radius-sm', selectedRadius.values[0] ?? '0.25rem')
+  root.style.setProperty('--wd-radius-md', selectedRadius.values[1] ?? '0.5rem')
+  root.style.setProperty('--wd-radius-lg', selectedRadius.values[2] ?? '0.75rem')
   // Density comes from useDensity() → data-wd-density tokens; do not override spaces here.
   root.style.setProperty('--wd-motion-fast', motionPreference.value === 'full' ? '150ms' : motionPreference.value === 'reduced' ? '80ms' : '0ms')
   root.style.setProperty('--wd-motion-normal', motionPreference.value === 'full' ? '250ms' : motionPreference.value === 'reduced' ? '120ms' : '0ms')
@@ -209,7 +110,7 @@ watch([accent, radius, motionPreference], applyPlaygroundTheme, { immediate: tru
 const themeSummary = computed(() => {
   const mode = isDark.value ? 'Dark' : 'Light'
   const accentLabel = accentOptions.find((item) => item.name === accent.value)?.label ?? 'Ocean'
-  const densityLabel = densityOptions.find((item) => item.name === density.value)?.label ?? '适中'
+  const densityLabel = densityOptions.value.find((item) => item.name === density.value)?.label ?? t.value.comfortable
   return `${mode} · ${accentLabel} · ${densityLabel}`
 })
 
@@ -220,19 +121,18 @@ watch(selectedComponent, async () => {
 
 const activePackageDoc = computed(() => {
   if (selectedComponent.value === OVERVIEW) return null
-  return resolveComponentDoc(selectedComponent.value)
+  return resolveComponentDoc(selectedComponent.value, lang.value)
 })
 
 const filteredDocumented = computed(() => {
   const query = search.value.trim().toLowerCase()
-  if (!query) return documented
-  return documented.filter((component) => {
+  if (!query) return documented.value
+  return documented.value.filter((component) => {
     const haystack = [
       component.name,
       component.categoryLabel,
       categoryTitle(component.categoryLabel),
       component.description ?? '',
-      componentBlurbs[component.name] ?? '',
     ]
       .join(' ')
       .toLowerCase()
@@ -241,18 +141,18 @@ const filteredDocumented = computed(() => {
 })
 
 const navGroups = computed(() => groupByCategory(filteredDocumented.value))
-const overviewGroups = computed(() => groupByCategory(documented))
+const overviewGroups = computed(() => groupByCategory(documented.value))
 </script>
 
 <template>
   <div class="components-shell">
     <div class="workspace">
-      <aside class="sidebar" aria-label="组件导航">
+      <aside class="sidebar" :aria-label="t.componentNav">
         <WdScrollbar class="column-scroll">
           <div class="sidebar-body">
             <label class="search-box">
               <WdIcon name="search" size="sm" />
-              <input v-model="search" type="search" placeholder="筛选组件" aria-label="筛选组件" />
+              <input v-model="search" type="search" :placeholder="t.filterComponents" :aria-label="t.filterComponents" />
             </label>
 
             <section class="theme-panel">
@@ -262,21 +162,21 @@ const overviewGroups = computed(() => groupByCategory(documented))
                 :aria-expanded="themeOpen"
                 @click="themeOpen = !themeOpen"
               >
-                <span class="theme-panel__title">主题</span>
+                <span class="theme-panel__title">{{ t.theme }}</span>
                 <span class="theme-panel__summary">{{ themeSummary }}</span>
                 <span class="theme-panel__chevron" aria-hidden="true">{{ themeOpen ? '▾' : '▸' }}</span>
               </button>
               <div v-show="themeOpen" class="theme-panel__body" aria-labelledby="appearance-title">
-                <h2 id="appearance-title" class="sr-only">主题设置</h2>
+                <h2 id="appearance-title" class="sr-only">{{ t.themeSettings }}</h2>
                 <div class="setting-group">
-                  <span class="setting-label">主题模式</span>
+                  <span class="setting-label">{{ t.themeMode }}</span>
                   <div class="segmented-control">
-                    <button type="button" :class="{ 'is-selected': !isDark }" @click="setTheme('light')">亮色</button>
-                    <button type="button" :class="{ 'is-selected': isDark }" @click="setTheme('dark')">暗色</button>
+                    <button type="button" :class="{ 'is-selected': !isDark }" @click="setTheme('light')">{{ t.light }}</button>
+                    <button type="button" :class="{ 'is-selected': isDark }" @click="setTheme('dark')">{{ t.dark }}</button>
                   </div>
                 </div>
                 <div class="setting-group">
-                  <span class="setting-label">品牌主色</span>
+                  <span class="setting-label">{{ t.brandColor }}</span>
                   <div class="accent-list">
                     <button
                       v-for="option in accentOptions"
@@ -285,14 +185,14 @@ const overviewGroups = computed(() => groupByCategory(documented))
                       class="accent-swatch"
                       :class="{ 'is-selected': accent === option.name }"
                       :style="{ '--swatch-color': option.color }"
-                      :aria-label="`使用${option.label}主题色`"
+                      :aria-label="interpolate(t.useAccent, { label: option.label })"
                       @click="accent = option.name"
                     />
                   </div>
                 </div>
                 <div class="setting-group">
-                  <span class="setting-label">圆角</span>
-                  <div class="segmented-control segmented-control--triple" role="group" aria-label="选择圆角风格">
+                  <span class="setting-label">{{ t.radius }}</span>
+                  <div class="segmented-control segmented-control--triple" role="group" :aria-label="t.radius">
                     <button
                       v-for="option in radiusOptions"
                       :key="option.name"
@@ -305,8 +205,8 @@ const overviewGroups = computed(() => groupByCategory(documented))
                   </div>
                 </div>
                 <div class="setting-group">
-                  <span class="setting-label">内容密度</span>
-                  <div class="segmented-control segmented-control--triple" role="group" aria-label="选择内容密度">
+                  <span class="setting-label">{{ t.density }}</span>
+                  <div class="segmented-control segmented-control--triple" role="group" :aria-label="t.density">
                     <button
                       v-for="option in densityOptions"
                       :key="option.name"
@@ -319,8 +219,8 @@ const overviewGroups = computed(() => groupByCategory(documented))
                   </div>
                 </div>
                 <div class="setting-group motion-setting">
-                  <span class="setting-label">动效</span>
-                  <div class="segmented-control segmented-control--triple" role="group" aria-label="全局组件动效">
+                  <span class="setting-label">{{ t.motion }}</span>
+                  <div class="segmented-control segmented-control--triple" role="group" :aria-label="t.motion">
                     <button
                       v-for="option in motionOptions"
                       :key="option.name"
@@ -335,13 +235,13 @@ const overviewGroups = computed(() => groupByCategory(documented))
               </div>
             </section>
 
-            <nav class="component-nav" aria-label="组件目录">
+            <nav class="component-nav" :aria-label="t.componentCatalog">
               <RouterLink
                 class="nav-item nav-item--overview"
                 :class="{ 'nav-item--active': selectedComponent === OVERVIEW }"
                 :to="componentRoute(OVERVIEW)"
               >
-                <span>全部组件</span>
+                <span>{{ t.overview }}</span>
                 <span class="nav-count">{{ documented.length }}</span>
               </RouterLink>
 
@@ -361,7 +261,7 @@ const overviewGroups = computed(() => groupByCategory(documented))
                 </RouterLink>
               </section>
 
-              <p v-if="navGroups.length === 0" class="empty-search">没有找到组件</p>
+              <p v-if="navGroups.length === 0" class="empty-search">{{ t.noComponent }}</p>
             </nav>
           </div>
         </WdScrollbar>
@@ -374,8 +274,8 @@ const overviewGroups = computed(() => groupByCategory(documented))
               <section class="hero">
                 <div>
                   <p class="eyebrow">COMPONENTS / OVERVIEW</p>
-                  <h1>组件实验室</h1>
-                  <p class="hero-copy">每个组件的 API 与示例写在 <code>docs/index.md</code>，支持 Markdown + <code>vue preview</code>。上手与主题配置请见顶部「文档」。</p>
+                  <h1>{{ t.labTitle }}</h1>
+                  <p class="hero-copy">{{ t.labCopy }}</p>
                   <div class="doc-meta"><span>Vue 3</span><span>TypeScript</span><span>Live Preview</span></div>
                 </div>
                 <div class="hero-glyph" aria-hidden="true"><span>W</span></div>
@@ -389,37 +289,37 @@ const overviewGroups = computed(() => groupByCategory(documented))
                   </div>
                   <span class="section-rule" />
                 </div>
-                <section class="demo-grid overview-section" :aria-label="`${group.title}组件`">
+                <section class="demo-grid overview-section" :aria-label="interpolate(t.groupAria, { title: group.title })">
                   <WdCard v-for="item in group.items" :key="item.name" class="overview-card">
                     <div class="overview-card__number">{{ group.label.slice(0, 2) }}</div>
                     <h2>{{ item.name }}</h2>
-                    <p>{{ componentBlurbs[item.name] ?? item.description ?? '组件文档。' }}</p>
-                    <RouterLink class="text-link" :to="componentRoute(item.name)">查看详情 <span>→</span></RouterLink>
+                    <p>{{ item.description ?? t.defaultDoc }}</p>
+                    <RouterLink class="text-link" :to="componentRoute(item.name)">{{ t.viewDetails }} <span>→</span></RouterLink>
                   </WdCard>
                 </section>
               </template>
             </template>
 
-            <ComponentDocViewer v-else-if="activePackageDoc" :doc="activePackageDoc" />
+            <ComponentDocViewer v-else-if="activePackageDoc" :key="`${activePackageDoc.name}-${lang}`" :doc="activePackageDoc" />
 
             <section v-else class="missing-doc">
               <h2>{{ selectedComponent }}</h2>
-              <p>尚未找到 <code>docs/index.md</code>。</p>
-              <RouterLink class="text-link" :to="{ name: 'components' }">返回全部组件 <span>→</span></RouterLink>
+              <p>{{ t.missingDoc }}</p>
+              <RouterLink class="text-link" :to="{ name: 'components' }">{{ t.backAll }} <span>→</span></RouterLink>
             </section>
           </div>
         </WdScrollbar>
       </main>
 
-      <aside class="token-panel" aria-label="设计令牌">
+      <aside class="token-panel" :aria-label="t.tokens">
         <WdScrollbar class="column-scroll">
           <div class="token-panel-body">
             <div class="token-heading"><span class="kicker">TOKENS</span><span class="token-index">/ 04</span></div>
-            <p class="token-description">组件共享同一套视觉语法。主题切换时，语义保持不变。</p>
+            <p class="token-description">{{ t.tokenDesc }}</p>
             <div class="token-group"><h3>Color</h3><div class="swatch-row"><span class="swatch swatch--primary" /><span>primary</span><code>brand</code></div><div class="swatch-row"><span class="swatch swatch--surface" /><span>surface</span><code>canvas</code></div><div class="swatch-row"><span class="swatch swatch--border" /><span>border</span><code>line</code></div></div>
             <div class="token-group"><h3>Radius</h3><div class="radius-row"><span class="radius-sample radius-sample--sm" /><span>sm</span><span class="radius-sample radius-sample--md" /><span>md</span><span class="radius-sample radius-sample--lg" /><span>lg</span></div></div>
             <div class="token-group"><h3>Spacing</h3><div class="spacing-bars"><span style="--bar: 25%">1</span><span style="--bar: 50%">2</span><span style="--bar: 75%">3</span><span style="--bar: 100%">4</span></div></div>
-            <div class="token-note"><WdIcon name="info" size="sm" /><span>所有组件都使用<br /><strong>--wd-*</strong> 设计变量。</span></div>
+            <div class="token-note"><WdIcon name="info" size="sm" /><span>{{ t.tokenNote }}</span></div>
           </div>
         </WdScrollbar>
       </aside>

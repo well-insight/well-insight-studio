@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { WdIcon } from '@well-design/ui'
+import { useDocsI18n } from '../i18n'
 import { copyText } from '../utils/copyText'
 
 const props = defineProps<{
@@ -11,9 +12,10 @@ const props = defineProps<{
 
 const highlightEl = ref<HTMLElement | null>(null)
 const copied = ref(false)
+const { t } = useDocsI18n()
 let resetTimer = 0
 
-const label = computed(() => (copied.value ? '已复制' : '复制'))
+const label = computed(() => (copied.value ? t.value.copied : t.value.copy))
 
 async function onCopy(event: MouseEvent) {
   event.preventDefault()
@@ -42,7 +44,7 @@ onBeforeUnmount(() => {
     </div>
     <details class="code-preview__code">
       <summary>
-        <span class="code-preview__summary-label">查看代码 <em>{{ lang || 'vue' }}</em></span>
+        <span class="code-preview__summary-label">{{ t.viewCode }} <em>{{ lang || 'vue' }}</em></span>
         <button
           type="button"
           class="code-preview__copy"

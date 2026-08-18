@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { formatLocale, useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
 import { resolveSizeClass } from '../../shared/types'
 import WdCheckbox from '../Checkbox/Checkbox.vue'
@@ -34,12 +35,13 @@ const props = withDefaults(defineProps<TableProps>(), {
 
 const emit = defineEmits<TableEmits>()
 const config = useWdConfig()
+const locale = useWdLocale()
 const sizeClass = computed(() => resolveSizeClass(props.size ?? config.value.size))
 const resolvedEmptyText = computed(
-  () => props.emptyText ?? config.value.locale?.emptyMessage ?? '暂无数据',
+  () => props.emptyText ?? locale.value.emptyMessage,
 )
 const resolvedLoadingText = computed(
-  () => props.loadingText ?? config.value.locale?.loading ?? '加载中',
+  () => props.loadingText ?? locale.value.loading,
 )
 
 const innerField = ref<string | undefined>(props.sortField)
@@ -322,7 +324,7 @@ function fixedClass(column: TableColumn) {
               <WdCheckbox
                 v-if="selectionMode === 'multiple'"
                 :model-value="allPageSelected"
-                aria-label="全选当前页"
+                :aria-label="locale.selectAllPage"
                 @update:model-value="toggleAllPage"
               />
             </th>
@@ -364,7 +366,7 @@ function fixedClass(column: TableColumn) {
                     type="button"
                     class="wd-table__filter-btn"
                     :aria-expanded="filterOpenKey === column.key"
-                    :aria-label="`筛选 ${column.label}`"
+                    :aria-label="formatLocale(locale.filterColumn, { label: column.label })"
                     @click.stop="filterOpenKey = filterOpenKey === column.key ? null : column.key"
                   >
                     <WdIcon name="filter" size="sm" />
@@ -376,7 +378,7 @@ function fixedClass(column: TableColumn) {
                       :value="String(innerFilters[column.key] ?? '')"
                       @change="setFilter(column.key, ($event.target as HTMLSelectElement).value || null)"
                     >
-                      <option value="">全部</option>
+                      <option value="">{{ locale.filterAll }}</option>
                       <option
                         v-for="option in column.filters"
                         :key="String(option.value)"
@@ -390,7 +392,7 @@ function fixedClass(column: TableColumn) {
                       class="wd-table__filter-control"
                       type="search"
                       :value="String(innerFilters[column.key] ?? '')"
-                      placeholder="筛选…"
+                      :placeholder="locale.filterOptions"
                       @input="setFilter(column.key, ($event.target as HTMLInputElement).value)"
                     >
                   </div>
@@ -417,7 +419,7 @@ function fixedClass(column: TableColumn) {
             >
               <WdCheckbox
                 :model-value="isSelected(row, index)"
-                :aria-label="`选择行 ${index + 1}`"
+                :aria-label="formatLocale(locale.selectRow, { index: index + 1 })"
                 @update:model-value="toggleRowSelection(row, index)"
               />
             </td>

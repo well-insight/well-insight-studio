@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TreeSelectNode } from './types'
+import { useWdLocale } from '../../locale'
 import TreeSelectNodeItem from './TreeSelectNodeItem.vue'
 
 defineProps<{
@@ -13,6 +14,8 @@ defineEmits<{
   (event: 'toggle', key: string): void
   (event: 'select', node: TreeSelectNode): void
 }>()
+
+const locale = useWdLocale()
 </script>
 
 <template>
@@ -26,7 +29,7 @@ defineEmits<{
         v-if="node.children?.length"
         type="button"
         class="wd-treeselect__toggler"
-        :aria-label="expanded[node.key] ? '折叠' : '展开'"
+        :aria-label="expanded[node.key] ? locale.collapse : locale.expand"
         @click.stop="$emit('toggle', node.key)"
       >
         {{ expanded[node.key] ? '▾' : '▸' }}

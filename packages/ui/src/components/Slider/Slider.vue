@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useWdLocale } from '../../locale'
 import type { SliderProps } from './types'
 
 const props = withDefaults(defineProps<SliderProps>(), {
@@ -11,6 +12,7 @@ const props = withDefaults(defineProps<SliderProps>(), {
   disabled: false,
 })
 const emit = defineEmits<{ (event: 'update:modelValue', value: number | number[]): void }>()
+const locale = useWdLocale()
 
 const singleValue = computed(() => {
   if (Array.isArray(props.modelValue)) return props.modelValue[0] ?? props.min
@@ -60,7 +62,7 @@ function emitRange(index: 0 | 1, event: Event) {
         :step="step"
         :value="rangeValues[0]"
         :disabled="disabled"
-        aria-label="范围起点"
+        :aria-label="locale.rangeStart"
         @input="emitRange(0, $event)"
       />
       <input
@@ -71,7 +73,7 @@ function emitRange(index: 0 | 1, event: Event) {
         :step="step"
         :value="rangeValues[1]"
         :disabled="disabled"
-        aria-label="范围终点"
+        :aria-label="locale.rangeEnd"
         @input="emitRange(1, $event)"
       />
     </template>
