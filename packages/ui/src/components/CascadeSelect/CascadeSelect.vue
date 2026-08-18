@@ -43,12 +43,20 @@ function findLabel(options: CascadeSelectOption[], value: CascadeSelectValue): s
 }
 
 function updatePanelPosition() {
-  if (!teleported.value || !trigger.value) return
+  if (!trigger.value) return
   const rect = trigger.value.getBoundingClientRect()
-  panelStyle.value = {
-    left: `${rect.left}px`,
-    top: `${rect.bottom + 8}px`,
-  }
+  const width = `${rect.width}px`
+  panelStyle.value = teleported.value
+    ? {
+        left: `${rect.left}px`,
+        minWidth: width,
+        top: `${rect.bottom + 8}px`,
+        width,
+      }
+    : {
+        minWidth: width,
+        width,
+      }
 }
 
 function toggle() {
@@ -64,6 +72,7 @@ function enterLevel(option: CascadeSelectOption, columnIndex: number) {
   if (option.disabled) return
   if (option.children?.length) {
     path.value = [...path.value.slice(0, columnIndex + 1), option.children]
+    void nextTick(() => updatePanelPosition())
     return
   }
   emit('update:modelValue', option.value)
@@ -129,7 +138,7 @@ onBeforeUnmount(() => {
           ref="panel"
           class="wd-cascadeselect__panel"
           :class="{ 'wd-cascadeselect__panel--teleported': teleported }"
-          :style="teleported ? panelStyle : undefined"
+          :style="panelStyle"
           role="listbox"
         >
           <ul

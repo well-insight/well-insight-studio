@@ -1,0 +1,63 @@
+# UI 发版
+
+`@well-design/ui` 的版本与 CHANGELOG 在发版时由你交互确认；日常按 [提交规范](../docs/COMMIT_CONVENTION.md) 提交即可。
+
+## 日常改动
+
+```text
+feat(ui): CascadeSelect 下拉宽度与选择框对齐
+fix(web): 修复登录页跳转
+docs(api): 补充鉴权说明
+```
+
+发版时：
+
+1. **交互勾选**要写入 CHANGELOG 的提交（列出上一个 `v*` 以来的**全部**提交；默认预选改过 `packages/ui` 的）
+2. **你自己选择** bump：`patch` / `minor` / `major`  
+   （提示：`feat` → minor，`fix`/其他 → patch，`!`/BREAKING → major，仅作参考）
+
+## 发版
+
+```bash
+pnpm release
+```
+
+流程：
+
+1. 交互选 CHANGELOG 条目与版本 bump
+2. 更新 `packages/ui/package.json` 与 `CHANGELOG.md` / `CHANGELOG.en.md`
+3. 切到（或新建）`release/{version}` 并提交
+4. 构建、npm publish
+5. 打 `v{version}` 标签并推送
+
+只预览、不写文件不发版：
+
+```bash
+pnpm release -- --dry-run
+```
+
+非交互 / CI 可用参数：
+
+```bash
+pnpm release -- --patch --ui-only --no-push
+pnpm release -- --minor --all
+pnpm release -- --major --ui-only --force
+```
+
+| 参数 | 说明 |
+| --- | --- |
+| `--patch` / `--minor` / `--major` | 指定 bump，跳过版本提问 |
+| `--all` | 上一个标签以来全部提交写入 CHANGELOG |
+| `--ui-only` | 仅改过 `packages/ui` 的提交 |
+| `--none` | 不写条目（需配合 `--force`） |
+| `--no-push` | 本地发版，不 push |
+| `--force` | 无提交 / 未勾选时仍允许发版 |
+| `--dry-run` | 只预览 |
+
+没有 `v*` 标签时，视为首次发布当前 `package.json` 版本，不会重复写入已有说明。
+
+只补 git 标签 / 分支：
+
+```bash
+pnpm release:git
+```

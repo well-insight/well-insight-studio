@@ -6,6 +6,7 @@
     "node": ">=20.19.0"
   },
   "scripts": {
+    "prepare": "husky",
     "dev": "pnpm --parallel --filter @well-design/api --filter @well-design/web --filter @well-design/ui run dev",
     "dev:web": "pnpm --filter @well-design/web dev",
     "dev:ui": "pnpm --filter @well-design/ui dev",
@@ -16,14 +17,14 @@
     "test": "pnpm -r test",
     "test:coverage": "pnpm -r test:coverage",
     "typecheck": "pnpm -r typecheck",
-    "changeset": "changeset",
-    "version-packages": "changeset version && node scripts/release-git.mjs --branch --checkout",
     "release": "node scripts/release-ui.mjs",
     "release:git": "node scripts/release-git.mjs --tag --branch"
   },
   "devDependencies": {
-    "@changesets/cli": "^3.0.0",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
     "@types/node": "^26.2.0",
+    "husky": "^9.1.7",
     "typescript": "^5.9.3"
   },
   "pnpm": {

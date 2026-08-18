@@ -4451,6 +4451,7 @@ a.wd-breadcrumb__link:hover {
     background: var(--wd-color-surface);
     border: 1px solid var(--wd-color-border);
     border-radius: var(--wd-radius-control);
+    box-sizing: border-box;
     color: var(--wd-color-text);
     cursor: pointer;
     display: inline-flex;
@@ -4461,6 +4462,7 @@ a.wd-breadcrumb__link:hover {
     min-height: var(--wd-control-height-medium);
     min-width: var(--wd-menu-min-width-lg);
     padding: 0 var(--wd-control-padding-x-medium);
+    width: 100%;
 }
 .wd-cascadeselect--small .wd-cascadeselect__trigger {
     font-size: var(--wd-control-font-small);
@@ -4485,11 +4487,13 @@ a.wd-breadcrumb__link:hover {
     border: 1px solid var(--wd-color-border);
     border-radius: var(--wd-radius-md);
     box-shadow: var(--wd-shadow-md);
+    box-sizing: border-box;
     display: flex;
     left: 0;
     margin-top: var(--wd-space-1);
     position: absolute;
     top: 100%;
+    width: 100%;
     z-index: var(--wd-z-popper);
 }
 .wd-cascadeselect__panel--teleported {
@@ -4499,10 +4503,11 @@ a.wd-breadcrumb__link:hover {
     z-index: var(--wd-z-dropdown);
 }
 .wd-cascadeselect__column {
+    flex: 1 1 0;
     list-style: none;
     margin: 0;
     max-height: 16rem;
-    min-width: 9rem;
+    min-width: 0;
     overflow: auto;
     padding: var(--wd-space-1);
 }

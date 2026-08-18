@@ -1,27 +1,24 @@
 import { execFileSync, execSync } from 'node:child_process'
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
+import { formatChangelogBody, prepareUiRelease, root } from './ui-changelog.mjs'
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-const args = new Set(process.argv.slice(2))
-const noPush = args.has('--no-push')
+const args = process.argv.slice(2)
+const noPush = args.includes('--no-push')
+const dryRun = args.includes('--dry-run')
+const force = args.includes('--force')
+const bumpArg = args.find((item) => item === '--major' || item === '--minor' || item === '--patch')
+const bump = bumpArg ? bumpArg.slice(2) : undefined
 
-const releasePaths = [
-  'packages/ui/package.json',
-  'packages/ui/CHANGELOG.md',
-  'packages/ui/CHANGELOG.en.md',
-  '.changeset',
-]
+let commitMode = 'interactive'
+if (args.includes('--all')) commitMode = 'all'
+else if (args.includes('--ui-only')) commitMode = 'ui'
+else if (args.includes('--none')) commitMode = 'none'
 
-function run(command, { allowFail = false } = {}) {
-  try {
-    execSync(command, { cwd: root, stdio: 'inherit', shell: true })
-    return true
-  } catch (error) {
-    if (allowFail) return false
-    throw error
-  }
+const releasePaths = ['packages/ui/package.json', 'packages/ui/CHANGELOG.md', 'packages/ui/CHANGELOG.en.md']
+
+function run(command) {
+  execSync(command, { cwd: root, stdio: 'inherit', shell: true })
 }
 
 function git(gitArgs, { allowFail = false, stdio = 'pipe' } = {}) {
@@ -38,36 +35,35 @@ function git(gitArgs, { allowFail = false, stdio = 'pipe' } = {}) {
   }
 }
 
-function readUiVersion() {
-  const pkg = JSON.parse(readFileSync(join(root, 'packages/ui/package.json'), 'utf8'))
-  const version = String(pkg.version ?? '').trim()
-  if (!/^\d+\.\d+\.\d+/.test(version)) {
-    throw new Error(`Invalid @well-design/ui version: ${pkg.version}`)
-  }
-  return version
-}
-
-function pendingChangesets() {
-  const dir = join(root, '.changeset')
-  if (!existsSync(dir)) return []
-  return readdirSync(dir).filter((name) => name.endsWith('.md') && name !== 'README.md')
-}
-
 function hasStagedChanges() {
   return Boolean(git(['diff', '--cached', '--name-only'], { allowFail: true }))
 }
 
 console.log('Releasing @well-design/ui')
 
-if (pendingChangesets().length > 0) {
-  console.log('Applying pending changesets…')
-  run('pnpm exec changeset version')
-} else {
-  console.log(`No pending changesets; releasing current version ${readUiVersion()}`)
+const dirtyUi = git(['status', '--porcelain', '--', 'packages/ui'], { allowFail: true })
+if (dirtyUi) {
+  console.warn('packages/ui has uncommitted files; commit them first if they should appear in CHANGELOG.')
 }
 
-const version = readUiVersion()
-run(`node scripts/release-git.mjs --branch --checkout`)
+const plan = await prepareUiRelease({ bump, dryRun, allowEmpty: force, commitMode })
+
+if (plan.firstRelease) {
+  console.log(`First release of current version ${plan.version} (no v* tag yet)`)
+} else {
+  console.log(
+    `${plan.previousTag} → v${plan.version} (${plan.bump}, ${plan.commits.length} changelog entr${plan.commits.length === 1 ? 'y' : 'ies'})`,
+  )
+}
+
+if (dryRun) {
+  if (!plan.firstRelease) {
+    console.log(`\nCHANGELOG.md preview:\n\n## ${plan.version}\n\n${formatChangelogBody(plan.commits, 'zh-CN')}\n`)
+  }
+  process.exit(0)
+}
+
+run('node scripts/release-git.mjs --branch --checkout')
 
 const existing = git(['ls-files', '--others', '--modified', '--exclude-standard'], { allowFail: true })
   .split(/\r?\n/)
@@ -81,24 +77,19 @@ if (unexpected.length) {
 
 git(['add', '--', ...releasePaths.filter((path) => existsSync(join(root, path)))], { allowFail: true })
 if (hasStagedChanges()) {
-  git(['commit', '-m', `release: @well-design/ui v${version}`], { stdio: 'inherit' })
+  git(['commit', '-m', `release: @well-design/ui v${plan.version}`], { stdio: 'inherit' })
 } else {
   console.log('No version files to commit')
 }
 
 run('pnpm --filter @well-design/ui build')
-run('pnpm exec changeset publish')
+run('pnpm --filter @well-design/ui publish --access public --no-git-checks')
 run('node scripts/release-git.mjs --tag --branch')
 
 if (noPush) {
-  console.log(`Released v${version} locally. Push with:\n  git push -u origin HEAD --follow-tags`)
+  console.log(`Released v${plan.version} locally. Push with:\n  git push -u origin HEAD --follow-tags`)
   process.exit(0)
 }
 
-run(`node scripts/release-git.mjs --tag --branch --push`)
-const packageTag = `@well-design/ui@${version}`
-if (git(['rev-parse', '--verify', '--quiet', `refs/tags/${packageTag}`], { allowFail: true })) {
-  git(['push', 'origin', `refs/tags/${packageTag}`], { allowFail: true, stdio: 'inherit' })
-}
-
-console.log(`Released @well-design/ui v${version} (tag v${version}, branch release/${version})`)
+run('node scripts/release-git.mjs --tag --branch --push')
+console.log(`Released @well-design/ui v${plan.version} (tag v${plan.version}, branch release/${plan.version})`)

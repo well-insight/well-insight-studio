@@ -44,4 +44,36 @@ describe('WdCascadeSelect', () => {
     expect(document.body.querySelector('.wd-cascadeselect__panel--teleported')).toBeTruthy()
     wrapper.unmount()
   })
+
+  it('keeps the overlay as wide as the trigger', async () => {
+    const wrapper = mount(WdCascadeSelect, {
+      props: { options, modelValue: null, teleport: false },
+      attachTo: document.body,
+    })
+    const trigger = wrapper.get('.wd-cascadeselect__trigger').element as HTMLElement
+    Object.defineProperty(trigger, 'getBoundingClientRect', {
+      value: () => ({
+        width: 240,
+        height: 34,
+        top: 10,
+        left: 16,
+        bottom: 44,
+        right: 256,
+        x: 16,
+        y: 10,
+        toJSON() {
+          return {}
+        },
+      }),
+    })
+    await wrapper.find('.wd-cascadeselect__trigger').trigger('click')
+    await nextTick()
+    const panel = wrapper.get('.wd-cascadeselect__panel')
+    expect(panel.attributes('style')).toContain('width: 240px')
+    await wrapper.findAll('.wd-cascadeselect__option')[0]!.trigger('click')
+    await nextTick()
+    expect(wrapper.findAll('.wd-cascadeselect__column')).toHaveLength(2)
+    expect(wrapper.get('.wd-cascadeselect__panel').attributes('style')).toContain('width: 240px')
+    wrapper.unmount()
+  })
 })

@@ -70,17 +70,16 @@ pnpm build:ui
 | `dist/index.d.ts` | 类型入口 |
 | `dist/styles.css` | 组件样式（含主题 token） |
 
-### Changesets 发版
+### 发版
 
-版本与 `CHANGELOG.md` 由 [Changesets](https://github.com/changesets/changesets) 管理（配置见仓库根目录 `.changeset/`）。
+按 [提交规范](../../docs/COMMIT_CONVENTION.md) 提交。发版时会列出上一个 `v*` 以来的全部提交，**交互勾选**写入 CHANGELOG 的条目，并**由你选择** `patch` / `minor` / `major`（不会按 commit type 自动升版）。
 
 ```bash
-# 有用户可见改动时先记一条
-pnpm changeset
-
-# bump、提交、构建、publish、打 tag、推送 release/{version}
+pnpm release -- --dry-run
 pnpm release
 ```
+
+详见 [`scripts/README.md`](../../scripts/README.md)。
 
 文档站「更新日志」页读取 `packages/ui/CHANGELOG.md`，与发版记录同步。Git 上每次发版会有 `v{version}` 标签和 `release/{version}` 分支。
 
