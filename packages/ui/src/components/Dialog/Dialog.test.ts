@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import { nextTick } from 'vue'
+import { setLastPointer } from '../../shared/lastPointer'
 import WdDialog from './Dialog.vue'
 
 describe('WdDialog', () => {
@@ -62,6 +63,19 @@ describe('WdDialog', () => {
     await nextTick()
     expect(document.body.querySelector('.wd-dialog--maximized')).toBeFalsy()
     expect(wrapper.emitted('unmaximize')).toHaveLength(1)
+    wrapper.unmount()
+  })
+
+  it('zooms the panel from the last pointer position', async () => {
+    setLastPointer(24, 48)
+    const wrapper = mount(WdDialog, {
+      attachTo: document.body,
+      props: { modelValue: true, title: 'Zoom' },
+    })
+    await nextTick()
+    const backdrop = document.body.querySelector('.wd-dialog-backdrop') as HTMLElement | null
+    expect(backdrop?.style.getPropertyValue('--wd-dialog-origin-x')).toBe('24px')
+    expect(backdrop?.style.getPropertyValue('--wd-dialog-origin-y')).toBe('48px')
     wrapper.unmount()
   })
 })

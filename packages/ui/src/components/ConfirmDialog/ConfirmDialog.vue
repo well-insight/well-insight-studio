@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, toRef } from 'vue'
+import { computed, ref, toRef, watch } from 'vue'
 import { useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
+import { getLastPointer } from '../../shared/lastPointer'
 import { resolveOverlayTeleport } from '../../shared/overlay'
 import { useModalOverlay } from '../../shared/useModalOverlay'
 import WdButton from '../Button/Button.vue'
@@ -26,6 +27,11 @@ const teleportTarget = computed(() => resolveOverlayTeleport(props, config.value
 const title = computed(() => props.header ?? locale.value.confirm)
 const acceptText = computed(() => props.acceptLabel ?? locale.value.accept)
 const rejectText = computed(() => props.rejectLabel ?? locale.value.reject)
+const origin = ref(getLastPointer())
+const zoomStyle = computed(() => ({
+  '--wd-dialog-origin-x': `${origin.value.x}px`,
+  '--wd-dialog-origin-y': `${origin.value.y}px`,
+}))
 
 function close() {
   emit('update:modelValue', false)
@@ -41,6 +47,13 @@ function reject() {
   close()
 }
 
+watch(
+  () => props.modelValue,
+  (open) => {
+    if (open) origin.value = getLastPointer()
+  },
+)
+
 useModalOverlay({
   open: toRef(props, 'modelValue'),
   container: dialogElement,
@@ -51,12 +64,13 @@ useModalOverlay({
 
 <template>
   <Teleport :to="teleportTarget.to" :disabled="teleportTarget.disabled">
-    <Transition name="wd-fade">
+    <Transition name="wd-dialog">
       <div
         v-if="modelValue"
         class="wd-dialog-backdrop wd-dialog-backdrop--center wd-dialog-backdrop--modal wd-confirmdialog-backdrop"
-        @click.self="reject"
+        :style="zoomStyle"
       >
+        <div class="wd-dialog-zoom" @click.self="reject">
         <section
           ref="dialogElement"
           class="wd-dialog wd-confirmdialog"
@@ -80,6 +94,7 @@ useModalOverlay({
             </slot>
           </footer>
         </section>
+        </div>
       </div>
     </Transition>
   </Teleport>

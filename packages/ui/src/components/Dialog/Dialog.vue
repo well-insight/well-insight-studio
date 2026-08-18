@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, toRef } from 'vue'
+import { computed, ref, toRef, watch } from 'vue'
 import { useWdLocale } from '../../locale'
 import { useWdConfig } from '../../shared/config'
+import { getLastPointer } from '../../shared/lastPointer'
 import { resolveOverlayTeleport } from '../../shared/overlay'
 import { useModalOverlay } from '../../shared/useModalOverlay'
 import type { DialogProps } from './types'
@@ -28,11 +29,14 @@ const config = useWdConfig()
 const locale = useWdLocale()
 const dialogElement = ref<HTMLElement | null>(null)
 const maximized = ref(false)
+const origin = ref(getLastPointer())
 
 const dialogTitle = computed(() => props.header ?? props.title)
 const teleportTarget = computed(() => resolveOverlayTeleport(props, config.value.appendTo))
 const backdropStyle = computed(() => ({
   zIndex: String(config.value.zIndex ?? 1000),
+  '--wd-dialog-origin-x': `${origin.value.x}px`,
+  '--wd-dialog-origin-y': `${origin.value.y}px`,
 }))
 const isDismissableMask = computed(() => {
   if (props.dismissableMask !== undefined) return props.dismissableMask
@@ -56,6 +60,13 @@ function onOutsideClick() {
   if (isDismissableMask.value) close()
 }
 
+watch(
+  () => props.modelValue,
+  (open) => {
+    if (open) origin.value = getLastPointer()
+  },
+)
+
 useModalOverlay({
   open: toRef(props, 'modelValue'),
   container: dialogElement,
@@ -72,7 +83,7 @@ useModalOverlay({
 
 <template>
   <Teleport :to="teleportTarget.to" :disabled="teleportTarget.disabled">
-    <Transition name="wd-fade">
+    <Transition name="wd-dialog">
       <div
         v-if="modelValue"
         class="wd-dialog-backdrop"
@@ -84,8 +95,8 @@ useModalOverlay({
           },
         ]"
         :style="backdropStyle"
-        @click.self="onOutsideClick"
       >
+        <div class="wd-dialog-zoom" @click.self="onOutsideClick">
         <section
           ref="dialogElement"
           class="wd-dialog"
@@ -122,6 +133,7 @@ useModalOverlay({
           <div class="wd-dialog__body"><slot /></div>
           <footer v-if="$slots.footer" class="wd-dialog__footer"><slot name="footer" /></footer>
         </section>
+        </div>
       </div>
     </Transition>
   </Teleport>
