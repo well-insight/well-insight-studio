@@ -43,7 +43,7 @@ docs(api): 补充鉴权说明
 - 约定上可参考：`feat` → minor，`fix` / 其他 → patch，`feat!:` / breaking → major；最终以你在 `pnpm release` 中的选择为准。
 - **不是所有 commit 都会进 CHANGELOG**：发版时会列出上一个 `v*` 以来的全部提交，交互勾选要写入 `@well-design/ui` 的条目（默认预选改过 `packages/ui` 的提交）。
 
-详见 [`scripts/README.md`](./scripts/README.md)。
+详见 [`scripts/README.md`](../scripts/README.md)。
 
 ## 示例
 

@@ -1,6 +1,6 @@
 # UI 发版
 
-`@well-design/ui` 的版本与 CHANGELOG 在发版时由你交互确认；日常按 [提交规范](../docs/COMMIT_CONVENTION.md) 提交即可。
+`@well-design/ui` 的版本与 CHANGELOG 在发版时由你交互确认；日常按 [提交规范](../docs/COMMIT_CONVENTION.md) 提交即可。更完整的维护说明见 [UI 开发](../docs/ui-development.zh-CN.md)（[English](../docs/ui-development.md)）与 [开发指南](../docs/DEVELOPMENT.zh-CN.md)（[English](../docs/DEVELOPMENT.md)）。
 
 ## 日常改动
 

@@ -1,33 +1,35 @@
 # Well Design
 
-Vue 3 + TypeScript + Hono 的可复用前后端 Monorepo。组件库 `@well-design/ui`（含主题）可对内源码消费，也可构建为可发布的 ESM 包。
+[English](./README.md) · [中文](./README.zh-CN.md)
 
-## Workspace
+**Well Design** is an end-to-end platform for the full data lifecycle — from connecting sources to collecting, processing, analyzing, presenting, and visualizing data in one coherent product.
 
-- `apps/web`：业务前端应用
-- `apps/api`：Hono + TypeScript API 服务
-- `packages/ui`：Vue 组件库（组件、主题、文档站 + 可发布构建）
-- `packages/shared`：前后端共享类型
+This monorepo also ships **[@well-design/ui](./packages/ui)**, a Vue 3 component library used across the platform’s interfaces.
 
-## Commands
+| Resource | Link |
+| --- | --- |
+| Source (GitHub) | [xcGoGo2/well-design](https://github.com/xcGoGo2/well-design) |
+| Source (Gitee) | [xcGoGo/well-design](https://gitee.com/xcGoGo/well-design) |
+| UI library | [`packages/ui`](./packages/ui) · [UI README](./packages/ui/README.md) |
+| npm | [`@well-design/ui`](https://www.npmjs.com/package/@well-design/ui) |
+| Contributors | [Development guide](./docs/DEVELOPMENT.md) |
 
-```bash
-pnpm install
-pnpm dev          # web + api + ui 文档站
-pnpm dev:web      # 仅业务前端 http://localhost:5181
-pnpm dev:ui       # 仅组件库文档站 http://localhost:5182
-pnpm dev:api      # 仅 API
-pnpm typecheck
-pnpm test
-pnpm build        # 先构建 ui，再构建其余包
-pnpm build:ui     # 仅构建 ui
-pnpm release                          # UI 完整发版：CHANGELOG、bump、publish、打 tag
-pnpm --filter @well-design/ui release # 仅 build + npm publish（需先改好 version）
-```
+## Platform scope
 
-提交规范见 [`docs/COMMIT_CONVENTION.md`](docs/COMMIT_CONVENTION.md)。发版细节见 [`scripts/README.md`](scripts/README.md)。
+| Stage | Focus |
+| --- | --- |
+| **Data access** | Connect and ingest from heterogeneous sources |
+| **Data collection** | Gather, schedule, and organize incoming datasets |
+| **Data processing** | Transform, clean, and prepare data for use |
+| **Data analysis** | Explore metrics, trends, and insights |
+| **Data presentation** | Product UI for browsing and operating on results |
+| **Data visualization** | Charts, dashboards, and visual storytelling |
 
-## 组件库（对外）
+The application layer (`apps/web`, `apps/api`) implements these flows. The UI package provides the shared design system, themes, and interactive documentation.
+
+## UI library
+
+Install and use the component library:
 
 ```bash
 pnpm add @well-design/ui vue
@@ -38,35 +40,22 @@ import { WdButton, useTheme } from '@well-design/ui'
 import '@well-design/ui/styles.css'
 ```
 
-本地文档站与静态构建：
+See the **[UI README](./packages/ui/README.md)** for install, configuration, theme, and consumer APIs.
 
-```bash
-pnpm --filter @well-design/ui dev          # http://localhost:5182
-pnpm --filter @well-design/ui build:docs
-```
+## Repository layout (overview)
 
-组件文档写在各组件目录的 `docs/index.md`（中文）与 `docs/index.en.md`（英文），支持 `vue preview` 代码块。更多说明见 [`packages/ui/README.md`](packages/ui/README.md)。发版说明见 [`scripts/README.md`](scripts/README.md)；文档站「更新日志」对应 `packages/ui/CHANGELOG.md` / `CHANGELOG.en.md`。
+| Path | Role |
+| --- | --- |
+| `apps/web` | Platform web application |
+| `apps/api` | Platform API service |
+| `packages/ui` | Vue 3 UI library + component docs site |
+| `packages/shared` | Shared types across apps |
+| `docs/` | Internal contributor documentation |
 
-## API documentation
+## Contributing
 
-开发环境可打开以下页面查看 Swagger-like API 文档：
+Day-to-day setup, scripts, API docs, database, commits, and releases are documented for maintainers in:
 
-```text
-http://localhost:3000/docs
-```
-
-机器可读的 OpenAPI 3.0 文档：
-
-```text
-http://localhost:3000/openapi.json
-```
-
-## API database
-
-API 使用 Drizzle ORM + `mysql2` 连接 MySQL。复制 `apps/api/.env.example` 为 `apps/api/.env`，填写数据库凭据；不要把 `.env` 提交到 Git。
-
-```bash
-pnpm --filter @well-design/api db:generate
-pnpm --filter @well-design/api db:migrate
-pnpm --filter @well-design/api db:check
-```
+- **[Development guide](./docs/DEVELOPMENT.md)**
+- [Commit convention](./docs/COMMIT_CONVENTION.md)
+- [UI release scripts](./scripts/README.md)
