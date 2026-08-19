@@ -8,6 +8,11 @@ description: What Well Design is and who it is for.
 
 **Well Design** (`@well-design/ui`) is a Vue 3 component library with design tokens, light/dark themes, and motion preferences. Use it inside this monorepo, or build and publish it as a standalone package.
 
+Source repositories:
+
+- [Gitee](https://gitee.com/xcGoGo/well-design)
+- [GitHub](https://github.com/xcGoGo2/well-design)
+
 ## Goals
 
 - **Reusable**: apps import components and styles from the package entry; the publish output is ESM + types + CSS.

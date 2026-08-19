@@ -1,101 +1,151 @@
 # @well-design/ui
 
-Vue 3 组件库（含设计令牌与主题 API）。可在 Monorepo 内源码消费，也可构建为 ESM 包对外发布。
+[English](./README.md) · [中文](./README.zh-CN.md)
 
-## 要求
+Vue 3 component library for the [Well Design](../../README.md) platform — themed UI primitives for forms, overlays, data display, and feedback.
+
+| | |
+| --- | --- |
+| **npm** | [`@well-design/ui`](https://www.npmjs.com/package/@well-design/ui) |
+| **Source** | [GitHub](https://github.com/xcGoGo2/well-design) · [Gitee](https://gitee.com/xcGoGo/well-design) |
+| **Changelog** | [CHANGELOG.md](./CHANGELOG.md) · [English](./CHANGELOG.en.md) |
+
+## Requirements
 
 - Vue `^3.5`
+- A bundler that resolves the package `exports` (Vite, webpack 5+, etc.)
 
-## 安装
+## Install
 
 ```bash
 pnpm add @well-design/ui vue
+# npm i @well-design/ui vue
+# yarn add @well-design/ui vue
 ```
 
-在本仓库内已通过 `workspace:` 链接，无需再装。
+## Quick start
 
-## 使用
+Import styles once at your app entry, then import components on demand:
 
 ```ts
 import { createApp } from 'vue'
-import { WdButton, WdInput, useTheme } from '@well-design/ui'
+import App from './App.vue'
 import '@well-design/ui/styles.css'
 
-createApp({ /* ... */ }).mount('#app')
+createApp(App).mount('#app')
 ```
 
-```ts
-const { toggleTheme } = useTheme()
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { WdButton, WdInput } from '@well-design/ui'
+
+const name = ref('')
+</script>
+
+<template>
+  <div style="display: grid; gap: 1rem; max-width: 20rem">
+    <WdInput v-model="name" label="Name" placeholder="Enter a name" />
+    <WdButton label="Submit" />
+  </div>
+</template>
 ```
 
-## 中英文
+Tree-shaking friendly: import only what you use from `@well-design/ui`. Styles are separate — always import `@well-design/ui/styles.css`.
 
-组件内置文案默认中文。切换英文时传入 `enUS`，也可通过 `WdConfigProvider` 覆盖：
+## App defaults (`createWellDesign`)
+
+Optional Vue plugin for global defaults (overlay mount, size, density, locale, z-index):
 
 ```ts
 import { createApp } from 'vue'
 import { createWellDesign, enUS } from '@well-design/ui'
+import App from './App.vue'
 import '@well-design/ui/styles.css'
 
-createApp(App).use(createWellDesign({ locale: enUS })).mount('#app')
+createApp(App)
+  .use(
+    createWellDesign({
+      appendTo: 'body',
+      size: 'small',
+      density: 'comfortable',
+      zIndex: 1100,
+      locale: enUS,
+    }),
+  )
+  .mount('#app')
 ```
 
-文档站右上角「中 / EN」会同步切换站点界面、组件内置文案，以及指南 / 组件 Markdown 正文（`docs/index.en.md`）。
-
-## 文档站
-
-```bash
-pnpm --filter @well-design/ui dev
-# http://localhost:5182
-
-pnpm --filter @well-design/ui build:docs
-pnpm --filter @well-design/ui preview
-```
-
-组件文档写在各组件目录的 `docs/index.md`（中文）与 `docs/index.en.md`（英文），支持 `vue preview` 代码块。
-
-## 构建与发布
-
-```bash
-pnpm --filter @well-design/ui build
-# 或根目录
-pnpm build:ui
-```
-
-产物在 `dist/`：
-
-| 文件 | 说明 |
+| Option | Role |
 | --- | --- |
-| `dist/index.js` | ESM 入口（组件 + 主题 API） |
-| `dist/index.d.ts` | 类型入口 |
-| `dist/styles.css` | 组件样式（含主题 token） |
+| `appendTo` | Default Teleport target for overlays (`'body'` by default) |
+| `size` | Default control size |
+| `density` | `compact` / `comfortable` / `spacious` |
+| `inputVariant` | `outlined` / `filled` |
+| `zIndex` | Overlay z-index base |
+| `locale` | Built-in UI copy (`zhCN` default, or `enUS` / partial override) |
 
-### 发版
+For subtree overrides, wrap with `<WdConfigProvider>`. Resolution order:
 
-**仅构建并发布到 npm**（不写 CHANGELOG、不打 git tag；请先自行改好 `version`）：
+**component props → `WdConfigProvider` → `createWellDesign` → built-in defaults**
 
-```bash
-pnpm --filter @well-design/ui release
-# 或在 packages/ui 目录下：
-pnpm release
+## Locale
+
+Built-in copy defaults to **Chinese**. Switch to English or override keys:
+
+```ts
+import { createWellDesign, enUS, zhCN } from '@well-design/ui'
+
+createWellDesign({ locale: enUS })
+
+createWellDesign({
+  locale: {
+    ...zhCN,
+    accept: 'OK',
+  },
+})
 ```
 
-**完整发版**（交互勾选 CHANGELOG、选择 bump、打 tag / 分支）在仓库根目录：
+## Theme
 
-```bash
-pnpm release -- --dry-run
-pnpm release
+Light / dark tokens and helpers ship in the same package:
+
+```ts
+import { useTheme } from '@well-design/ui'
+
+const { theme, isDark, setTheme, toggleTheme } = useTheme()
 ```
 
-详见 [`scripts/README.md`](../../scripts/README.md)。
+`useTheme` persists the choice in `localStorage` and respects `prefers-color-scheme` when unset. Related APIs: `useDensity`, `useMotion`, `applyTheme`, `lightTokens`, `darkTokens`.
 
-文档站「更新日志」页读取 `packages/ui/CHANGELOG.md`，与发版记录同步。Git 上每次发版会在当前分支提交版本改动，并另建 `v{version}` 标签和 `release/{version}` 分支。
+## Feedback APIs
 
-发布前检查：
+Imperative feedback without mounting hosts yourself (hosts auto-mount when needed):
 
-1. `version` 与 CHANGELOG 一致
-2. `pnpm --filter @well-design/ui build` 与 `typecheck` / `test` 通过
-3. `files` 包含 `dist` 与 `CHANGELOG.md`
-4. peer：`vue`
+```ts
+import { message, toast } from '@well-design/ui'
 
-Monorepo 开发时 `exports.development` 指向源码；对外安装走 `dist`。
+message.success('Saved')
+message.error('Something went wrong')
+
+toast.add({ severity: 'info', summary: 'Notice', detail: 'Details here' })
+```
+
+You can still render `<WdMessage />` / `<WdToast />` when you need a controlled host.
+
+## What you import
+
+| Import | Purpose |
+| --- | --- |
+| `@well-design/ui` | Components (`WdButton`, `WdTable`, …), `createWellDesign`, `WdConfigProvider`, theme & locale helpers, `message` / `toast` |
+| `@well-design/ui/styles.css` | Required stylesheet (tokens + component styles) |
+
+TypeScript types are included via the package `exports`.
+
+## License
+
+MIT — see the repository root.
+
+---
+
+Contributing to this monorepo (build, docs playground, release): [UI development](../../docs/ui-development.md).

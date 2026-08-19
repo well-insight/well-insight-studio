@@ -8,6 +8,11 @@ description: Well Design 是什么、适合谁用。
 
 **Well Design**（`@well-design/ui`）是一套面向 Vue 3 的组件库，内置设计令牌、亮暗主题与动效偏好。可在本仓库业务应用中使用，也可构建后对外发布。
 
+源码仓库：
+
+- [Gitee](https://gitee.com/xcGoGo/well-design)
+- [GitHub](https://github.com/xcGoGo2/well-design)
+
 ## 设计目标
 
 - **可独立复用**：业务应用通过包入口引入组件与样式；发布产物为 ESM + 类型 + CSS。

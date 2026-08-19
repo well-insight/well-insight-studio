@@ -5,7 +5,8 @@ import { useTheme } from '@well-design/ui'
 import { getUiPackageMeta } from '../docs/loadChangelog'
 import { useDocsI18n } from '../i18n'
 
-const GIT_REPO = 'https://gitcode.com/Wayne1308/well-design'
+const GITEE_REPO = 'https://gitee.com/xcGoGo/well-design'
+const GITHUB_REPO = 'https://github.com/xcGoGo2/well-design'
 const uiMeta = getUiPackageMeta()
 
 const route = useRoute()
@@ -95,11 +96,25 @@ const activeSection = computed(() => {
       </button>
       <a
         class="site-icon-btn"
-        :href="GIT_REPO"
+        :href="GITEE_REPO"
         target="_blank"
         rel="noopener noreferrer"
-        :aria-label="t.openGit"
-        :title="t.gitRepo"
+        :aria-label="t.openGitee"
+        :title="t.giteeRepo"
+      >
+        <svg viewBox="0 0 1024 1024" width="16" height="16" aria-hidden="true" fill="currentColor">
+          <path
+            d="M512 1024C229.2224 1024 0 794.7776 0 512S229.2224 0 512 0s512 229.2224 512 512-229.2224 512-512 512z m259.1488-568.7296H480.6656c-15.7696 0-28.4672 12.6976-28.4672 28.4672v57.0368c0 15.7696 12.6976 28.4672 28.4672 28.4672h177.4592c15.7696 0 28.4672 12.8 28.4672 28.5696v28.3648c0 51.2-41.472 92.672-92.7744 92.672H364.544a28.4672 28.4672 0 0 1-28.4672-28.4672V417.8944c0-51.2 41.472-92.672 92.7744-92.672h342.4256c15.7696 0 28.4672-12.6976 28.4672-28.4672v-56.9344a28.4672 28.4672 0 0 0-28.4672-28.4672H335.1296c-94.208 0-170.5984 76.3904-170.5984 170.5984v342.4256c0 15.7696 12.6976 28.4672 28.4672 28.4672h373.0432c113.2544 0 204.9024-91.648 204.9024-204.9024v-149.6064a28.4672 28.4672 0 0 0-28.4672-28.4672z"
+          />
+        </svg>
+      </a>
+      <a
+        class="site-icon-btn"
+        :href="GITHUB_REPO"
+        target="_blank"
+        rel="noopener noreferrer"
+        :aria-label="t.openGithub"
+        :title="t.githubRepo"
       >
         <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor">
           <path
