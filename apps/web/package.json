@@ -9,7 +9,7 @@
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "@well-design/ui": "workspace:*",
+    "@well-insight/ui": "file:../../../well-insight-ui",
     "vue": "^3.5.41",
     "vue-router": "^5.2.0"
   },

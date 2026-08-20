@@ -2,8 +2,7 @@
   <main class="home">
     <p class="eyebrow">WELL DESIGN / APP</p>
     <h1>业务系统</h1>
-    <p>这里是业务前端入口。组件库文档请单独启动 UI 项目查看。</p>
-    <code>pnpm --filter @well-design/ui dev</code>
+    <p>这里是业务前端入口，使用本地的 @well-insight/ui 组件库。</p>
   </main>
 </template>
 
@@ -32,16 +31,7 @@ body {
   color: var(--wd-color-text-muted);
   line-height: 1.6;
 }
-.home code {
-  background: color-mix(in srgb, var(--wd-color-primary) 8%, transparent);
-  border-radius: var(--wd-radius-sm);
-  color: var(--wd-color-primary);
-  display: inline-block;
-  font-family: ui-monospace, monospace;
-  font-size: 0.85rem;
-  margin-top: 1.5rem;
-  padding: 0.55rem 0.75rem;
-}
+
 .eyebrow {
   color: var(--wd-color-primary);
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;

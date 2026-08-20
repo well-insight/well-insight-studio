@@ -7,18 +7,13 @@
   },
   "scripts": {
     "prepare": "husky",
-    "dev": "pnpm --parallel --filter @well-design/api --filter @well-design/web --filter @well-design/ui run dev",
+    "dev": "pnpm --parallel --filter @well-design/api --filter @well-design/web run dev",
     "dev:web": "pnpm --filter @well-design/web dev",
-    "dev:ui": "pnpm --filter @well-design/ui dev",
     "dev:api": "pnpm --filter @well-design/api dev",
-    "build": "pnpm --filter @well-design/ui build && pnpm --filter @well-design/shared --filter @well-design/web --filter @well-design/api run build",
-    "build:ui": "pnpm --filter @well-design/ui build",
-    "build:ui:docs": "pnpm --filter @well-design/ui build:docs",
+    "build": "pnpm --filter @well-design/shared --filter @well-design/web --filter @well-design/api run build",
     "test": "pnpm -r test",
     "test:coverage": "pnpm -r test:coverage",
-    "typecheck": "pnpm -r typecheck",
-    "release": "node scripts/release-ui.mjs",
-    "release:git": "node scripts/release-git.mjs --tag --branch"
+    "typecheck": "pnpm -r typecheck"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",

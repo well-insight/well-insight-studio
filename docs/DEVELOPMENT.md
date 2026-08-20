@@ -2,31 +2,27 @@
 
 [English](./DEVELOPMENT.md) · [中文](./DEVELOPMENT.zh-CN.md)
 
-Internal documentation for contributors working in this monorepo. Public product overview: [root README](../README.md).
+Internal documentation for contributors working in this monorepo. Public product overview: [root README](../README.md). The web app uses the local sibling dependency `../well-insight-ui`.
 
 ## Workspace
 
-| Path | Role |
-| --- | --- |
-| `apps/web` | Platform web app (`http://localhost:5181`) |
+| Path       | Role                                            |
+| ---------- | ----------------------------------------------- |
+| `apps/web` | Platform web app (`http://localhost:5181`)      |
 | `apps/api` | Hono + TypeScript API (`http://localhost:3000`) |
-| `packages/ui` | Vue UI library + docs site (`http://localhost:5182`) |
+
 | `packages/shared` | Shared types |
 
 ## Commands
 
 ```bash
 pnpm install
-pnpm dev          # web + api + ui docs in parallel
+pnpm dev          # web + api in parallel
 pnpm dev:web
-pnpm dev:ui
 pnpm dev:api
 pnpm typecheck
 pnpm test
-pnpm build        # build ui first, then other packages
-pnpm build:ui
-pnpm release      # full UI release (CHANGELOG, bump, publish, tag)
-pnpm --filter @well-design/ui release  # build + npm publish only (set version first)
+pnpm build
 ```
 
 ## API docs (local)
@@ -46,8 +42,6 @@ pnpm --filter @well-design/api db:check
 
 ## Related docs
 
-| Doc | Topic |
-| --- | --- |
+| Doc                                            | Topic                                     |
+| ---------------------------------------------- | ----------------------------------------- |
 | [COMMIT_CONVENTION.md](./COMMIT_CONVENTION.md) | Conventional Commits + husky / commitlint |
-| [UI development](./ui-development.md) | Build, publish, changelog for `@well-design/ui` |
-| [scripts/README.md](../scripts/README.md) | Interactive UI release tooling |

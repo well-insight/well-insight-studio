@@ -1,5 +1,5 @@
 import { createApp } from 'vue'
-import '@well-design/ui/styles.css'
+import '@well-insight/ui/styles.css'
 import App from './App.vue'
 import router from './router'
 
