@@ -2,7 +2,7 @@
 
 [English](./README.md) · [中文](./README.zh-CN.md)
 
-Maintainer documentation for the Well Design monorepo. The web app uses the local sibling package `../well-insight-ui`.
+Maintainer documentation for the Well Insight Studio monorepo. The web app uses the local sibling package `../well-insight-ui`.
 
 | Document                           | Description                               |
 | ---------------------------------- | ----------------------------------------- |
@@ -12,4 +12,4 @@ Maintainer documentation for the Well Design monorepo. The web app uses the loca
 
 External:
 
-- [Well Design README](../README.md) · [中文](../README.zh-CN.md)
+- [Well Insight Studio README](../README.md) · [中文](../README.zh-CN.md)

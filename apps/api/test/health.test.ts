@@ -13,7 +13,7 @@ describe('API documentation', () => {
     })
     expect(docs.status).toBe(200)
     expect(docs.headers.get('content-type')).toContain('text/html')
-    await expect(docs.text()).resolves.toContain('Well Design API')
+    await expect(docs.text()).resolves.toContain('Well Insight Studio API')
   })
 })
 

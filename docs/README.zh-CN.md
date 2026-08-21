@@ -2,7 +2,7 @@
 
 [English](./README.md) · [中文](./README.zh-CN.md)
 
-Well Design Monorepo 的维护者文档。平台前端使用相邻目录 `../well-insight-ui` 中的本地组件库。
+Well Insight Studio Monorepo 的维护者文档。平台前端使用相邻目录 `../well-insight-ui` 中的本地组件库。
 
 | 文档                                           | 说明                               |
 | ---------------------------------------------- | ---------------------------------- |
@@ -12,4 +12,4 @@ Well Design Monorepo 的维护者文档。平台前端使用相邻目录 `../wel
 
 对外：
 
-- [Well Design README（中文）](../README.zh-CN.md) · [English](../README.md)
+- [Well Insight Studio README（中文）](../README.zh-CN.md) · [English](../README.md)

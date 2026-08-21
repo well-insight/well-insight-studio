@@ -1,17 +1,16 @@
-# Well Design
+# Well Insight Studio
 
 [English](./README.md) · [中文](./README.zh-CN.md)
 
-**Well Design** is an end-to-end platform for the full data lifecycle — from connecting sources to collecting, processing, analyzing, presenting, and visualizing data in one coherent product.
+**Well Insight Studio** is an end-to-end platform for the full data lifecycle — from connecting sources to collecting, processing, analyzing, presenting, and visualizing data in one coherent product.
 
 The web application uses the locally checked-out **[@well-insight/ui](../well-insight-ui)** Vue 3 component library.
 
-| Resource        | Link                                                                                  |
-| --------------- | ------------------------------------------------------------------------------------- |
-| Source (GitHub) | [xcGoGo2/well-design](https://github.com/xcGoGo2/well-design)                         |
-| Source (Gitee)  | [xcGoGo/well-design](https://gitee.com/xcGoGo/well-design)                            |
-| UI library      | [`../well-insight-ui`](../well-insight-ui) · [`@well-insight/ui`](../well-insight-ui) |
-| Contributors    | [Development guide](./docs/DEVELOPMENT.md)                                            |
+| Resource        | Link                                                                                    |
+| --------------- | --------------------------------------------------------------------------------------- |
+| Source (GitHub) | [well-insight/well-insight-studio](https://github.com/well-insight/well-insight-studio) |
+| UI library      | [`../well-insight-ui`](../well-insight-ui) · [`@well-insight/ui`](../well-insight-ui)   |
+| Contributors    | [Development guide](./docs/DEVELOPMENT.md)                                              |
 
 ## Platform scope
 

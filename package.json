@@ -1,5 +1,5 @@
 {
-  "name": "well-design",
+  "name": "well-insight-studio",
   "private": true,
   "packageManager": "pnpm@10.12.4",
   "engines": {
@@ -7,10 +7,10 @@
   },
   "scripts": {
     "prepare": "husky",
-    "dev": "pnpm --parallel --filter @well-design/api --filter @well-design/web run dev",
-    "dev:web": "pnpm --filter @well-design/web dev",
-    "dev:api": "pnpm --filter @well-design/api dev",
-    "build": "pnpm --filter @well-design/shared --filter @well-design/web --filter @well-design/api run build",
+    "dev": "pnpm --parallel --filter @well-insight/api --filter @well-insight/web run dev",
+    "dev:web": "pnpm --filter @well-insight/web dev",
+    "dev:api": "pnpm --filter @well-insight/api dev",
+    "build": "pnpm --filter @well-insight/shared --filter @well-insight/web --filter @well-insight/api run build",
     "test": "pnpm -r test",
     "test:coverage": "pnpm -r test:coverage",
     "typecheck": "pnpm -r typecheck"

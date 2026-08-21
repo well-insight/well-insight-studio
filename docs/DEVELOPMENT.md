@@ -35,9 +35,9 @@ pnpm build
 API uses Drizzle ORM + `mysql2`. Copy `apps/api/.env.example` to `apps/api/.env` and fill credentials. Do not commit `.env`.
 
 ```bash
-pnpm --filter @well-design/api db:generate
-pnpm --filter @well-design/api db:migrate
-pnpm --filter @well-design/api db:check
+pnpm --filter @well-insight/api db:generate
+pnpm --filter @well-insight/api db:migrate
+pnpm --filter @well-insight/api db:check
 ```
 
 ## Related docs

@@ -1,17 +1,16 @@
-# Well Design
+# Well Insight Studio
 
 [English](./README.md) · [中文](./README.zh-CN.md)
 
-**Well Design** 定位为覆盖数据全生命周期的平台：数据接入、数据集合、数据处理、数据分析、数据展示与数据可视化，在同一产品体系中贯通。
+**Well Insight Studio** 定位为覆盖数据全生命周期的平台：数据接入、数据集合、数据处理、数据分析、数据展示与数据可视化，在同一产品体系中贯通。
 
 平台前端使用位于相邻目录 `../well-insight-ui` 的 Vue 3 组件库 **[@well-insight/ui](../well-insight-ui)**。
 
-| 资源           | 链接                                                                                  |
-| -------------- | ------------------------------------------------------------------------------------- |
-| 源码（GitHub） | [xcGoGo2/well-design](https://github.com/xcGoGo2/well-design)                         |
-| 源码（Gitee）  | [xcGoGo/well-design](https://gitee.com/xcGoGo/well-design)                            |
-| UI 组件库      | [`../well-insight-ui`](../well-insight-ui) · [`@well-insight/ui`](../well-insight-ui) |
-| 贡献者文档     | [开发指南](./docs/DEVELOPMENT.zh-CN.md) · [English](./docs/DEVELOPMENT.md)            |
+| 资源           | 链接                                                                                    |
+| -------------- | --------------------------------------------------------------------------------------- |
+| 源码（GitHub） | [well-insight/well-insight-studio](https://github.com/well-insight/well-insight-studio) |
+| UI 组件库      | [`../well-insight-ui`](../well-insight-ui) · [`@well-insight/ui`](../well-insight-ui)   |
+| 贡献者文档     | [开发指南](./docs/DEVELOPMENT.zh-CN.md) · [English](./docs/DEVELOPMENT.md)              |
 
 ## 平台能力
 

@@ -35,9 +35,9 @@ pnpm build
 使用 Drizzle + `mysql2`。复制 `apps/api/.env.example` 为 `.env` 并填写凭据；不要提交 `.env`。
 
 ```bash
-pnpm --filter @well-design/api db:generate
-pnpm --filter @well-design/api db:migrate
-pnpm --filter @well-design/api db:check
+pnpm --filter @well-insight/api db:generate
+pnpm --filter @well-insight/api db:migrate
+pnpm --filter @well-insight/api db:check
 ```
 
 ## 相关文档

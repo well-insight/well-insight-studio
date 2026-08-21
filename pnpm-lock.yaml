@@ -32,7 +32,7 @@ importers:
       '@hono/node-server':
         specifier: ^2.1.1
         version: 2.1.1(hono@4.13.2)
-      '@well-design/shared':
+      '@well-insight/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       dotenv:
@@ -70,8 +70,8 @@ importers:
   apps/web:
     dependencies:
       '@well-insight/ui':
-        specifier: file:../../../well-insight-ui
-        version: file:../well-insight-ui(vue@3.5.41(typescript@5.9.3))
+        specifier: ^0.1.6
+        version: 0.1.6(vue@3.5.41(typescript@5.9.3))
       vue:
         specifier: ^3.5.41
         version: 3.5.41(typescript@5.9.3)
@@ -913,8 +913,8 @@ packages:
   '@vue/shared@3.5.41':
     resolution: {integrity: sha512-IOnwSCma8j+9xJT6b8H0dEYidC80NsYmNMlZxRsukYcSoGaDBohog5hDxzeUXdFeGWFA++vWvxqOmrr96VlqMA==}
 
-  '@well-insight/ui@file:../well-insight-ui':
-    resolution: {directory: ../well-insight-ui, type: directory}
+  '@well-insight/ui@0.1.6':
+    resolution: {integrity: sha512-RHsbFh1TqfoYSenjXNaSPvbzcJ7pgGShcbwslcUeFH9FhIt3GTeI8U2daRhNlbYLIZf/3RI89syOXwIR7TO5UQ==}
     engines: {node: '>=20.19.0'}
     peerDependencies:
       vue: ^3.5.0
@@ -2584,7 +2584,7 @@ snapshots:
 
   '@vue/shared@3.5.41': {}
 
-  '@well-insight/ui@file:../well-insight-ui(vue@3.5.41(typescript@5.9.3))':
+  '@well-insight/ui@0.1.6(vue@3.5.41(typescript@5.9.3))':
     dependencies:
       vue: 3.5.41(typescript@5.9.3)
 
