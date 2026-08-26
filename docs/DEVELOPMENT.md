@@ -13,6 +13,15 @@ Internal documentation for contributors working in this monorepo. Public product
 
 | `packages/shared` | Shared types |
 
+## Local UI library
+
+`apps/web` consumes the sibling repo `../well-insight-ui` in two ways:
+
+1. **Package link**: `"@well-insight/ui": "link:../../../well-insight-ui"` in `package.json` (local package, not the npm registry).
+2. **Source alias**: `vite.config.ts` / `tsconfig.json` map `@well-insight/ui` to `well-insight-ui/src` so component edits hot-reload without building the UI first.
+
+Keep `well-insight-ui` as a sibling of `well-design`, then run `pnpm install` in this repo.
+
 ## Commands
 
 ```bash

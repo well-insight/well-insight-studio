@@ -8,6 +8,27 @@
       "when": 1786676289165,
       "tag": "0000_sticky_rictor",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1787554095509,
+      "tag": "0001_known_jazinda",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1787555969001,
+      "tag": "0002_add_datasources_and_query_cache",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787557800000,
+      "tag": "0003_add_auth_fields",
+      "breakpoints": true
     }
   ]
 }

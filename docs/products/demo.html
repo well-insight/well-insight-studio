@@ -1,0 +1,3129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Well-Insight Studio · 数据可视化画布</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        /* ===== 全局重置 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #080b13;
+            color: #e8edf5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #141a24; }
+        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 8px; }
+
+        /* ===== 顶部 ===== */
+        .app-header {
+            height: 48px;
+            background: #0c111c;
+            border-bottom: 1px solid #1e2638;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            flex-shrink: 0;
+            gap: 12px;
+            z-index: 100;
+        }
+        .logo-area { display: flex; align-items: center; gap: 6px; }
+        .logo-icon {
+            width: 26px; height: 26px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800; font-size: 12px;
+        }
+        .logo-text {
+            font-weight: 700; font-size: 14px;
+            background: linear-gradient(to right, #f0f4ff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .logo-text span {
+            font-weight: 300;
+            -webkit-text-fill-color: #6b7a93;
+        }
+        .header-actions {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .header-actions button {
+            background: transparent; border: none; color: #8a9bb5;
+            padding: 4px 10px; border-radius: 4px; font-size: 11px;
+            cursor: pointer; display: flex; align-items: center; gap: 4px;
+        }
+        .header-actions button:hover { background: #1e2638; color: #e8edf5; }
+        .btn-primary-sm {
+            background: #3b82f6 !important;
+            color: white !important;
+            padding: 4px 14px !important;
+            border-radius: 16px !important;
+            font-weight: 500;
+        }
+        .user-avatar {
+            width: 26px; height: 26px; border-radius: 50%;
+            background: linear-gradient(135deg, #6b21a5, #3b82f6);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 600; font-size: 11px;
+        }
+
+        /* ===== 主体 ===== */
+        .app-body { display: flex; flex: 1; overflow: hidden; }
+
+        /* ===== 左侧：数据源面板 ===== */
+        .data-panel {
+            width: 200px;
+            background: #0a0f18;
+            border-right: 1px solid #1a212e;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        .data-panel .panel-header {
+            padding: 10px 14px;
+            border-bottom: 1px solid #1a212e;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .data-panel .panel-header h3 { font-size: 12px; font-weight: 600; }
+        .data-panel .panel-header .actions i {
+            margin-left: 8px;
+            color: #4a5a78;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .data-panel .panel-header .actions i:hover { color: #e8edf5; }
+        .data-tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px 0;
+        }
+        .table-node { margin-bottom: 2px; }
+        .table-node .table-header {
+            display: flex;
+            align-items: center;
+            padding: 5px 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-weight: 500;
+            font-size: 12px;
+        }
+        .table-node .table-header:hover { background: #141c2a; }
+        .table-node .table-header .icon {
+            margin-right: 6px;
+            color: #3b82f6;
+            font-size: 12px;
+        }
+        .table-node .table-header .badge {
+            margin-left: auto;
+            background: #1a212e;
+            padding: 0 5px;
+            border-radius: 8px;
+            font-size: 9px;
+            color: #6a7b98;
+        }
+        .table-node .table-header .chevron {
+            margin-left: 4px;
+            transition: transform 0.2s;
+            font-size: 10px;
+        }
+        .table-node .table-header .chevron.open { transform: rotate(90deg); }
+        .field-list {
+            list-style: none;
+            padding: 0 14px 4px 32px;
+            display: none;
+        }
+        .field-list.open { display: block; }
+        .field-item {
+            display: flex;
+            align-items: center;
+            padding: 3px 6px;
+            margin: 1px 0;
+            font-size: 11px;
+            color: #b9c7e0;
+            border-radius: 3px;
+            cursor: grab;
+            transition: background 0.2s;
+            border: 1px solid transparent;
+            background: #0f1520;
+        }
+        .field-item:hover { background: #1a212e; border-color: #2a3a55; }
+        .field-item .field-type {
+            font-size: 7px;
+            background: #1f2840;
+            padding: 0 5px;
+            border-radius: 6px;
+            margin-left: 4px;
+            color: #6a7b98;
+            text-transform: uppercase;
+        }
+        .field-item .field-name { flex: 1; }
+        .field-item .drag-icon {
+            color: #4a5a78;
+            font-size: 10px;
+            margin-right: 4px;
+        }
+        .data-panel .panel-footer {
+            padding: 6px 14px;
+            border-top: 1px solid #1a212e;
+            font-size: 10px;
+            color: #4a5a78;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* ===== 中间：画布 ===== */
+        .canvas-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #080b13;
+            overflow: hidden;
+        }
+        .canvas-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 14px;
+            background: #0c111c;
+            border-bottom: 1px solid #1a212e;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .canvas-toolbar .left {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .canvas-toolbar .left .title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+        .canvas-toolbar .left .tool-btn {
+            padding: 3px 10px;
+            border-radius: 14px;
+            border: 1px solid #2a3a55;
+            background: transparent;
+            color: #b9c7e0;
+            cursor: pointer;
+            font-size: 10px;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .canvas-toolbar .left .tool-btn:hover { background: #1f2840; border-color: #3b82f6; }
+        .canvas-toolbar .left .tool-btn.primary {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        .canvas-toolbar .right {
+            display: flex;
+            gap: 8px;
+            color: #6a7b98;
+            font-size: 11px;
+            align-items: center;
+        }
+        .canvas-toolbar .right .zoom-control {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .canvas-toolbar .right .zoom-control button {
+            background: #1a212e;
+            border: 1px solid #2a3a55;
+            color: #b9c7e0;
+            border-radius: 3px;
+            padding: 0 6px;
+            cursor: pointer;
+            font-size: 12px;
+            height: 20px;
+        }
+        .canvas-toolbar .right .zoom-control button:hover { background: #2a3346; }
+        .canvas-toolbar .right .zoom-control .zoom-level {
+            font-size: 11px;
+            min-width: 32px;
+            text-align: center;
+        }
+
+        .canvas-area {
+            flex: 1;
+            overflow: auto;
+            padding: 12px;
+            background: #080b13;
+            position: relative;
+            background-image: radial-gradient(circle at 16px 16px, #141c2a 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            min-height: 100%;
+            background: #0f1520;
+            border-radius: 10px;
+            border: 1px solid #1a212e;
+            padding: 12px;
+            min-height: 400px;
+            transition: all 0.2s;
+            transform-origin: top left;
+        }
+        .canvas-container.drag-over {
+            border-color: #3b82f6;
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.08);
+        }
+        .canvas-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 280px;
+            color: #4a5a78;
+        }
+        .canvas-empty i {
+            font-size: 36px;
+            color: #2a3a55;
+            margin-bottom: 10px;
+        }
+        .canvas-empty .hint {
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+        .canvas-empty .sub-hint {
+            font-size: 12px;
+            color: #6a7b98;
+        }
+        .canvas-empty .drag-hint {
+            margin-top: 10px;
+            padding: 6px 16px;
+            border: 2px dashed #2a3a55;
+            border-radius: 8px;
+            font-size: 11px;
+            color: #6a7b98;
+        }
+        .canvas-empty .drag-hint i {
+            font-size: 14px;
+            color: #3b82f6;
+            margin-right: 4px;
+        }
+
+        /* ===== 画布组件 ===== */
+        .canvas-widget {
+            position: absolute;
+            min-width: 120px;
+            min-height: 70px;
+            background: #0c111c;
+            border: 2px solid #1a212e;
+            border-radius: 8px;
+            padding: 8px 10px;
+            cursor: move;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        .canvas-widget:hover { border-color: #2a3a55; z-index: 2; }
+        .canvas-widget.selected {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2), 0 8px 24px rgba(0, 0, 0, 0.5);
+            z-index: 3;
+        }
+        .canvas-widget.hidden { opacity: 0.3; border-color: #2a3346; }
+        .canvas-widget.locked { opacity: 0.7; }
+        .canvas-widget.locked .resize-handle { display: none; }
+        .canvas-widget .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+            flex-shrink: 0;
+        }
+        .canvas-widget .widget-header .widget-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #b9c7e0;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .canvas-widget .widget-header .widget-title .type-icon {
+            font-size: 10px;
+            color: #3b82f6;
+        }
+        .canvas-widget .widget-header .widget-actions {
+            display: flex;
+            gap: 2px;
+        }
+        .canvas-widget .widget-header .widget-actions i {
+            color: #4a5a78;
+            font-size: 10px;
+            cursor: pointer;
+            padding: 2px 3px;
+            border-radius: 3px;
+            transition: 0.2s;
+        }
+        .canvas-widget .widget-header .widget-actions i:hover { background: #1a212e; color: #e8edf5; }
+        .canvas-widget .widget-header .widget-actions i.danger:hover { color: #ef4444; }
+        .canvas-widget .widget-header .widget-actions i.config-icon:hover { color: #60a5fa; }
+        .canvas-widget .widget-body {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 40px;
+        }
+        .canvas-widget .resize-handle {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 12px;
+            height: 12px;
+            cursor: nwse-resize;
+            background: linear-gradient(135deg, transparent 50%, #2a3a55 50%);
+            border-radius: 0 0 8px 0;
+            opacity: 0.4;
+            transition: opacity 0.2s;
+        }
+        .canvas-widget:hover .resize-handle { opacity: 1; }
+
+        .widget-body .table-view {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+        }
+        .widget-body .table-view th {
+            text-align: left;
+            padding: 2px 4px;
+            border-bottom: 1px solid #1e2638;
+            color: #6a7b98;
+            font-weight: 500;
+            font-size: 9px;
+        }
+        .widget-body .table-view td {
+            padding: 2px 4px;
+            border-bottom: 1px solid #1a212e;
+            font-size: 10px;
+        }
+        .widget-body .chart-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 100%;
+            padding: 2px 0;
+            gap: 2px;
+        }
+        .widget-body .chart-container .bar {
+            flex: 1;
+            background: linear-gradient(to top, #3b82f6, #8b5cf6);
+            border-radius: 2px 2px 0 0;
+            min-height: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 1px;
+            font-size: 7px;
+            color: white;
+            transition: height 0.3s;
+            position: relative;
+        }
+        .widget-body .chart-container .bar .bar-label {
+            position: absolute;
+            bottom: -12px;
+            color: #6a7b98;
+            font-size: 6px;
+            white-space: nowrap;
+        }
+        .widget-body .kpi-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            height: 100%;
+        }
+        .widget-body .kpi-grid .kpi {
+            background: #0f1520;
+            padding: 4px 6px;
+            border-radius: 4px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .widget-body .kpi-grid .kpi .value {
+            font-size: 15px;
+            font-weight: 700;
+            background: linear-gradient(to right, #f0f4ff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .widget-body .kpi-grid .kpi .label {
+            font-size: 8px;
+            color: #6a7b98;
+            margin-top: 1px;
+        }
+
+        /* ===== 右侧：属性 + 图层 ===== */
+        .right-panel {
+            width: 220px;
+            background: #0a0f18;
+            border-left: 1px solid #1a212e;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        .right-panel .tabs {
+            display: flex;
+            border-bottom: 1px solid #1a212e;
+            flex-shrink: 0;
+        }
+        .right-panel .tabs .tab {
+            flex: 1;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 11px;
+            color: #6a7b98;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .right-panel .tabs .tab:hover { color: #b9c7e0; }
+        .right-panel .tabs .tab.active {
+            color: #e8edf5;
+            border-bottom-color: #3b82f6;
+        }
+        .right-panel .panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 12px;
+        }
+        .right-panel .panel-body .empty-tip {
+            color: #4a5a78;
+            font-size: 12px;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .prop-group { margin-bottom: 10px; }
+        .prop-group label {
+            display: block;
+            font-size: 10px;
+            color: #94a3b8;
+            margin-bottom: 2px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .prop-group input, .prop-group select {
+            width: 100%;
+            padding: 4px 8px;
+            background: #141c2a;
+            border: 1px solid #1e2638;
+            border-radius: 4px;
+            color: #e8edf5;
+            font-size: 11px;
+            outline: none;
+            transition: 0.2s;
+        }
+        .prop-group input:focus, .prop-group select:focus { border-color: #3b82f6; }
+        .prop-group .prop-row { display: flex; gap: 6px; }
+        .prop-group .prop-row>* { flex: 1; }
+        .prop-group .color-picker { display: flex; gap: 4px; flex-wrap: wrap; }
+        .prop-group .color-picker .color-dot {
+            width: 22px; height: 22px; border-radius: 4px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .prop-group .color-picker .color-dot:hover { transform: scale(1.1); }
+        .prop-group .color-picker .color-dot.active {
+            border-color: #3b82f6;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+        }
+        .prop-divider {
+            border: none;
+            border-top: 1px solid #1a212e;
+            margin: 10px 0;
+        }
+
+        /* ---- 图层面板 ---- */
+        .layer-list { display: flex; flex-direction: column; gap: 2px; }
+        .layer-item {
+            display: flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: #0f1520;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: 0.2s;
+            gap: 6px;
+            font-size: 11px;
+        }
+        .layer-item:hover { background: #1a212e; border-color: #2a3a55; }
+        .layer-item.active { border-color: #3b82f6; background: #1f2840; }
+        .layer-item .layer-index {
+            font-size: 9px;
+            color: #4a5a78;
+            min-width: 16px;
+            text-align: center;
+        }
+        .layer-item .layer-icon {
+            color: #3b82f6;
+            font-size: 10px;
+            width: 16px;
+            text-align: center;
+        }
+        .layer-item .layer-name {
+            flex: 1;
+            font-size: 11px;
+            color: #b9c7e0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .layer-item .layer-actions { display: flex; gap: 3px; }
+        .layer-item .layer-actions i {
+            color: #4a5a78;
+            font-size: 10px;
+            cursor: pointer;
+            padding: 2px 3px;
+            border-radius: 3px;
+            transition: 0.2s;
+        }
+        .layer-item .layer-actions i:hover { background: #1a212e; color: #e8edf5; }
+        .layer-item .layer-actions i.danger:hover { color: #ef4444; }
+        .layer-item.dragging { opacity: 0.5; transform: scale(0.95); }
+        .layer-item.drag-over { border-color: #3b82f6; background: #1f2840; }
+
+        /* ============================================================ */
+        /*  配置弹窗 (完整三栏) ———— 支持多字段选择 */
+        /* ============================================================ */
+        .config-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(6px);
+            padding: 20px;
+        }
+        .config-overlay.active { display: flex; }
+        .config-modal {
+            background: #0c111c;
+            border: 1px solid #2a3a55;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 1200px;
+            height: 90vh;
+            max-height: 800px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+        }
+        .config-modal .config-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 24px;
+            border-bottom: 1px solid #1a212e;
+            flex-shrink: 0;
+            background: #0a0f18;
+        }
+        .config-modal .config-header .left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .config-modal .config-header .left h3 {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .config-modal .config-header .left h3 i { color: #3b82f6; }
+        .config-modal .config-header .left .ds-selector {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #141c2a;
+            padding: 4px 12px 4px 8px;
+            border-radius: 20px;
+            border: 1px solid #1e2638;
+            font-size: 12px;
+            color: #b9c7e0;
+        }
+        .config-modal .config-header .left .ds-selector select {
+            background: transparent;
+            border: none;
+            color: #e8edf5;
+            font-size: 12px;
+            outline: none;
+            cursor: pointer;
+        }
+        .config-modal .config-header .right {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .config-modal .config-header .right button {
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+        .config-modal .config-header .right .btn-close {
+            background: transparent;
+            color: #6a7b98;
+            font-size: 18px;
+            padding: 4px 8px;
+        }
+        .config-modal .config-header .right .btn-close:hover {
+            color: #e8edf5;
+            background: #1a212e;
+        }
+        .config-modal .config-header .right .btn-cancel {
+            background: #1a212e;
+            color: #94a3b8;
+        }
+        .config-modal .config-header .right .btn-cancel:hover { background: #2a3346; }
+        .config-modal .config-header .right .btn-apply {
+            background: #3b82f6;
+            color: white;
+        }
+        .config-modal .config-header .right .btn-apply:hover { background: #2563eb; }
+
+        .config-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* 左栏：字段列表（含复选框） */
+        .config-left {
+            width: 300px;
+            background: #0a0f18;
+            border-right: 1px solid #1a212e;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        .config-left .left-header {
+            padding: 10px 16px;
+            border-bottom: 1px solid #1a212e;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .config-left .left-header span {
+            font-size: 12px;
+            font-weight: 600;
+            color: #b9c7e0;
+        }
+        .config-left .left-header .field-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .config-left .left-header .field-actions button {
+            background: #1a212e;
+            border: 1px solid #2a3a55;
+            border-radius: 4px;
+            color: #94a3b8;
+            padding: 2px 10px;
+            cursor: pointer;
+            font-size: 10px;
+            transition: 0.2s;
+        }
+        .config-left .left-header .field-actions button:hover {
+            background: #2a3346;
+            color: #e8edf5;
+        }
+        .config-left .field-list-config {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 12px;
+        }
+        .config-left .field-list-config .field-item-config {
+            display: flex;
+            align-items: center;
+            padding: 6px 10px;
+            margin: 2px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid transparent;
+            background: #0f1520;
+            font-size: 12px;
+            color: #b9c7e0;
+        }
+        .config-left .field-list-config .field-item-config:hover {
+            background: #1a212e;
+            border-color: #2a3a55;
+        }
+        .config-left .field-list-config .field-item-config.selected {
+            background: #1f2840;
+            border-color: #3b82f6;
+        }
+        .config-left .field-list-config .field-item-config .f-checkbox {
+            margin-right: 8px;
+            width: 16px;
+            height: 16px;
+            accent-color: #3b82f6;
+            cursor: pointer;
+        }
+        .config-left .field-list-config .field-item-config .f-icon {
+            margin-right: 6px;
+            font-size: 12px;
+            color: #4a5a78;
+            width: 16px;
+            text-align: center;
+        }
+        .config-left .field-list-config .field-item-config .f-name {
+            flex: 1;
+        }
+        .config-left .field-list-config .field-item-config .f-type {
+            font-size: 8px;
+            background: #1f2840;
+            padding: 0 6px;
+            border-radius: 8px;
+            color: #6a7b98;
+            text-transform: uppercase;
+        }
+        .config-left .field-list-config .field-item-config .f-check {
+            margin-left: 8px;
+            color: #4a5a78;
+            font-size: 12px;
+        }
+        .config-left .field-list-config .field-item-config .f-check.checked { color: #3b82f6; }
+        .config-left .field-list-config .field-item-config .f-ops {
+            display: none;
+            margin-left: 6px;
+            gap: 4px;
+        }
+        .config-left .field-list-config .field-item-config:hover .f-ops { display: flex; }
+        .config-left .field-list-config .field-item-config .f-ops i {
+            color: #4a5a78;
+            font-size: 10px;
+            cursor: pointer;
+            padding: 2px;
+            border-radius: 3px;
+        }
+        .config-left .field-list-config .field-item-config .f-ops i:hover {
+            background: #1a212e;
+            color: #e8edf5;
+        }
+
+        /* 中栏：操作面板（支持批量） */
+        .config-middle {
+            width: 320px;
+            background: #0f1520;
+            border-right: 1px solid #1a212e;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        .config-middle .middle-header {
+            padding: 10px 16px;
+            border-bottom: 1px solid #1a212e;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .config-middle .middle-header span {
+            font-size: 12px;
+            font-weight: 600;
+            color: #b9c7e0;
+        }
+        .config-middle .middle-header .op-hint {
+            font-size: 10px;
+            color: #6a7b98;
+            font-weight: 400;
+        }
+        .config-middle .op-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 16px;
+        }
+        .config-middle .op-panel .no-selection {
+            color: #4a5a78;
+            font-size: 13px;
+            text-align: center;
+            padding: 30px 0;
+        }
+        .config-middle .op-panel .no-selection i {
+            display: block;
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #2a3a55;
+        }
+
+        .config-middle .op-group { margin-bottom: 14px; }
+        .config-middle .op-group label {
+            display: block;
+            font-size: 10px;
+            color: #94a3b8;
+            margin-bottom: 3px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .config-middle .op-group .op-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .config-middle .op-group .op-row .op-btn {
+            padding: 3px 12px;
+            border-radius: 14px;
+            border: 1px solid #2a3a55;
+            background: transparent;
+            color: #b9c7e0;
+            cursor: pointer;
+            font-size: 11px;
+            transition: 0.2s;
+        }
+        .config-middle .op-group .op-row .op-btn:hover {
+            background: #1a212e;
+            border-color: #3b82f6;
+        }
+        .config-middle .op-group .op-row .op-btn.active {
+            background: #1f2840;
+            border-color: #3b82f6;
+            color: #60a5fa;
+        }
+        .config-middle .op-group input,
+        .config-middle .op-group select {
+            width: 100%;
+            padding: 4px 10px;
+            background: #141c2a;
+            border: 1px solid #1e2638;
+            border-radius: 4px;
+            color: #e8edf5;
+            font-size: 12px;
+            outline: none;
+            transition: 0.2s;
+        }
+        .config-middle .op-group input:focus,
+        .config-middle .op-group select:focus { border-color: #3b82f6; }
+        .config-middle .op-divider {
+            border: none;
+            border-top: 1px solid #1a212e;
+            margin: 12px 0;
+        }
+
+        /* 右栏：预览 */
+        .config-right {
+            flex: 1;
+            background: #080b13;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 12px 16px;
+        }
+        .config-right .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+        .config-right .preview-header span {
+            font-size: 12px;
+            font-weight: 600;
+            color: #b9c7e0;
+        }
+        .config-right .preview-header .preview-info {
+            font-size: 10px;
+            color: #6a7b98;
+            font-weight: 400;
+        }
+        .config-right .preview-body {
+            flex: 1;
+            background: #0f1520;
+            border-radius: 10px;
+            border: 1px solid #1a212e;
+            padding: 16px;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 200px;
+        }
+        .config-right .preview-body .preview-empty {
+            color: #4a5a78;
+            text-align: center;
+            font-size: 13px;
+        }
+        .config-right .preview-body .preview-empty i {
+            display: block;
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #2a3a55;
+        }
+
+        /* 预览中的图表样式 */
+        .preview-body .chart-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 100%;
+            padding: 8px 0;
+            gap: 8px;
+            min-height: 120px;
+        }
+        .preview-body .chart-container .bar {
+            flex: 1;
+            background: linear-gradient(to top, #3b82f6, #8b5cf6);
+            border-radius: 4px 4px 0 0;
+            min-height: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 4px;
+            font-size: 11px;
+            color: white;
+            transition: height 0.4s ease;
+            position: relative;
+            min-width: 30px;
+        }
+        .preview-body .chart-container .bar .bar-label {
+            position: absolute;
+            bottom: -20px;
+            color: #6a7b98;
+            font-size: 10px;
+            white-space: nowrap;
+        }
+        .preview-body .kpi-grid-preview {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 12px;
+            height: 100%;
+            align-content: center;
+        }
+        .preview-body .kpi-grid-preview .kpi {
+            background: #0c111c;
+            padding: 12px 16px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 3px solid #3b82f6;
+        }
+        .preview-body .kpi-grid-preview .kpi .value {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(to right, #f0f4ff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .preview-body .kpi-grid-preview .kpi .label {
+            font-size: 11px;
+            color: #6a7b98;
+            margin-top: 2px;
+        }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2840;
+            border: 1px solid #2a3a55;
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #e8edf5;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 3000;
+        }
+        .toast.show {
+            display: block;
+            animation: fadeInUp 0.3s;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 1024px) {
+            .data-panel { width: 180px; }
+            .right-panel { width: 190px; }
+            .config-left, .config-middle { width: 240px; }
+            .config-modal { max-height: 95vh; height: 95vh; }
+        }
+        @media (max-width: 768px) {
+            .data-panel, .right-panel { display: none; }
+            .config-left, .config-middle { width: 200px; }
+            .config-body { flex-direction: column; }
+            .config-left, .config-middle, .config-right {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #1a212e;
+                max-height: 30vh;
+            }
+            .config-right { max-height: 40vh; }
+            .config-modal { height: 95vh; max-height: none; }
+            .config-modal .config-header .left h3 { font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 顶部 ===== -->
+    <header class="app-header">
+        <div class="logo-area">
+            <div class="logo-icon">WI</div>
+            <div class="logo-text">Well-Insight<span>Studio</span></div>
+        </div>
+        <div style="font-size:11px;color:#6a7b98;margin-left:4px;">
+            <i class="fas fa-arrows-alt"></i> 可视化画布
+        </div>
+        <div class="header-actions">
+            <button id="importBtn" title="导入项目 JSON"><i class="fas fa-file-import"></i> 导入</button>
+            <button id="resetCanvasBtn"><i class="fas fa-undo-alt"></i> 清空</button>
+            <button class="btn-primary-sm" id="exportBtn"><i class="fas fa-rocket"></i> 导出</button>
+            <div class="user-avatar">J</div>
+            <input type="file" id="importFileInput" accept="application/json,.json" style="display:none;" />
+        </div>
+    </header>
+
+    <!-- ===== 主体 ===== -->
+    <div class="app-body">
+
+        <!-- 左侧：数据源 -->
+        <aside class="data-panel">
+            <div class="panel-header">
+                <h3><i class="fas fa-database" style="color:#3b82f6;margin-right:4px;"></i>数据源</h3>
+                <div class="actions">
+                    <i class="fas fa-plus" title="添加数据源" onclick="showToast('🔌 演示版本内置示例数据，正式版将支持连接 MySQL / CSV')"></i>
+                    <i class="fas fa-sync-alt" title="刷新" onclick="refreshDataTree()"></i>
+                </div>
+            </div>
+            <div class="data-tree" id="dataTree"></div>
+            <div class="panel-footer">
+                <span><i class="fas fa-layer-group"></i> <span id="tableCount">3</span> 表</span>
+                <span><i class="fas fa-arrows-alt"></i> 拖入画布</span>
+            </div>
+        </aside>
+
+        <!-- 中间：画布 -->
+        <main class="canvas-wrapper">
+            <div class="canvas-toolbar">
+                <div class="left">
+                    <span class="title"><i class="fas fa-th-large" style="color:#3b82f6;margin-right:3px;"></i>画布</span>
+                    <button class="tool-btn" id="undoBtn" onclick="undo()" title="撤销 (Ctrl+Z)" disabled><i class="fas fa-rotate-left"></i></button>
+                    <button class="tool-btn" id="redoBtn" onclick="redo()" title="重做 (Ctrl+Y)" disabled><i class="fas fa-rotate-right"></i></button>
+                    <span style="width:1px;height:14px;background:#1e2638;margin:0 2px;"></span>
+                    <button class="tool-btn primary" onclick="addWidget('kpi')"><i class="fas fa-chart-simple"></i> 指标</button>
+                    <button class="tool-btn" onclick="addWidget('bar')"><i class="fas fa-chart-bar"></i> 柱状</button>
+                    <button class="tool-btn" onclick="addWidget('line')"><i class="fas fa-chart-line"></i> 折线</button>
+                    <button class="tool-btn" onclick="addWidget('pie')"><i class="fas fa-chart-pie"></i> 饼图</button>
+                    <button class="tool-btn" onclick="addWidget('table')"><i class="fas fa-table"></i> 表格</button>
+                </div>
+                <div class="right">
+                    <span><i class="fas fa-circle" style="color:#22c55e;font-size:6px;"></i> <span id="widgetCount">0</span></span>
+                    <div class="zoom-control">
+                        <button onclick="zoomCanvas(-0.1)">−</button>
+                        <span class="zoom-level" id="zoomLevel">100%</span>
+                        <button onclick="zoomCanvas(0.1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="canvas-area" id="canvasArea">
+                <div class="canvas-container" id="canvasContainer">
+                    <div class="canvas-empty" id="canvasEmpty">
+                        <i class="fas fa-arrows-alt"></i>
+                        <div class="hint">拖拽左侧字段到此处</div>
+                        <div class="sub-hint">或点击工具栏添加组件</div>
+                        <div class="drag-hint">
+                            <i class="fas fa-arrow-pointer"></i>
+                            拖拽 <strong>字段</strong> 到画布生成图表
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 右侧：属性 + 图层 -->
+        <aside class="right-panel" id="rightPanel">
+            <div class="tabs">
+                <div class="tab active" data-tab="props" onclick="switchRightTab('props')">
+                    <i class="fas fa-sliders-h"></i> 属性
+                </div>
+                <div class="tab" data-tab="layers" onclick="switchRightTab('layers')">
+                    <i class="fas fa-layer-group"></i> 图层
+                    <span id="layerBadge" style="background:#1f2840;padding:0 5px;border-radius:6px;font-size:8px;color:#94a3b8;">0</span>
+                </div>
+            </div>
+            <div class="panel-body" id="rightPanelBody">
+                <div id="propsPanel"></div>
+                <div id="layersPanel" style="display:none;"></div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- ============================================================ -->
+    <!--  配置弹窗 (完整三栏) ———— 支持多字段选择 -->
+    <!-- ============================================================ -->
+    <div class="config-overlay" id="configOverlay">
+        <div class="config-modal">
+            <!-- 头部 -->
+            <div class="config-header">
+                <div class="left">
+                    <h3><i class="fas fa-cog"></i> <span id="configTitle">配置组件</span></h3>
+                    <div class="ds-selector">
+                        <i class="fas fa-database" style="color:#3b82f6;font-size:11px;"></i>
+                        <select id="configDataSource" onchange="onConfigDataSourceChange()"></select>
+                    </div>
+                    <span style="font-size:11px;color:#6a7b98;" id="configFieldCount">0 个字段</span>
+                </div>
+                <div class="right">
+                    <button class="btn-cancel" onclick="closeConfig()">取消</button>
+                    <button class="btn-apply" onclick="applyConfig()"><i class="fas fa-check"></i> 应用</button>
+                    <button class="btn-close" onclick="closeConfig()"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+
+            <!-- 三栏主体 -->
+            <div class="config-body">
+                <!-- 左栏：字段列表（含复选框） -->
+                <div class="config-left">
+                    <div class="left-header">
+                        <span><i class="fas fa-list-ul" style="color:#3b82f6;margin-right:4px;"></i>字段列表</span>
+                        <div class="field-actions">
+                            <button onclick="selectAllFields()">全选</button>
+                            <button onclick="deselectAllFields()">取消</button>
+                            <span class="field-count" id="leftFieldCount">0</span>
+                        </div>
+                    </div>
+                    <div class="field-list-config" id="configFieldList"></div>
+                </div>
+
+                <!-- 中栏：操作面板（批量或单个） -->
+                <div class="config-middle">
+                    <div class="middle-header">
+                        <span><i class="fas fa-tools" style="color:#3b82f6;margin-right:4px;"></i>字段操作</span>
+                        <span class="op-hint" id="selectedFieldName">未选择</span>
+                    </div>
+                    <div class="op-panel" id="configOpPanel">
+                        <div class="no-selection">
+                            <i class="fas fa-arrow-pointer"></i>
+                            请勾选左侧字段进行配置
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右栏：预览 -->
+                <div class="config-right">
+                    <div class="preview-header">
+                        <span><i class="fas fa-eye" style="color:#3b82f6;margin-right:4px;"></i>预览</span>
+                        <span class="preview-info" id="previewInfo">实时更新</span>
+                    </div>
+                    <div class="preview-body" id="configPreview">
+                        <div class="preview-empty">
+                            <i class="fas fa-chart-pie"></i>
+                            选择字段后预览图表
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Toast ===== -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ============================================================ -->
+    <!-- SCRIPT -->
+    <!-- ============================================================ -->
+    <script>
+        // ================================================================
+        //  1. 数据
+        // ================================================================
+        const sampleData = {
+            orders: {
+                fields: ['order_id', 'customer_id', 'product', 'category', 'amount', 'order_date', 'status'],
+                rows: [
+                    [101, 1, 'Laptop', 'Electronics', 1200, '2026-01-15', 'paid'],
+                    [102, 2, 'Phone', 'Electronics', 800, '2026-01-20', 'paid'],
+                    [103, 3, 'Table', 'Furniture', 450, '2026-02-01', 'paid'],
+                    [104, 1, 'Chair', 'Furniture', 200, '2026-02-10', 'pending'],
+                    [105, 4, 'Headphones', 'Electronics', 150, '2026-02-15', 'paid'],
+                    [106, 5, 'Book', 'Stationery', 25, '2026-03-01', 'paid'],
+                    [107, 2, 'Monitor', 'Electronics', 300, '2026-03-05', 'paid'],
+                    [108, 3, 'Desk', 'Furniture', 600, '2026-03-10', 'paid'],
+                    [109, 6, 'Notebook', 'Stationery', 12, '2026-03-12', 'paid'],
+                    [110, 7, 'Phone Case', 'Accessories', 20, '2026-03-15', 'paid'],
+                ]
+            },
+            customers: {
+                fields: ['customer_id', 'name', 'age', 'city', 'signup_date'],
+                rows: [
+                    [1, 'Alice', 28, 'Beijing', '2025-01-01'],
+                    [2, 'Bob', 34, 'Shanghai', '2025-02-01'],
+                    [3, 'Charlie', 45, 'Beijing', '2024-11-01'],
+                    [4, 'Diana', 29, 'Shenzhen', '2025-05-01'],
+                    [5, 'Eve', 38, 'Shanghai', '2024-08-01'],
+                    [6, 'Frank', 22, 'Beijing', '2026-01-01'],
+                    [7, 'Grace', 31, 'Shenzhen', '2025-09-01'],
+                ]
+            },
+            products: {
+                fields: ['product_id', 'product_name', 'category', 'price', 'stock'],
+                rows: [
+                    [1, 'Laptop', 'Electronics', 1200, 50],
+                    [2, 'Phone', 'Electronics', 800, 120],
+                    [3, 'Table', 'Furniture', 450, 30],
+                    [4, 'Chair', 'Furniture', 200, 80],
+                    [5, 'Headphones', 'Electronics', 150, 200],
+                    [6, 'Book', 'Stationery', 25, 500],
+                    [7, 'Monitor', 'Electronics', 300, 60],
+                    [8, 'Desk', 'Furniture', 600, 20],
+                    [9, 'Notebook', 'Stationery', 12, 1000],
+                    [10, 'Phone Case', 'Accessories', 20, 300],
+                ]
+            }
+        };
+
+        let currentData = {
+            orders: { fields: [...sampleData.orders.fields], rows: sampleData.orders.rows.map(r => [...r]) },
+            customers: { fields: [...sampleData.customers.fields], rows: sampleData.customers.rows.map(r => [...r]) },
+            products: { fields: [...sampleData.products.fields], rows: sampleData.products.rows.map(r => [...r]) }
+        };
+
+        // ================================================================
+        //  2. 组件管理
+        // ================================================================
+        let widgets = [];
+        let widgetIdCounter = 0;
+        let selectedWidgetId = null;
+        let canvasZoom = 1;
+        let dragState = null;
+        let resizeState = null;
+
+        // 配置弹窗状态
+        let configTargetId = null;
+        let configSelectedFields = []; // 当前选中的字段名数组
+        let configFieldOps = {}; // 字段操作配置 { fieldName: { agg, sort, filter, hidden, alias } }
+
+        // ================================================================
+        //  2.1 撤销/重做 + 本地持久化
+        // ================================================================
+        const STORAGE_KEY = 'well-insight-demo-v1';
+        const MAX_HISTORY = 50;
+        let undoStack = [];
+        let redoStack = [];
+        let saveTimer = null;
+
+        function takeSnapshot() {
+            return JSON.stringify({ widgets, widgetIdCounter, selectedWidgetId });
+        }
+
+        // 在每次“变更前”调用：把当前状态压入撤销栈
+        function pushHistory() {
+            undoStack.push(takeSnapshot());
+            if (undoStack.length > MAX_HISTORY) undoStack.shift();
+            redoStack.length = 0;
+            updateHistoryButtons();
+        }
+
+        function restoreSnapshot(snap) {
+            const state = JSON.parse(snap);
+            widgets = state.widgets || [];
+            widgetIdCounter = state.widgetIdCounter || widgets.length;
+            selectedWidgetId = state.selectedWidgetId ?? null;
+            renderAll();
+            updateHistoryButtons();
+            scheduleSave();
+        }
+
+        function undo() {
+            if (undoStack.length === 0) return;
+            redoStack.push(takeSnapshot());
+            restoreSnapshot(undoStack.pop());
+            showToast('↩️ 已撤销');
+        }
+
+        function redo() {
+            if (redoStack.length === 0) return;
+            undoStack.push(takeSnapshot());
+            restoreSnapshot(redoStack.pop());
+            showToast('↪️ 已重做');
+        }
+
+        function updateHistoryButtons() {
+            const undoBtn = document.getElementById('undoBtn');
+            const redoBtn = document.getElementById('redoBtn');
+            if (undoBtn) undoBtn.disabled = undoStack.length === 0;
+            if (redoBtn) redoBtn.disabled = redoStack.length === 0;
+        }
+
+        function scheduleSave() {
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(saveState, 500);
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    widgets,
+                    widgetIdCounter,
+                    savedAt: Date.now()
+                }));
+            } catch (e) { /* 存储满或隐私模式下静默失败 */ }
+        }
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return false;
+                const state = JSON.parse(raw);
+                if (!Array.isArray(state.widgets)) return false;
+                widgets = state.widgets;
+                widgetIdCounter = state.widgetIdCounter || widgets.length;
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function refreshDataTree() {
+            renderDataTree();
+            showToast('🔄 数据源已刷新');
+        }
+
+        // ================================================================
+        //  2.2 导入 / 导出
+        // ================================================================
+        function exportProject() {
+            const payload = {
+                app: 'well-insight-studio',
+                version: 1,
+                exportedAt: new Date().toISOString(),
+                canvas: { zoom: canvasZoom },
+                widgets
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `well-insight-project-${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+            showToast('📦 已导出项目 JSON');
+        }
+
+        function importProject(file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const data = JSON.parse(reader.result);
+                    if (!data || !Array.isArray(data.widgets)) throw new Error('invalid');
+                    pushHistory();
+                    widgets = data.widgets;
+                    widgetIdCounter = widgets.reduce((m, w) => Math.max(m, w.id || 0), 0);
+                    selectedWidgetId = null;
+                    renderAll();
+                    scheduleSave();
+                    showToast(`📥 已导入 ${widgets.length} 个组件`);
+                } catch (err) {
+                    showToast('⚠️ 导入失败：文件格式不正确');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        document.getElementById('exportBtn').addEventListener('click', exportProject);
+        document.getElementById('importBtn').addEventListener('click', () => {
+            document.getElementById('importFileInput').click();
+        });
+        document.getElementById('importFileInput').addEventListener('change', function() {
+            if (this.files && this.files[0]) importProject(this.files[0]);
+            this.value = '';
+        });
+
+        const WIDGET_TYPES = {
+            kpi: { label: '指标卡', icon: 'fa-chart-simple', defaultWidth: 180, defaultHeight: 110 },
+            bar: { label: '柱状图', icon: 'fa-chart-bar', defaultWidth: 240, defaultHeight: 150 },
+            line: { label: '折线图', icon: 'fa-chart-line', defaultWidth: 240, defaultHeight: 150 },
+            pie: { label: '饼图', icon: 'fa-chart-pie', defaultWidth: 220, defaultHeight: 160 },
+            table: { label: '表格', icon: 'fa-table', defaultWidth: 280, defaultHeight: 170 },
+        };
+
+        const COLOR_PALETTE = ['#3b82f6', '#8b5cf6', '#f59e0b', '#22c55e', '#ef4444', '#ec4899', '#14b8a6', '#f97316'];
+
+        // ================================================================
+        //  3. 数据树渲染
+        // ================================================================
+        function renderDataTree() {
+            const container = document.getElementById('dataTree');
+            container.innerHTML = '';
+            Object.keys(currentData).forEach(tableName => {
+                const table = currentData[tableName];
+                const node = document.createElement('div');
+                node.className = 'table-node';
+                const header = document.createElement('div');
+                header.className = 'table-header';
+                header.innerHTML = `
+                    <span class="icon"><i class="fas fa-table"></i></span>
+                    <span>${tableName}</span>
+                    <span class="badge">${table.rows.length}</span>
+                    <span class="chevron open"><i class="fas fa-chevron-right"></i></span>
+                `;
+                const fieldList = document.createElement('ul');
+                fieldList.className = 'field-list open';
+                table.fields.forEach(field => {
+                    const li = document.createElement('li');
+                    li.className = 'field-item';
+                    li.draggable = true;
+                    li.dataset.table = tableName;
+                    li.dataset.field = field;
+                    const isNum = table.rows.length > 0 && typeof table.rows[0]?.[table.fields.indexOf(field)] ===
+                        'number';
+                    li.innerHTML = `
+                        <span class="drag-icon"><i class="fas fa-grip-vertical"></i></span>
+                        <span class="field-name">${field}</span>
+                        <span class="field-type">${isNum ? 'num' : 'str'}</span>
+                    `;
+                    fieldList.appendChild(li);
+
+                    li.addEventListener('dragstart', function(e) {
+                        e.dataTransfer.setData('text/plain', JSON.stringify({
+                            table: this.dataset.table,
+                            field: this.dataset.field
+                        }));
+                        e.dataTransfer.effectAllowed = 'copy';
+                        const clone = document.createElement('div');
+                        clone.className = 'drag-clone';
+                        clone.innerHTML = `<i class="fas fa-arrow-pointer"></i> ${this.dataset.field}`;
+                        document.body.appendChild(clone);
+                        e.dataTransfer.setDragImage(clone, 50, 16);
+                        setTimeout(() => clone.remove(), 0);
+                    });
+                });
+                node.appendChild(header);
+                node.appendChild(fieldList);
+                container.appendChild(node);
+
+                header.addEventListener('click', function(e) {
+                    if (e.target.closest('.field-item')) return;
+                    const list = this.nextElementSibling;
+                    const chev = this.querySelector('.chevron');
+                    list.classList.toggle('open');
+                    chev.classList.toggle('open');
+                });
+            });
+            document.getElementById('tableCount').textContent = Object.keys(currentData).length;
+        }
+
+        // ================================================================
+        //  4. 画布组件操作
+        // ================================================================
+        function getTableData(tableName) {
+            return currentData[tableName] || currentData.orders;
+        }
+
+        function addWidget(type, options = {}) {
+            const config = WIDGET_TYPES[type] || WIDGET_TYPES.kpi;
+            pushHistory();
+            const id = ++widgetIdCounter;
+            const container = document.getElementById('canvasContainer');
+            const empty = document.getElementById('canvasEmpty');
+            if (empty) empty.style.display = 'none';
+
+            const existing = container.querySelectorAll('.canvas-widget');
+            const baseX = 12 + existing.length * 20 % 320;
+            const baseY = 12 + existing.length * 16 % 220;
+
+            const widget = {
+                id: id,
+                type: type,
+                title: options.title || `${config.label} ${id}`,
+                dataSource: options.dataSource || 'orders',
+                field: options.field || null,
+                x: options.x ?? baseX,
+                y: options.y ?? baseY,
+                width: options.width || config.defaultWidth,
+                height: options.height || config.defaultHeight,
+                color: options.color || COLOR_PALETTE[id % COLOR_PALETTE.length],
+                visible: true,
+                locked: false,
+                config: options.config || {}
+            };
+            widgets.push(widget);
+            renderAll();
+            selectWidget(id);
+            updateCount();
+            scheduleSave();
+            showToast(`✅ 已添加「${widget.title}」`);
+            return id;
+        }
+
+        function deleteWidget(id) {
+            const idx = widgets.findIndex(w => w.id === id);
+            if (idx === -1) return;
+            pushHistory();
+            const name = widgets[idx].title;
+            widgets.splice(idx, 1);
+            if (selectedWidgetId === id) selectedWidgetId = null;
+            renderAll();
+            updateCount();
+            scheduleSave();
+            showToast(`🗑️ 已删除「${name}」`);
+        }
+
+        function selectWidget(id) {
+            selectedWidgetId = id;
+            renderAll();
+        }
+
+        function toggleVisibility(id) {
+            const w = widgets.find(w => w.id === id);
+            if (!w) return;
+            pushHistory();
+            w.visible = !w.visible;
+            renderAll();
+            scheduleSave();
+        }
+
+        function toggleLock(id) {
+            const w = widgets.find(w => w.id === id);
+            if (!w) return;
+            pushHistory();
+            w.locked = !w.locked;
+            renderAll();
+            scheduleSave();
+        }
+
+        function moveLayer(id, direction) {
+            const idx = widgets.findIndex(w => w.id === id);
+            if (idx === -1) return;
+            const newIdx = idx + direction;
+            if (newIdx < 0 || newIdx >= widgets.length) return;
+            pushHistory();
+            [widgets[idx], widgets[newIdx]] = [widgets[newIdx], widgets[idx]];
+            renderAll();
+            scheduleSave();
+        }
+
+        function updateWidget(id, props) {
+            const w = widgets.find(w => w.id === id);
+            if (!w) return;
+            pushHistory();
+            Object.assign(w, props);
+            renderAll();
+            scheduleSave();
+        }
+
+        // ================================================================
+        //  5. 渲染全部
+        // ================================================================
+        function renderAll() {
+            renderWidgets();
+            renderPropsPanel();
+            renderLayersPanel();
+            updateCount();
+        }
+
+        // ---- 渲染画布 ----
+        function renderWidgets() {
+            const container = document.getElementById('canvasContainer');
+            container.querySelectorAll('.canvas-widget').forEach(el => el.remove());
+
+            const empty = document.getElementById('canvasEmpty');
+            if (widgets.length === 0) {
+                if (empty) empty.style.display = 'flex';
+                return;
+            }
+            if (empty) empty.style.display = 'none';
+
+            widgets.forEach((w, idx) => {
+                const data = getTableData(w.dataSource);
+                const el = document.createElement('div');
+                el.className = 'canvas-widget' +
+                    (selectedWidgetId === w.id ? ' selected' : '') +
+                    (!w.visible ? ' hidden' : '') +
+                    (w.locked ? ' locked' : '');
+                el.dataset.id = w.id;
+                el.style.left = w.x + 'px';
+                el.style.top = w.y + 'px';
+                el.style.width = w.width + 'px';
+                el.style.height = w.height + 'px';
+                el.style.zIndex = idx + 1;
+                if (w.color) {
+                    el.style.borderColor = w.selected ? '#3b82f6' : w.color;
+                }
+
+                const config = WIDGET_TYPES[w.type] || WIDGET_TYPES.kpi;
+
+                const header = document.createElement('div');
+                header.className = 'widget-header';
+                header.innerHTML = `
+                    <span class="widget-title">
+                        <span class="type-icon"><i class="fas ${config.icon}"></i></span>
+                        ${w.title}
+                    </span>
+                    <span class="widget-actions">
+                        <i class="fas fa-cog config-icon" title="配置" onclick="event.stopPropagation(); openConfig(${w.id})"></i>
+                        <i class="fas fa-${w.visible ? 'eye' : 'eye-slash'}" title="显示/隐藏" onclick="event.stopPropagation(); toggleVisibility(${w.id})"></i>
+                        <i class="fas fa-${w.locked ? 'lock' : 'unlock'}" title="锁定/解锁" onclick="event.stopPropagation(); toggleLock(${w.id})"></i>
+                        <i class="fas fa-times danger" title="删除" onclick="event.stopPropagation(); deleteWidget(${w.id})"></i>
+                    </span>
+                `;
+                el.appendChild(header);
+
+                const body = document.createElement('div');
+                body.className = 'widget-body';
+                renderWidgetBody(body, w, data);
+                el.appendChild(body);
+
+                if (!w.locked) {
+                    const resize = document.createElement('div');
+                    resize.className = 'resize-handle';
+                    el.appendChild(resize);
+                    resize.addEventListener('mousedown', function(e) {
+                        e.stopPropagation();
+                        startResize(e, w.id);
+                    });
+                }
+
+                el.addEventListener('mousedown', function(e) {
+                    if (e.target.closest('.widget-actions') || e.target.closest('.resize-handle')) return;
+                    if (w.locked) return;
+                    if (e.button !== 0) return;
+                    startDrag(e, w.id);
+                });
+
+                el.addEventListener('click', function(e) {
+                    if (e.target.closest('.widget-actions')) return;
+                    selectWidget(w.id);
+                });
+
+                el.addEventListener('dblclick', function(e) {
+                    if (e.target.closest('.widget-actions') || e.target.closest('.resize-handle')) return;
+                    openConfig(w.id);
+                });
+
+                container.appendChild(el);
+            });
+        }
+
+        // ================================================================
+        //  5.1 数据处理管道：过滤 → 排序 → 聚合分组
+        //  画布渲染与配置预览共用同一套 fieldOps 语义
+        // ================================================================
+        function applyFieldOps(data, fieldOps, visibleFields) {
+            const fields = data.fields;
+            let rows = data.rows.map(r => [...r]);
+            const isNumField = (f) => data.rows.length > 0 && typeof data.rows[0]?.[fields.indexOf(f)] === 'number';
+
+            // 1) 过滤
+            visibleFields.forEach(f => {
+                const ops = fieldOps[f];
+                if (!ops || !ops.filter) return;
+                const idx = fields.indexOf(f);
+                const match = ops.filter.trim().match(/^(>=|<=|!=|>|<|=)\s*(.+)/);
+                if (!match || idx < 0) return;
+                const [, operator, operand] = match;
+                const isNum = !isNaN(parseFloat(operand));
+                const numVal = isNum ? parseFloat(operand) : operand.replace(/["']/g, '');
+                rows = rows.filter(row => {
+                    const cell = row[idx];
+                    if (isNum) {
+                        const numCell = parseFloat(cell);
+                        if (isNaN(numCell)) return false;
+                        switch (operator) {
+                            case '>': return numCell > numVal;
+                            case '<': return numCell < numVal;
+                            case '>=': return numCell >= numVal;
+                            case '<=': return numCell <= numVal;
+                            case '=': return numCell === numVal;
+                            case '!=': return numCell !== numVal;
+                            default: return true;
+                        }
+                    }
+                    const strCell = String(cell);
+                    const strVal = String(numVal);
+                    if (operator === '=') return strCell === strVal;
+                    if (operator === '!=') return strCell !== strVal;
+                    return true;
+                });
+            });
+
+            // 2) 排序（按第一个设置了排序的字段）
+            let sortField = null;
+            let sortDir = 'none';
+            visibleFields.forEach(f => {
+                const ops = fieldOps[f];
+                if (ops && ops.sort && ops.sort !== 'none' && (!sortField || ops.sort === 'asc')) {
+                    sortField = f;
+                    sortDir = ops.sort;
+                }
+            });
+            if (sortField && sortDir !== 'none') {
+                const idx = fields.indexOf(sortField);
+                const dir = sortDir === 'asc' ? 1 : -1;
+                rows.sort((a, b) => {
+                    const va = a[idx], vb = b[idx];
+                    if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
+                    return String(va).localeCompare(String(vb)) * dir;
+                });
+            }
+
+            // 3) 聚合分组
+            const aggFields = visibleFields.filter(f => {
+                const ops = fieldOps[f];
+                return ops && ops.agg && ops.agg !== 'none' && isNumField(f);
+            });
+            const aggregate = (vals, agg) => {
+                switch (agg) {
+                    case 'sum': return vals.reduce((a, b) => a + b, 0);
+                    case 'avg': return vals.reduce((a, b) => a + b, 0) / (vals.length || 1);
+                    case 'count': return vals.length;
+                    case 'min': return Math.min(...vals);
+                    case 'max': return Math.max(...vals);
+                    default: return vals[0] || 0;
+                }
+            };
+
+            if (aggFields.length > 0 && rows.length > 0) {
+                const groupFields = visibleFields.filter(f => !aggFields.includes(f));
+                const projectRow = (sourceRows) => visibleFields.map(f => {
+                    const idx = fields.indexOf(f);
+                    const ops = fieldOps[f];
+                    if (aggFields.includes(f)) {
+                        const vals = sourceRows.map(r => parseFloat(r[idx])).filter(v => !isNaN(v));
+                        return Math.round(aggregate(vals, ops.agg) * 100) / 100;
+                    }
+                    return sourceRows[0]?.[idx] ?? '';
+                });
+
+                if (groupFields.length > 0) {
+                    const groups = {};
+                    rows.forEach(row => {
+                        const key = groupFields.map(f => row[fields.indexOf(f)]).join('|');
+                        (groups[key] = groups[key] || []).push(row);
+                    });
+                    rows = Object.values(groups).map(g => projectRow(g));
+                } else {
+                    rows = [projectRow(rows)];
+                }
+            } else {
+                // 无聚合时也要把行投影到 visibleFields 的顺序/子集
+                rows = rows.map(row => visibleFields.map(f => row[fields.indexOf(f)]));
+            }
+
+            const displayFields = visibleFields.map(f => {
+                const ops = fieldOps[f];
+                return ops && ops.alias ? ops.alias : f;
+            });
+
+            return { fields: visibleFields, displayFields, rows };
+        }
+
+        function renderWidgetBody(body, widget, data) {
+            body.innerHTML = '';
+            const color = widget.color || '#3b82f6';
+
+            // 若组件已应用过配置，则按 fieldOps 处理数据后再渲染
+            const cfg = widget.config || {};
+            const hasOps = !!(cfg.fieldOps && cfg.visibleFields && cfg.visibleFields.length > 0);
+            let fields = data.fields || [];
+            let rows = (data.rows || []).map(r => [...r]);
+            let displayFields = fields.slice();
+
+            if (hasOps) {
+                const processed = applyFieldOps(data, cfg.fieldOps, cfg.visibleFields);
+                fields = processed.fields;
+                displayFields = processed.displayFields;
+                rows = processed.rows;
+            }
+
+            if (fields.length === 0 || rows.length === 0) {
+                body.innerHTML = '<div style="color:#4a5a78;text-align:center;font-size:10px;padding:10px 4px;">无数据<br/>点击 ⚙️ 或双击组件配置字段</div>';
+                return;
+            }
+
+            switch (widget.type) {
+                case 'kpi': {
+                    const grid = document.createElement('div');
+                    grid.className = 'kpi-grid';
+                    if (hasOps) {
+                        // 配置生效：展示处理后第一行的各字段值
+                        const sampleRow = rows[0] || [];
+                        fields.slice(0, 4).forEach((f, i) => {
+                            const val = sampleRow[i] !== undefined ? sampleRow[i] : '—';
+                            const div = document.createElement('div');
+                            div.className = 'kpi';
+                            div.style.borderLeft = `3px solid ${color}`;
+                            const text = typeof val === 'number' ? val.toLocaleString() : val;
+                            div.innerHTML =
+                                `<div class="value" style="background:linear-gradient(to right, ${color}, ${color}cc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">${text}</div><div class="label">${displayFields[i] || f}</div>`;
+                            grid.appendChild(div);
+                        });
+                    } else {
+                        const total = rows.reduce((sum, r) => sum + (parseFloat(r[0]) || 0), 0);
+                        const count = rows.length;
+                        const avg = count ? (total / count) : 0;
+                        [
+                            { label: '总记录', value: count },
+                            { label: '总和', value: total.toFixed(1) },
+                            { label: '平均值', value: avg.toFixed(2) },
+                            { label: '字段数', value: fields.length },
+                        ].forEach(k => {
+                            const div = document.createElement('div');
+                            div.className = 'kpi';
+                            div.style.borderLeft = `3px solid ${color}`;
+                            div.innerHTML =
+                                `<div class="value" style="background:linear-gradient(to right, ${color}, ${color}cc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">${k.value}</div><div class="label">${k.label}</div>`;
+                            grid.appendChild(div);
+                        });
+                    }
+                    body.appendChild(grid);
+                    break;
+                }
+                case 'bar':
+                case 'line':
+                case 'pie': {
+                    let numIdx = -1,
+                        strIdx = -1;
+                    fields.forEach((f, i) => {
+                        const sample = rows[0]?.[i];
+                        if (typeof sample === 'number' && numIdx === -1) numIdx = i;
+                        if (typeof sample === 'string' && strIdx === -1) strIdx = i;
+                    });
+                    if (numIdx === -1) numIdx = 0;
+                    if (strIdx === -1) strIdx = 1;
+
+                    const groups = {};
+                    rows.forEach(row => {
+                        const key = row[strIdx] || 'Unknown';
+                        const val = parseFloat(row[numIdx]) || 0;
+                        groups[key] = (groups[key] || 0) + val;
+                    });
+                    const entries = Object.entries(groups).slice(0, 8);
+                    const maxVal = Math.max(...entries.map(e => e[1]), 1);
+
+                    if (widget.type === 'line') {
+                        // 真正的折线图：SVG polyline + 渐变面积
+                        const svgNS = 'http://www.w3.org/2000/svg';
+                        const wrap = document.createElement('div');
+                        wrap.style.cssText = 'flex:1;display:flex;flex-direction:column;min-height:0;width:100%;';
+                        const svg = document.createElementNS(svgNS, 'svg');
+                        svg.setAttribute('viewBox', '0 0 100 100');
+                        svg.setAttribute('preserveAspectRatio', 'none');
+                        svg.style.cssText = 'flex:1;width:100%;min-height:0;display:block;';
+                        const pts = entries.map(([, value], i) => {
+                            const x = entries.length === 1 ? 50 : 6 + (i / (entries.length - 1)) * 88;
+                            const y = 90 - (value / maxVal) * 78;
+                            return [x, y];
+                        });
+                        if (pts.length > 0) {
+                            const area = document.createElementNS(svgNS, 'polygon');
+                            area.setAttribute('points',
+                                `${pts[0][0]},94 ${pts.map(p => p.join(',')).join(' ')} ${pts[pts.length - 1][0]},94`);
+                            area.setAttribute('fill', color);
+                            area.setAttribute('opacity', '0.12');
+                            svg.appendChild(area);
+                            const line = document.createElementNS(svgNS, 'polyline');
+                            line.setAttribute('points', pts.map(p => p.join(',')).join(' '));
+                            line.setAttribute('fill', 'none');
+                            line.setAttribute('stroke', color);
+                            line.setAttribute('stroke-width', '2');
+                            line.setAttribute('stroke-linecap', 'round');
+                            line.setAttribute('stroke-linejoin', 'round');
+                            line.setAttribute('vector-effect', 'non-scaling-stroke');
+                            svg.appendChild(line);
+                        }
+                        wrap.appendChild(svg);
+                        const labels = document.createElement('div');
+                        labels.style.cssText =
+                            'display:flex;justify-content:space-between;font-size:7px;color:#6a7b98;flex-shrink:0;padding:0 2px;gap:2px;overflow:hidden;';
+                        entries.forEach(([label, value]) => {
+                            const s = document.createElement('span');
+                            s.textContent = label;
+                            s.title = `${label}: ${value}`;
+                            s.style.cssText = 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+                            labels.appendChild(s);
+                        });
+                        wrap.appendChild(labels);
+                        body.appendChild(wrap);
+                    } else {
+                        const container = document.createElement('div');
+                        container.className = 'chart-container';
+
+                        if (widget.type === 'pie') {
+                            const total = entries.reduce((s, e) => s + e[1], 0);
+                            const colors = [color, '#8b5cf6', '#f59e0b', '#22c55e', '#ef4444', '#ec4899', '#14b8a6',
+                                '#f97316'
+                            ];
+                            entries.forEach(([label, value], idx) => {
+                                const pct = total ? ((value / total) * 100).toFixed(0) : 0;
+                                const div = document.createElement('div');
+                                div.style.cssText =
+                                    `flex:${Math.max(pct, 1)};height:100%;background:${colors[idx % colors.length]};border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;color:white;text-shadow:0 1px 4px rgba(0,0,0,0.5);padding:2px;min-width:16px;`;
+                                div.innerHTML =
+                                `<span>${pct}%</span><span style="font-size:6px;opacity:0.7;">${label}</span>`;
+                                container.appendChild(div);
+                            });
+                        } else {
+                            entries.forEach(([label, value]) => {
+                                const bar = document.createElement('div');
+                                bar.className = 'bar';
+                                const h = Math.max((value / maxVal) * 80, 5);
+                                bar.style.height = h + '%';
+                                bar.style.background = `linear-gradient(to top, ${color}, ${color}cc)`;
+                                bar.innerHTML = `
+                                    <span>${value}</span>
+                                    <span class="bar-label">${label}</span>
+                                `;
+                                container.appendChild(bar);
+                            });
+                        }
+                        body.appendChild(container);
+                    }
+                    const info = document.createElement('div');
+                    info.style.cssText =
+                        'font-size:8px;color:#6a7b98;text-align:center;margin-top:2px;flex-shrink:0;';
+                    info.textContent = `📊 ${displayFields[strIdx] || fields[strIdx]} → ${displayFields[numIdx] || fields[numIdx]}`;
+                    body.appendChild(info);
+                    break;
+                }
+                case 'table': {
+                    const table = document.createElement('table');
+                    table.className = 'table-view';
+                    const thead = document.createElement('thead');
+                    const trHead = document.createElement('tr');
+                    fields.slice(0, 4).forEach((f, i) => {
+                        const th = document.createElement('th');
+                        th.textContent = displayFields[i] || f;
+                        trHead.appendChild(th);
+                    });
+                    thead.appendChild(trHead);
+                    table.appendChild(thead);
+
+                    const tbody = document.createElement('tbody');
+                    rows.slice(0, 5).forEach(row => {
+                        const tr = document.createElement('tr');
+                        row.slice(0, 4).forEach(cell => {
+                            const td = document.createElement('td');
+                            td.textContent = cell;
+                            tr.appendChild(td);
+                        });
+                        tbody.appendChild(tr);
+                    });
+                    table.appendChild(tbody);
+                    body.appendChild(table);
+                    if (rows.length > 5) {
+                        const note = document.createElement('div');
+                        note.style.cssText = 'font-size:8px;color:#4a5a78;margin-top:2px;text-align:right;';
+                        note.textContent = `显示前5条，共${rows.length}条`;
+                        body.appendChild(note);
+                    }
+                    break;
+                }
+                default: {
+                    body.innerHTML = '<div style="color:#4a5a78;text-align:center;font-size:11px;">未知类型</div>';
+                }
+            }
+        }
+
+        // ================================================================
+        //  6. 属性面板
+        // ================================================================
+        function renderPropsPanel() {
+            const container = document.getElementById('propsPanel');
+            const w = widgets.find(w => w.id === selectedWidgetId);
+
+            if (!w) {
+                container.innerHTML =
+                    `<div class="empty-tip"><i class="fas fa-arrow-pointer" style="font-size:20px;display:block;margin-bottom:6px;color:#2a3a55;"></i>点击画布组件查看属性</div>`;
+                return;
+            }
+
+            const config = WIDGET_TYPES[w.type] || WIDGET_TYPES.kpi;
+            const data = getTableData(w.dataSource);
+
+            let html = `
+                <div class="prop-group">
+                    <label><i class="fas fa-tag"></i> 标题</label>
+                    <input type="text" id="propTitle" value="${w.title}" onchange="updateWidget(${w.id}, {title: this.value})" />
+                </div>
+                <div class="prop-group">
+                    <label><i class="fas fa-database"></i> 数据源</label>
+                    <select id="propDataSource" onchange="updateWidget(${w.id}, {dataSource: this.value}); renderPropsPanel();">
+                        ${Object.keys(currentData).map(name => `<option value="${name}" ${name===w.dataSource?'selected':''}>${name}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="prop-group">
+                    <label><i class="fas fa-columns"></i> 字段</label>
+                    <select id="propField" onchange="updateWidget(${w.id}, {field: this.value})">
+                        ${data.fields.map(f => `<option value="${f}" ${f===w.field?'selected':''}>${f}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="prop-group">
+                    <label><i class="fas fa-chart-pie"></i> 图表类型</label>
+                    <select id="propType" onchange="updateWidget(${w.id}, {type: this.value}); renderPropsPanel();">
+                        ${Object.keys(WIDGET_TYPES).map(key => `<option value="${key}" ${key===w.type?'selected':''}>${WIDGET_TYPES[key].label}</option>`).join('')}
+                    </select>
+                </div>
+                <hr class="prop-divider" />
+                <div class="prop-group">
+                    <label><i class="fas fa-palette"></i> 主题色</label>
+                    <div class="color-picker">
+                        ${COLOR_PALETTE.map(c => `<div class="color-dot ${c===w.color?'active':''}" style="background:${c};" onclick="updateWidget(${w.id}, {color: '${c}'})"></div>`).join('')}
+                    </div>
+                </div>
+                <hr class="prop-divider" />
+                <div class="prop-group">
+                    <label><i class="fas fa-arrows-alt"></i> 位置 & 尺寸</label>
+                    <div class="prop-row">
+                        <div><label style="font-size:9px;text-transform:none;">X</label><input type="number" value="${Math.round(w.x)}" onchange="updateWidget(${w.id}, {x: parseFloat(this.value)})" /></div>
+                        <div><label style="font-size:9px;text-transform:none;">Y</label><input type="number" value="${Math.round(w.y)}" onchange="updateWidget(${w.id}, {y: parseFloat(this.value)})" /></div>
+                    </div>
+                    <div class="prop-row" style="margin-top:3px;">
+                        <div><label style="font-size:9px;text-transform:none;">宽度</label><input type="number" value="${Math.round(w.width)}" onchange="updateWidget(${w.id}, {width: parseFloat(this.value)})" /></div>
+                        <div><label style="font-size:9px;text-transform:none;">高度</label><input type="number" value="${Math.round(w.height)}" onchange="updateWidget(${w.id}, {height: parseFloat(this.value)})" /></div>
+                    </div>
+                </div>
+                <hr class="prop-divider" />
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button style="flex:1;padding:5px;background:#1f2840;border:1px solid #2a3a55;border-radius:4px;color:#b9c7e0;cursor:pointer;font-size:11px;" onclick="toggleVisibility(${w.id})">
+                        <i class="fas fa-${w.visible ? 'eye' : 'eye-slash'}"></i> ${w.visible ? '隐藏' : '显示'}
+                    </button>
+                    <button style="flex:1;padding:5px;background:#1f2840;border:1px solid #2a3a55;border-radius:4px;color:#b9c7e0;cursor:pointer;font-size:11px;" onclick="toggleLock(${w.id})">
+                        <i class="fas fa-${w.locked ? 'lock' : 'unlock'}"></i> ${w.locked ? '解锁' : '锁定'}
+                    </button>
+                    <button style="flex:1;padding:5px;background:#3a1a1a;border:1px solid #5a2a2a;border-radius:4px;color:#ef4444;cursor:pointer;font-size:11px;" onclick="deleteWidget(${w.id})">
+                        <i class="fas fa-trash"></i> 删除
+                    </button>
+                </div>
+                <div style="margin-top:8px;">
+                    <button style="width:100%;padding:5px;background:#1f2840;border:1px solid #3b82f6;border-radius:4px;color:#60a5fa;cursor:pointer;font-size:11px;" onclick="openConfig(${w.id})">
+                        <i class="fas fa-cog"></i> 完整配置 (字段操作)
+                    </button>
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+
+        // ================================================================
+        //  7. 图层面板
+        // ================================================================
+        function renderLayersPanel() {
+            const container = document.getElementById('layersPanel');
+            const badge = document.getElementById('layerBadge');
+            badge.textContent = widgets.length;
+
+            if (widgets.length === 0) {
+                container.innerHTML =
+                `<div class="empty-tip"><i class="fas fa-layer-group" style="font-size:20px;display:block;margin-bottom:6px;color:#2a3a55;"></i>暂无组件</div>`;
+                return;
+            }
+
+            let html = `<div class="layer-list">`;
+            const reversed = [...widgets].reverse();
+            reversed.forEach((w, idx) => {
+                const actualIdx = widgets.length - 1 - idx;
+                const config = WIDGET_TYPES[w.type] || WIDGET_TYPES.kpi;
+                const isActive = selectedWidgetId === w.id;
+                html += `
+                    <div class="layer-item ${isActive ? 'active' : ''}" data-id="${w.id}">
+                        <span class="layer-index">#${actualIdx + 1}</span>
+                        <span class="layer-icon"><i class="fas ${config.icon}"></i></span>
+                        <span class="layer-name" style="${!w.visible ? 'opacity:0.4;' : ''}">${w.title}</span>
+                        <span class="layer-actions">
+                            <i class="fas fa-${w.visible ? 'eye' : 'eye-slash'}" title="显示/隐藏" onclick="event.stopPropagation(); toggleVisibility(${w.id})"></i>
+                            <i class="fas fa-${w.locked ? 'lock' : 'unlock'}" title="锁定/解锁" onclick="event.stopPropagation(); toggleLock(${w.id})"></i>
+                            <i class="fas fa-chevron-up" title="上移" onclick="event.stopPropagation(); moveLayer(${w.id}, 1)"></i>
+                            <i class="fas fa-chevron-down" title="下移" onclick="event.stopPropagation(); moveLayer(${w.id}, -1)"></i>
+                            <i class="fas fa-cog" title="配置" onclick="event.stopPropagation(); openConfig(${w.id})" style="color:#60a5fa;"></i>
+                            <i class="fas fa-times danger" title="删除" onclick="event.stopPropagation(); deleteWidget(${w.id})"></i>
+                        </span>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+
+            container.querySelectorAll('.layer-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    selectWidget(id);
+                });
+            });
+        }
+
+        // ================================================================
+        //  8. 右侧 Tab 切换
+        // ================================================================
+        function switchRightTab(tab) {
+            document.querySelectorAll('.right-panel .tabs .tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.right-panel .tabs .tab[data-tab="${tab}"]`).classList.add('active');
+            document.getElementById('propsPanel').style.display = tab === 'props' ? 'block' : 'none';
+            document.getElementById('layersPanel').style.display = tab === 'layers' ? 'block' : 'none';
+            if (tab === 'layers') renderLayersPanel();
+            else renderPropsPanel();
+        }
+
+        // ================================================================
+        //  9. 拖拽交互
+        // ================================================================
+        const GRID_SIZE = 8;
+        const snap = (v) => Math.round(v / GRID_SIZE) * GRID_SIZE;
+
+        function startDrag(e, id) {
+            const el = e.currentTarget;
+            const rect = el.getBoundingClientRect();
+            pushHistory();
+            dragState = {
+                widgetId: id,
+                moved: false,
+                offsetX: e.clientX - rect.left,
+                offsetY: e.clientY - rect.top,
+            };
+            document.addEventListener('mousemove', onDragMove);
+            document.addEventListener('mouseup', onDragEnd);
+            e.preventDefault();
+        }
+
+        function onDragMove(e) {
+            if (!dragState) return;
+            const containerRect = document.getElementById('canvasContainer').getBoundingClientRect();
+            const w = widgets.find(w => w.id === dragState.widgetId);
+            if (!w || w.locked) return;
+            let x = e.clientX - containerRect.left - dragState.offsetX;
+            let y = e.clientY - containerRect.top - dragState.offsetY;
+            x = Math.max(0, snap(x));
+            y = Math.max(0, snap(y));
+            if (x !== w.x || y !== w.y) dragState.moved = true;
+            w.x = x;
+            w.y = y;
+            renderWidgets();
+            renderPropsPanel();
+        }
+
+        function onDragEnd(e) {
+            // 未发生位移时撤销刚才压入的快照，避免空操作污染历史栈
+            if (dragState && !dragState.moved) {
+                undoStack.pop();
+                updateHistoryButtons();
+            } else {
+                scheduleSave();
+            }
+            dragState = null;
+            document.removeEventListener('mousemove', onDragMove);
+            document.removeEventListener('mouseup', onDragEnd);
+        }
+
+        function startResize(e, id) {
+            const w = widgets.find(w => w.id === id);
+            if (!w || w.locked) return;
+            pushHistory();
+            resizeState = {
+                widgetId: id,
+                moved: false,
+                startX: e.clientX,
+                startY: e.clientY,
+                startWidth: w.width,
+                startHeight: w.height
+            };
+            document.addEventListener('mousemove', onResizeMove);
+            document.addEventListener('mouseup', onResizeEnd);
+            e.preventDefault();
+        }
+
+        function onResizeMove(e) {
+            if (!resizeState) return;
+            const w = widgets.find(w => w.id === resizeState.widgetId);
+            if (!w) return;
+            const dx = e.clientX - resizeState.startX;
+            const dy = e.clientY - resizeState.startY;
+            const newWidth = Math.max(110, snap(resizeState.startWidth + dx));
+            const newHeight = Math.max(70, snap(resizeState.startHeight + dy));
+            if (newWidth !== w.width || newHeight !== w.height) resizeState.moved = true;
+            w.width = newWidth;
+            w.height = newHeight;
+            renderWidgets();
+            renderPropsPanel();
+        }
+
+        function onResizeEnd(e) {
+            if (resizeState && !resizeState.moved) {
+                undoStack.pop();
+                updateHistoryButtons();
+            } else {
+                scheduleSave();
+            }
+            resizeState = null;
+            document.removeEventListener('mousemove', onResizeMove);
+            document.removeEventListener('mouseup', onResizeEnd);
+        }
+
+        // ================================================================
+        //  10. 从左侧拖拽到画布
+        // ================================================================
+        const canvasContainer = document.getElementById('canvasContainer');
+        canvasContainer.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            this.classList.add('drag-over');
+        });
+        canvasContainer.addEventListener('dragleave', function(e) {
+            this.classList.remove('drag-over');
+        });
+        canvasContainer.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            const raw = e.dataTransfer.getData('text/plain');
+            if (!raw) return;
+            try {
+                const { table, field } = JSON.parse(raw);
+                const data = getTableData(table);
+                const idx = data.fields.indexOf(field);
+                const isNum = idx >= 0 && data.rows.length > 0 && typeof data.rows[0]?.[idx] === 'number';
+                const type = isNum ? 'bar' : 'table';
+                const rect = this.getBoundingClientRect();
+                const x = e.clientX - rect.left - 110;
+                const y = e.clientY - rect.top - 50;
+                const title = `${field} 分析`;
+                addWidget(type, {
+                    title: title,
+                    dataSource: table,
+                    field: field,
+                    x: Math.max(8, x),
+                    y: Math.max(8, y)
+                });
+                showToast(`✨ 从「${table}.${field}」生成 ${WIDGET_TYPES[type].label}`);
+            } catch (err) {
+                showToast('⚠️ 拖拽解析失败');
+            }
+        });
+
+        // ================================================================
+        //  11. 缩放画布
+        // ================================================================
+        function zoomCanvas(delta) {
+            canvasZoom = Math.max(0.4, Math.min(1.6, canvasZoom + delta));
+            document.getElementById('zoomLevel').textContent = Math.round(canvasZoom * 100) + '%';
+            const container = document.getElementById('canvasContainer');
+            container.style.transform = `scale(${canvasZoom})`;
+            container.style.transformOrigin = 'top left';
+        }
+
+        // ================================================================
+        //  12. 清空画布
+        // ================================================================
+        document.getElementById('resetCanvasBtn').addEventListener('click', function() {
+            if (widgets.length === 0) return;
+            if (confirm('确定清空画布所有组件？（可撤销）')) {
+                pushHistory();
+                widgets = [];
+                selectedWidgetId = null;
+                renderAll();
+                updateCount();
+                scheduleSave();
+                showToast('🗑️ 画布已清空，Ctrl+Z 可撤销');
+            }
+        });
+
+        // ================================================================
+        //  13. 计数更新
+        // ================================================================
+        function updateCount() {
+            document.getElementById('widgetCount').textContent = widgets.length;
+            document.getElementById('layerBadge').textContent = widgets.length;
+        }
+
+        // ================================================================
+        //  14. Toast
+        // ================================================================
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => toast.classList.remove('show'), 2200);
+        }
+
+        // ================================================================
+        //  15. 快捷键
+        // ================================================================
+        document.addEventListener('keydown', (e) => {
+            const inInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
+
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+                if (inInput) return;
+                e.preventDefault();
+                undo();
+                return;
+            }
+            if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' ||
+                    (e.key.toLowerCase() === 'z' && e.shiftKey))) {
+                if (inInput) return;
+                e.preventDefault();
+                redo();
+                return;
+            }
+            if (e.key === 'Delete' && selectedWidgetId !== null && !inInput) {
+                if (confirm('删除选中的组件？')) deleteWidget(selectedWidgetId);
+            }
+            if (e.key === 'Escape') {
+                if (document.getElementById('configOverlay').classList.contains('active')) {
+                    closeConfig();
+                } else {
+                    selectedWidgetId = null;
+                    renderAll();
+                }
+            }
+        });
+
+        // ================================================================
+        //  16. 配置弹窗 (支持多字段)
+        // ================================================================
+        function openConfig(id) {
+            const w = widgets.find(w => w.id === id);
+            if (!w) return;
+            configTargetId = id;
+            configSelectedFields = [];
+            // 初始化字段操作配置
+            configFieldOps = {};
+            const data = getTableData(w.dataSource);
+            data.fields.forEach(f => {
+                const isNum = data.rows.length > 0 && typeof data.rows[0]?.[data.fields.indexOf(f)] === 'number';
+                configFieldOps[f] = {
+                    agg: isNum ? 'sum' : 'none',
+                    sort: 'none',
+                    filter: '',
+                    hidden: false,
+                    alias: f
+                };
+            });
+
+            document.getElementById('configTitle').textContent = `配置: ${w.title}`;
+            document.getElementById('configOverlay').classList.add('active');
+
+            // 填充数据源下拉
+            const dsSelect = document.getElementById('configDataSource');
+            dsSelect.innerHTML = '';
+            Object.keys(currentData).forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                if (name === w.dataSource) opt.selected = true;
+                dsSelect.appendChild(opt);
+            });
+
+            renderConfigFieldList();
+            renderConfigOpPanel();
+            renderConfigPreview();
+            updateConfigFieldCount();
+        }
+
+        function closeConfig() {
+            document.getElementById('configOverlay').classList.remove('active');
+            configTargetId = null;
+            configSelectedFields = [];
+        }
+
+        function onConfigDataSourceChange() {
+            // 重置字段操作
+            const ds = document.getElementById('configDataSource').value;
+            const data = getTableData(ds);
+            configFieldOps = {};
+            data.fields.forEach(f => {
+                const isNum = data.rows.length > 0 && typeof data.rows[0]?.[data.fields.indexOf(f)] === 'number';
+                configFieldOps[f] = {
+                    agg: isNum ? 'sum' : 'none',
+                    sort: 'none',
+                    filter: '',
+                    hidden: false,
+                    alias: f
+                };
+            });
+            configSelectedFields = [];
+            renderConfigFieldList();
+            renderConfigOpPanel();
+            renderConfigPreview();
+            updateConfigFieldCount();
+        }
+
+        // ---- 字段列表渲染（含复选框） ----
+        function renderConfigFieldList() {
+            const container = document.getElementById('configFieldList');
+            const ds = document.getElementById('configDataSource').value;
+            const data = getTableData(ds);
+            container.innerHTML = '';
+            data.fields.forEach(f => {
+                const isNum = data.rows.length > 0 && typeof data.rows[0]?.[data.fields.indexOf(f)] === 'number';
+                const checked = configSelectedFields.includes(f);
+                const ops = configFieldOps[f] || { agg: 'none', sort: 'none', filter: '', hidden: false, alias: f };
+                const div = document.createElement('div');
+                div.className = `field-item-config ${checked ? 'selected' : ''}`;
+                div.dataset.field = f;
+                div.innerHTML = `
+                    <input type="checkbox" class="f-checkbox" ${checked ? 'checked' : ''} />
+                    <span class="f-icon"><i class="fas ${isNum ? 'fa-hashtag' : 'fa-font'}"></i></span>
+                    <span class="f-name">${ops.alias || f}</span>
+                    <span class="f-type">${isNum ? 'num' : 'str'}</span>
+                    <span class="f-check ${!ops.hidden ? 'checked' : ''}"><i class="fas fa-${ops.hidden ? 'eye-slash' : 'eye'}"></i></span>
+                `;
+                // 点击行或复选框切换选中
+                div.addEventListener('click', function(e) {
+                    if (e.target.type === 'checkbox') {
+                        // 由change事件处理
+                        return;
+                    }
+                    const cb = this.querySelector('.f-checkbox');
+                    cb.checked = !cb.checked;
+                    cb.dispatchEvent(new Event('change'));
+                });
+                const cb = div.querySelector('.f-checkbox');
+                cb.addEventListener('change', function(e) {
+                    e.stopPropagation();
+                    const field = this.closest('.field-item-config').dataset.field;
+                    if (this.checked) {
+                        if (!configSelectedFields.includes(field)) {
+                            configSelectedFields.push(field);
+                        }
+                    } else {
+                        const idx = configSelectedFields.indexOf(field);
+                        if (idx > -1) configSelectedFields.splice(idx, 1);
+                    }
+                    renderConfigFieldList();
+                    renderConfigOpPanel();
+                    renderConfigPreview();
+                });
+                container.appendChild(div);
+            });
+            document.getElementById('leftFieldCount').textContent = configSelectedFields.length;
+        }
+
+        function selectAllFields() {
+            const ds = document.getElementById('configDataSource').value;
+            const data = getTableData(ds);
+            configSelectedFields = data.fields.slice();
+            renderConfigFieldList();
+            renderConfigOpPanel();
+            renderConfigPreview();
+        }
+
+        function deselectAllFields() {
+            configSelectedFields = [];
+            renderConfigFieldList();
+            renderConfigOpPanel();
+            renderConfigPreview();
+        }
+
+        // ---- 操作面板（批量或单个） ----
+        function renderConfigOpPanel() {
+            const container = document.getElementById('configOpPanel');
+            const ds = document.getElementById('configDataSource').value;
+            const data = getTableData(ds);
+
+            if (configSelectedFields.length === 0) {
+                container.innerHTML = `
+                    <div class="no-selection">
+                        <i class="fas fa-arrow-pointer"></i>
+                        请勾选左侧字段进行配置
+                    </div>
+                `;
+                document.getElementById('selectedFieldName').textContent = '未选择';
+                return;
+            }
+
+            const isMulti = configSelectedFields.length > 1;
+            document.getElementById('selectedFieldName').textContent =
+                `${configSelectedFields.length} 个字段${isMulti ? ' (批量)' : ''}`;
+
+            // 获取第一个字段作为示例（用于判断类型等）
+            const firstField = configSelectedFields[0];
+            const firstIdx = data.fields.indexOf(firstField);
+            const isNum = data.rows.length > 0 && typeof data.rows[0]?.[firstIdx] === 'number';
+            // 检查所有选中字段是否都是数值
+            const allNum = configSelectedFields.every(f => {
+                const idx = data.fields.indexOf(f);
+                return data.rows.length > 0 && typeof data.rows[0]?.[idx] === 'number';
+            });
+
+            let html = `
+                <div class="op-group">
+                    <label><i class="fas fa-tag"></i> 批量设置别名</label>
+                    <input type="text" id="opAliasBatch" placeholder="输入统一别名" oninput="batchUpdateAlias(this.value)" />
+                </div>
+            `;
+
+            if (allNum) {
+                html += `
+                    <div class="op-group">
+                        <label><i class="fas fa-calculator"></i> 批量聚合</label>
+                        <div class="op-row">
+                            ${['none','sum','avg','count','min','max'].map(a => `
+                                <button class="op-btn ${getBatchAgg() === a ? 'active' : ''}" onclick="batchUpdateAgg('${a}')">${a}</button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `
+                <div class="op-group">
+                    <label><i class="fas fa-sort"></i> 批量排序</label>
+                    <div class="op-row">
+                        ${['none','asc','desc'].map(s => `
+                            <button class="op-btn ${getBatchSort() === s ? 'active' : ''}" onclick="batchUpdateSort('${s}')">${s}</button>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="op-group">
+                    <label><i class="fas fa-filter"></i> 批量过滤条件 (应用到所有选中字段)</label>
+                    <input type="text" id="opFilterBatch" placeholder="例如: > 1000" oninput="batchUpdateFilter(this.value)" />
+                </div>
+                <hr class="op-divider" />
+                <div class="op-group">
+                    <label><i class="fas fa-eye"></i> 批量可见性</label>
+                    <div class="op-row">
+                        <button class="op-btn ${getBatchHidden() === false ? 'active' : ''}" onclick="batchUpdateHidden(false)">显示</button>
+                        <button class="op-btn ${getBatchHidden() === true ? 'active' : ''}" onclick="batchUpdateHidden(true)">隐藏</button>
+                    </div>
+                </div>
+                <hr class="op-divider" />
+                <div style="font-size:11px;color:#4a5a78;padding:4px 0;">
+                    <i class="fas fa-info-circle"></i> 共选中 ${configSelectedFields.length} 个字段
+                </div>
+            `;
+
+            container.innerHTML = html;
+
+            // 填充当前批量值
+            const aliasInput = document.getElementById('opAliasBatch');
+            if (aliasInput) {
+                // 如果所有字段别名相同则显示，否则留空
+                const aliases = configSelectedFields.map(f => configFieldOps[f]?.alias || f);
+                if (aliases.every(a => a === aliases[0])) {
+                    aliasInput.value = aliases[0];
+                } else {
+                    aliasInput.value = '';
+                }
+            }
+
+            const filterInput = document.getElementById('opFilterBatch');
+            if (filterInput) {
+                const filters = configSelectedFields.map(f => configFieldOps[f]?.filter || '');
+                if (filters.every(f => f === filters[0])) {
+                    filterInput.value = filters[0];
+                } else {
+                    filterInput.value = '';
+                }
+            }
+        }
+
+        // ---- 批量操作辅助函数 ----
+        function getBatchAgg() {
+            const aggs = configSelectedFields.map(f => configFieldOps[f]?.agg || 'none');
+            if (aggs.every(a => a === aggs[0])) return aggs[0];
+            return null;
+        }
+
+        function getBatchSort() {
+            const sorts = configSelectedFields.map(f => configFieldOps[f]?.sort || 'none');
+            if (sorts.every(s => s === sorts[0])) return sorts[0];
+            return null;
+        }
+
+        function getBatchHidden() {
+            const hiddens = configSelectedFields.map(f => configFieldOps[f]?.hidden || false);
+            if (hiddens.every(h => h === hiddens[0])) return hiddens[0];
+            return null;
+        }
+
+        function batchUpdateAlias(value) {
+            configSelectedFields.forEach(f => {
+                if (!configFieldOps[f]) configFieldOps[f] = { agg: 'none', sort: 'none', filter: '', hidden: false,
+                    alias: f };
+                configFieldOps[f].alias = value || f;
+            });
+            renderConfigFieldList();
+            renderConfigPreview();
+        }
+
+        function batchUpdateAgg(value) {
+            configSelectedFields.forEach(f => {
+                if (!configFieldOps[f]) configFieldOps[f] = { agg: 'none', sort: 'none', filter: '', hidden: false,
+                    alias: f };
+                configFieldOps[f].agg = value;
+            });
+            renderConfigOpPanel();
+            renderConfigPreview();
+        }
+
+        function batchUpdateSort(value) {
+            configSelectedFields.forEach(f => {
+                if (!configFieldOps[f]) configFieldOps[f] = { agg: 'none', sort: 'none', filter: '', hidden: false,
+                    alias: f };
+                configFieldOps[f].sort = value;
+            });
+            renderConfigOpPanel();
+            renderConfigPreview();
+        }
+
+        function batchUpdateFilter(value) {
+            configSelectedFields.forEach(f => {
+                if (!configFieldOps[f]) configFieldOps[f] = { agg: 'none', sort: 'none', filter: '', hidden: false,
+                    alias: f };
+                configFieldOps[f].filter = value;
+            });
+            renderConfigPreview();
+        }
+
+        function batchUpdateHidden(value) {
+            configSelectedFields.forEach(f => {
+                if (!configFieldOps[f]) configFieldOps[f] = { agg: 'none', sort: 'none', filter: '', hidden: false,
+                    alias: f };
+                configFieldOps[f].hidden = value;
+            });
+            renderConfigFieldList();
+            renderConfigOpPanel();
+            renderConfigPreview();
+        }
+
+        // ---- 预览 ----
+        function renderConfigPreview() {
+            const container = document.getElementById('configPreview');
+            const ds = document.getElementById('configDataSource').value;
+            const data = getTableData(ds);
+
+            // 收集可见字段（所有未隐藏的字段）
+            const visibleFields = data.fields.filter(f => {
+                const ops = configFieldOps[f];
+                return ops && !ops.hidden;
+            });
+
+            if (visibleFields.length === 0) {
+                container.innerHTML = `
+                    <div class="preview-empty">
+                        <i class="fas fa-eye-slash"></i>
+                        所有字段已隐藏，请显示至少一个字段
+                    </div>
+                `;
+                document.getElementById('previewInfo').textContent = '无可见字段';
+                return;
+            }
+
+            // 应用过滤、排序、聚合
+            let previewRows = data.rows.map(r => [...r]);
+            const fields = data.fields;
+
+            // 过滤
+            visibleFields.forEach(f => {
+                const ops = configFieldOps[f];
+                if (ops && ops.filter) {
+                    const idx = fields.indexOf(f);
+                    const filterStr = ops.filter.trim();
+                    const match = filterStr.match(/^(>=|<=|>|<|=)\s*(.+)/);
+                    if (match && idx >= 0) {
+                        const [, operator, operand] = match;
+                        const isNum = !isNaN(parseFloat(operand));
+                        const numVal = isNum ? parseFloat(operand) : operand.replace(/["']/g, '');
+                        previewRows = previewRows.filter(row => {
+                            const cell = row[idx];
+                            if (isNum) {
+                                const numCell = parseFloat(cell);
+                                if (isNaN(numCell)) return false;
+                                switch (operator) {
+                                    case '>': return numCell > numVal;
+                                    case '<': return numCell < numVal;
+                                    case '>=': return numCell >= numVal;
+                                    case '<=': return numCell <= numVal;
+                                    case '=': return numCell === numVal;
+                                    default: return true;
+                                }
+                            } else {
+                                const strCell = String(cell);
+                                const strVal = String(numVal);
+                                if (operator === '=') return strCell === strVal;
+                                return true;
+                            }
+                        });
+                    }
+                }
+            });
+
+            // 排序 (按第一个有排序的字段)
+            let sortField = null;
+            let sortDir = 'none';
+            visibleFields.forEach(f => {
+                const ops = configFieldOps[f];
+                if (ops && ops.sort && ops.sort !== 'none') {
+                    if (!sortField || ops.sort === 'asc') {
+                        sortField = f;
+                        sortDir = ops.sort;
+                    }
+                }
+            });
+            if (sortField && sortDir !== 'none') {
+                const idx = fields.indexOf(sortField);
+                const dir = sortDir === 'asc' ? 1 : -1;
+                previewRows.sort((a, b) => {
+                    const va = a[idx],
+                        vb = b[idx];
+                    if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
+                    return String(va).localeCompare(String(vb)) * dir;
+                });
+            }
+
+            // 聚合处理 (取所有数值字段的聚合)
+            let aggFields = visibleFields.filter(f => {
+                const ops = configFieldOps[f];
+                const isNum = data.rows.length > 0 && typeof data.rows[0]?.[fields.indexOf(f)] === 'number';
+                return ops && ops.agg && ops.agg !== 'none' && isNum;
+            });
+
+            let displayData = previewRows;
+            let displayFields = visibleFields.map(f => {
+                const ops = configFieldOps[f];
+                return ops && ops.alias ? ops.alias : f;
+            });
+
+            if (aggFields.length > 0 && previewRows.length > 0) {
+                const groupFields = visibleFields.filter(f => {
+                    const ops = configFieldOps[f];
+                    const isNum = data.rows.length > 0 && typeof data.rows[0]?.[fields.indexOf(f)] === 'number';
+                    return !(ops && ops.agg && ops.agg !== 'none' && isNum);
+                });
+
+                if (groupFields.length > 0) {
+                    const groups = {};
+                    previewRows.forEach(row => {
+                        const key = groupFields.map(f => row[fields.indexOf(f)]).join('|');
+                        if (!groups[key]) {
+                            groups[key] = { count: 0, rows: [] };
+                        }
+                        groups[key].count++;
+                        groups[key].rows.push(row);
+                    });
+
+                    const aggResults = [];
+                    Object.values(groups).forEach(g => {
+                        const aggRow = [];
+                        visibleFields.forEach(f => {
+                            const idx = fields.indexOf(f);
+                            const ops = configFieldOps[f];
+                            const isNum = data.rows.length > 0 && typeof data.rows[0]?.[idx] === 'number';
+                            if (isNum && ops && ops.agg && ops.agg !== 'none') {
+                                const vals = g.rows.map(r => parseFloat(r[idx])).filter(v => !isNaN(v));
+                                let result = 0;
+                                switch (ops.agg) {
+                                    case 'sum':
+                                        result = vals.reduce((a, b) => a + b, 0);
+                                        break;
+                                    case 'avg':
+                                        result = vals.reduce((a, b) => a + b, 0) / (vals.length || 1);
+                                        break;
+                                    case 'count':
+                                        result = vals.length;
+                                        break;
+                                    case 'min':
+                                        result = Math.min(...vals);
+                                        break;
+                                    case 'max':
+                                        result = Math.max(...vals);
+                                        break;
+                                    default:
+                                        result = vals[0] || 0;
+                                }
+                                aggRow.push(Math.round(result * 100) / 100);
+                            } else {
+                                aggRow.push(g.rows[0][idx]);
+                            }
+                        });
+                        aggResults.push(aggRow);
+                    });
+                    displayData = aggResults;
+                } else {
+                    // 只有聚合字段，全局聚合
+                    const aggRow = [];
+                    visibleFields.forEach(f => {
+                        const idx = fields.indexOf(f);
+                        const ops = configFieldOps[f];
+                        const isNum = data.rows.length > 0 && typeof data.rows[0]?.[idx] === 'number';
+                        if (isNum && ops && ops.agg && ops.agg !== 'none') {
+                            const vals = previewRows.map(r => parseFloat(r[idx])).filter(v => !isNaN(v));
+                            let result = 0;
+                            switch (ops.agg) {
+                                case 'sum':
+                                    result = vals.reduce((a, b) => a + b, 0);
+                                    break;
+                                case 'avg':
+                                    result = vals.reduce((a, b) => a + b, 0) / (vals.length || 1);
+                                    break;
+                                case 'count':
+                                    result = vals.length;
+                                    break;
+                                case 'min':
+                                    result = Math.min(...vals);
+                                    break;
+                                case 'max':
+                                    result = Math.max(...vals);
+                                    break;
+                                default:
+                                    result = vals[0] || 0;
+                            }
+                            aggRow.push(Math.round(result * 100) / 100);
+                        } else {
+                            aggRow.push(previewRows[0]?.[idx] || '');
+                        }
+                    });
+                    displayData = [aggRow];
+                }
+            }
+
+            // 渲染预览
+            container.innerHTML = '';
+            const widget = widgets.find(w => w.id === configTargetId);
+            const chartType = widget ? widget.type : 'bar';
+
+            if (visibleFields.length === 0 || displayData.length === 0) {
+                container.innerHTML = `<div class="preview-empty"><i class="fas fa-database"></i>无数据</div>`;
+                document.getElementById('previewInfo').textContent = '无数据';
+                return;
+            }
+
+            document.getElementById('previewInfo').textContent =
+                `${displayData.length} 行 · ${visibleFields.length} 字段`;
+
+            if (chartType === 'kpi') {
+                const grid = document.createElement('div');
+                grid.className = 'kpi-grid-preview';
+                const sampleRow = displayData[0] || [];
+                visibleFields.forEach((f, i) => {
+                    const val = sampleRow[i] !== undefined ? sampleRow[i] : '—';
+                    const div = document.createElement('div');
+                    div.className = 'kpi';
+                    div.style.borderLeftColor = '#3b82f6';
+                    div.innerHTML = `
+                        <div class="value">${typeof val === 'number' ? val.toLocaleString() : val}</div>
+                        <div class="label">${displayFields[i] || f}</div>
+                    `;
+                    grid.appendChild(div);
+                });
+                container.appendChild(grid);
+            } else if (chartType === 'table') {
+                const table = document.createElement('table');
+                table.className = 'table-view';
+                const thead = document.createElement('thead');
+                const trHead = document.createElement('tr');
+                visibleFields.forEach((f, i) => {
+                    const th = document.createElement('th');
+                    th.textContent = displayFields[i] || f;
+                    trHead.appendChild(th);
+                });
+                thead.appendChild(trHead);
+                table.appendChild(thead);
+
+                const tbody = document.createElement('tbody');
+                const displayRows = displayData.slice(0, 10);
+                displayRows.forEach(row => {
+                    const tr = document.createElement('tr');
+                    visibleFields.forEach((f, i) => {
+                        const td = document.createElement('td');
+                        const val = row[i] !== undefined ? row[i] : '—';
+                        td.textContent = typeof val === 'number' ? val.toLocaleString() : val;
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+                table.appendChild(tbody);
+                container.appendChild(table);
+                if (displayData.length > 10) {
+                    const note = document.createElement('div');
+                    note.style.cssText = 'font-size:9px;color:#4a5a78;text-align:right;margin-top:4px;';
+                    note.textContent = `显示前10条，共${displayData.length}条`;
+                    container.appendChild(note);
+                }
+            } else {
+                // 图表 (bar/line/pie)
+                let dimIdx = -1,
+                    measIdx = -1;
+                visibleFields.forEach((f, i) => {
+                    const idx = fields.indexOf(f);
+                    const isNum = data.rows.length > 0 && typeof data.rows[0]?.[idx] === 'number';
+                    if (!isNum && dimIdx === -1) dimIdx = i;
+                    if (isNum && measIdx === -1) measIdx = i;
+                });
+                if (dimIdx === -1) dimIdx = 0;
+                if (measIdx === -1) measIdx = Math.min(1, visibleFields.length - 1);
+
+                const groups = {};
+                displayData.forEach(row => {
+                    const key = String(row[dimIdx] !== undefined ? row[dimIdx] : 'Unknown');
+                    const val = parseFloat(row[measIdx]) || 0;
+                    groups[key] = (groups[key] || 0) + val;
+                });
+                const entries = Object.entries(groups).slice(0, 10);
+                const maxVal = Math.max(...entries.map(e => e[1]), 1);
+
+                const chartContainer = document.createElement('div');
+                chartContainer.className = 'chart-container';
+                chartContainer.style.minHeight = '140px';
+
+                if (chartType === 'pie') {
+                    const total = entries.reduce((s, e) => s + e[1], 0);
+                    const colors = ['#3b82f6', '#8b5cf6', '#f59e0b', '#22c55e', '#ef4444', '#ec4899', '#14b8a6', '#f97316'];
+                    entries.forEach(([label, value], idx) => {
+                        const pct = total ? ((value / total) * 100).toFixed(0) : 0;
+                        const div = document.createElement('div');
+                        div.style.cssText =
+                            `flex:${Math.max(pct, 1)};height:100%;background:${colors[idx % colors.length]};border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;color:white;text-shadow:0 1px 4px rgba(0,0,0,0.5);padding:4px;min-width:30px;`;
+                        div.innerHTML =
+                            `<span>${pct}%</span><span style="font-size:8px;opacity:0.7;">${label}</span>`;
+                        chartContainer.appendChild(div);
+                    });
+                } else {
+                    entries.forEach(([label, value]) => {
+                        const bar = document.createElement('div');
+                        bar.className = 'bar';
+                        const h = Math.max((value / maxVal) * 80, 6);
+                        bar.style.height = h + '%';
+                        bar.style.background = `linear-gradient(to top, #3b82f6, #8b5cf6)`;
+                        bar.innerHTML = `
+                            <span>${typeof value === 'number' ? value.toFixed(0) : value}</span>
+                            <span class="bar-label">${label}</span>
+                        `;
+                        if (chartType === 'line') {
+                            bar.style.borderRadius = '50% 50% 0 0';
+                            bar.style.width = '14px';
+                            bar.style.margin = '0 auto';
+                        }
+                        chartContainer.appendChild(bar);
+                    });
+                }
+                container.appendChild(chartContainer);
+                const legend = document.createElement('div');
+                legend.style.cssText =
+                    'font-size:9px;color:#6a7b98;text-align:center;margin-top:4px;flex-shrink:0;';
+                legend.textContent =
+                `📊 ${displayFields[dimIdx] || visibleFields[dimIdx]} → ${displayFields[measIdx] || visibleFields[measIdx]}`;
+                container.appendChild(legend);
+            }
+        }
+
+        function updateConfigFieldCount() {
+            const ds = document.getElementById('configDataSource').value;
+            const data = getTableData(ds);
+            document.getElementById('configFieldCount').textContent = `${data.fields.length} 个字段`;
+        }
+
+        // ================================================================
+        //  17. 应用配置
+        // ================================================================
+        function applyConfig() {
+            if (configTargetId === null) return;
+            const w = widgets.find(w => w.id === configTargetId);
+            if (!w) return;
+            pushHistory();
+
+            const ds = document.getElementById('configDataSource').value;
+            const data = getTableData(ds);
+
+            // 收集可见字段
+            const visibleFields = data.fields.filter(f => {
+                const ops = configFieldOps[f];
+                return ops && !ops.hidden;
+            });
+
+            if (visibleFields.length === 0) {
+                showToast('⚠️ 至少保留一个可见字段');
+                return;
+            }
+
+            w.dataSource = ds;
+            w.field = visibleFields[0] || null;
+            w.config = {
+                fieldOps: { ...configFieldOps },
+                visibleFields: visibleFields
+            };
+
+            // 更新标题（取第一个可见字段的别名）
+            const firstField = visibleFields[0];
+            if (firstField) {
+                const ops = configFieldOps[firstField];
+                const alias = ops && ops.alias ? ops.alias : firstField;
+                w.title = `${alias} 分析`;
+            }
+
+            renderAll();
+            closeConfig();
+            scheduleSave();
+            showToast(`✅ 已应用配置到「${w.title}」`);
+        }
+
+        // ================================================================
+        //  18. 初始化
+        // ================================================================
+        renderDataTree();
+
+        // 优先从 localStorage 恢复上次的画布；否则加载示例布局
+        const restored = loadState();
+        if (!restored) {
+            addWidget('kpi', { title: '总销售额', dataSource: 'orders', x: 12, y: 12, color: '#3b82f6' });
+            addWidget('bar', { title: '品类销售额', dataSource: 'orders', x: 200, y: 12, color: '#8b5cf6' });
+            addWidget('pie', { title: '地区分布', dataSource: 'customers', x: 450, y: 12, color: '#f59e0b' });
+            addWidget('table', { title: '订单明细', dataSource: 'orders', x: 12, y: 150, color: '#22c55e' });
+        } else {
+            renderAll();
+        }
+
+        // 初始化产生的状态不入历史栈
+        undoStack.length = 0;
+        redoStack.length = 0;
+        updateHistoryButtons();
+
+        if (widgets.length > 0) selectWidget(widgets[0].id);
+
+        console.log('✅ Well-Insight Studio 已启动');
+        console.log(restored ? '💾 已从本地存储恢复画布' : '🎨 已加载示例布局');
+        console.log('💡 双击组件或点击 ⚙️ 打开配置，支持多选字段批量操作');
+        console.log('⌨️ Ctrl+Z 撤销 · Ctrl+Y 重做 · Delete 删除 · Esc 取消');
+    </script>
+</body>
+</html>

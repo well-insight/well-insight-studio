@@ -1,18 +1,32 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { getConfig } from './config/env'
 import type { AppConfig } from './config/env'
 import { errorHandler } from './middleware/error-handler'
 import { requestId } from './middleware/request-id'
 import { createDocsRoutes } from './routes/docs'
 import { createHealthRoutes } from './routes/health'
+import { createProjectsRoutes } from './routes/projects'
+import { createDatasourcesRoutes } from './routes/datasources'
+import { createAuthRoutes } from './routes/auth'
 import type { AppBindings } from './types/context'
+import { createDb } from './db/client'
 
-export function createApp(config?: AppConfig) {
+export function createApp(config?: AppConfig, dbFactory = createDb) {
   const app = new Hono<AppBindings>()
+  const resolvedConfig = config ?? getConfig()
 
   app.use('*', requestId)
-  app.use('/api/*', cors({ origin: config?.APP_ORIGIN ?? 'http://localhost:5173' }))
+  app.use(async (c, next) => {
+    c.set('db', dbFactory(resolvedConfig))
+    c.set('config', resolvedConfig)
+    await next()
+  })
+  app.use('/api/*', cors({ origin: resolvedConfig.APP_ORIGIN, credentials: true }))
   app.route('/health', createHealthRoutes())
+  app.route('/api/auth', createAuthRoutes())
+  app.route('/api/projects', createProjectsRoutes())
+  app.route('/api/datasources', createDatasourcesRoutes())
   app.route('/', createDocsRoutes())
 
   app.get('/api/routes', (context) => {

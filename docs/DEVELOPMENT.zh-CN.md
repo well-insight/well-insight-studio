@@ -13,6 +13,15 @@
 
 | `packages/shared` | 共享类型 |
 
+## 本地 UI 组件库
+
+`apps/web` 同时用两种方式消费 sibling 仓库 `../well-insight-ui`：
+
+1. **依赖链接**：`package.json` 中 `"@well-insight/ui": "link:../../../well-insight-ui"`（解析本地包，非 npm registry）。
+2. **源码别名**：`vite.config.ts` / `tsconfig.json` 把 `@well-insight/ui` 指到 `well-insight-ui/src`，开发时改组件可热更新，不必先 `build` UI。
+
+请先保证 `well-insight-ui` 与 `well-design` 同级目录，再在本仓库执行 `pnpm install`。
+
 ## 常用命令
 
 ```bash
