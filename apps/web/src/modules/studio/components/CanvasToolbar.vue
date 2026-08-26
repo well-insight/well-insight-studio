@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import type { WidgetType } from '@well-insight/shared'
-import { BarChart3, ChartLine, ChartPie, LayoutGrid, Minus, Plus, Table2, Undo2, Redo2, Trash2 } from '@lucide/vue'
+import { BarChart3, ChartLine, ChartPie, LayoutGrid, Minus, Plus, RefreshCw, Table2, Undo2, Redo2, Trash2 } from '@lucide/vue'
 import { useWidgetStore, WIDGET_DEFAULTS } from '../../../stores/widgetStore'
 
-defineProps<{ zoom: number }>()
+defineProps<{
+  zoom: number
+  loading?: boolean
+}>()
 
 const emit = defineEmits<{
   zoom: [delta: number]
+  refresh: []
 }>()
 
 const store = useWidgetStore()
@@ -58,6 +62,10 @@ function clearCanvas() {
       </button>
     </div>
     <div class="toolbar-right">
+      <button class="tool-btn" title="刷新画布数据" :disabled="loading" @click="emit('refresh')">
+        <RefreshCw :size="13" :class="{ spinning: loading }" />
+        <span>刷新</span>
+      </button>
       <span class="widget-count">{{ store.widgets.length }} 个组件</span>
       <div class="zoom-control">
         <button class="tool-btn" title="缩小" @click="emit('zoom', -0.1)"><Minus :size="13" /></button>
@@ -119,6 +127,12 @@ function clearCanvas() {
 .tool-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+.spinning {
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 .widget-count {
   font-size: 11px;

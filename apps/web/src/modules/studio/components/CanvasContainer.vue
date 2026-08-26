@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { message, toast } from '@well-insight/ui'
+import { message, toast, WiProgressSpinner, WiScrollbar } from '@well-insight/ui'
 import { useWidgetStore } from '../../../stores/widgetStore'
 import { useDataStore } from '../../../stores/dataStore'
 import { isNumericField } from '../utils/sampleData'
@@ -8,7 +8,10 @@ import { useDrag } from '../../../composables/useDrag'
 import { useResize } from '../../../composables/useResize'
 import WidgetRenderer from './WidgetRenderer.vue'
 
-const props = defineProps<{ zoom: number }>()
+const props = defineProps<{
+  zoom: number
+  loading?: boolean
+}>()
 
 const emit = defineEmits<{
   configure: [id: string]
@@ -60,8 +63,9 @@ function onDrop(e: DragEvent) {
 
 <template>
   <div class="canvas-area">
-    <div
-      ref="containerRef"
+    <WiScrollbar class="canvas-scrollbar" :always="true" aria-label="画布">
+      <div
+        ref="containerRef"
       class="canvas-container"
       :class="{ 'drag-over': dragOver }"
       :style="{ transform: `scale(${zoom})` }"
@@ -85,6 +89,11 @@ function onDrop(e: DragEvent) {
         @drag-start="startDrag"
         @resize-start="startResize"
       />
+      </div>
+    </WiScrollbar>
+    <div v-if="loading" class="canvas-loading" aria-live="polite">
+      <WiProgressSpinner size="small" aria-label="正在加载画布" />
+      <span>正在加载画布…</span>
     </div>
   </div>
 </template>
@@ -92,9 +101,31 @@ function onDrop(e: DragEvent) {
 <style scoped>
 .canvas-area {
   flex: 1;
-  overflow: auto;
+  min-height: 0;
   position: relative;
   background: var(--wi-ground-background, #080b13);
+}
+.canvas-scrollbar {
+  width: 100%;
+  height: 100%;
+}
+.canvas-scrollbar :deep(.wi-scrollbar__wrap) {
+  overscroll-behavior: contain;
+}
+.canvas-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--wi-text-secondary, #8a9bb5);
+  background: color-mix(in srgb, var(--wi-ground-background, #080b13) 72%, transparent);
+  pointer-events: all;
+}
+.canvas-loading span {
+  font-size: 12px;
 }
 .canvas-container {
   position: relative;

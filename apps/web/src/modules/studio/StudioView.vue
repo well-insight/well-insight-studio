@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { message, toast, WiButton, WiInput, WiSelect, WiSkeleton, WiTag, WiTabs, WiToolbar, useTheme } from '@well-insight/ui'
-import { Download, Upload, Plus, FolderOpen, Save, Cloud, Database, Trash2, FileText, LogOut, Presentation, Sun, Moon } from '@lucide/vue'
+import { message, toast, WiButton, WiInput, WiSelect, WiTag, WiTabs, WiToolbar, useTheme } from '@well-insight/ui'
+import { Download, Upload, Plus, FolderOpen, Save, Cloud, Database, Trash2, FileText, Presentation, Sun, Moon } from '@lucide/vue'
 import type { ProjectConfig, Widget } from '@well-insight/shared'
 import { useWidgetStore } from '../../stores/widgetStore'
 import { useConfigStore } from '../../stores/configStore'
 import { useProjectStore } from '../../stores/projectStore'
 import { useDataStore } from '../../stores/dataStore'
-import { useAuthStore } from '../../stores/authStore'
+
 import DataPanel from './components/DataPanel.vue'
 import CanvasToolbar from './components/CanvasToolbar.vue'
 import CanvasContainer from './components/CanvasContainer.vue'
@@ -24,7 +24,7 @@ const store = useWidgetStore()
 const configStore = useConfigStore()
 const projectStore = useProjectStore()
 const dataStore = useDataStore()
-const authStore = useAuthStore()
+
 
 const router = useRouter()
 const { isDark, toggleTheme } = useTheme()
@@ -36,6 +36,7 @@ const newProjectName = ref('')
 const editingName = ref(false)
 const nameInput = ref<InstanceType<typeof WiInput> | null>(null)
 const datasourceManagerVisible = ref(false)
+const canvasLoading = ref(false)
 
 const datasourceOptions = computed(() => projectStore.currentDatasources.map(ds => ({ label: ds.name, value: ds.id })))
 const rightTabs = computed(() => [
@@ -86,12 +87,32 @@ async function createProject() {
 }
 
 async function loadProject(id: string) {
-  await projectStore.load(id)
-  if (projectStore.currentDatasourceId) {
-    await dataStore.loadDatasource(projectStore.currentDatasourceId)
+  canvasLoading.value = true
+  try {
+    await projectStore.load(id)
+    if (projectStore.currentDatasourceId) {
+      await dataStore.loadDatasource(projectStore.currentDatasourceId)
+    }
+    projectMenuOpen.value = false
+    message.success(`已加载项目「${projectStore.projectName}」`)
+  } finally {
+    canvasLoading.value = false
   }
-  projectMenuOpen.value = false
-  message.success(`已加载项目「${projectStore.projectName}」`)
+}
+
+async function refreshCanvas() {
+  canvasLoading.value = true
+  try {
+    dataStore.clearCache()
+    if (projectStore.currentDatasourceId) {
+      await dataStore.loadDatasource(projectStore.currentDatasourceId)
+    }
+    message.success('画布数据已刷新')
+  } catch (err) {
+    message.error(err instanceof Error ? err.message : '刷新画布失败')
+  } finally {
+    canvasLoading.value = false
+  }
 }
 
 async function manualSave() {
@@ -128,13 +149,8 @@ async function onSwitchDatasource(id: string) {
   message.success('已切换数据源')
 }
 
-async function signOut() {
-  try {
-    await authStore.logout()
-    await router.push('/login')
-  } catch (err) {
-    message.error(err instanceof Error ? err.message : '退出失败')
-  }
+function returnToProjectList() {
+  router.push('/')
 }
 
 async function onDeleteProject(id: string, name: string) {
@@ -446,9 +462,9 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
           severity="secondary"
           text
           size="small"
-          @click="signOut"
+          @click="returnToProjectList"
         >
-          退出
+          返回
         </WiButton>
         <WiButton
           severity="secondary"
@@ -465,17 +481,12 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
       </template>
     </WiToolbar>
 
-    <div v-if="projectStore.isLoading" class="studio-loading">
-      <WiSkeleton width="100%" height="120px" border-radius="8px" />
-      <WiSkeleton width="60%" height="120px" border-radius="8px" />
-      <div class="loading-tip">正在加载项目…</div>
-    </div>
-    <div v-else class="studio-body">
+    <div class="studio-body">
       <DataPanel />
 
       <main class="canvas-wrapper">
-        <CanvasToolbar :zoom="projectStore.canvasZoom" @zoom="onZoom" />
-        <CanvasContainer ref="canvasRef" :zoom="projectStore.canvasZoom" @update-zoom="v => { projectStore.canvasZoom = v; projectStore.markDirty() }" @configure="onConfigure" />
+        <CanvasToolbar :zoom="projectStore.canvasZoom" :loading="canvasLoading" @zoom="onZoom" @refresh="refreshCanvas" />
+        <CanvasContainer ref="canvasRef" :zoom="projectStore.canvasZoom" :loading="canvasLoading" @update-zoom="v => { projectStore.canvasZoom = v; projectStore.markDirty() }" @configure="onConfigure" />
       </main>
 
       <ConfigModal ref="modalRef" />
