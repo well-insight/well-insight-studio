@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { WiInput, WiInputNumber, WiInputColor, WiSelect } from '@well-insight/ui'
+import { WiInput, WiInputNumber, WiInputColor, WiSelect, WiScrollbar } from '@well-insight/ui'
 import type { Widget, WidgetType } from '@well-insight/shared'
 import { useWidgetStore, WIDGET_DEFAULTS } from '../../../stores/widgetStore'
 import { useDataStore } from '../../../stores/dataStore'
@@ -26,7 +26,8 @@ function update<K extends keyof Widget>(key: K, value: Widget[K]) {
 </script>
 
 <template>
-  <div class="props-panel">
+  <WiScrollbar class="props-scroll" :native="false" trigger="hover" aria-label="组件属性">
+    <div class="props-panel">
     <div v-if="!widget" class="empty-tip">点击画布组件查看属性</div>
 
     <template v-else>
@@ -81,16 +82,24 @@ function update<K extends keyof Widget>(key: K, value: Widget[K]) {
         <div>类型：{{ WIDGET_DEFAULTS[widget.type]?.label }}</div>
       </div>
     </template>
-  </div>
+    </div>
+  </WiScrollbar>
 </template>
 
 <style scoped>
+.props-scroll {
+  flex: 1;
+  min-height: 0;
+}
+.props-scroll :deep(.wi-scrollbar__wrap) {
+  height: 100%;
+}
 .props-panel {
-  padding: 10px;
+  min-height: 100%;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  overflow-y: auto;
+  gap: 14px;
 }
 .empty-tip {
   text-align: center;

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { User } from '../api/auth'
-import { login as apiLogin, logout as apiLogout, me, register as apiRegister } from '../api/auth'
+import { login as apiLogin, logout as apiLogout, me, refresh as apiRefresh, register as apiRegister } from '../api/auth'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
@@ -15,7 +15,15 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
     try {
       const res = await me()
-      user.value = res.user
+      if (res.user) {
+        user.value = res.user
+      } else {
+        try {
+          user.value = (await apiRefresh()).user
+        } catch {
+          user.value = null
+        }
+      }
     } catch {
       user.value = null
     } finally {

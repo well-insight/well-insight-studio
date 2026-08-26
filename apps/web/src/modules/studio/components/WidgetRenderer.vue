@@ -2,7 +2,7 @@
 import type { Widget } from '@well-insight/shared'
 import { ref } from 'vue'
 import { Settings, Eye, EyeOff, Lock, Unlock, X, Camera } from '@lucide/vue'
-import { toast } from '@well-insight/ui'
+import { message } from '@well-insight/ui'
 import { useWidgetStore, WIDGET_DEFAULTS } from '../../../stores/widgetStore'
 import KpiWidget from './widgets/KpiWidget.vue'
 import ChartWidget from './widgets/ChartWidget.vue'
@@ -49,9 +49,9 @@ async function onExportPNG() {
   if (!widgetRef.value) return
   try {
     await exportElementToPNG(widgetRef.value, `${props.widget.title || props.widget.type}`)
-    toast.success({ summary: '已导出 PNG' })
+    message.success('已导出 PNG')
   } catch (err) {
-    toast.error({ summary: err instanceof Error ? err.message : '导出失败' })
+    message.error(err instanceof Error ? err.message : '导出失败')
   }
 }
 </script>

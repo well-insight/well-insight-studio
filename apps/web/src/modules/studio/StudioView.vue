@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { toast, WiButton, WiInput, WiSelect, WiSkeleton, WiTag, useTheme } from '@well-insight/ui'
-import { Download, Upload, Layers, SlidersHorizontal, Plus, FolderOpen, Save, Cloud, Database, Trash2, FileText, LogOut, Presentation, Sun, Moon } from '@lucide/vue'
+import { message, toast, WiButton, WiInput, WiSelect, WiSkeleton, WiTag, WiTabs, WiToolbar, useTheme } from '@well-insight/ui'
+import { Download, Upload, Plus, FolderOpen, Save, Cloud, Database, Trash2, FileText, LogOut, Presentation, Sun, Moon } from '@lucide/vue'
 import type { ProjectConfig, Widget } from '@well-insight/shared'
 import { useWidgetStore } from '../../stores/widgetStore'
 import { useConfigStore } from '../../stores/configStore'
@@ -38,6 +38,10 @@ const nameInput = ref<InstanceType<typeof WiInput> | null>(null)
 const datasourceManagerVisible = ref(false)
 
 const datasourceOptions = computed(() => projectStore.currentDatasources.map(ds => ({ label: ds.name, value: ds.id })))
+const rightTabs = computed(() => [
+  { label: '属性', value: 'props' },
+  { label: `图层 ${store.widgets.length}`, value: 'layers' },
+])
 
 watch(editingName, async (val) => {
   if (val) {
@@ -77,7 +81,7 @@ async function createProject() {
   })
   newProjectName.value = ''
   projectMenuOpen.value = false
-  toast.success({ summary: `已创建项目「${projectStore.projectName}」` })
+  message.success(`已创建项目「${projectStore.projectName}」`)
   await projectStore.refreshList()
 }
 
@@ -87,13 +91,13 @@ async function loadProject(id: string) {
     await dataStore.loadDatasource(projectStore.currentDatasourceId)
   }
   projectMenuOpen.value = false
-  toast.success({ summary: `已加载项目「${projectStore.projectName}」` })
+  message.success(`已加载项目「${projectStore.projectName}」`)
 }
 
 async function manualSave() {
   await projectStore.save()
   if (!projectStore.autoSaveError) {
-    toast.success({ summary: '已保存' })
+    message.success('已保存')
   }
 }
 
@@ -121,14 +125,23 @@ function toggleMenu() {
 async function onSwitchDatasource(id: string) {
   projectStore.setDatasource(id)
   await dataStore.loadDatasource(id)
-  toast.success({ summary: '已切换数据源' })
+  message.success('已切换数据源')
+}
+
+async function signOut() {
+  try {
+    await authStore.logout()
+    await router.push('/login')
+  } catch (err) {
+    message.error(err instanceof Error ? err.message : '退出失败')
+  }
 }
 
 async function onDeleteProject(id: string, name: string) {
   if (!window.confirm(`确定删除项目「${name}」？此操作不可恢复。`)) return
   try {
     await deleteProject(id)
-    toast.success({ summary: '已删除项目' })
+    message.success('已删除项目')
     if (projectStore.currentId === id) {
       projectStore.currentId = null
       projectStore.projectName = '未命名项目'
@@ -139,7 +152,7 @@ async function onDeleteProject(id: string, name: string) {
     }
     await projectStore.refreshList()
   } catch (err) {
-    toast.error({ summary: err instanceof Error ? err.message : '删除失败' })
+    message.error(err instanceof Error ? err.message : '删除失败')
   }
 }
 
@@ -171,7 +184,7 @@ function exportProject() {
   a.download = `well-insight-project-${new Date().toISOString().slice(0, 10)}.json`
   a.click()
   URL.revokeObjectURL(a.href)
-  toast.success({ summary: '已导出项目 JSON' })
+  message.success('已导出项目 JSON')
 }
 
 const canvasRef = ref<InstanceType<typeof CanvasContainer> | null>(null)
@@ -185,13 +198,16 @@ async function exportProjectPDF() {
     const widgetEls = canvasRef.value?.$el?.querySelectorAll('.canvas-widget') as NodeListOf<HTMLElement> | undefined
     const elements = widgetEls ? Array.from(widgetEls) : []
     if (elements.length === 0) {
-      toast.warn({ summary: '当前画布没有可导出的组件' })
+      message.warn('当前画布没有可导出的组件')
       return
     }
     await exportElementsToPDF(elements, projectStore.projectName || 'well-insight')
-    toast.success({ summary: '已导出 PDF' })
+    message.success('已导出 PDF')
   } catch (err) {
-    toast.error({ summary: err instanceof Error ? err.message : 'PDF 导出失败' })
+    toast.error({
+      summary: 'PDF 导出失败',
+      detail: err instanceof Error ? err.message : undefined,
+    })
   }
 }
 
@@ -212,9 +228,9 @@ function onImportFile(e: Event) {
       store.pushHistory()
       store.widgets = data.widgets as Widget[]
       store.selectWidget(null)
-      toast.success({ summary: `已导入 ${data.widgets.length} 个组件` })
+      message.success(`已导入 ${data.widgets.length} 个组件`)
     } catch {
-      toast.error({ summary: '导入失败：文件格式不正确' })
+      toast.error({ summary: '导入失败', detail: '文件格式不正确' })
     }
   }
   reader.readAsText(file)
@@ -253,12 +269,15 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 <template>
   <div class="studio-view">
-    <header class="studio-header">
+    <WiToolbar class="studio-header">
+      <template #start>
       <div class="logo-area">
         <div class="logo-icon">WI</div>
         <span class="logo-text">Well-Insight Studio</span>
       </div>
+      </template>
 
+      <template #center>
       <div class="project-bar">
         <div class="project-menu-wrapper">
           <WiButton
@@ -373,7 +392,9 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
           />
         </div>
       </div>
+      </template>
 
+      <template #end>
       <div class="header-actions">
         <WiButton
           severity="secondary"
@@ -425,7 +446,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
           severity="secondary"
           text
           size="small"
-          @click="authStore.logout(); router.push('/login')"
+          @click="signOut"
         >
           退出
         </WiButton>
@@ -441,7 +462,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
         </WiButton>
         <input ref="importInput" type="file" accept="application/json,.json" hidden @change="onImportFile" />
       </div>
-    </header>
+      </template>
+    </WiToolbar>
 
     <div v-if="projectStore.isLoading" class="studio-loading">
       <WiSkeleton width="100%" height="120px" border-radius="8px" />
@@ -469,33 +491,14 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
       />
 
       <aside class="right-panel">
-        <div class="right-tabs">
-          <WiButton
-            class="right-tab"
-            :class="{ active: rightTab === 'props' }"
-            severity="secondary"
-            text
-            size="small"
-            @click="rightTab = 'props'"
-          >
-            <SlidersHorizontal :size="12" /> 属性
-          </WiButton>
-          <WiButton
-            class="right-tab"
-            :class="{ active: rightTab === 'layers' }"
-            severity="secondary"
-            text
-            size="small"
-            @click="rightTab = 'layers'"
-          >
-            <Layers :size="12" /> 图层
-            <span class="layer-badge">{{ store.widgets.length }}</span>
-          </WiButton>
-        </div>
-        <div class="right-body">
-          <PropsPanel v-show="rightTab === 'props'" />
-          <LayersPanel v-show="rightTab === 'layers'" />
-        </div>
+        <WiTabs v-model="rightTab" :tabs="rightTabs" type="line" class="right-tabs">
+          <template #default>
+            <div class="right-body">
+              <PropsPanel v-show="rightTab === 'props'" />
+              <LayersPanel v-show="rightTab === 'layers'" />
+            </div>
+          </template>
+        </WiTabs>
       </aside>
     </div>
 
@@ -521,14 +524,26 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   user-select: none;
 }
 .studio-header {
-  height: 46px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 14px;
+  min-height: 52px;
+  padding: 0 16px;
   border-bottom: 1px solid var(--wi-color-border);
   background: var(--wi-color-surface-elevated);
   flex-shrink: 0;
+  gap: 12px;
+  z-index: 10;
+}
+.studio-header :deep(.wi-toolbar__start),
+.studio-header :deep(.wi-toolbar__center),
+.studio-header :deep(.wi-toolbar__end) {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+.studio-header :deep(.wi-toolbar__center) {
+  flex: 1;
+}
+.studio-header :deep(.wi-toolbar__end) {
+  justify-content: flex-end;
 }
 .logo-area {
   display: flex;
@@ -555,13 +570,14 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 .project-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex: 1;
-  margin: 0 16px;
+  gap: 8px;
+  width: 100%;
   min-width: 0;
+  overflow: hidden;
 }
 .project-menu-wrapper {
   position: relative;
+  flex-shrink: 0;
 }
 .project-menu-trigger {
   display: inline-flex;
@@ -690,6 +706,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 }
 .project-name-editor {
   min-width: 0;
+  max-width: 220px;
+  overflow: hidden;
 }
 .datasource-selector select {
   background: var(--wi-surface-hover, #141c2a);
@@ -752,7 +770,10 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 }
 .header-actions {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .header-btn:disabled {
   opacity: 0.4;
@@ -852,46 +873,42 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   min-height: 0;
 }
 .right-panel {
-  width: 230px;
+  width: clamp(220px, 24vw, 300px);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  border-left: 1px solid var(--wi-border-color, #1a212e);
-  background: var(--wi-surface, #0a0f18);
+  border-left: 1px solid var(--wi-color-border);
+  background: var(--wi-color-surface);
   min-height: 0;
 }
 .right-tabs {
-  display: flex;
-  border-bottom: 1px solid var(--wi-border-color, #1a212e);
-  flex-shrink: 0;
-}
-.right-tab {
   flex: 1;
+  min-height: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 8px 0;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--wi-text-secondary, #8a9bb5);
+  flex-direction: column;
+}
+.right-tabs :deep(.wi-tabs__bar) {
+  flex-shrink: 0;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--wi-color-border);
+}
+.right-tabs :deep(.wi-tabs__list) {
+  width: 100%;
+}
+.right-tabs :deep(.wi-tabs__item) {
+  flex: 1;
+}
+.right-tabs :deep(.wi-tabs__tab) {
+  width: 100%;
   font-size: 11px;
-  cursor: pointer;
 }
-.right-tab.active {
-  color: var(--wi-primary, #3b82f6);
-  border-bottom-color: var(--wi-primary, #3b82f6);
-}
-.layer-badge {
-  font-size: 9px;
-  background: var(--wi-surface-hover, #1f2840);
-  color: var(--wi-text-secondary, #94a3b8);
-  padding: 0 5px;
-  border-radius: 6px;
+.right-tabs :deep(.wi-tabs__panel) {
+  flex: 1;
+  min-height: 0;
+  padding: 0;
 }
 .right-body {
-  flex: 1;
+  height: 100%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -899,5 +916,52 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 .right-body > * {
   flex: 1;
   min-height: 0;
+}
+
+@media (max-width: 1100px) {
+  .logo-text {
+    display: none;
+  }
+  .project-bar {
+    gap: 4px;
+  }
+  .header-actions :deep(.wi-button) {
+    padding-inline: 7px;
+  }
+  .header-actions :deep(.wi-button:not(:last-child)) {
+    font-size: 0;
+  }
+  .header-actions :deep(.wi-button svg) {
+    margin: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .studio-header {
+    min-height: 48px;
+    padding-inline: 8px;
+  }
+  .studio-header :deep(.wi-toolbar__center) {
+    min-width: 0;
+  }
+  .project-name-editor,
+  .save-status {
+    display: none;
+  }
+  .data-panel {
+    width: 168px;
+  }
+  .right-panel {
+    width: 210px;
+  }
+  .header-actions :deep(.wi-button:nth-child(n + 4):nth-child(-n + 6)) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-view * {
+    transition-duration: 0ms !important;
+  }
 }
 </style>

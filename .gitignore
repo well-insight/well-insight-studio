@@ -2,3 +2,6 @@ node_modules/
 dist/
 coverage/
 .vite/
+
+# Local database backups may contain sensitive data
+apps/api/backups/

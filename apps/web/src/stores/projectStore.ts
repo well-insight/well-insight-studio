@@ -46,7 +46,7 @@ export const useProjectStore = defineStore('project', () => {
     if (!currentId.value || !isDirty.value) return
     isLoading.value = true
     try {
-      await updateProject(currentId.value, { config: config.value })
+      await updateProject(currentId.value, { name: projectName.value, config: config.value })
       isDirty.value = false
       lastSavedAt.value = new Date()
     } catch (err) {
@@ -61,6 +61,9 @@ export const useProjectStore = defineStore('project', () => {
     currentId.value = project.id
     projectName.value = project.name
     if (project.config) setConfig(project.config)
+    const datasources = await getProjectDatasources(project.id)
+    currentDatasources.value = datasources
+    currentDatasourceId.value = datasources[0]?.id ?? null
     isDirty.value = false
     lastSavedAt.value = new Date()
     return project.id

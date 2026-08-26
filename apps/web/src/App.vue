@@ -1,17 +1,20 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
-import { WiToast, useTheme } from '@well-insight/ui'
+import { WiMessage, WiToast, useTheme, useMotion } from '@well-insight/ui'
 
 const { setTheme } = useTheme()
+const { setMotion } = useMotion()
 
 onMounted(() => {
   setTheme('light')
+  setMotion('full')
 })
 </script>
 
 <template>
   <RouterView />
+  <WiMessage placement="top" />
   <WiToast position="bottom-right" />
 </template>
 
@@ -36,5 +39,14 @@ onMounted(() => {
   --wi-border-color: #1e2638;
   --wi-primary: #3b82f6;
   --wi-ground-background: #080b13;
+}
+
+html, body, #app {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 </style>

@@ -20,11 +20,12 @@ const router = createRouter({
       path: '/present',
       name: 'present',
       component: () => import('../modules/studio/PresentView.vue'),
+      meta: { requiresAuth: true },
     },
     {
       path: '/login',
       name: 'login',
-      component: () => import('../views/AuthView.vue'),
+      component: () => import('../modules/auth/AuthView.vue'),
       meta: { guestOnly: true },
     },
   ],

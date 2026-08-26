@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { WiDialog, WiSelect, toast } from '@well-insight/ui'
+import { WiDialog, WiSelect, message } from '@well-insight/ui'
 import type { Widget } from '@well-insight/shared'
 import { useConfigStore } from '../../../../stores/configStore'
 import { useDataStore } from '../../../../stores/dataStore'
@@ -48,7 +48,7 @@ function apply() {
     .filter(f => config.selectedFields.includes(f))
 
   if (visibleFields.length === 0) {
-    toast.warn({ summary: '至少保留一个可见字段' })
+    message.warn('至少保留一个可见字段')
     return
   }
 
@@ -64,7 +64,7 @@ function apply() {
   widget.title = `${alias} 分析`
 
   config.close()
-  toast.success({ summary: `已应用配置到「${widget.title}」` })
+  message.success(`已应用配置到「${widget.title}」`)
 }
 
 function cancel() {

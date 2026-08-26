@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { ChevronUp, ChevronDown, Eye, EyeOff, Lock, Unlock } from '@lucide/vue'
+import { WiButton, WiScrollbar } from '@well-insight/ui'
 import { useWidgetStore, WIDGET_DEFAULTS } from '../../../stores/widgetStore'
 
 const store = useWidgetStore()
@@ -17,7 +18,8 @@ function isLast(id: string) {
 </script>
 
 <template>
-  <div class="layers-panel">
+  <WiScrollbar class="layers-scroll" :native="false" trigger="hover" aria-label="画布图层">
+    <div class="layers-panel">
     <div v-if="store.widgets.length === 0" class="empty-tip">画布暂无组件</div>
 
     <div
@@ -30,28 +32,36 @@ function isLast(id: string) {
       <span class="layer-type">{{ WIDGET_DEFAULTS[w.type]?.label }}</span>
       <span class="layer-name" :title="w.title">{{ w.title }}</span>
       <span class="layer-actions" @click.stop>
-        <button title="上移一层" :disabled="isFirst(w.id)" @click="store.moveLayer(w.id, 1)"><ChevronUp :size="11" /></button>
-        <button title="下移一层" :disabled="isLast(w.id)" @click="store.moveLayer(w.id, -1)"><ChevronDown :size="11" /></button>
-        <button :title="w.visible ? '隐藏' : '显示'" @click="store.toggleVisibility(w.id)">
+        <WiButton icon-only variant="ghost" size="small" :aria-label="'上移一层'" :disabled="isFirst(w.id)" @click="store.moveLayer(w.id, 1)"><ChevronUp :size="11" /></WiButton>
+        <WiButton icon-only variant="ghost" size="small" :aria-label="'下移一层'" :disabled="isLast(w.id)" @click="store.moveLayer(w.id, -1)"><ChevronDown :size="11" /></WiButton>
+        <WiButton icon-only variant="ghost" size="small" :aria-label="w.visible ? '隐藏' : '显示'" @click="store.toggleVisibility(w.id)">
           <Eye v-if="w.visible" :size="11" />
           <EyeOff v-else :size="11" />
-        </button>
-        <button :title="w.locked ? '解锁' : '锁定'" @click="store.toggleLock(w.id)">
+        </WiButton>
+        <WiButton icon-only variant="ghost" size="small" :aria-label="w.locked ? '解锁' : '锁定'" @click="store.toggleLock(w.id)">
           <Unlock v-if="!w.locked" :size="11" />
           <Lock v-else :size="11" />
-        </button>
+        </WiButton>
       </span>
     </div>
-  </div>
+    </div>
+  </WiScrollbar>
 </template>
 
 <style scoped>
+.layers-scroll {
+  flex: 1;
+  min-height: 0;
+}
+.layers-scroll :deep(.wi-scrollbar__wrap) {
+  height: 100%;
+}
 .layers-panel {
-  padding: 6px;
+  min-height: 100%;
+  padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  overflow-y: auto;
+  gap: 3px;
 }
 .empty-tip {
   text-align: center;
@@ -101,25 +111,14 @@ function isLast(id: string) {
 .layer-item.selected .layer-actions {
   display: flex;
 }
-.layer-actions button {
-  background: transparent;
-  border: none;
-  color: var(--wi-text-secondary, #8a9bb5);
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 3px;
-  cursor: pointer;
+.layer-actions :deep(.wi-button) {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
   padding: 0;
+  color: var(--wi-text-secondary, #8a9bb5);
 }
-.layer-actions button:hover:not(:disabled) {
-  background: var(--wi-surface, #1e2638);
+.layer-actions :deep(.wi-button:hover:not(:disabled)) {
   color: var(--wi-text-color, #e8edf5);
-}
-.layer-actions button:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
 }
 </style>

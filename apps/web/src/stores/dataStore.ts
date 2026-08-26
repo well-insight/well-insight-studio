@@ -65,8 +65,8 @@ export const useDataStore = defineStore('data', {
         this.tables = schemaToTables(schema)
       } catch (err) {
         this.schemaError = err instanceof Error ? err.message : String(err)
-        // 回退：使用内置样例 schema，但标记 datasourceId 为本地模式
-        this.tables = sampleTables
+        // 外部数据源失败时禁止回退到样例数据，避免展示错误数据
+        this.tables = {}
       } finally {
         this.isLoadingSchema = false
       }

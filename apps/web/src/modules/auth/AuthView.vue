@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { toast, WiButton, WiCard, WiInput, WiInputPassword } from '@well-insight/ui'
-import { useAuthStore } from '../stores/authStore'
+import { message, WiButton, WiCard, WiInput, WiInputPassword } from '@well-insight/ui'
+import { useAuthStore } from '../../stores/authStore'
 
 const router = useRouter()
 const route = useRoute()
@@ -23,15 +23,15 @@ async function submit() {
   try {
     if (isLogin.value) {
       await authStore.login(email.value, password.value)
-      toast.success({ summary: '登录成功' })
+      message.success('登录成功')
     } else {
       await authStore.register(email.value, password.value, displayName.value || email.value.split('@')[0] || email.value)
-      toast.success({ summary: '注册成功' })
+      message.success('注册成功')
     }
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
     router.replace(redirect)
   } catch (err) {
-    toast.error({ summary: err instanceof Error ? err.message : '操作失败' })
+    message.error(err instanceof Error ? err.message : '操作失败')
   } finally {
     submitting.value = false
   }
@@ -77,15 +77,13 @@ async function submit() {
 
 <style scoped>
 .auth-page {
-  min-height: 100vh;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 24px;
-  background: var(--wi-color-surface);
-  color: var(--wi-color-text);
-  padding: 24px;
 }
 .auth-brand {
   display: flex;

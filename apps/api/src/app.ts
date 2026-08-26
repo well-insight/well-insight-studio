@@ -15,10 +15,12 @@ import { createDb } from './db/client'
 export function createApp(config?: AppConfig, dbFactory = createDb) {
   const app = new Hono<AppBindings>()
   const resolvedConfig = config ?? getConfig()
+  // 每个 App 实例只创建一个连接池，所有请求复用它。
+  const dbInstance = dbFactory(resolvedConfig)
 
   app.use('*', requestId)
   app.use(async (c, next) => {
-    c.set('db', dbFactory(resolvedConfig))
+    c.set('db', dbInstance)
     c.set('config', resolvedConfig)
     await next()
   })

@@ -7,7 +7,7 @@
   },
   "scripts": {
     "prepare": "husky",
-    "dev": "pnpm --parallel --filter @well-insight/api --filter @well-insight/web run dev",
+    "dev": "node apps/api/scripts/free-port.mjs 3000 && node apps/api/scripts/free-port.mjs 5181 && pnpm --parallel --filter @well-insight/api --filter @well-insight/web run dev",
     "dev:web": "pnpm --filter @well-insight/web dev",
     "dev:api": "pnpm --filter @well-insight/api dev",
     "build": "pnpm --filter @well-insight/shared --filter @well-insight/web --filter @well-insight/api run build",

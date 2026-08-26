@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { toast, WiButton, WiCard, WiInput, WiSkeleton, WiTag } from '@well-insight/ui'
+import { message, WiButton, WiCard, WiInput, WiSkeleton, WiTag } from '@well-insight/ui'
 import { Plus, FolderKanban, LayoutTemplate, Clock, Trash2, ArrowRight, LogOut } from '@lucide/vue'
 import { createProject, deleteProject, listProjects, type ProjectSummary } from '../api/projects'
 import { useProjectStore } from '../stores/projectStore'
@@ -23,7 +23,7 @@ async function loadProjects() {
   try {
     projects.value = await listProjects()
   } catch (err) {
-    toast.error({ summary: err instanceof Error ? err.message : '加载项目列表失败' })
+    message.error(err instanceof Error ? err.message : '加载项目列表失败')
   } finally {
     loading.value = false
   }
@@ -37,7 +37,7 @@ async function onCreate() {
     projectStore.refreshList()
     router.push({ path: '/studio', query: { project: project.id } })
   } catch (err) {
-    toast.error({ summary: err instanceof Error ? err.message : '创建项目失败' })
+    message.error(err instanceof Error ? err.message : '创建项目失败')
   } finally {
     creating.value = false
     newProjectName.value = ''
@@ -48,15 +48,24 @@ function openProject(id: string) {
   router.push({ path: '/studio', query: { project: id } })
 }
 
+async function signOut() {
+  try {
+    await authStore.logout()
+    await router.push('/login')
+  } catch (err) {
+    message.error(err instanceof Error ? err.message : '退出失败')
+  }
+}
+
 async function onDelete(id: string, name: string) {
   if (!window.confirm(`确定删除项目「${name}」？此操作不可恢复。`)) return
   try {
     await deleteProject(id)
-    toast.success({ summary: '项目已删除' })
+    message.success('项目已删除')
     await loadProjects()
     projectStore.refreshList()
   } catch (err) {
-    toast.error({ summary: err instanceof Error ? err.message : '删除失败' })
+    message.error(err instanceof Error ? err.message : '删除失败')
   }
 }
 
@@ -85,7 +94,7 @@ function formatDate(iso: string) {
           severity="secondary"
           text
           size="small"
-          @click="authStore.logout(); router.push('/login')"
+          @click="signOut"
         >
           <LogOut :size="12" /> 退出
         </WiButton>

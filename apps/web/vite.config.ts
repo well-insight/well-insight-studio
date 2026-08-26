@@ -26,7 +26,9 @@ export default defineConfig({
     dedupe: ['vue'],
   },
   server: {
+    // Never silently move to 5182/5183: the workspace relies on a fixed dev URL.
     port: 5181,
+    strictPort: true,
     fs: {
       allow: [workspaceRoot, uiRoot],
     },

@@ -5,6 +5,7 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 import { projects } from '../db/schema/projects'
 import { datasourceConnections } from '../db/schema/datasourceConnections'
+import { queryCache } from '../db/schema/queryCache'
 import type { AppBindings } from '../types/context'
 import type { AuthContext } from '../middleware/auth'
 import { requireAuth } from '../middleware/auth'
@@ -147,6 +148,15 @@ export function createProjectsRoutes() {
     const user = c.get('user')
     const [existing] = await db.select({ id: projects.id }).from(projects).where(and(eq(projects.id, id), eq(projects.userId, user.userId))).limit(1)
     if (!existing) return c.json({ error: { code: 'NOT_FOUND', message: 'project not found' } }, 404)
+    const datasourceRows = await db
+      .select({ id: datasourceConnections.id })
+      .from(datasourceConnections)
+      .where(eq(datasourceConnections.projectId, id))
+
+    for (const datasource of datasourceRows) {
+      await db.delete(queryCache).where(eq(queryCache.datasourceId, datasource.id))
+    }
+    await db.delete(datasourceConnections).where(eq(datasourceConnections.projectId, id))
     await db.delete(projects).where(eq(projects.id, id))
     return c.body(null, 204)
   })

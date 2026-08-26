@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { ChevronRight, Database, GripVertical, Hash, Type } from '@lucide/vue'
+import { WiScrollbar } from '@well-insight/ui'
 import { useDataStore } from '../../../stores/dataStore'
 import { isNumericField } from '../utils/sampleData'
 
@@ -27,7 +28,7 @@ function onFieldDragStart(e: DragEvent, table: string, field: string) {
       <span class="table-count">{{ dataStore.tableNames.length }} 表</span>
     </div>
 
-    <div class="data-tree">
+    <WiScrollbar class="data-tree" :native="false" trigger="hover" aria-label="数据表和字段">
       <div v-for="name in dataStore.tableNames" :key="name" class="table-node">
         <button class="table-header" @click="toggleTable(name)">
           <ChevronRight :size="11" class="chevron" :class="{ open: !collapsed[name] }" />
@@ -50,7 +51,7 @@ function onFieldDragStart(e: DragEvent, table: string, field: string) {
           </li>
         </ul>
       </div>
-    </div>
+    </WiScrollbar>
 
     <div class="panel-footer">拖入画布生成组件</div>
   </aside>
@@ -88,8 +89,14 @@ function onFieldDragStart(e: DragEvent, table: string, field: string) {
 }
 .data-tree {
   flex: 1;
-  overflow-y: auto;
+  min-height: 0;
   padding: 4px 0;
+}
+.data-tree :deep(.wi-scrollbar__wrap) {
+  height: 100%;
+}
+.data-tree :deep(.wi-scrollbar__view) {
+  min-height: 100%;
 }
 .table-header {
   width: 100%;

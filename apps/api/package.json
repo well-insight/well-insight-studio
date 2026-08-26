@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "node scripts/free-port.mjs 3000",
     "dev": "tsx watch src/server.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts",
@@ -10,6 +11,7 @@
     "db:list-tables": "tsx src/db/list-tables.ts",
     "db:reset": "tsx src/db/reset.ts",
     "db:seed": "tsx src/db/seed-cli.ts",
+    "db:backup": "node scripts/backup-database.mjs",
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

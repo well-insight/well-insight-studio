@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { WiDialog, WiInput, WiSelect, toast } from '@well-insight/ui'
+import { WiDialog, WiInput, WiSelect, message, toast } from '@well-insight/ui'
 import { Database, Pencil, Trash2, Plus, RefreshCw, CheckCircle2, AlertCircle } from '@lucide/vue'
 import type { ProjectDatasource } from '../../../api/datasources'
 import { createDatasource, updateDatasource, deleteDatasource, testDatasource } from '../../../api/datasources'
@@ -48,10 +48,10 @@ async function saveEdit(ds: ProjectDatasource) {
   if (!name) return
   try {
     await updateDatasource(ds.id, { name })
-    toast.success({ summary: '已重命名数据源' })
+    message.success('已重命名数据源')
     emit('refresh')
   } catch (err) {
-    toast.error({ summary: err instanceof Error ? err.message : '重命名失败' })
+    message.error(err instanceof Error ? err.message : '重命名失败')
   } finally {
     editingId.value = null
   }
@@ -61,14 +61,14 @@ async function confirmDelete(ds: ProjectDatasource) {
   if (!window.confirm(`确定删除数据源「${ds.name}」？相关的查询缓存会被一并清理。`)) return
   try {
     await deleteDatasource(ds.id)
-    toast.success({ summary: '已删除数据源' })
+    message.success('已删除数据源')
     if (props.currentId === ds.id) {
       const next = sortedDatasources.value.find(d => d.id !== ds.id)?.id ?? null
       emit('select', next ?? '')
     }
     emit('refresh')
   } catch (err) {
-    toast.error({ summary: err instanceof Error ? err.message : '删除失败' })
+    message.error(err instanceof Error ? err.message : '删除失败')
   }
 }
 
@@ -96,12 +96,12 @@ async function submitAdd() {
       type: newType.value,
       connectionString: newConnectionString.value.trim() || undefined,
     })
-    toast.success({ summary: '已创建数据源' })
+    message.success('已创建数据源')
     isAdding.value = false
     emit('refresh')
     emit('select', ds.id)
   } catch (err) {
-    toast.error({ summary: err instanceof Error ? err.message : '创建失败' })
+    message.error(err instanceof Error ? err.message : '创建失败')
   } finally {
     isLoading.value = false
   }
@@ -115,10 +115,10 @@ async function syncConnectionString(ds: ProjectDatasource) {
   isLoading.value = true
   try {
     await updateDatasource(ds.id, { connectionString: connectionString.trim() || undefined })
-    toast.success({ summary: '已同步数据源 schema' })
+    message.success('已同步数据源 schema')
     emit('refresh')
   } catch (err) {
-    toast.error({ summary: err instanceof Error ? err.message : '同步失败' })
+    message.error(err instanceof Error ? err.message : '同步失败')
   } finally {
     isLoading.value = false
   }
@@ -134,14 +134,14 @@ async function testConnection(ds: ProjectDatasource) {
     const result = await testDatasource(ds.id)
     testResults.value[ds.id] = result
     if (result.ok) {
-      toast.success({ summary: '连接测试成功' })
+      message.success('连接测试成功')
     } else {
-      toast.error({ summary: result.message ?? '连接失败' })
+      toast.error({ summary: '连接失败', detail: result.message })
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : '测试失败'
-    testResults.value[ds.id] = { ok: false, message }
-    toast.error({ summary: message })
+    const errMessage = err instanceof Error ? err.message : '测试失败'
+    testResults.value[ds.id] = { ok: false, message: errMessage }
+    toast.error({ summary: '连接测试失败', detail: errMessage })
   } finally {
     testingId.value = null
   }

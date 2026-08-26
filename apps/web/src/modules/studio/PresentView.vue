@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { toast, WiButton, WiProgressSpinner, WiSkeleton } from '@well-insight/ui'
+import { message, WiButton, WiProgressSpinner, WiSkeleton } from '@well-insight/ui'
 import { RefreshCw, Fullscreen, Minimize } from '@lucide/vue'
 import type { ProjectConfig, Widget } from '@well-insight/shared'
 import { getProject, getProjectDatasources } from '../../api/projects'
@@ -62,7 +62,7 @@ async function loadProject() {
 async function refreshAll() {
   dataStore.clearCache()
   widgets.value = [...widgets.value]
-  toast.success({ summary: '已刷新数据' })
+  message.success('已刷新数据')
 }
 
 function toggleFullscreen() {

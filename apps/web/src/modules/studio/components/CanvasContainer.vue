@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { toast } from '@well-insight/ui'
+import { message, toast } from '@well-insight/ui'
 import { useWidgetStore } from '../../../stores/widgetStore'
 import { useDataStore } from '../../../stores/dataStore'
 import { isNumericField } from '../utils/sampleData'
@@ -53,7 +53,7 @@ function onDrop(e: DragEvent) {
     const widget = store.addWidget(type, { title: `${field} 分析`, dataSource: table, x, y })
     toast.success({ summary: `已从「${table}.${field}」生成组件`, detail: widget.title })
   } catch {
-    toast.warn({ summary: '拖拽解析失败' })
+    message.warn('拖拽解析失败')
   }
 }
 </script>
