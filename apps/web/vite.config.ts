@@ -2,6 +2,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite'
+import tailwindcss from '@tailwindcss/vite'
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
 const workspaceRoot = path.resolve(rootDir, '../..')
@@ -9,7 +10,7 @@ const workspaceRoot = path.resolve(rootDir, '../..')
 const uiRoot = path.resolve(workspaceRoot, '../well-insight-ui')
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [vue(), tailwindcss()],
   resolve: {
     // Dev + build: resolve to local UI source for HMR / latest components.
     // Package itself is still linked via package.json (`link:…`) for types / tooling.

@@ -6,6 +6,7 @@ import {
   toast,
   useTheme,
   WiButton,
+  WiFlex,
   WiInput,
   WiLayout,
   WiLayoutContent,
@@ -14,7 +15,6 @@ import {
   WiSelect,
   WiTabs,
   WiTag,
-  WiToolbar,
 } from '@well-insight/ui'
 import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
@@ -298,17 +298,15 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 <template>
   <WiLayout class="studio-view" :native-scrollbar="false">
     <WiLayoutHeader class="studio-header">
-      <WiToolbar>
-        <template #start>
+      <WiFlex class="w-full h-full" justify="space-between" align="center">
+        <WiSpace>
           <div class="logo-area">
             <div class="logo-icon">
               WI
             </div>
             <span class="logo-text">Well-Insight Studio</span>
           </div>
-        </template>
 
-        <template #center>
           <div class="project-bar">
             <div class="project-menu-wrapper">
               <WiButton
@@ -393,114 +391,111 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
               size="small"
               @update:model-value="id => id && onSwitchDatasource(id as string)"
             />
-
-            <div class="save-status">
-              <Cloud :size="11" />
-              <WiTag
-                v-if="projectStore.isLoading"
-                value="保存中"
-                severity="info"
-                class="save-tag"
-              />
-              <WiTag
-                v-else-if="projectStore.autoSaveError"
-                value="保存失败"
-                severity="danger"
-                class="save-tag"
-                :title="projectStore.autoSaveError"
-              />
-              <WiTag
-                v-else-if="projectStore.currentId && projectStore.isDirty"
-                value="待保存"
-                severity="warn"
-                class="save-tag"
-              />
-              <WiTag
-                v-else-if="projectStore.currentId"
-                value="已保存"
-                severity="success"
-                class="save-tag"
-              />
-              <WiTag
-                v-else
-                value="未保存"
-                severity="secondary"
-                class="save-tag"
-              />
-            </div>
           </div>
-        </template>
+        </WiSpace>
 
-        <template #end>
-          <div class="header-actions">
-            <WiButton
+        <WiSpace>
+          <div class="save-status">
+            <Cloud :size="11" />
+            <WiTag
+              v-if="projectStore.isLoading"
+              value="保存中"
+              severity="info"
+              class="save-tag"
+            />
+            <WiTag
+              v-else-if="projectStore.autoSaveError"
+              value="保存失败"
+              severity="danger"
+              class="save-tag"
+              :title="projectStore.autoSaveError"
+            />
+            <WiTag
+              v-else-if="projectStore.currentId && projectStore.isDirty"
+              value="待保存"
+              severity="warn"
+              class="save-tag"
+            />
+            <WiTag
+              v-else-if="projectStore.currentId"
+              value="已保存"
+              severity="success"
+              class="save-tag"
+            />
+            <WiTag
+              v-else
+              value="未保存"
               severity="secondary"
-              size="small"
-              :disabled="!projectStore.currentId"
-              @click="datasourceManagerVisible = true"
-            >
-              数据源
-            </WiButton>
-            <WiButton
-              severity="secondary"
-              size="small"
-              :disabled="!projectStore.currentId"
-              :loading="projectStore.isLoading"
-              @click="manualSave"
-            >
-              保存
-            </WiButton>
-            <WiButton
-              severity="secondary"
-              size="small"
-              @click="importInput?.click()"
-            >
-              导入
-            </WiButton>
-            <WiButton
-              severity="secondary"
-              size="small"
-              @click="exportProject"
-            >
-              JSON
-            </WiButton>
-            <WiButton
-              severity="secondary"
-              size="small"
-              @click="exportProjectPDF"
-            >
-              PDF
-            </WiButton>
-            <WiButton
-              severity="secondary"
-              size="small"
-              :disabled="!projectStore.currentId"
-              @click="openPresent"
-            >
-              大屏
-            </WiButton>
-            <WiButton
-              severity="secondary"
-              text
-              size="small"
-              @click="returnToProjectList"
-            >
-              返回
-            </WiButton>
-            <WiButton
-              severity="secondary"
-              text
-              size="small"
-              aria-label="切换主题"
-              @click="toggleTheme"
-            >
-              <Sun v-if="isDark" :size="12" />
-              <Moon v-else :size="12" />
-            </WiButton>
-            <input ref="importInput" type="file" accept="application/json,.json" hidden @change="onImportFile">
+              class="save-tag"
+            />
           </div>
-        </template>
-      </WiToolbar>
+          <WiButton
+            severity="secondary"
+            size="small"
+            :disabled="!projectStore.currentId"
+            @click="datasourceManagerVisible = true"
+          >
+            数据源
+          </WiButton>
+          <WiButton
+            severity="secondary"
+            size="small"
+            :disabled="!projectStore.currentId"
+            :loading="projectStore.isLoading"
+            @click="manualSave"
+          >
+            保存
+          </WiButton>
+          <WiButton
+            severity="secondary"
+            size="small"
+            @click="importInput?.click()"
+          >
+            导入
+          </WiButton>
+          <WiButton
+            severity="secondary"
+            size="small"
+            @click="exportProject"
+          >
+            JSON
+          </WiButton>
+          <WiButton
+            severity="secondary"
+            size="small"
+            @click="exportProjectPDF"
+          >
+            PDF
+          </WiButton>
+          <WiButton
+            severity="secondary"
+            size="small"
+            :disabled="!projectStore.currentId"
+            @click="openPresent"
+          >
+            大屏
+          </WiButton>
+          <WiButton
+            severity="secondary"
+            text
+            size="small"
+            @click="returnToProjectList"
+          >
+            返回
+          </WiButton>
+          <WiButton
+            severity="secondary"
+            text
+            size="small"
+            aria-label="切换主题"
+            @click="toggleTheme"
+          >
+            <Sun v-if="isDark" :size="12" />
+            <Moon v-else :size="12" />
+          </WiButton>
+          <input ref="importInput" type="file" accept="application/json,.json" hidden @change="onImportFile">
+        </WiSpace>
+      </WiFlex>
     </WiLayoutHeader>
 
     <WiLayoutContent
@@ -595,6 +590,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 }
 .studio-header {
   min-height: 52px;
+  height: 52px;
   padding: 0 16px;
   border-bottom: 1px solid var(--wi-color-border);
   background: var(--wi-color-surface-elevated);
@@ -641,7 +637,6 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 100%;
   min-width: 0;
   overflow: hidden;
 }
@@ -837,13 +832,6 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   color: var(--wi-text-secondary, #4a5a78);
   padding: 8px 6px;
   text-align: center;
-}
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-  white-space: nowrap;
 }
 .header-btn:disabled {
   opacity: 0.4;
