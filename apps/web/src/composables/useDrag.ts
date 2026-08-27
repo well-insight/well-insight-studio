@@ -1,6 +1,6 @@
 import type { Widget } from '@well-insight/shared'
 import type { Ref } from 'vue'
-import { useWidgetStore } from '../stores/widgetStore'
+import { useWidgetStore } from '../styles/stores/widgetStore'
 
 export const GRID_SIZE = 8
 export const snapToGrid = (v: number) => Math.round(v / GRID_SIZE) * GRID_SIZE

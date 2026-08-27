@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ProjectConfig, Widget } from '@well-insight/shared'
-import { Cloud, FolderOpen, Moon, Sun, Trash2 } from '@lucide/vue'
+import { ArrowUpDown, Cloud, Moon, Sun, Trash2 } from '@lucide/vue'
 import {
   message,
   toast,
@@ -12,18 +12,19 @@ import {
   WiLayoutContent,
   WiLayoutHeader,
   WiLayoutSider,
+  WiPopover,
   WiSelect,
   WiTabs,
-  WiTag,
+  WiTag
 } from '@well-insight/ui'
 import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { deleteProject, getProjectDatasources } from '../../api/projects'
-import { useConfigStore } from '../../stores/configStore'
-import { useDataStore } from '../../stores/dataStore'
-import { useProjectStore } from '../../stores/projectStore'
+import { useConfigStore } from '../../styles/stores/configStore'
+import { useDataStore } from '../../styles/stores/dataStore'
+import { useProjectStore } from '../../styles/stores/projectStore'
 
-import { useWidgetStore } from '../../stores/widgetStore'
+import { useWidgetStore } from '../../styles/stores/widgetStore'
 import CanvasContainer from './components/CanvasContainer.vue'
 import CanvasToolbar from './components/CanvasToolbar.vue'
 import DataPanel from './components/DataPanel.vue'
@@ -291,76 +292,75 @@ function onKeydown(e: KeyboardEvent) {
   }
 }
 
+const collapsed = ref(false)
+const collapsedRight = ref(false)
+
 onMounted(() => document.addEventListener('keydown', onKeydown))
 onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
-  <WiLayout class="studio-view" :native-scrollbar="false">
-    <WiLayoutHeader class="studio-header">
+  <WiLayout class="h-full w-full overflow-hidden">
+    <WiLayoutHeader>
       <WiFlex class="w-full h-full" justify="space-between" align="center">
         <WiSpace>
-          <div class="logo-area">
-            <div class="logo-icon">
+          <div class="flex items-center gap-2">
+            <div class="grid size-[26px] place-items-center rounded-md bg-gradient-to-br from-blue-500 to-violet-500 text-[11px] font-extrabold text-white">
               WI
             </div>
-            <span class="logo-text">Well-Insight Studio</span>
+            <span class="text-[13px] font-bold text-[var(--wi-color-text)]">Well-Insight Studio</span>
           </div>
 
-          <div class="project-bar">
-            <div class="project-menu-wrapper">
-              <WiButton
-                severity="secondary"
-                text
-                size="small"
-                @click="toggleMenu"
-              >
-                <FolderOpen :size="12" />
-                <span>{{ projectStore.currentId ? projectStore.projectName : '选择项目' }}</span>
+          <div class="flex min-w-0 items-center overflow-hidden">
+            <WiPopover v-model="projectMenuOpen" placement="bottom-start">
+              <WiButton text size="small" @click="projectMenuOpen = !projectMenuOpen">
+                <ArrowUpDown :size="10" />
               </WiButton>
-              <div v-if="projectMenuOpen" class="project-dropdown">
-                <div class="dropdown-section">
-                  <div class="dropdown-title">
-                    新建项目
+              <template #content>
+                <div>
+                  <div class="border-b border-[var(--wi-color-border)] px-2.5 pb-2">
+                    <div class="py-1 text-[9px] uppercase tracking-wide text-[var(--wi-color-text-muted)]">
+                      新建项目
+                    </div>
+                    <div class="flex gap-1">
+                      <WiInput v-model="newProjectName" class="min-w-0 flex-1" placeholder="项目名称" size="small" @keydown.enter="createProject" />
+                      <WiButton icon="plus" size="small" @click="createProject" />
+                    </div>
                   </div>
-                  <div class="new-project-row">
-                    <WiInput v-model="newProjectName" placeholder="项目名称" size="small" @keydown.enter="createProject" />
-                    <WiButton icon="plus" size="small" @click="createProject" />
+                  <div class="px-2.5">
+                    <div class="py-1 text-[9px] uppercase tracking-wide text-[var(--wi-color-text-muted)]">
+                      打开项目
+                    </div>
+                    <div v-if="projectStore.projects.length === 0" class="py-2 text-center text-xs text-[var(--wi-color-text-muted)]">
+                      暂无项目
+                    </div>
+                    <button
+                      v-for="p in projectStore.projects"
+                      :key="p.id"
+                      class="flex w-full items-center justify-between gap-1.5 rounded px-1.5 py-1 text-left text-xs text-[var(--wi-color-text-muted)] hover:bg-[var(--wi-color-surface-hover)] hover:text-[var(--wi-color-text)]"
+                      :class="{ active: projectStore.currentId === p.id }"
+                      @click="loadProject(p.id)"
+                    >
+                      <span class="min-w-0 flex-1 truncate">{{ p.name }}</span>
+                      <span class="flex shrink-0 items-center gap-1.5">
+                        <span class="text-[8px] text-[var(--wi-color-text-muted)]">{{ new Date(p.updatedAt).toLocaleDateString() }}</span>
+                        <WiButton
+                          severity="danger"
+                          text
+                          size="small"
+                          aria-label="删除项目"
+                          @click.stop="onDeleteProject(p.id, p.name)"
+                        >
+                          <Trash2 :size="10" />
+                        </WiButton>
+                      </span>
+                    </button>
                   </div>
                 </div>
-                <div class="dropdown-section">
-                  <div class="dropdown-title">
-                    打开项目
-                  </div>
-                  <div v-if="projectStore.projects.length === 0" class="dropdown-empty">
-                    暂无项目
-                  </div>
-                  <button
-                    v-for="p in projectStore.projects"
-                    :key="p.id"
-                    class="project-item"
-                    :class="{ active: projectStore.currentId === p.id }"
-                    @click="loadProject(p.id)"
-                  >
-                    <span class="project-name">{{ p.name }}</span>
-                    <span class="project-actions">
-                      <span class="project-date">{{ new Date(p.updatedAt).toLocaleDateString() }}</span>
-                      <WiButton
-                        severity="danger"
-                        text
-                        size="small"
-                        aria-label="删除项目"
-                        @click.stop="onDeleteProject(p.id, p.name)"
-                      >
-                        <Trash2 :size="10" />
-                      </WiButton>
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </div>
+              </template>
+            </WiPopover>
 
-            <div class="project-name-editor">
+            <div class="min-w-0 max-w-[220px] overflow-hidden">
               <WiInput
                 v-if="editingName"
                 ref="nameInput"
@@ -374,7 +374,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
                 severity="secondary"
                 text
                 size="small"
-                class="rename-btn"
+                class="max-w-[180px] truncate"
                 @click="startRename"
               >
                 <span v-if="projectStore.currentId">{{ projectStore.projectName }}</span>
@@ -384,7 +384,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
             <WiSelect
               v-if="projectStore.currentDatasources.length > 0"
-              class="datasource-selector"
+              class="min-w-0"
               :model-value="projectStore.currentDatasourceId ?? undefined"
               :options="datasourceOptions"
               placeholder="选择数据源"
@@ -395,7 +395,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
         </WiSpace>
 
         <WiSpace>
-          <div class="save-status">
+          <div class="ml-auto flex shrink-0 items-center gap-1 text-[10px] text-[var(--wi-color-text-muted)]">
             <Cloud :size="11" />
             <WiTag
               v-if="projectStore.isLoading"
@@ -497,58 +497,56 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
         </WiSpace>
       </WiFlex>
     </WiLayoutHeader>
-
-    <WiLayoutContent
-      class="studio-body"
-      :native-scrollbar="false"
-      :content-style="{ overflow: 'hidden' }"
-    >
-      <WiLayout
-        class="studio-main-layout"
-        :has-sider="true"
-        sider-placement="right"
+    <WiLayout has-sider class="min-h-0">
+      <WiLayoutSider
+        v-model:collapsed="collapsed"
+        bordered
+        show-trigger="arrow-circle"
+        :width="250"
+        :collapsed-width="10"
+        :content-style="{ overflow: 'hidden' }"
       >
-        <!-- `sider-placement="right"` reverses the flex row, so declare the
-             right panel first and the data panel last. -->
+        <DataPanel />
+      </WiLayoutSider>
+
+      <WiLayout
+        has-sider
+        sider-placement="right"
+        class="min-h-0 min-w-0"
+      >
         <WiLayoutSider
-          class="right-panel"
-          width="clamp(220px, 24vw, 300px)"
-          :native-scrollbar="false"
+          v-model:collapsed="collapsedRight"
+          bordered
+          :width="250"
+          :collapsed-width="10"
+          show-trigger="arrow-circle"
           :content-style="{ overflow: 'hidden' }"
         >
-          <WiTabs v-model="rightTab" :tabs="rightTabs" type="line" class="right-tabs">
+          <WiTabs v-model="rightTab" :tabs="rightTabs" type="line" class="right-tabs h-full min-h-0 flex-1">
             <template #default>
-              <div class="right-body">
-                <PropsPanel v-show="rightTab === 'props'" />
-                <LayersPanel v-show="rightTab === 'layers'" />
+              <div class="flex h-full min-h-0 flex-col overflow-hidden">
+                <PropsPanel v-show="rightTab === 'props'" class="min-h-0 flex-1" />
+                <LayersPanel v-show="rightTab === 'layers'" class="min-h-0 flex-1" />
               </div>
             </template>
           </WiTabs>
         </WiLayoutSider>
 
         <WiLayoutContent
-          class="canvas-wrapper"
-          :content-style="{ overflow: 'hidden' }"
+          embedded
+          class="min-h-0 min-w-0"
+          :content-style="{ padding: 0, overflow: 'hidden' }"
         >
           <CanvasToolbar :zoom="projectStore.canvasZoom" :loading="canvasLoading" @zoom="onZoom" @refresh="refreshCanvas" />
           <CanvasContainer ref="canvasRef" :zoom="projectStore.canvasZoom" :loading="canvasLoading" @update-zoom="v => { projectStore.canvasZoom = v; projectStore.markDirty() }" @configure="onConfigure" />
         </WiLayoutContent>
-
-        <WiLayoutSider
-          class="data-sider"
-          :width="200"
-          :native-scrollbar="false"
-          :content-style="{ overflow: 'hidden' }"
-        >
-          <DataPanel />
-        </WiLayoutSider>
       </WiLayout>
-    </WiLayoutContent>
+    </WiLayout>
 
     <ConfigModal ref="modalRef" />
 
     <DatasourceManager
-      v-model:visible="datasourceManagerVisible"
+      v-model="datasourceManagerVisible"
       :project-id="projectStore.currentId"
       :datasources="projectStore.currentDatasources"
       :current-id="projectStore.currentDatasourceId"
@@ -556,481 +554,20 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
       @refresh="refreshDatasources"
       @select="onSelectDatasource"
     />
-
-    <div v-if="projectStore.autoSaveError" class="error-banner" role="alert">
-      <span class="error-dot" /> 保存失败：{{ projectStore.autoSaveError }}
-      <WiButton severity="danger" text size="small" @click="manualSave">
-        重试
-      </WiButton>
-    </div>
-
-    <div v-if="dataStore.schemaError" class="error-banner" role="alert">
-      <span class="error-dot" /> 数据源加载失败：{{ dataStore.schemaError }}
-      <WiButton severity="danger" text size="small" @click="onSwitchDatasource(projectStore.currentDatasourceId ?? '')">
-        重试
-      </WiButton>
-      <WiButton severity="secondary" text size="small" @click="dataStore.schemaError = null">
-        忽略
-      </WiButton>
-    </div>
   </WiLayout>
 </template>
 
 <style scoped>
-.studio-view {
-  height: 100vh;
-  min-height: 0;
-  overflow: hidden;
-  user-select: none;
-}
-.studio-view :deep(.wi-layout__scroll),
-.studio-body :deep(.wi-layout__scroll),
-.studio-main-layout :deep(.wi-layout__scroll) {
-  min-height: 0;
-}
-.studio-header {
-  min-height: 52px;
-  height: 52px;
-  padding: 0 16px;
-  border-bottom: 1px solid var(--wi-color-border);
-  background: var(--wi-color-surface-elevated);
-  flex-shrink: 0;
-  gap: 12px;
-  z-index: 10;
-}
-.studio-header :deep(.wi-toolbar__start),
-.studio-header :deep(.wi-toolbar__center),
-.studio-header :deep(.wi-toolbar__end) {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-}
-.studio-header :deep(.wi-toolbar__center) {
-  flex: 1;
-}
-.studio-header :deep(.wi-toolbar__end) {
-  justify-content: flex-end;
-}
-.logo-area {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.logo-icon {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  color: white;
-  font-size: 11px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.logo-text {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--wi-color-text);
-}
-.project-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  overflow: hidden;
-}
-.project-menu-wrapper {
-  position: relative;
-  flex-shrink: 0;
-}
-.project-menu-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: transparent;
-  border: 1px solid var(--wi-border-color, #1e2638);
-  color: var(--wi-text-secondary, #8a9bb5);
-  font-size: 11px;
-  padding: 5px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.project-menu-trigger:hover {
-  color: var(--wi-text-color, #e8edf5);
-  border-color: var(--wi-primary, #3b82f6);
-}
-.project-dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  width: 220px;
-  background: var(--wi-surface, #0c111c);
-  border: 1px solid var(--wi-border-color, #1e2638);
-  border-radius: 8px;
-  padding: 8px 0;
-  z-index: 200;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-}
-.dropdown-section {
-  padding: 0 10px 8px;
-  border-bottom: 1px solid var(--wi-border-color, #1a212e);
-}
-.dropdown-section:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-.dropdown-title {
-  font-size: 9px;
-  color: var(--wi-text-secondary, #6a7b98);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 4px 0;
-}
-.new-project-row {
-  display: flex;
-  gap: 4px;
-}
-.new-project-row input {
-  flex: 1;
-  background: var(--wi-surface-hover, #141c2a);
-  border: 1px solid var(--wi-border-color, #1e2638);
-  border-radius: 4px;
-  color: var(--wi-text-color, #e8edf5);
-  font-size: 11px;
-  padding: 4px 6px;
-  outline: none;
-}
-.new-project-row input:focus {
-  border-color: var(--wi-primary, #3b82f6);
-}
-.btn-icon {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--wi-primary, #3b82f6);
-  border: none;
-  border-radius: 4px;
-  color: white;
-  cursor: pointer;
-}
-.project-item {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 5px 6px;
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  color: var(--wi-text-secondary, #a8b4c8);
-  font-size: 11px;
-  cursor: pointer;
-  text-align: left;
-}
-.project-item:hover,
-.project-item.active {
-  background: var(--wi-surface-hover, #141c2a);
-  color: var(--wi-text-color, #e8edf5);
-}
-.project-item .project-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-  min-width: 0;
-}
-.project-item .project-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-.project-date {
-  font-size: 8px;
-  color: var(--wi-text-secondary, #4a5a78);
-}
-.project-delete {
-  width: 16px;
-  height: 16px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: var(--wi-text-secondary, #4a5a78);
-  cursor: pointer;
-  border-radius: 3px;
-  padding: 0;
-}
-.project-delete:hover {
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.1);
-}
-.project-name-editor {
-  min-width: 0;
-  max-width: 220px;
-  overflow: hidden;
-}
-.datasource-selector select {
-  background: var(--wi-surface-hover, #141c2a);
-  border: 1px solid var(--wi-border-color, #1e2638);
-  border-radius: 4px;
-  color: var(--wi-text-color, #e8edf5);
-  font-size: 10px;
-  padding: 4px 6px;
-  outline: none;
-  cursor: pointer;
-}
-.datasource-selector select:focus {
-  border-color: var(--wi-primary, #3b82f6);
-}
-.rename-btn,
-.name-input {
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--wi-text-color, #e8edf5);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 6px;
-  border-radius: 4px;
-  cursor: pointer;
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.rename-btn:hover {
-  border-color: var(--wi-border-color, #2a3448);
-}
-.rename-btn .unsaved {
-  color: var(--wi-text-secondary, #6a7b98);
-  font-weight: 400;
-}
-.name-input {
-  border-color: var(--wi-primary, #3b82f6);
-  cursor: text;
-  outline: none;
-  color: var(--wi-text-color, #e8edf5);
-}
-.save-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 10px;
-  color: var(--wi-text-secondary, #6a7b98);
-  margin-left: auto;
-  flex-shrink: 0;
-}
-.save-status .error {
-  color: #ef4444;
-}
-.dropdown-empty {
-  font-size: 11px;
-  color: var(--wi-text-secondary, #4a5a78);
-  padding: 8px 6px;
-  text-align: center;
-}
-.header-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-.header-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: transparent;
-  border: 1px solid var(--wi-border-color, #1e2638);
-  color: var(--wi-text-secondary, #8a9bb5);
-  font-size: 11px;
-  padding: 5px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.studio-loading {
-  flex: 1;
+.right-tabs :deep(.wi-tabs) {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 40px;
-  background: var(--wi-surface, #0a0f18);
-}
-.loading-tip {
-  font-size: 12px;
-  color: var(--wi-text-secondary, #6a7b98);
-}
-.error-banner {
-  position: fixed;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-radius: 6px;
-  background: #1a0f0f;
-  border: 1px solid #ef4444;
-  color: #ef4444;
-  font-size: 11px;
-  z-index: 300;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-}
-.error-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #ef4444;
-}
-.error-retry,
-.error-dismiss {
-  font-size: 10px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  border: 1px solid currentColor;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  margin-left: 4px;
-}
-.error-dismiss {
-  color: var(--wi-text-secondary, #8a9bb5);
-  border-color: var(--wi-border-color, #2a3448);
-}
-.error-retry:hover,
-.error-dismiss:hover {
-  opacity: 0.8;
-}
-.header-btn:hover {
-  color: var(--wi-text-color, #e8edf5);
-  background: var(--wi-surface-hover, #1e2638);
-}
-.header-btn.primary {
-  background: var(--wi-primary, #3b82f6);
-  border-color: var(--wi-primary, #3b82f6);
-  color: white;
-}
-.header-btn.primary:hover {
-  opacity: 0.9;
-}
-.studio-body {
-  flex: 1;
-  min-height: 0;
-  min-width: 0;
-  overflow: hidden;
-}
-.studio-main-layout {
   height: 100%;
   min-height: 0;
-  min-width: 0;
 }
-.data-sider {
-  flex-shrink: 0;
-  min-height: 0;
-}
-.data-sider :deep(.wi-layout-sider__scroll),
-.right-panel :deep(.wi-layout-sider__scroll) {
-  height: 100%;
-}
-.canvas-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-}
-.right-panel {
-  flex-shrink: 0;
-  min-height: 0;
-  border-left: 1px solid var(--wi-color-border);
-  background: var(--wi-color-surface);
-}
-.right-tabs {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-.right-tabs :deep(.wi-tabs__bar) {
-  flex-shrink: 0;
-  padding: 0 8px;
-  border-bottom: 1px solid var(--wi-color-border);
-}
-.right-tabs :deep(.wi-tabs__list) {
-  width: 100%;
-}
-.right-tabs :deep(.wi-tabs__item) {
-  flex: 1;
-}
-.right-tabs :deep(.wi-tabs__tab) {
-  width: 100%;
-  font-size: 11px;
-}
+
 .right-tabs :deep(.wi-tabs__panel) {
   flex: 1;
   min-height: 0;
-  padding: 0;
-}
-.right-body {
-  height: 100%;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-.right-body > * {
-  flex: 1;
-  min-height: 0;
-}
-
-@media (max-width: 1100px) {
-  .logo-text {
-    display: none;
-  }
-  .project-bar {
-    gap: 4px;
-  }
-  .header-actions :deep(.wi-button) {
-    padding-inline: 7px;
-  }
-  .header-actions :deep(.wi-button:not(:last-child)) {
-    font-size: 0;
-  }
-  .header-actions :deep(.wi-button svg) {
-    margin: 0;
-  }
-}
-
-@media (max-width: 760px) {
-  .studio-header {
-    min-height: 48px;
-    padding-inline: 8px;
-  }
-  .studio-header :deep(.wi-toolbar__center) {
-    min-width: 0;
-  }
-  .project-name-editor,
-  .save-status {
-    display: none;
-  }
-  .data-panel {
-    width: 168px;
-  }
-  .right-panel {
-    width: 210px;
-    max-width: 210px;
-  }
-  .header-actions :deep(.wi-button:nth-child(n + 4):nth-child(-n + 6)) {
-    display: none;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .studio-view * {
-    transition-duration: 0ms !important;
-  }
 }
 </style>

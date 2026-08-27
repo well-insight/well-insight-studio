@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Hash, Type } from '@lucide/vue'
 import { computed } from 'vue'
-import { useConfigStore } from '../../../../stores/configStore'
+import { useConfigStore } from '../../../../styles/stores/configStore'
 import { isNumericField } from '../../utils/sampleData'
 
 const config = useConfigStore()

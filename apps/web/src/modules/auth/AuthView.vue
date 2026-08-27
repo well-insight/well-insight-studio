@@ -2,7 +2,7 @@
 import { message, WiButton, WiCard, WiInput, WiInputPassword } from '@well-insight/ui'
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '../../stores/authStore'
+import { useAuthStore } from '../../styles/stores/authStore'
 
 const router = useRouter()
 const route = useRoute()

@@ -1,8 +1,8 @@
 import type { ProjectConfig } from '@well-insight/shared'
-import type { DatasourceSummary, ProjectSummary } from '../api/projects'
+import type { DatasourceSummary, ProjectSummary } from '../../api/projects'
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
-import { createProject, getProject, getProjectDatasources, listProjects, updateProject } from '../api/projects'
+import { createProject, getProject, getProjectDatasources, listProjects, updateProject } from '../../api/projects'
 import { useWidgetStore } from './widgetStore'
 
 const AUTO_SAVE_MS = 1000

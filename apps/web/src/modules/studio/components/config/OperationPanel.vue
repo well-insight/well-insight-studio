@@ -2,7 +2,7 @@
 import type { FieldOperation } from '@well-insight/shared'
 import { WiInput, WiSelectButton } from '@well-insight/ui'
 import { computed } from 'vue'
-import { useConfigStore } from '../../../../stores/configStore'
+import { useConfigStore } from '../../../../styles/stores/configStore'
 
 const config = useConfigStore()
 

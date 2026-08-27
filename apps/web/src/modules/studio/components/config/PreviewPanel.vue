@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { Widget } from '@well-insight/shared'
 import { computed, ref, watchEffect } from 'vue'
-import { useConfigStore } from '../../../../stores/configStore'
-import { useDataStore } from '../../../../stores/dataStore'
+import { useConfigStore } from '../../../../styles/stores/configStore'
+import { useDataStore } from '../../../../styles/stores/dataStore'
 import { applyFieldOps } from '../../utils/fieldOps'
 import ChartWidget from '../widgets/ChartWidget.vue'
 import KpiWidget from '../widgets/KpiWidget.vue'

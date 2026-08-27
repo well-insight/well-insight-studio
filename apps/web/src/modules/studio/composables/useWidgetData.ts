@@ -1,7 +1,7 @@
 import type { TableData, Widget } from '@well-insight/shared'
 import type { ProcessedData } from '../utils/fieldOps'
 import { computed, onMounted, ref, watch } from 'vue'
-import { useDataStore } from '../../../stores/dataStore'
+import { useDataStore } from '../../../styles/stores/dataStore'
 import { resolveWidgetData, resolveWidgetDataAsync } from '../utils/widgetData'
 
 /**

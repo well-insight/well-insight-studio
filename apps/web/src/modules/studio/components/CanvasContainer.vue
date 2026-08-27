@@ -3,8 +3,8 @@ import { message, toast, WiProgressSpinner, WiScrollbar } from '@well-insight/ui
 import { computed, ref } from 'vue'
 import { useDrag } from '../../../composables/useDrag'
 import { useResize } from '../../../composables/useResize'
-import { useDataStore } from '../../../stores/dataStore'
-import { useWidgetStore } from '../../../stores/widgetStore'
+import { useDataStore } from '../../../styles/stores/dataStore'
+import { useWidgetStore } from '../../../styles/stores/widgetStore'
 import { isNumericField } from '../utils/sampleData'
 import WidgetRenderer from './WidgetRenderer.vue'
 

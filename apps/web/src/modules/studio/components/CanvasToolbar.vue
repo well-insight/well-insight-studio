@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { WidgetType } from '@well-insight/shared'
 import { BarChart3, ChartLine, ChartPie, LayoutGrid, Minus, Plus, Redo2, RefreshCw, Table2, Trash2, Undo2 } from '@lucide/vue'
-import { useWidgetStore, WIDGET_DEFAULTS } from '../../../stores/widgetStore'
+import { WiButton, WiFlex, WiTag } from '@well-insight/ui'
+import { useWidgetStore, WIDGET_DEFAULTS } from '../../../styles/stores/widgetStore'
 
 defineProps<{
   zoom: number
@@ -36,101 +37,82 @@ function clearCanvas() {
 </script>
 
 <template>
-  <div class="canvas-toolbar">
-    <div class="toolbar-left">
+  <WiFlex class="canvas-toolbar" justify="space-between" align="center" :wrap="false" :size="4">
+    <WiFlex class="toolbar-left" align="center" :wrap="false" :size="4">
       <span class="toolbar-title">画布</span>
-      <button class="tool-btn" title="撤销 (Ctrl+Z)" :disabled="!store.canUndo" @click="store.undo()">
+      <WiButton icon-only variant="ghost" size="small" aria-label="撤销 (Ctrl+Z)" :disabled="!store.canUndo" @click="store.undo()">
         <Undo2 :size="13" />
-      </button>
-      <button class="tool-btn" title="重做 (Ctrl+Y)" :disabled="!store.canRedo" @click="store.redo()">
+      </WiButton>
+      <WiButton icon-only variant="ghost" size="small" aria-label="重做 (Ctrl+Y)" :disabled="!store.canRedo" @click="store.redo()">
         <Redo2 :size="13" />
-      </button>
+      </WiButton>
       <span class="divider" />
-      <button
+      <WiButton
         v-for="btn in WIDGET_BUTTONS"
         :key="btn.type"
-        class="tool-btn labeled"
-        :title="`添加${WIDGET_DEFAULTS[btn.type]?.label ?? btn.type}`"
+        variant="ghost"
+        size="small"
+        :aria-label="`添加${WIDGET_DEFAULTS[btn.type]?.label ?? btn.type}`"
         @click="addWidget(btn.type)"
       >
         <component :is="btn.icon" :size="13" />
         <span>{{ WIDGET_DEFAULTS[btn.type]?.label }}</span>
-      </button>
+      </WiButton>
       <span class="divider" />
-      <button class="tool-btn" title="清空画布" :disabled="store.widgets.length === 0" @click="clearCanvas">
+      <WiButton icon-only variant="ghost" size="small" aria-label="清空画布" :disabled="store.widgets.length === 0" @click="clearCanvas">
         <Trash2 :size="13" />
-      </button>
-    </div>
-    <div class="toolbar-right">
-      <button class="tool-btn" title="刷新画布数据" :disabled="loading" @click="emit('refresh')">
+      </WiButton>
+    </WiFlex>
+    <WiFlex class="toolbar-right" align="center" :wrap="false" :size="4">
+      <WiButton variant="ghost" size="small" aria-label="刷新画布数据" :loading="loading" @click="emit('refresh')">
         <RefreshCw :size="13" :class="{ spinning: loading }" />
         <span>刷新</span>
-      </button>
-      <span class="widget-count">{{ store.widgets.length }} 个组件</span>
-      <div class="zoom-control">
-        <button class="tool-btn" title="缩小" @click="emit('zoom', -0.1)">
+      </WiButton>
+      <WiTag :value="`${store.widgets.length} 个组件`" severity="secondary" size="small" />
+      <WiFlex class="zoom-control" align="center" :wrap="false" :size="2">
+        <WiButton icon-only variant="ghost" size="small" aria-label="缩小" @click="emit('zoom', -0.1)">
           <Minus :size="13" />
-        </button>
+        </WiButton>
         <span class="zoom-level">{{ Math.round(zoom * 100) }}%</span>
-        <button class="tool-btn" title="放大" @click="emit('zoom', 0.1)">
+        <WiButton icon-only variant="ghost" size="small" aria-label="放大" @click="emit('zoom', 0.1)">
           <Plus :size="13" />
-        </button>
-      </div>
-    </div>
-  </div>
+        </WiButton>
+      </WiFlex>
+    </WiFlex>
+  </WiFlex>
 </template>
 
 <style scoped>
 .canvas-toolbar {
   height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 10px;
-  border-bottom: 1px solid var(--wi-border-color, #1e2638);
-  background: var(--wi-surface, #0c111c);
   flex-shrink: 0;
-  gap: 8px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--wi-color-border);
+  background: var(--wi-color-surface);
+  overflow: hidden;
 }
 .toolbar-left,
 .toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 4px;
   min-width: 0;
 }
+.toolbar-left {
+  overflow: hidden;
+}
+.toolbar-left :deep(.wi-button) {
+  white-space: nowrap;
+}
 .toolbar-title {
+  flex-shrink: 0;
+  color: var(--wi-color-text);
   font-size: 12px;
   font-weight: 600;
-  margin-right: 6px;
-  color: var(--wi-text-color, #e8edf5);
 }
 .divider {
   width: 1px;
   height: 14px;
-  background: var(--wi-border-color, #1e2638);
+  flex-shrink: 0;
   margin: 0 3px;
-}
-.tool-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--wi-text-secondary, #8a9bb5);
-  font-size: 11px;
-  padding: 4px 7px;
-  border-radius: 5px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.tool-btn:hover:not(:disabled) {
-  background: var(--wi-surface-hover, #1e2638);
-  color: var(--wi-text-color, #e8edf5);
-}
-.tool-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
+  background: var(--wi-color-border);
 }
 .spinning {
   animation: spin 0.8s linear infinite;
@@ -138,21 +120,11 @@ function clearCanvas() {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
-.widget-count {
-  font-size: 11px;
-  color: var(--wi-text-secondary, #8a9bb5);
-  margin-right: 6px;
-}
-.zoom-control {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
 .zoom-level {
-  font-size: 10px;
-  color: var(--wi-text-secondary, #8a9bb5);
   min-width: 36px;
-  text-align: center;
+  color: var(--wi-color-text-muted);
+  font-size: 10px;
   font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 </style>

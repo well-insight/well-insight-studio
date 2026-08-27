@@ -17,7 +17,7 @@ const emit = defineEmits<{
   select: [id: string]
 }>()
 
-const visible = defineModel<boolean>('visible', { default: false })
+const visible = defineModel<boolean>({ default: false })
 
 const editingId = ref<string | null>(null)
 const editingName = ref('')
@@ -160,12 +160,12 @@ function close() {
 
 <template>
   <WiDialog
-    v-model:visible="visible"
+    v-model="visible"
     header="数据源管理"
     :style="{ width: '540px', height: '460px' }"
     :modal="true"
     :closable="true"
-    :close-on-escape="true"
+    :close-on-esc="true"
     @hide="close"
   >
     <div class="ds-manager-body">

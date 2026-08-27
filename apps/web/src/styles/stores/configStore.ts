@@ -1,7 +1,7 @@
 import type { FieldOperation, Widget } from '@well-insight/shared'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { isNumericField } from '../modules/studio/utils/sampleData'
+import { isNumericField } from '../../modules/studio/utils/sampleData'
 import { useDataStore } from './dataStore'
 
 export interface ConfigFormState {

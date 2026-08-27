@@ -1,6 +1,6 @@
 import type { Widget } from '@well-insight/shared'
 import type { Ref } from 'vue'
-import { useWidgetStore } from '../stores/widgetStore'
+import { useWidgetStore } from '../styles/stores/widgetStore'
 import { snapToGrid } from './useDrag'
 
 const MIN_WIDTH = 110

@@ -6,7 +6,7 @@ import { GridComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useDataStore } from '../../../../stores/dataStore'
+import { useDataStore } from '../../../../styles/stores/dataStore'
 import { useWidgetData } from '../../composables/useWidgetData'
 import { buildChartOption  } from '../../utils/chart'
 

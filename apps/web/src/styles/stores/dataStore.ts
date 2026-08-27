@@ -1,6 +1,6 @@
 import type { DatasourceSchema, QueryRequest, QueryResponse, TableData } from '@well-insight/shared'
 import { defineStore } from 'pinia'
-import { fetchDatasourceSchema, queryDatasource, schemaToTables } from '../api/datasources'
+import { fetchDatasourceSchema, queryDatasource, schemaToTables } from '../../api/datasources'
 
 interface DataStoreState {
   /** 当前数据源 ID；未选择数据源时为空 */

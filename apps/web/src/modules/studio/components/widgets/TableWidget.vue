@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Widget } from '@well-insight/shared'
 import { computed } from 'vue'
-import { useDataStore } from '../../../../stores/dataStore'
+import { useDataStore } from '../../../../styles/stores/dataStore'
 import { useWidgetData } from '../../composables/useWidgetData'
 
 const props = defineProps<{ widget: Widget }>()

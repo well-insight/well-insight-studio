@@ -2,8 +2,8 @@
 import type { Widget, WidgetType } from '@well-insight/shared'
 import { WiInput, WiInputColor, WiInputNumber, WiScrollbar, WiSelect } from '@well-insight/ui'
 import { computed } from 'vue'
-import { useDataStore } from '../../../stores/dataStore'
-import { useWidgetStore, WIDGET_DEFAULTS } from '../../../stores/widgetStore'
+import { useDataStore } from '../../../styles/stores/dataStore'
+import { useWidgetStore, WIDGET_DEFAULTS } from '../../../styles/stores/widgetStore'
 
 const store = useWidgetStore()
 const dataStore = useDataStore()
@@ -27,8 +27,8 @@ function update<K extends keyof Widget>(key: K, value: Widget[K]) {
 
 <template>
   <WiScrollbar class="props-scroll" :native="false" trigger="hover" aria-label="组件属性">
-    <div class="props-panel">
-      <div v-if="!widget" class="empty-tip">
+    <div class="props-panel flex min-h-full flex-col gap-3 p-3">
+      <div v-if="!widget" class="empty-tip p-6 text-center text-xs text-[var(--wi-color-text-muted)]">
         点击画布组件查看属性
       </div>
 
@@ -89,44 +89,10 @@ function update<K extends keyof Widget>(key: K, value: Widget[K]) {
 </template>
 
 <style scoped>
-.props-scroll {
-  flex: 1;
-  min-height: 0;
-}
 .props-scroll :deep(.wi-scrollbar__wrap) {
   height: 100%;
 }
-.props-panel {
-  min-height: 100%;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.empty-tip {
-  text-align: center;
-  color: var(--wi-text-secondary, #4a5a78);
-  font-size: 11px;
-  padding: 24px 8px;
-}
-.prop-label {
-  display: block;
-  font-size: 11px;
-  color: var(--wi-text-secondary, #8a9bb5);
-  margin-bottom: 4px;
-}
-.prop-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
 .meta {
-  font-size: 10px;
-  color: var(--wi-text-secondary, #4a5a78);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  border-top: 1px solid var(--wi-border-color, #1e2638);
-  padding-top: 10px;
+  border-top: 1px solid var(--wi-color-border);
 }
 </style>
