@@ -1,17 +1,18 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import * as echarts from 'echarts/core'
+import type { Widget } from '@well-insight/shared'
+import type {ChartKind} from '../../utils/chart';
 import { BarChart, LineChart, PieChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
+import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import type { Widget } from '@well-insight/shared'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useDataStore } from '../../../../stores/dataStore'
 import { useWidgetData } from '../../composables/useWidgetData'
-import { buildChartOption, type ChartKind } from '../../utils/chart'
-
-echarts.use([BarChart, LineChart, PieChart, GridComponent, TooltipComponent, CanvasRenderer])
+import { buildChartOption  } from '../../utils/chart'
 
 const props = defineProps<{ widget: Widget }>()
+
+echarts.use([BarChart, LineChart, PieChart, GridComponent, TooltipComponent, CanvasRenderer])
 
 const dataStore = useDataStore()
 const chartEl = ref<HTMLElement | null>(null)
@@ -52,9 +53,13 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div v-if="isLoading" class="widget-empty">加载数据中…</div>
-  <div v-else-if="!isEmpty" ref="chartEl" class="chart-body"></div>
-  <div v-else class="widget-empty">无数据，双击配置字段</div>
+  <div v-if="isLoading" class="widget-empty">
+    加载数据中…
+  </div>
+  <div v-else-if="!isEmpty" ref="chartEl" class="chart-body" />
+  <div v-else class="widget-empty">
+    无数据，双击配置字段
+  </div>
 </template>
 
 <style scoped>

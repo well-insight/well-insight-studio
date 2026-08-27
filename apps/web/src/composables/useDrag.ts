@@ -1,5 +1,5 @@
-import type { Ref } from 'vue'
 import type { Widget } from '@well-insight/shared'
+import type { Ref } from 'vue'
 import { useWidgetStore } from '../stores/widgetStore'
 
 export const GRID_SIZE = 8

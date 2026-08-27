@@ -18,7 +18,7 @@ const FORBIDDEN_KEYWORDS = [
   'load',
 ]
 
-const ALLOWED_IDENTIFIER = /^[a-zA-Z_][a-zA-Z0-9_]*$/
+const ALLOWED_IDENTIFIER = /^[a-z_]\w*$/i
 
 export function validateIdentifier(name: string): boolean {
   return ALLOWED_IDENTIFIER.test(name)

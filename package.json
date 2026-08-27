@@ -13,18 +13,17 @@
     "build": "pnpm --filter @well-insight/shared --filter @well-insight/web --filter @well-insight/api run build",
     "test": "pnpm -r test",
     "test:coverage": "pnpm -r test:coverage",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
+    "@antfu/eslint-config": "^9.3.0",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@types/node": "^26.2.0",
+    "eslint": "^10.9.1",
     "husky": "^9.1.7",
     "typescript": "^5.9.3"
-  },
-  "pnpm": {
-    "overrides": {
-      "typescript": "5.9.3"
-    }
   }
 }

@@ -1,6 +1,5 @@
-import { json, timestamp, varchar } from 'drizzle-orm/mysql-core'
-import { mysqlTable } from 'drizzle-orm/mysql-core'
 import type { QueryResponse } from '@well-insight/shared'
+import { json, mysqlTable, timestamp, varchar  } from 'drizzle-orm/mysql-core'
 
 /** 查询结果缓存表（TTL 60s） */
 export const queryCache = mysqlTable('query_cache', {

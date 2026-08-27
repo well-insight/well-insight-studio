@@ -1,7 +1,7 @@
-import type { FieldOperation, QueryRequest, QueryResponse, TableData } from '@well-insight/shared'
+import type { FieldOperation, QueryRequest, QueryResponse } from '@well-insight/shared'
 
-const FILTER_RE = /^(>=|<=|!=|>|<|=)\s*(.+)/
-const ALLOWED_FIELDS = /^[a-zA-Z_][a-zA-Z0-9_]*$/
+const FILTER_RE = /^(>=|<=|!=|[><=])\s*(.+)/
+const ALLOWED_FIELDS = /^[a-z_]\w*$/i
 
 function validateIdentifier(name: string): boolean {
   return ALLOWED_FIELDS.test(name)
@@ -21,8 +21,8 @@ export function buildWhere(
     const match = ops.filter.trim().match(FILTER_RE)
     if (!match || !validateIdentifier(field)) continue
     const [, operator, operand] = match
-    const isNum = !Number.isNaN(parseFloat(operand!))
-    const param = isNum ? parseFloat(operand!) : operand!.replace(/["']/g, '')
+    const isNum = !Number.isNaN(Number.parseFloat(operand!))
+    const param = isNum ? Number.parseFloat(operand!) : operand!.replace(/["']/g, '')
     clauses.push(`\`${field}\` ${operator} ?`)
     params.push(param)
   }

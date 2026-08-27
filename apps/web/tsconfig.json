@@ -2,12 +2,12 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"],
     "paths": {
       "@well-insight/ui": ["../../../well-insight-ui/src/index.ts"],
       "@well-insight/ui/*": ["../../../well-insight-ui/src/*"],
       "@well-insight/ui/styles.css": ["../../../well-insight-ui/src/styles/index.css"]
-    }
+    },
+    "types": ["vite/client"]
   },
   "include": ["src", "vite.config.ts"]
 }

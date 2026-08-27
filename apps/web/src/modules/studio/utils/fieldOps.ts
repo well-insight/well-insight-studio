@@ -9,16 +9,16 @@ export interface ProcessedData {
   rows: unknown[][]
 }
 
-const FILTER_RE = /^(>=|<=|!=|>|<|=)\s*(.+)/
+const FILTER_RE = /^(>=|<=|!=|[><=])\s*(.+)/
 
 type Row = unknown[]
 
 function matchFilter(cell: unknown, operator: string, operand: string): boolean {
-  const numeric = !Number.isNaN(parseFloat(operand))
+  const numeric = !Number.isNaN(Number.parseFloat(operand))
   if (numeric) {
-    const numCell = parseFloat(String(cell))
+    const numCell = Number.parseFloat(String(cell))
     if (Number.isNaN(numCell)) return false
-    const numVal = parseFloat(operand)
+    const numVal = Number.parseFloat(operand)
     switch (operator) {
       case '>': return numCell > numVal
       case '<': return numCell < numVal
@@ -106,7 +106,7 @@ export function applyFieldOps(
       const ops = fieldOps[f]
       if (aggFields.includes(f) && ops) {
         const vals = sourceRows
-          .map(r => parseFloat(String(r[idx])))
+          .map(r => Number.parseFloat(String(r[idx])))
           .filter(v => !Number.isNaN(v))
         return Math.round(aggregate(vals, ops.agg) * 100) / 100
       }

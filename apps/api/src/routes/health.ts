@@ -1,6 +1,6 @@
-import { Hono } from 'hono'
-import type { AppBindings } from '../types/context'
 import type { HealthResponse } from '@well-insight/shared'
+import type { AppBindings } from '../types/context'
+import { Hono } from 'hono'
 
 export function createHealthRoutes() {
   const router = new Hono<AppBindings>()

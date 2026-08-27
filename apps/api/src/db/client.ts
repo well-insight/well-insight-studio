@@ -1,6 +1,6 @@
-import mysql from 'mysql2/promise'
-import { drizzle } from 'drizzle-orm/mysql2'
 import type { AppConfig } from '../config/env'
+import { drizzle } from 'drizzle-orm/mysql2'
+import mysql from 'mysql2/promise'
 import * as schema from './schema'
 
 export function createDb(config: AppConfig) {

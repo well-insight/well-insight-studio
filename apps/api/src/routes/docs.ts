@@ -1,5 +1,5 @@
-import { Hono } from 'hono'
 import type { AppBindings } from '../types/context'
+import { Hono } from 'hono'
 
 const openApiDocument = {
   openapi: '3.0.3',

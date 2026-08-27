@@ -18,7 +18,10 @@ async function request<T>(path: string, init: RequestInit | undefined, allowRefr
     ...init,
   })
 
-  if (response.status === 401 && allowRefresh && path !== '/api/auth/refresh') {
+  const canRefresh = allowRefresh
+    && path !== '/api/auth/refresh'
+    && path !== '/api/auth/logout'
+  if (response.status === 401 && canRefresh) {
     const refreshResponse = await fetch(`${getApiOrigin()}/api/auth/refresh`, {
       method: 'POST',
       credentials: 'include',

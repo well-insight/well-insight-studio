@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { useMotion, useTheme, WiMessage, WiToast } from '@well-insight/ui'
 import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
-import { WiMessage, WiToast, useTheme, useMotion } from '@well-insight/ui'
 
 const { setTheme } = useTheme()
 const { setMotion } = useMotion()

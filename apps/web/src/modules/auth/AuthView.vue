@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { message, WiButton, WiCard, WiInput, WiInputPassword } from '@well-insight/ui'
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { message, WiButton, WiCard, WiInput, WiInputPassword } from '@well-insight/ui'
 import { useAuthStore } from '../../stores/authStore'
 
 const router = useRouter()
@@ -9,6 +9,7 @@ const route = useRoute()
 const authStore = useAuthStore()
 
 const isLogin = ref(true)
+const username = ref('')
 const email = ref('')
 const password = ref('')
 const displayName = ref('')
@@ -22,13 +23,17 @@ async function submit() {
   submitting.value = true
   try {
     if (isLogin.value) {
-      await authStore.login(email.value, password.value)
+      await authStore.login(username.value, password.value)
       message.success('登录成功')
     } else {
-      await authStore.register(email.value, password.value, displayName.value || email.value.split('@')[0] || email.value)
+      await authStore.register(username.value, email.value, password.value, displayName.value)
       message.success('注册成功')
     }
-    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
+    const requestedRedirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
+    // Only accept same-origin app paths from the query string.
+    const redirect = requestedRedirect.startsWith('/') && !requestedRedirect.startsWith('//')
+      ? requestedRedirect
+      : '/'
     router.replace(redirect)
   } catch (err) {
     message.error(err instanceof Error ? err.message : '操作失败')
@@ -41,24 +46,38 @@ async function submit() {
 <template>
   <div class="auth-page">
     <div class="auth-brand">
-      <div class="brand-logo">WI</div>
+      <div class="brand-logo">
+        WI
+      </div>
       <h1>Well-Insight</h1>
     </div>
 
     <WiCard class="auth-card">
-      <h2 class="auth-title">{{ isLogin ? '欢迎回来' : '创建账号' }}</h2>
-      <p class="auth-subtitle">{{ isLogin ? '登录后继续你的数据探索' : '注册后即可创建可视化项目' }}</p>
+      <h2 class="auth-title">
+        {{ isLogin ? '欢迎回来' : '创建账号' }}
+      </h2>
+      <p class="auth-subtitle">
+        {{ isLogin ? '登录后继续你的数据探索' : '注册后即可创建可视化项目' }}
+      </p>
 
       <form class="auth-form" @submit.prevent="submit">
-        <WiInput v-model="email" type="email" label="邮箱" placeholder="you@example.com" fluid />
+        <WiInput
+          v-model="username"
+          :label="isLogin ? '账户名称 / 邮箱' : '账户名称'"
+          :placeholder="isLogin ? '账户名称或邮箱' : '3-64 位字母、数字、下划线或短横线'"
+          autocomplete="username"
+          fluid
+        />
+        <WiInput v-if="!isLogin" v-model="email" type="email" label="邮箱" placeholder="you@example.com" autocomplete="email" fluid />
         <WiInput
           v-if="!isLogin"
           v-model="displayName"
-          label="昵称"
-          placeholder="你的名字"
+          label="显示名称（可选）"
+          placeholder="不填写则使用账户名称"
+          autocomplete="nickname"
           fluid
         />
-        <WiInputPassword v-model="password" label="密码" placeholder="至少 6 位" fluid />
+        <WiInputPassword v-model="password" label="密码" placeholder="至少 6 位" autocomplete="current-password" fluid />
 
         <WiButton type="submit" fluid :loading="submitting">
           {{ isLogin ? '登录' : '注册' }}

@@ -1,8 +1,8 @@
 import { execFileSync } from 'node:child_process'
 import net from 'node:net'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import process from 'node:process'
+import { fileURLToPath } from 'node:url'
 
 const port = Number(process.argv[2] ?? 3000)
 const scriptDir = path.dirname(fileURLToPath(import.meta.url))

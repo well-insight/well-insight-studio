@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { WiInput, WiInputNumber, WiInputColor, WiSelect, WiScrollbar } from '@well-insight/ui'
 import type { Widget, WidgetType } from '@well-insight/shared'
-import { useWidgetStore, WIDGET_DEFAULTS } from '../../../stores/widgetStore'
+import { WiInput, WiInputColor, WiInputNumber, WiScrollbar, WiSelect } from '@well-insight/ui'
+import { computed } from 'vue'
 import { useDataStore } from '../../../stores/dataStore'
+import { useWidgetStore, WIDGET_DEFAULTS } from '../../../stores/widgetStore'
 
 const store = useWidgetStore()
 const dataStore = useDataStore()
@@ -28,60 +28,62 @@ function update<K extends keyof Widget>(key: K, value: Widget[K]) {
 <template>
   <WiScrollbar class="props-scroll" :native="false" trigger="hover" aria-label="组件属性">
     <div class="props-panel">
-    <div v-if="!widget" class="empty-tip">点击画布组件查看属性</div>
-
-    <template v-else>
-      <div class="prop-group">
-        <WiInput
-          :model-value="widget.title"
-          label="标题"
-          @update:model-value="update('title', String($event))"
-        />
+      <div v-if="!widget" class="empty-tip">
+        点击画布组件查看属性
       </div>
 
-      <div class="prop-group">
-        <WiSelect
-          :model-value="widget.dataSource"
-          label="数据源"
-          :options="dataSourceOptions"
-          fluid
-          @update:model-value="update('dataSource', String($event))"
-        />
-      </div>
-
-      <div class="prop-group">
-        <WiSelect
-          :model-value="widget.type"
-          label="图表类型"
-          :options="typeOptions"
-          fluid
-          @update:model-value="update('type', $event as WidgetType)"
-        />
-      </div>
-
-      <div class="prop-group">
-        <label class="prop-label">主题色</label>
-        <WiInputColor
-          :model-value="widget.color"
-          @update:model-value="update('color', String($event))"
-        />
-      </div>
-
-      <div class="prop-group">
-        <label class="prop-label">位置与尺寸</label>
-        <div class="prop-grid">
-          <WiInputNumber :model-value="widget.x" label="X" :min="0" fluid @update:model-value="update('x', Number($event) || 0)" />
-          <WiInputNumber :model-value="widget.y" label="Y" :min="0" fluid @update:model-value="update('y', Number($event) || 0)" />
-          <WiInputNumber :model-value="widget.width" label="宽" :min="110" fluid @update:model-value="update('width', Number($event) || 110)" />
-          <WiInputNumber :model-value="widget.height" label="高" :min="70" fluid @update:model-value="update('height', Number($event) || 70)" />
+      <template v-else>
+        <div class="prop-group">
+          <WiInput
+            :model-value="widget.title"
+            label="标题"
+            @update:model-value="update('title', String($event))"
+          />
         </div>
-      </div>
 
-      <div class="prop-group meta">
-        <div>ID：{{ widget.id.slice(0, 8) }}…</div>
-        <div>类型：{{ WIDGET_DEFAULTS[widget.type]?.label }}</div>
-      </div>
-    </template>
+        <div class="prop-group">
+          <WiSelect
+            :model-value="widget.dataSource"
+            label="数据源"
+            :options="dataSourceOptions"
+            fluid
+            @update:model-value="update('dataSource', String($event))"
+          />
+        </div>
+
+        <div class="prop-group">
+          <WiSelect
+            :model-value="widget.type"
+            label="图表类型"
+            :options="typeOptions"
+            fluid
+            @update:model-value="update('type', $event as WidgetType)"
+          />
+        </div>
+
+        <div class="prop-group">
+          <label class="prop-label">主题色</label>
+          <WiInputColor
+            :model-value="widget.color"
+            @update:model-value="update('color', String($event))"
+          />
+        </div>
+
+        <div class="prop-group">
+          <label class="prop-label">位置与尺寸</label>
+          <div class="prop-grid">
+            <WiInputNumber :model-value="widget.x" label="X" :min="0" fluid @update:model-value="update('x', Number($event) || 0)" />
+            <WiInputNumber :model-value="widget.y" label="Y" :min="0" fluid @update:model-value="update('y', Number($event) || 0)" />
+            <WiInputNumber :model-value="widget.width" label="宽" :min="110" fluid @update:model-value="update('width', Number($event) || 110)" />
+            <WiInputNumber :model-value="widget.height" label="高" :min="70" fluid @update:model-value="update('height', Number($event) || 70)" />
+          </div>
+        </div>
+
+        <div class="prop-group meta">
+          <div>ID：{{ widget.id.slice(0, 8) }}…</div>
+          <div>类型：{{ WIDGET_DEFAULTS[widget.type]?.label }}</div>
+        </div>
+      </template>
     </div>
   </WiScrollbar>
 </template>

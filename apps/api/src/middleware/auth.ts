@@ -1,7 +1,7 @@
+import type { AppBindings } from '../types/context'
 import { getCookie } from 'hono/cookie'
 import { createMiddleware } from 'hono/factory'
 import { verifyAccessToken } from '../services/auth'
-import type { AppBindings } from '../types/context'
 
 const ACCESS_TOKEN_COOKIE = 'well_access_token'
 

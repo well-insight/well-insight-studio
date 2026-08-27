@@ -1,6 +1,5 @@
-import { json, timestamp, varchar } from 'drizzle-orm/mysql-core'
-import { mysqlTable } from 'drizzle-orm/mysql-core'
 import type { ProjectConfig } from '@well-insight/shared'
+import { json, mysqlTable, timestamp, varchar  } from 'drizzle-orm/mysql-core'
 
 /**
  * 项目表：存储画布完整配置（JSON）。

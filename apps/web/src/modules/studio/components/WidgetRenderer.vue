@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import type { Widget } from '@well-insight/shared'
-import { ref } from 'vue'
-import { Settings, Eye, EyeOff, Lock, Unlock, X, Camera } from '@lucide/vue'
+import { Camera, Eye, EyeOff, Lock, Settings, Unlock, X } from '@lucide/vue'
 import { message } from '@well-insight/ui'
-import { useWidgetStore, WIDGET_DEFAULTS } from '../../../stores/widgetStore'
-import KpiWidget from './widgets/KpiWidget.vue'
-import ChartWidget from './widgets/ChartWidget.vue'
-import TableWidget from './widgets/TableWidget.vue'
+import { ref } from 'vue'
+import { useWidgetStore } from '../../../stores/widgetStore'
 import { exportElementToPNG } from '../utils/export'
+import ChartWidget from './widgets/ChartWidget.vue'
+import KpiWidget from './widgets/KpiWidget.vue'
+import TableWidget from './widgets/TableWidget.vue'
 
 const props = defineProps<{
   widget: Widget
@@ -62,12 +62,12 @@ async function onExportPNG() {
     class="canvas-widget"
     :class="{ selected, 'is-hidden': !widget.visible, 'is-locked': widget.locked }"
     :style="{
-      left: widget.x + 'px',
-      top: widget.y + 'px',
-      width: widget.width + 'px',
-      height: widget.height + 'px',
+      left: `${widget.x }px`,
+      top: `${widget.y }px`,
+      width: `${widget.width }px`,
+      height: `${widget.height }px`,
       zIndex,
-      borderColor: selected ? undefined : widget.color + '55',
+      borderColor: selected ? undefined : `${widget.color }55`,
     }"
     @mousedown="emit('dragStart', $event, widget)"
     @click="store.selectWidget(widget.id)"
@@ -97,14 +97,16 @@ async function onExportPNG() {
       <KpiWidget v-if="widget.type === 'kpi'" :widget="widget" />
       <ChartWidget v-else-if="widget.type === 'bar' || widget.type === 'line' || widget.type === 'pie'" :widget="widget" />
       <TableWidget v-else-if="widget.type === 'table'" :widget="widget" />
-      <div v-else class="widget-unknown">未知类型</div>
+      <div v-else class="widget-unknown">
+        未知类型
+      </div>
     </div>
 
     <div
       v-if="!widget.locked"
       class="resize-handle"
       @mousedown="emit('resizeStart', $event, widget)"
-    ></div>
+    />
   </div>
 </template>
 

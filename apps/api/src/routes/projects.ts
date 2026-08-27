@@ -1,13 +1,12 @@
-import { zValidator } from '@hono/zod-validator'
 import type { ProjectConfig } from '@well-insight/shared'
+import type { AuthContext } from '../middleware/auth'
+import { zValidator } from '@hono/zod-validator'
 import { and, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
-import { projects } from '../db/schema/projects'
 import { datasourceConnections } from '../db/schema/datasourceConnections'
+import { projects } from '../db/schema/projects'
 import { queryCache } from '../db/schema/queryCache'
-import type { AppBindings } from '../types/context'
-import type { AuthContext } from '../middleware/auth'
 import { requireAuth } from '../middleware/auth'
 
 const projectConfigSchema: z.ZodType<ProjectConfig> = z.object({
@@ -49,10 +48,24 @@ export function createProjectsRoutes() {
     if (!project) return c.json({ error: { code: 'NOT_FOUND', message: 'project not found' } }, 404)
 
     const rows = await db
-      .select({ id: datasourceConnections.id, name: datasourceConnections.name, type: datasourceConnections.type, updatedAt: datasourceConnections.updatedAt })
+      .select({
+        id: datasourceConnections.id,
+        name: datasourceConnections.name,
+        type: datasourceConnections.type,
+        hasConnection: datasourceConnections.connectionString,
+        schemaCache: datasourceConnections.schemaCache,
+        updatedAt: datasourceConnections.updatedAt,
+        createdAt: datasourceConnections.createdAt,
+      })
       .from(datasourceConnections)
       .where(eq(datasourceConnections.projectId, id))
-    return c.json({ datasources: rows })
+    return c.json({
+      datasources: rows.map(row => ({
+        ...row,
+        connectionString: null,
+        hasConnection: Boolean(row.hasConnection),
+      })),
+    })
   })
 
   app.post('/', zValidator('json', createSchema), async (c) => {
@@ -71,44 +84,7 @@ export function createProjectsRoutes() {
       name: body.name,
       config,
     })
-    // 每个项目自动创建一个内置样例数据源
-    await db.insert(datasourceConnections).values({
-      id: crypto.randomUUID(),
-      projectId: id,
-      name: '样例数据',
-      type: 'mysql',
-      schemaCache: {
-        orders: {
-          fields: [
-            { name: 'order_id', type: 'number' },
-            { name: 'customer_id', type: 'number' },
-            { name: 'product', type: 'string' },
-            { name: 'category', type: 'string' },
-            { name: 'amount', type: 'number' },
-            { name: 'order_date', type: 'string' },
-            { name: 'status', type: 'string' },
-          ],
-        },
-        customers: {
-          fields: [
-            { name: 'customer_id', type: 'number' },
-            { name: 'name', type: 'string' },
-            { name: 'age', type: 'number' },
-            { name: 'city', type: 'string' },
-            { name: 'signup_date', type: 'string' },
-          ],
-        },
-        products: {
-          fields: [
-            { name: 'product_id', type: 'number' },
-            { name: 'product_name', type: 'string' },
-            { name: 'category', type: 'string' },
-            { name: 'price', type: 'number' },
-            { name: 'stock', type: 'number' },
-          ],
-        },
-      },
-    })
+
     return c.json({ id, name: body.name, config }, 201)
   })
 

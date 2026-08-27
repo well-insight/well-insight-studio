@@ -1,9 +1,9 @@
+import type { ProjectConfig } from '@well-insight/shared'
+import type { DatasourceSummary, ProjectSummary } from '../api/projects'
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
-import type { ProjectConfig, Widget } from '@well-insight/shared'
-import type { ProjectSummary } from '../api/projects'
+import { createProject, getProject, getProjectDatasources, listProjects, updateProject } from '../api/projects'
 import { useWidgetStore } from './widgetStore'
-import { createProject, getProject, updateProject, listProjects, getProjectDatasources, type DatasourceSummary } from '../api/projects'
 
 const AUTO_SAVE_MS = 1000
 
@@ -39,7 +39,7 @@ export const useProjectStore = defineStore('project', () => {
     isDirty.value = true
     autoSaveError.value = null
     if (saveTimer) clearTimeout(saveTimer)
-    saveTimer = setTimeout(() => save(), AUTO_SAVE_MS)
+    saveTimer = setTimeout(save, AUTO_SAVE_MS)
   }
 
   async function save() {

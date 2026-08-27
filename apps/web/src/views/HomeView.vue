@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import type {ProjectSummary} from '../api/projects';
+import { ArrowRight, Clock, FolderKanban, LayoutTemplate, LogOut, Plus, Trash2 } from '@lucide/vue'
+import { message, WiButton, WiCard, WiInput, WiSkeleton, WiTag } from '@well-insight/ui'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { message, WiButton, WiCard, WiInput, WiSkeleton, WiTag } from '@well-insight/ui'
-import { Plus, FolderKanban, LayoutTemplate, Clock, Trash2, ArrowRight, LogOut } from '@lucide/vue'
-import { createProject, deleteProject, listProjects, type ProjectSummary } from '../api/projects'
-import { useProjectStore } from '../stores/projectStore'
+import { createProject, deleteProject, listProjects  } from '../api/projects'
 import { useAuthStore } from '../stores/authStore'
+import { useProjectStore } from '../stores/projectStore'
 
 const router = useRouter()
 const projectStore = useProjectStore()
@@ -82,10 +83,14 @@ function formatDate(iso: string) {
   <div class="home">
     <header class="home-header">
       <div class="brand">
-        <div class="brand-logo">WI</div>
+        <div class="brand-logo">
+          WI
+        </div>
         <div>
           <h1>Well-Insight</h1>
-          <p class="brand-sub">数据可视化工作台</p>
+          <p class="brand-sub">
+            数据可视化工作台
+          </p>
         </div>
       </div>
       <div class="header-actions">
@@ -105,7 +110,9 @@ function formatDate(iso: string) {
       <section class="hero">
         <div class="hero-text">
           <h2>从数据到洞察，只需几分钟</h2>
-          <p class="hero-desc">创建项目、连接数据源、拖拽字段生成可视化组件，一键导出报告。</p>
+          <p class="hero-desc">
+            创建项目、连接数据源、拖拽字段生成可视化组件，一键导出报告。
+          </p>
           <div class="new-project">
             <WiInput v-model="newProjectName" placeholder="输入项目名称开始" @keydown.enter="onCreate" />
             <WiButton :loading="creating" @click="onCreate">
@@ -137,9 +144,13 @@ function formatDate(iso: string) {
         </div>
 
         <div v-else-if="projects.length === 0" class="empty-state">
-          <div class="empty-icon"><FolderKanban :size="32" /></div>
+          <div class="empty-icon">
+            <FolderKanban :size="32" />
+          </div>
           <p>还没有项目</p>
-          <p class="empty-sub">在上方输入名称，立即创建第一个可视化项目。</p>
+          <p class="empty-sub">
+            在上方输入名称，立即创建第一个可视化项目。
+          </p>
         </div>
 
         <div v-else class="project-grid">

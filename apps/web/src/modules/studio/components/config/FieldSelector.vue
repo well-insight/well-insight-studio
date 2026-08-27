@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { Hash, Type } from '@lucide/vue'
+import { computed } from 'vue'
 import { useConfigStore } from '../../../../stores/configStore'
 import { isNumericField } from '../../utils/sampleData'
 
@@ -43,8 +43,12 @@ function toggleVisibility(field: string, e: Event) {
     <div class="selector-header">
       <span>字段列表</span>
       <div class="selector-actions">
-        <button @click="batchToggle(true)">全选</button>
-        <button @click="batchToggle(false)">取消</button>
+        <button @click="batchToggle(true)">
+          全选
+        </button>
+        <button @click="batchToggle(false)">
+          取消
+        </button>
         <span class="selected-count">{{ config.selectedFields.length }}</span>
       </div>
     </div>
@@ -62,7 +66,7 @@ function toggleVisibility(field: string, e: Event) {
           :checked="item.checked"
           @click.stop
           @change="toggle(item.field)"
-        />
+        >
         <component :is="item.isNum ? Hash : Type" :size="12" class="type-icon" />
         <span class="field-name" :title="item.field">{{ item.alias }}</span>
         <span class="field-type">{{ item.isNum ? 'num' : 'str' }}</span>
@@ -71,7 +75,7 @@ function toggleVisibility(field: string, e: Event) {
           :title="item.hidden ? '显示' : '隐藏'"
           @click="toggleVisibility(item.field, $event)"
         >
-          <span class="eye" :class="{ closed: item.hidden }"></span>
+          <span class="eye" :class="{ closed: item.hidden }" />
         </button>
       </div>
     </div>

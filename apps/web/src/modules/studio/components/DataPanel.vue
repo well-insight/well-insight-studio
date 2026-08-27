@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { ChevronRight, Database, GripVertical, Hash, Type } from '@lucide/vue'
 import { WiScrollbar } from '@well-insight/ui'
+import { ref } from 'vue'
 import { useDataStore } from '../../../stores/dataStore'
 import { isNumericField } from '../utils/sampleData'
 
@@ -29,6 +29,15 @@ function onFieldDragStart(e: DragEvent, table: string, field: string) {
     </div>
 
     <WiScrollbar class="data-tree" :native="false" trigger="hover" aria-label="数据表和字段">
+      <div v-if="dataStore.isLoadingSchema" class="data-empty">
+        正在加载真实数据源结构…
+      </div>
+      <div v-else-if="!dataStore.datasourceId" class="data-empty">
+        请先配置并选择真实数据源
+      </div>
+      <div v-else-if="dataStore.tableNames.length === 0" class="data-empty">
+        数据源中暂无可用数据表
+      </div>
       <div v-for="name in dataStore.tableNames" :key="name" class="table-node">
         <button class="table-header" @click="toggleTable(name)">
           <ChevronRight :size="11" class="chevron" :class="{ open: !collapsed[name] }" />
@@ -53,7 +62,9 @@ function onFieldDragStart(e: DragEvent, table: string, field: string) {
       </div>
     </WiScrollbar>
 
-    <div class="panel-footer">拖入画布生成组件</div>
+    <div class="panel-footer">
+      拖入画布生成组件
+    </div>
   </aside>
 </template>
 
@@ -173,6 +184,13 @@ function onFieldDragStart(e: DragEvent, table: string, field: string) {
   padding: 0 3px;
   border-radius: 3px;
   flex-shrink: 0;
+}
+.data-empty {
+  padding: 24px 14px;
+  color: var(--wi-text-secondary, #6a7b98);
+  font-size: 11px;
+  line-height: 1.6;
+  text-align: center;
 }
 .panel-footer {
   padding: 8px 12px;

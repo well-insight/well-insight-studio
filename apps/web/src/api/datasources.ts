@@ -7,6 +7,7 @@ export interface ProjectDatasource {
   name: string
   type: 'mysql' | 'postgres' | 'csv'
   connectionString: string | null
+  hasConnection: boolean
   schemaCache: DatasourceSchema['tables']
   updatedAt: string
   createdAt: string

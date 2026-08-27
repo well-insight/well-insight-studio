@@ -1,5 +1,5 @@
-import { defineStore } from 'pinia'
 import type { Widget, WidgetType } from '@well-insight/shared'
+import { defineStore } from 'pinia'
 
 const MAX_HISTORY = 50
 

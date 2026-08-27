@@ -1,5 +1,5 @@
-import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'node:crypto'
 import type { AppConfig } from '../config/env'
+import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto'
 
 const ENCRYPTED_PREFIX = 'enc:'
 

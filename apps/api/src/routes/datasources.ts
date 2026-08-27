@@ -1,18 +1,18 @@
-import { zValidator } from '@hono/zod-validator'
-import type { DatasourceSchema, FieldOperation, QueryRequest, QueryResponse } from '@well-insight/shared'
-import { and, eq, gte } from 'drizzle-orm'
+import type { DatasourceSchema, QueryRequest, QueryResponse } from '@well-insight/shared'
 import type { Context } from 'hono'
+import type { AuthContext } from '../middleware/auth'
+import { createHash } from 'node:crypto'
+import { zValidator } from '@hono/zod-validator'
+import { and, eq, gte } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { datasourceConnections } from '../db/schema/datasourceConnections'
+
 import { projects } from '../db/schema/projects'
 import { queryCache } from '../db/schema/queryCache'
-import { buildQuery, rowsToTableData } from '../services/query-builder'
+import { requireAuth } from '../middleware/auth'
 import { executeCSVQuery, executeExternalQuery, introspectSchema, testConnection } from '../services/datasource-runner'
 import { decryptConnectionString, encryptConnectionString } from '../services/encryption'
-import type { AuthContext } from '../middleware/auth'
-import { requireAuth } from '../middleware/auth'
-import { createHash } from 'node:crypto'
 
 const CACHE_TTL_MS = 60 * 1000
 
@@ -94,7 +94,8 @@ export function createDatasourcesRoutes() {
       }
     }
 
-    return c.json({ tables: conn.schemaCache } as DatasourceSchema)
+    // 没有连接串时不返回历史样例 schema，工作台只展示真实数据源结构。
+    return c.json({ tables: connectionString ? conn.schemaCache : {} } as DatasourceSchema)
   })
 
   app.post('/:id/test', async (c) => {
@@ -147,10 +148,15 @@ export function createDatasourcesRoutes() {
 
     const schemaCache = (conn.schemaCache ?? {}) as DatasourceSchema['tables']
     const fieldTypes = inferFieldTypes(schemaCache, body.table)
-
-    // 缓存键：hash(datasourceId + table + fieldOps)
     const queryHash = createHash('sha256').update(JSON.stringify({ id, table: body.table, fieldOps: body.fieldOps })).digest('hex')
     const now = new Date()
+
+    const [cached] = await db
+      .select({ resultData: queryCache.resultData })
+      .from(queryCache)
+      .where(and(eq(queryCache.datasourceId, id), eq(queryCache.queryHash, queryHash), gte(queryCache.expiresAt, now)))
+      .limit(1)
+    if (cached) return c.json(cached.resultData as QueryResponse)
 
     // 配置了外部连接串：走真实数据库查询
     if (connectionString && conn.type !== 'csv') {
@@ -189,66 +195,12 @@ export function createDatasourcesRoutes() {
       }
     }
 
-    const sampleTables: DatasourceSchema['tables'] = {
-      orders: {
-        fields: [
-          { name: 'order_id', type: 'number' },
-          { name: 'customer_id', type: 'number' },
-          { name: 'product', type: 'string' },
-          { name: 'category', type: 'string' },
-          { name: 'amount', type: 'number' },
-          { name: 'order_date', type: 'string' },
-          { name: 'status', type: 'string' },
-        ],
-      },
-      customers: {
-        fields: [
-          { name: 'customer_id', type: 'number' },
-          { name: 'name', type: 'string' },
-          { name: 'age', type: 'number' },
-          { name: 'city', type: 'string' },
-          { name: 'signup_date', type: 'string' },
-        ],
-      },
-      products: {
-        fields: [
-          { name: 'product_id', type: 'number' },
-          { name: 'product_name', type: 'string' },
-          { name: 'category', type: 'string' },
-          { name: 'price', type: 'number' },
-          { name: 'stock', type: 'number' },
-        ],
-      },
+    // 没有连接串时不能返回内置样例，避免工作台误显示虚构数据。
+    if (!connectionString) {
+      return c.json({ error: { code: 'NO_CONNECTION', message: '数据源未配置连接信息，请先配置真实数据库连接串' } }, 400)
     }
 
-    const plan = buildQuery(body.table, body, fieldTypes)
-    void plan
-
-    // 检查缓存
-    const [cached] = await db
-      .select({ resultData: queryCache.resultData })
-      .from(queryCache)
-      .where(and(eq(queryCache.datasourceId, id), eq(queryCache.queryHash, queryHash), gte(queryCache.expiresAt, now)))
-      .limit(1)
-
-    if (cached) {
-      return c.json(cached.resultData as QueryResponse)
-    }
-
-    // 无外部连接时走内置样例数据
-    const { rows, fields } = executeSampleQuery(body.table, body, sampleTables)
-    const result: QueryResponse = rowsToTableData(fields, rows)
-
-    // 写入缓存
-    await db.insert(queryCache).values({
-      id: crypto.randomUUID(),
-      datasourceId: id,
-      queryHash,
-      resultData: result,
-      expiresAt: new Date(Date.now() + CACHE_TTL_MS),
-    })
-
-    return c.json(result)
+    return c.json({ error: { code: 'NO_CONNECTION', message: '数据源未配置真实连接信息' } }, 400)
   })
 
   app.post('/', zValidator('json', createDatasourceSchema), async (c) => {
@@ -299,7 +251,7 @@ export function createDatasourcesRoutes() {
     })
 
     const [row] = await db.select().from(datasourceConnections).where(eq(datasourceConnections.id, id)).limit(1)
-    return c.json({ id: row!.id, projectId: row!.projectId, name: row!.name, type: row!.type, connectionString: null, schemaCache: row!.schemaCache }, 201)
+    return c.json({ id: row!.id, projectId: row!.projectId, name: row!.name, type: row!.type, connectionString: null, hasConnection: Boolean(row!.connectionString), schemaCache: row!.schemaCache }, 201)
   })
 
   app.put('/:id', zValidator('json', updateDatasourceSchema), async (c) => {
@@ -347,7 +299,7 @@ export function createDatasourcesRoutes() {
 
     await db.update(datasourceConnections).set(patch).where(eq(datasourceConnections.id, id))
     const [row] = await db.select().from(datasourceConnections).where(eq(datasourceConnections.id, id)).limit(1)
-    return c.json({ id: row!.id, projectId: row!.projectId, name: row!.name, type: row!.type, connectionString: null, schemaCache: row!.schemaCache })
+    return c.json({ id: row!.id, projectId: row!.projectId, name: row!.name, type: row!.type, connectionString: null, hasConnection: Boolean(row!.connectionString), schemaCache: row!.schemaCache })
   })
 
   app.delete('/:id', async (c) => {
@@ -373,8 +325,8 @@ export function createDatasourcesRoutes() {
   return app
 }
 
-/** 样例内存查询：用 JS 过滤/排序/聚合，语义与前端 applyFieldOps 一致 */
-function executeSampleQuery(
+/* obsolete sample-query implementation removed */
+/* function executeSampleQuery(
   tableName: string,
   request: QueryRequest,
   schema: DatasourceSchema['tables'],
@@ -502,3 +454,4 @@ function getSampleRows(tableName: string): Record<string, unknown>[] {
   }
   return []
 }
+*/

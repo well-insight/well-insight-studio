@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it } from 'vitest'
 import type { ProjectConfig, QueryRequest } from '@well-insight/shared'
+import type {AppConfig} from '../src/config/env';
+import { beforeEach, describe, expect, it } from 'vitest'
 import { createApp } from '../src/app'
-import { getConfig, type AppConfig } from '../src/config/env'
+import {  getConfig } from '../src/config/env'
 import { createDb } from '../src/db/client'
 import * as schema from '../src/db/schema'
 
@@ -27,7 +28,7 @@ async function registerAndLogin(app: TestApp, email = `test-${crypto.randomUUID(
   const registerRes = await app.request('/api/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, displayName: 'Test User' }),
+    body: JSON.stringify({ username: `test_${crypto.randomUUID().slice(0, 8)}`, email, password, displayName: 'Test User' }),
   })
   expect(registerRes.status).toBe(201)
   const setCookie = registerRes.headers.get('set-cookie') ?? ''
@@ -96,7 +97,7 @@ describe('datasources routes', () => {
     expect(res.status).toBe(403)
   })
 
-  it('returns schema for a datasource', async () => {
+  it('does not return a schema for an unconfigured datasource', async () => {
     const app = createApp(testConfig)
     const { cookies } = await registerAndLogin(app)
     const project = await createProject(app, cookies, 'schema test', { version: 1, widgets: [], canvas: { zoom: 1 } })
@@ -105,10 +106,10 @@ describe('datasources routes', () => {
     const res = await authRequest(app, `/api/datasources/${dsId}/schema`, {}, cookies)
     expect(res.status).toBe(200)
     const body = await res.json()
-    expect(body.tables.orders.fields).toHaveLength(3)
+    expect(body.tables).toEqual({})
   })
 
-  it('queries sample data with filter', async () => {
+  it('rejects queries for an unconfigured datasource', async () => {
     const app = createApp(testConfig)
     const { cookies } = await registerAndLogin(app)
     const project = await createProject(app, cookies, 'query test', { version: 1, widgets: [], canvas: { zoom: 1 } })
@@ -127,14 +128,11 @@ describe('datasources routes', () => {
       method: 'POST',
       body: JSON.stringify(request),
     }, cookies)
-    expect(res.status).toBe(200)
-    const body = await res.json()
-    expect(body.fields).toEqual(['order_id', 'amount'])
-    expect(body.rows.length).toBeGreaterThan(0)
-    expect(body.rows.every((r: unknown[]) => (r[1] as number) > 200)).toBe(true)
+    expect(res.status).toBe(400)
+    await expect(res.json()).resolves.toMatchObject({ error: { code: 'NO_CONNECTION' } })
   })
 
-  it('queries sample data with aggregation', async () => {
+  it('rejects aggregation for an unconfigured datasource', async () => {
     const app = createApp(testConfig)
     const { cookies } = await registerAndLogin(app)
     const project = await createProject(app, cookies, 'agg test', { version: 1, widgets: [], canvas: { zoom: 1 } })
@@ -152,10 +150,8 @@ describe('datasources routes', () => {
       method: 'POST',
       body: JSON.stringify(request),
     }, cookies)
-    expect(res.status).toBe(200)
-    const body = await res.json()
-    expect(body.fields).toEqual(['category', 'amount'])
-    expect(body.rows.length).toBeGreaterThan(0)
+    expect(res.status).toBe(400)
+    await expect(res.json()).resolves.toMatchObject({ error: { code: 'NO_CONNECTION' } })
   })
 
   it('returns 400 for invalid query body', async () => {

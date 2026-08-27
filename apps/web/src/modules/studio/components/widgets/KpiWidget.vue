@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { Widget } from '@well-insight/shared'
+import { computed } from 'vue'
 import { useDataStore } from '../../../../stores/dataStore'
 import { useWidgetData } from '../../composables/useWidgetData'
 
@@ -46,7 +46,9 @@ const items = computed<KpiItem[]>(() => {
 </script>
 
 <template>
-  <div v-if="isLoading" class="widget-empty">加载数据中…</div>
+  <div v-if="isLoading" class="widget-empty">
+    加载数据中…
+  </div>
   <div v-else-if="items.length" class="kpi-grid">
     <div
       v-for="item in items"
@@ -54,11 +56,17 @@ const items = computed<KpiItem[]>(() => {
       class="kpi-item"
       :style="{ borderLeftColor: widget.color }"
     >
-      <div class="kpi-value" :style="{ color: widget.color }">{{ item.value }}</div>
-      <div class="kpi-label">{{ item.label }}</div>
+      <div class="kpi-value" :style="{ color: widget.color }">
+        {{ item.value }}
+      </div>
+      <div class="kpi-label">
+        {{ item.label }}
+      </div>
     </div>
   </div>
-  <div v-else class="widget-empty">无数据，双击配置字段</div>
+  <div v-else class="widget-empty">
+    无数据，双击配置字段
+  </div>
 </template>
 
 <style scoped>

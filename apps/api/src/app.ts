@@ -1,16 +1,16 @@
+import type { AppConfig } from './config/env'
+import type { AppBindings } from './types/context'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { getConfig } from './config/env'
-import type { AppConfig } from './config/env'
+import { createDb } from './db/client'
 import { errorHandler } from './middleware/error-handler'
 import { requestId } from './middleware/request-id'
+import { createAuthRoutes } from './routes/auth'
+import { createDatasourcesRoutes } from './routes/datasources'
 import { createDocsRoutes } from './routes/docs'
 import { createHealthRoutes } from './routes/health'
 import { createProjectsRoutes } from './routes/projects'
-import { createDatasourcesRoutes } from './routes/datasources'
-import { createAuthRoutes } from './routes/auth'
-import type { AppBindings } from './types/context'
-import { createDb } from './db/client'
 
 export function createApp(config?: AppConfig, dbFactory = createDb) {
   const app = new Hono<AppBindings>()

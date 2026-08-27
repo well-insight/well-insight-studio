@@ -1,6 +1,7 @@
-import { compare, hash } from 'bcrypt'
-import jwt, { type SignOptions } from 'jsonwebtoken'
+import type {SignOptions} from 'jsonwebtoken';
 import type { AppConfig } from '../config/env'
+import { compare, hash } from 'bcrypt'
+import jwt from 'jsonwebtoken'
 
 export interface TokenPayload {
   userId: string

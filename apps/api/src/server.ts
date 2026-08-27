@@ -1,7 +1,6 @@
 import { execFile } from 'node:child_process'
-import { promisify } from 'node:util'
 import { fileURLToPath } from 'node:url'
-import path from 'node:path'
+import { promisify } from 'node:util'
 import { serve } from '@hono/node-server'
 import { createApp } from './app'
 import { getConfig } from './config/env'

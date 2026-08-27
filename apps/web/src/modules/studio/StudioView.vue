@@ -1,20 +1,34 @@
 <script setup lang="ts">
+import type { ProjectConfig, Widget } from '@well-insight/shared'
+import { Cloud, FolderOpen, Moon, Sun, Trash2 } from '@lucide/vue'
+import {
+  message,
+  toast,
+  useTheme,
+  WiButton,
+  WiInput,
+  WiLayout,
+  WiLayoutContent,
+  WiLayoutHeader,
+  WiLayoutSider,
+  WiSelect,
+  WiTabs,
+  WiTag,
+  WiToolbar,
+} from '@well-insight/ui'
 import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { message, toast, WiButton, WiInput, WiSelect, WiTag, WiTabs, WiToolbar, useTheme } from '@well-insight/ui'
-import { Download, Upload, Plus, FolderOpen, Save, Cloud, Database, Trash2, FileText, Presentation, Sun, Moon } from '@lucide/vue'
-import type { ProjectConfig, Widget } from '@well-insight/shared'
-import { useWidgetStore } from '../../stores/widgetStore'
-import { useConfigStore } from '../../stores/configStore'
-import { useProjectStore } from '../../stores/projectStore'
-import { useDataStore } from '../../stores/dataStore'
-
-import DataPanel from './components/DataPanel.vue'
-import CanvasToolbar from './components/CanvasToolbar.vue'
-import CanvasContainer from './components/CanvasContainer.vue'
-import PropsPanel from './components/PropsPanel.vue'
-import LayersPanel from './components/LayersPanel.vue'
 import { deleteProject, getProjectDatasources } from '../../api/projects'
+import { useConfigStore } from '../../stores/configStore'
+import { useDataStore } from '../../stores/dataStore'
+import { useProjectStore } from '../../stores/projectStore'
+
+import { useWidgetStore } from '../../stores/widgetStore'
+import CanvasContainer from './components/CanvasContainer.vue'
+import CanvasToolbar from './components/CanvasToolbar.vue'
+import DataPanel from './components/DataPanel.vue'
+import LayersPanel from './components/LayersPanel.vue'
+import PropsPanel from './components/PropsPanel.vue'
 import { exportElementsToPDF } from './utils/export'
 
 const ConfigModal = defineAsyncComponent(() => import('./components/config/ConfigModal.vue'))
@@ -90,9 +104,7 @@ async function loadProject(id: string) {
   canvasLoading.value = true
   try {
     await projectStore.load(id)
-    if (projectStore.currentDatasourceId) {
-      await dataStore.loadDatasource(projectStore.currentDatasourceId)
-    }
+    await dataStore.loadDatasource(projectStore.currentDatasourceId)
     projectMenuOpen.value = false
     message.success(`已加载项目「${projectStore.projectName}」`)
   } finally {
@@ -176,10 +188,10 @@ async function refreshDatasources() {
   if (!projectStore.currentId) return
   const datasources = await getProjectDatasources(projectStore.currentId)
   projectStore.currentDatasources = datasources
-  if (!datasources.find(d => d.id === projectStore.currentDatasourceId)) {
+  if (!datasources.some(d => d.id === projectStore.currentDatasourceId)) {
     projectStore.currentDatasourceId = datasources[0]?.id ?? null
-    if (projectStore.currentDatasourceId) await dataStore.loadDatasource(projectStore.currentDatasourceId)
   }
+  await dataStore.loadDatasource(projectStore.currentDatasourceId)
 }
 
 async function onSelectDatasource(id: string) {
@@ -284,255 +296,302 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
-  <div class="studio-view">
-    <WiToolbar class="studio-header">
-      <template #start>
-      <div class="logo-area">
-        <div class="logo-icon">WI</div>
-        <span class="logo-text">Well-Insight Studio</span>
-      </div>
-      </template>
+  <WiLayout class="studio-view" :native-scrollbar="false">
+    <WiLayoutHeader class="studio-header">
+      <WiToolbar>
+        <template #start>
+          <div class="logo-area">
+            <div class="logo-icon">
+              WI
+            </div>
+            <span class="logo-text">Well-Insight Studio</span>
+          </div>
+        </template>
 
-      <template #center>
-      <div class="project-bar">
-        <div class="project-menu-wrapper">
-          <WiButton
-            severity="secondary"
-            text
-            size="small"
-            @click="toggleMenu"
-          >
-            <FolderOpen :size="12" />
-            <span>{{ projectStore.currentId ? projectStore.projectName : '选择项目' }}</span>
-          </WiButton>
-          <div v-if="projectMenuOpen" class="project-dropdown">
-            <div class="dropdown-section">
-              <div class="dropdown-title">新建项目</div>
-              <div class="new-project-row">
-                <WiInput v-model="newProjectName" placeholder="项目名称" size="small" @keydown.enter="createProject" />
-                <WiButton icon="plus" size="small" @click="createProject" />
+        <template #center>
+          <div class="project-bar">
+            <div class="project-menu-wrapper">
+              <WiButton
+                severity="secondary"
+                text
+                size="small"
+                @click="toggleMenu"
+              >
+                <FolderOpen :size="12" />
+                <span>{{ projectStore.currentId ? projectStore.projectName : '选择项目' }}</span>
+              </WiButton>
+              <div v-if="projectMenuOpen" class="project-dropdown">
+                <div class="dropdown-section">
+                  <div class="dropdown-title">
+                    新建项目
+                  </div>
+                  <div class="new-project-row">
+                    <WiInput v-model="newProjectName" placeholder="项目名称" size="small" @keydown.enter="createProject" />
+                    <WiButton icon="plus" size="small" @click="createProject" />
+                  </div>
+                </div>
+                <div class="dropdown-section">
+                  <div class="dropdown-title">
+                    打开项目
+                  </div>
+                  <div v-if="projectStore.projects.length === 0" class="dropdown-empty">
+                    暂无项目
+                  </div>
+                  <button
+                    v-for="p in projectStore.projects"
+                    :key="p.id"
+                    class="project-item"
+                    :class="{ active: projectStore.currentId === p.id }"
+                    @click="loadProject(p.id)"
+                  >
+                    <span class="project-name">{{ p.name }}</span>
+                    <span class="project-actions">
+                      <span class="project-date">{{ new Date(p.updatedAt).toLocaleDateString() }}</span>
+                      <WiButton
+                        severity="danger"
+                        text
+                        size="small"
+                        aria-label="删除项目"
+                        @click.stop="onDeleteProject(p.id, p.name)"
+                      >
+                        <Trash2 :size="10" />
+                      </WiButton>
+                    </span>
+                  </button>
+                </div>
               </div>
             </div>
-            <div class="dropdown-section">
-              <div class="dropdown-title">打开项目</div>
-              <div v-if="projectStore.projects.length === 0" class="dropdown-empty">暂无项目</div>
-              <button
-                v-for="p in projectStore.projects"
-                :key="p.id"
-                class="project-item"
-                :class="{ active: projectStore.currentId === p.id }"
-                @click="loadProject(p.id)"
+
+            <div class="project-name-editor">
+              <WiInput
+                v-if="editingName"
+                ref="nameInput"
+                v-model="projectStore.projectName"
+                size="small"
+                @blur="finishRename"
+                @keydown="onRenameKeydown"
+              />
+              <WiButton
+                v-else
+                severity="secondary"
+                text
+                size="small"
+                class="rename-btn"
+                @click="startRename"
               >
-                <span class="project-name">{{ p.name }}</span>
-                <span class="project-actions">
-                  <span class="project-date">{{ new Date(p.updatedAt).toLocaleDateString() }}</span>
-                  <WiButton
-                    severity="danger"
-                    text
-                    size="small"
-                    aria-label="删除项目"
-                    @click.stop="onDeleteProject(p.id, p.name)"
-                  >
-                    <Trash2 :size="10" />
-                  </WiButton>
-                </span>
-              </button>
+                <span v-if="projectStore.currentId">{{ projectStore.projectName }}</span>
+                <span v-else class="unsaved">未保存项目</span>
+              </WiButton>
+            </div>
+
+            <WiSelect
+              v-if="projectStore.currentDatasources.length > 0"
+              class="datasource-selector"
+              :model-value="projectStore.currentDatasourceId ?? undefined"
+              :options="datasourceOptions"
+              placeholder="选择数据源"
+              size="small"
+              @update:model-value="id => id && onSwitchDatasource(id as string)"
+            />
+
+            <div class="save-status">
+              <Cloud :size="11" />
+              <WiTag
+                v-if="projectStore.isLoading"
+                value="保存中"
+                severity="info"
+                class="save-tag"
+              />
+              <WiTag
+                v-else-if="projectStore.autoSaveError"
+                value="保存失败"
+                severity="danger"
+                class="save-tag"
+                :title="projectStore.autoSaveError"
+              />
+              <WiTag
+                v-else-if="projectStore.currentId && projectStore.isDirty"
+                value="待保存"
+                severity="warn"
+                class="save-tag"
+              />
+              <WiTag
+                v-else-if="projectStore.currentId"
+                value="已保存"
+                severity="success"
+                class="save-tag"
+              />
+              <WiTag
+                v-else
+                value="未保存"
+                severity="secondary"
+                class="save-tag"
+              />
             </div>
           </div>
-        </div>
+        </template>
 
-        <div class="project-name-editor">
-          <WiInput
-            v-if="editingName"
-            ref="nameInput"
-            v-model="projectStore.projectName"
-            size="small"
-            @blur="finishRename"
-            @keydown="onRenameKeydown"
-          />
-          <WiButton
-            v-else
-            severity="secondary"
-            text
-            size="small"
-            class="rename-btn"
-            @click="startRename"
-          >
-            <span v-if="projectStore.currentId">{{ projectStore.projectName }}</span>
-            <span v-else class="unsaved">未保存项目</span>
-          </WiButton>
-        </div>
+        <template #end>
+          <div class="header-actions">
+            <WiButton
+              severity="secondary"
+              size="small"
+              :disabled="!projectStore.currentId"
+              @click="datasourceManagerVisible = true"
+            >
+              数据源
+            </WiButton>
+            <WiButton
+              severity="secondary"
+              size="small"
+              :disabled="!projectStore.currentId"
+              :loading="projectStore.isLoading"
+              @click="manualSave"
+            >
+              保存
+            </WiButton>
+            <WiButton
+              severity="secondary"
+              size="small"
+              @click="importInput?.click()"
+            >
+              导入
+            </WiButton>
+            <WiButton
+              severity="secondary"
+              size="small"
+              @click="exportProject"
+            >
+              JSON
+            </WiButton>
+            <WiButton
+              severity="secondary"
+              size="small"
+              @click="exportProjectPDF"
+            >
+              PDF
+            </WiButton>
+            <WiButton
+              severity="secondary"
+              size="small"
+              :disabled="!projectStore.currentId"
+              @click="openPresent"
+            >
+              大屏
+            </WiButton>
+            <WiButton
+              severity="secondary"
+              text
+              size="small"
+              @click="returnToProjectList"
+            >
+              返回
+            </WiButton>
+            <WiButton
+              severity="secondary"
+              text
+              size="small"
+              aria-label="切换主题"
+              @click="toggleTheme"
+            >
+              <Sun v-if="isDark" :size="12" />
+              <Moon v-else :size="12" />
+            </WiButton>
+            <input ref="importInput" type="file" accept="application/json,.json" hidden @change="onImportFile">
+          </div>
+        </template>
+      </WiToolbar>
+    </WiLayoutHeader>
 
-        <WiSelect
-          v-if="projectStore.currentDatasources.length > 0"
-          class="datasource-selector"
-          :model-value="projectStore.currentDatasourceId ?? undefined"
-          :options="datasourceOptions"
-          placeholder="选择数据源"
-          size="small"
-          @update:model-value="id => id && onSwitchDatasource(id as string)"
-        />
-
-        <div class="save-status">
-          <Cloud :size="11" />
-          <WiTag
-            v-if="projectStore.isLoading"
-            value="保存中"
-            severity="info"
-            class="save-tag"
-          />
-          <WiTag
-            v-else-if="projectStore.autoSaveError"
-            :value="'保存失败'"
-            severity="danger"
-            class="save-tag"
-            :title="projectStore.autoSaveError"
-          />
-          <WiTag
-            v-else-if="projectStore.currentId && projectStore.isDirty"
-            value="待保存"
-            severity="warn"
-            class="save-tag"
-          />
-          <WiTag
-            v-else-if="projectStore.currentId"
-            value="已保存"
-            severity="success"
-            class="save-tag"
-          />
-          <WiTag
-            v-else
-            value="未保存"
-            severity="secondary"
-            class="save-tag"
-          />
-        </div>
-      </div>
-      </template>
-
-      <template #end>
-      <div class="header-actions">
-        <WiButton
-          severity="secondary"
-          size="small"
-          :disabled="!projectStore.currentId"
-          @click="datasourceManagerVisible = true"
+    <WiLayoutContent
+      class="studio-body"
+      :native-scrollbar="false"
+      :content-style="{ overflow: 'hidden' }"
+    >
+      <WiLayout
+        class="studio-main-layout"
+        :has-sider="true"
+        sider-placement="right"
+      >
+        <!-- `sider-placement="right"` reverses the flex row, so declare the
+             right panel first and the data panel last. -->
+        <WiLayoutSider
+          class="right-panel"
+          width="clamp(220px, 24vw, 300px)"
+          :native-scrollbar="false"
+          :content-style="{ overflow: 'hidden' }"
         >
-          数据源
-        </WiButton>
-        <WiButton
-          severity="secondary"
-          size="small"
-          :disabled="!projectStore.currentId"
-          :loading="projectStore.isLoading"
-          @click="manualSave"
-        >
-          保存
-        </WiButton>
-        <WiButton
-          severity="secondary"
-          size="small"
-          @click="importInput?.click()"
-        >
-          导入
-        </WiButton>
-        <WiButton
-          severity="secondary"
-          size="small"
-          @click="exportProject"
-        >
-          JSON
-        </WiButton>
-        <WiButton
-          severity="secondary"
-          size="small"
-          @click="exportProjectPDF"
-        >
-          PDF
-        </WiButton>
-        <WiButton
-          severity="secondary"
-          size="small"
-          :disabled="!projectStore.currentId"
-          @click="openPresent"
-        >
-          大屏
-        </WiButton>
-        <WiButton
-          severity="secondary"
-          text
-          size="small"
-          @click="returnToProjectList"
-        >
-          返回
-        </WiButton>
-        <WiButton
-          severity="secondary"
-          text
-          size="small"
-          aria-label="切换主题"
-          @click="toggleTheme"
-        >
-          <Sun v-if="isDark" :size="12" />
-          <Moon v-else :size="12" />
-        </WiButton>
-        <input ref="importInput" type="file" accept="application/json,.json" hidden @change="onImportFile" />
-      </div>
-      </template>
-    </WiToolbar>
+          <WiTabs v-model="rightTab" :tabs="rightTabs" type="line" class="right-tabs">
+            <template #default>
+              <div class="right-body">
+                <PropsPanel v-show="rightTab === 'props'" />
+                <LayersPanel v-show="rightTab === 'layers'" />
+              </div>
+            </template>
+          </WiTabs>
+        </WiLayoutSider>
 
-    <div class="studio-body">
-      <DataPanel />
+        <WiLayoutContent
+          class="canvas-wrapper"
+          :content-style="{ overflow: 'hidden' }"
+        >
+          <CanvasToolbar :zoom="projectStore.canvasZoom" :loading="canvasLoading" @zoom="onZoom" @refresh="refreshCanvas" />
+          <CanvasContainer ref="canvasRef" :zoom="projectStore.canvasZoom" :loading="canvasLoading" @update-zoom="v => { projectStore.canvasZoom = v; projectStore.markDirty() }" @configure="onConfigure" />
+        </WiLayoutContent>
 
-      <main class="canvas-wrapper">
-        <CanvasToolbar :zoom="projectStore.canvasZoom" :loading="canvasLoading" @zoom="onZoom" @refresh="refreshCanvas" />
-        <CanvasContainer ref="canvasRef" :zoom="projectStore.canvasZoom" :loading="canvasLoading" @update-zoom="v => { projectStore.canvasZoom = v; projectStore.markDirty() }" @configure="onConfigure" />
-      </main>
+        <WiLayoutSider
+          class="data-sider"
+          :width="200"
+          :native-scrollbar="false"
+          :content-style="{ overflow: 'hidden' }"
+        >
+          <DataPanel />
+        </WiLayoutSider>
+      </WiLayout>
+    </WiLayoutContent>
 
-      <ConfigModal ref="modalRef" />
+    <ConfigModal ref="modalRef" />
 
-      <DatasourceManager
-        v-model:visible="datasourceManagerVisible"
-        :project-id="projectStore.currentId"
-        :datasources="projectStore.currentDatasources"
-        :current-id="projectStore.currentDatasourceId"
-        @close="datasourceManagerVisible = false"
-        @refresh="refreshDatasources"
-        @select="onSelectDatasource"
-      />
-
-      <aside class="right-panel">
-        <WiTabs v-model="rightTab" :tabs="rightTabs" type="line" class="right-tabs">
-          <template #default>
-            <div class="right-body">
-              <PropsPanel v-show="rightTab === 'props'" />
-              <LayersPanel v-show="rightTab === 'layers'" />
-            </div>
-          </template>
-        </WiTabs>
-      </aside>
-    </div>
+    <DatasourceManager
+      v-model:visible="datasourceManagerVisible"
+      :project-id="projectStore.currentId"
+      :datasources="projectStore.currentDatasources"
+      :current-id="projectStore.currentDatasourceId"
+      @close="datasourceManagerVisible = false"
+      @refresh="refreshDatasources"
+      @select="onSelectDatasource"
+    />
 
     <div v-if="projectStore.autoSaveError" class="error-banner" role="alert">
       <span class="error-dot" /> 保存失败：{{ projectStore.autoSaveError }}
-      <WiButton severity="danger" text size="small" @click="manualSave">重试</WiButton>
+      <WiButton severity="danger" text size="small" @click="manualSave">
+        重试
+      </WiButton>
     </div>
 
     <div v-if="dataStore.schemaError" class="error-banner" role="alert">
       <span class="error-dot" /> 数据源加载失败：{{ dataStore.schemaError }}
-      <WiButton severity="danger" text size="small" @click="onSwitchDatasource(projectStore.currentDatasourceId ?? '')">重试</WiButton>
-      <WiButton severity="secondary" text size="small" @click="dataStore.schemaError = null">忽略</WiButton>
+      <WiButton severity="danger" text size="small" @click="onSwitchDatasource(projectStore.currentDatasourceId ?? '')">
+        重试
+      </WiButton>
+      <WiButton severity="secondary" text size="small" @click="dataStore.schemaError = null">
+        忽略
+      </WiButton>
     </div>
-  </div>
+  </WiLayout>
 </template>
 
 <style scoped>
 .studio-view {
   height: 100vh;
-  display: flex;
-  flex-direction: column;
+  min-height: 0;
   overflow: hidden;
   user-select: none;
+}
+.studio-view :deep(.wi-layout__scroll),
+.studio-body :deep(.wi-layout__scroll),
+.studio-main-layout :deep(.wi-layout__scroll) {
+  min-height: 0;
 }
 .studio-header {
   min-height: 52px;
@@ -872,9 +931,22 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 }
 .studio-body {
   flex: 1;
-  display: flex;
-  overflow: hidden;
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.studio-main-layout {
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+.data-sider {
+  flex-shrink: 0;
+  min-height: 0;
+}
+.data-sider :deep(.wi-layout-sider__scroll),
+.right-panel :deep(.wi-layout-sider__scroll) {
+  height: 100%;
 }
 .canvas-wrapper {
   flex: 1;
@@ -884,13 +956,10 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   min-height: 0;
 }
 .right-panel {
-  width: clamp(220px, 24vw, 300px);
   flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
+  min-height: 0;
   border-left: 1px solid var(--wi-color-border);
   background: var(--wi-color-surface);
-  min-height: 0;
 }
 .right-tabs {
   flex: 1;
@@ -964,6 +1033,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   }
   .right-panel {
     width: 210px;
+    max-width: 210px;
   }
   .header-actions :deep(.wi-button:nth-child(n + 4):nth-child(-n + 6)) {
     display: none;

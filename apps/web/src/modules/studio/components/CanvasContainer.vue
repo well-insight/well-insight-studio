@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
 import { message, toast, WiProgressSpinner, WiScrollbar } from '@well-insight/ui'
-import { useWidgetStore } from '../../../stores/widgetStore'
-import { useDataStore } from '../../../stores/dataStore'
-import { isNumericField } from '../utils/sampleData'
+import { computed, ref } from 'vue'
 import { useDrag } from '../../../composables/useDrag'
 import { useResize } from '../../../composables/useResize'
+import { useDataStore } from '../../../stores/dataStore'
+import { useWidgetStore } from '../../../stores/widgetStore'
+import { isNumericField } from '../utils/sampleData'
 import WidgetRenderer from './WidgetRenderer.vue'
 
 const props = defineProps<{
@@ -66,29 +66,33 @@ function onDrop(e: DragEvent) {
     <WiScrollbar class="canvas-scrollbar" :always="true" aria-label="画布">
       <div
         ref="containerRef"
-      class="canvas-container"
-      :class="{ 'drag-over': dragOver }"
-      :style="{ transform: `scale(${zoom})` }"
-      @dragover.prevent="dragOver = true"
-      @dragleave="dragOver = false"
-      @drop.prevent="onDrop"
-      @mousedown.self="store.selectWidget(null)"
-    >
-      <div v-if="store.widgets.length === 0" class="canvas-empty">
-        <div class="hint">拖拽左侧字段到此处</div>
-        <div class="sub-hint">或点击工具栏添加组件</div>
-      </div>
+        class="canvas-container"
+        :class="{ 'drag-over': dragOver }"
+        :style="{ transform: `scale(${zoom})` }"
+        @dragover.prevent="dragOver = true"
+        @dragleave="dragOver = false"
+        @drop.prevent="onDrop"
+        @mousedown.self="store.selectWidget(null)"
+      >
+        <div v-if="store.widgets.length === 0" class="canvas-empty">
+          <div class="hint">
+            拖拽左侧字段到此处
+          </div>
+          <div class="sub-hint">
+            或点击工具栏添加组件
+          </div>
+        </div>
 
-      <WidgetRenderer
-        v-for="(widget, idx) in store.widgets"
-        :key="widget.id"
-        :widget="widget"
-        :selected="store.selectedId === widget.id"
-        :z-index="idx + 1"
-        @configure="emit('configure', $event)"
-        @drag-start="startDrag"
-        @resize-start="startResize"
-      />
+        <WidgetRenderer
+          v-for="(widget, idx) in store.widgets"
+          :key="widget.id"
+          :widget="widget"
+          :selected="store.selectedId === widget.id"
+          :z-index="idx + 1"
+          @configure="emit('configure', $event)"
+          @drag-start="startDrag"
+          @resize-start="startResize"
+        />
       </div>
     </WiScrollbar>
     <div v-if="loading" class="canvas-loading" aria-live="polite">

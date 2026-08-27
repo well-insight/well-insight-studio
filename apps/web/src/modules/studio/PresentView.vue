@@ -1,14 +1,14 @@
 <script setup lang="ts">
+import type { ProjectConfig, Widget } from '@well-insight/shared'
+import { Fullscreen, Minimize, RefreshCw } from '@lucide/vue'
+import { message, WiButton, WiProgressSpinner } from '@well-insight/ui'
 import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { message, WiButton, WiProgressSpinner, WiSkeleton } from '@well-insight/ui'
-import { RefreshCw, Fullscreen, Minimize } from '@lucide/vue'
-import type { ProjectConfig, Widget } from '@well-insight/shared'
 import { getProject, getProjectDatasources } from '../../api/projects'
 import { useDataStore } from '../../stores/dataStore'
 import { useProjectStore } from '../../stores/projectStore'
-import KpiWidget from './components/widgets/KpiWidget.vue'
 import ChartWidget from './components/widgets/ChartWidget.vue'
+import KpiWidget from './components/widgets/KpiWidget.vue'
 import TableWidget from './components/widgets/TableWidget.vue'
 
 const route = useRoute()
@@ -78,8 +78,12 @@ function toggleFullscreen() {
   <div class="present-view">
     <header class="present-header">
       <div class="brand">
-        <div class="brand-logo">WI</div>
-        <div class="brand-title">{{ projectStore.projectName || '数据大屏' }}</div>
+        <div class="brand-logo">
+          WI
+        </div>
+        <div class="brand-title">
+          {{ projectStore.projectName || '数据大屏' }}
+        </div>
       </div>
       <div class="header-actions">
         <WiButton
@@ -111,8 +115,12 @@ function toggleFullscreen() {
       </div>
       <div v-else-if="error" class="present-error">
         <p>加载失败</p>
-        <p class="sub">{{ error }}</p>
-        <WiButton severity="danger" size="small" @click="loadProject">重试</WiButton>
+        <p class="sub">
+          {{ error }}
+        </p>
+        <WiButton severity="danger" size="small" @click="loadProject">
+          重试
+        </WiButton>
       </div>
       <div v-else-if="widgets.length === 0" class="present-empty">
         <p>当前项目没有可见组件</p>
@@ -127,14 +135,16 @@ function toggleFullscreen() {
             gridRow: `span ${Math.min(4, Math.max(1, Math.round((widget.height / 140) * 2)))}`,
           }"
         >
-          <div class="card-header" :style="{ borderColor: widget.color + '55' }">
+          <div class="card-header" :style="{ borderColor: `${widget.color }55` }">
             <span class="card-title">{{ widget.title }}</span>
           </div>
           <div class="card-body">
             <KpiWidget v-if="widget.type === 'kpi'" :widget="widget" />
             <ChartWidget v-else-if="widget.type === 'bar' || widget.type === 'line' || widget.type === 'pie'" :widget="widget" />
             <TableWidget v-else-if="widget.type === 'table'" :widget="widget" />
-            <div v-else class="widget-unknown">未知类型</div>
+            <div v-else class="widget-unknown">
+              未知类型
+            </div>
           </div>
         </div>
       </div>

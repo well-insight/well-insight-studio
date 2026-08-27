@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { WidgetType } from '@well-insight/shared'
-import { BarChart3, ChartLine, ChartPie, LayoutGrid, Minus, Plus, RefreshCw, Table2, Undo2, Redo2, Trash2 } from '@lucide/vue'
+import { BarChart3, ChartLine, ChartPie, LayoutGrid, Minus, Plus, Redo2, RefreshCw, Table2, Trash2, Undo2 } from '@lucide/vue'
 import { useWidgetStore, WIDGET_DEFAULTS } from '../../../stores/widgetStore'
 
 defineProps<{
@@ -45,7 +45,7 @@ function clearCanvas() {
       <button class="tool-btn" title="重做 (Ctrl+Y)" :disabled="!store.canRedo" @click="store.redo()">
         <Redo2 :size="13" />
       </button>
-      <span class="divider"></span>
+      <span class="divider" />
       <button
         v-for="btn in WIDGET_BUTTONS"
         :key="btn.type"
@@ -56,7 +56,7 @@ function clearCanvas() {
         <component :is="btn.icon" :size="13" />
         <span>{{ WIDGET_DEFAULTS[btn.type]?.label }}</span>
       </button>
-      <span class="divider"></span>
+      <span class="divider" />
       <button class="tool-btn" title="清空画布" :disabled="store.widgets.length === 0" @click="clearCanvas">
         <Trash2 :size="13" />
       </button>
@@ -68,9 +68,13 @@ function clearCanvas() {
       </button>
       <span class="widget-count">{{ store.widgets.length }} 个组件</span>
       <div class="zoom-control">
-        <button class="tool-btn" title="缩小" @click="emit('zoom', -0.1)"><Minus :size="13" /></button>
+        <button class="tool-btn" title="缩小" @click="emit('zoom', -0.1)">
+          <Minus :size="13" />
+        </button>
         <span class="zoom-level">{{ Math.round(zoom * 100) }}%</span>
-        <button class="tool-btn" title="放大" @click="emit('zoom', 0.1)"><Plus :size="13" /></button>
+        <button class="tool-btn" title="放大" @click="emit('zoom', 0.1)">
+          <Plus :size="13" />
+        </button>
       </div>
     </div>
   </div>

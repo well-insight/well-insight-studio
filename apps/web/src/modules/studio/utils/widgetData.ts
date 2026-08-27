@@ -1,6 +1,7 @@
 import type { QueryRequest, TableData, Widget } from '@well-insight/shared'
+import type {ProcessedData} from './fieldOps';
 import { useDataStore } from '../../../stores/dataStore'
-import { applyFieldOps, type ProcessedData } from './fieldOps'
+import { applyFieldOps  } from './fieldOps'
 
 /**
  * 解析组件渲染数据：

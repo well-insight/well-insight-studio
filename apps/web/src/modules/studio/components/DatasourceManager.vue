@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { WiDialog, WiInput, WiSelect, message, toast } from '@well-insight/ui'
-import { Database, Pencil, Trash2, Plus, RefreshCw, CheckCircle2, AlertCircle } from '@lucide/vue'
 import type { ProjectDatasource } from '../../../api/datasources'
-import { createDatasource, updateDatasource, deleteDatasource, testDatasource } from '../../../api/datasources'
+import { AlertCircle, CheckCircle2, Database, Pencil, Plus, RefreshCw, Trash2 } from '@lucide/vue'
+import { message, toast, WiDialog, WiInput, WiSelect } from '@well-insight/ui'
+import { computed, ref } from 'vue'
+import { createDatasource, deleteDatasource, testDatasource, updateDatasource } from '../../../api/datasources'
 
 const props = defineProps<{
   projectId: string | null
@@ -114,7 +114,7 @@ async function syncConnectionString(ds: ProjectDatasource) {
   if (connectionString === null) return
   isLoading.value = true
   try {
-    await updateDatasource(ds.id, { connectionString: connectionString.trim() || undefined })
+    await updateDatasource(ds.id, { connectionString: connectionString.trim() })
     message.success('已同步数据源 schema')
     emit('refresh')
   } catch (err) {
@@ -125,7 +125,7 @@ async function syncConnectionString(ds: ProjectDatasource) {
 }
 
 async function testConnection(ds: ProjectDatasource) {
-  if (!ds.connectionString) {
+  if (!ds.hasConnection) {
     testResults.value[ds.id] = { ok: false, message: '未配置连接串' }
     return
   }
@@ -179,16 +179,22 @@ function close() {
       <div v-if="isAdding" class="ds-add-form">
         <div class="form-row">
           <WiInput v-model="newName" label="名称" placeholder="例如：生产数据库" fluid />
-          <WiSelect v-model="newType" label="类型" :options="[
-            { label: 'MySQL', value: 'mysql' },
-            { label: 'PostgreSQL', value: 'postgres' },
-            { label: 'CSV', value: 'csv' },
-          ]" fluid />
+          <WiSelect
+            v-model="newType" label="类型" :options="[
+              { label: 'MySQL', value: 'mysql' },
+              { label: 'PostgreSQL', value: 'postgres' },
+              { label: 'CSV', value: 'csv' },
+            ]" fluid
+          />
         </div>
         <WiInput v-model="newConnectionString" label="连接串 / CSV 内容（可选）" :placeholder="newType === 'csv' ? '粘贴 CSV 内容，首行为表头' : `${newType}://user:pass@host:port/db`" fluid />
         <div class="form-actions">
-          <button class="btn-text" @click="cancelAdd">取消</button>
-          <button class="btn-primary" :disabled="isLoading" @click="submitAdd">{{ isLoading ? '创建中…' : '创建' }}</button>
+          <button class="btn-text" @click="cancelAdd">
+            取消
+          </button>
+          <button class="btn-primary" :disabled="isLoading" @click="submitAdd">
+            {{ isLoading ? '创建中…' : '创建' }}
+          </button>
         </div>
       </div>
 
@@ -204,16 +210,22 @@ function close() {
           </div>
           <div class="ds-info">
             <div v-if="editingId === ds.id" class="ds-edit-row">
-              <input v-model="editingName" class="ds-name-input" @keydown.enter="saveEdit(ds)" @keydown.escape="cancelEdit" />
-              <button class="btn-icon" @click="saveEdit(ds)">保存</button>
-              <button class="btn-icon" @click="cancelEdit">取消</button>
+              <input v-model="editingName" class="ds-name-input" @keydown.enter="saveEdit(ds)" @keydown.escape="cancelEdit">
+              <button class="btn-icon" @click="saveEdit(ds)">
+                保存
+              </button>
+              <button class="btn-icon" @click="cancelEdit">
+                取消
+              </button>
             </div>
             <template v-else>
-              <div class="ds-name" @click="onSelect(ds.id)">{{ ds.name }}</div>
+              <div class="ds-name" @click="onSelect(ds.id)">
+                {{ ds.name }}
+              </div>
               <div class="ds-meta">
                 {{ ds.type }} · {{ Object.keys(ds.schemaCache ?? {}).length }} 表
-                <span v-if="ds.connectionString" class="ds-tag external">外部</span>
-                <span v-else class="ds-tag sample">内置</span>
+                <span v-if="ds.hasConnection" class="ds-tag external">已连接</span>
+                <span v-else class="ds-tag sample">未配置</span>
               </div>
             </template>
           </div>
@@ -235,7 +247,9 @@ function close() {
             <component :is="testResults[ds.id]?.ok ? CheckCircle2 : AlertCircle" :size="10" />
           </div>
         </li>
-        <li v-if="datasources.length === 0" class="ds-empty">暂无数据源，点击上方按钮创建</li>
+        <li v-if="datasources.length === 0" class="ds-empty">
+          暂无数据源，点击上方按钮创建
+        </li>
       </ul>
     </div>
   </WiDialog>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { WiDialog, WiSelect, message } from '@well-insight/ui'
 import type { Widget } from '@well-insight/shared'
+import { message, WiDialog, WiSelect } from '@well-insight/ui'
+import { computed } from 'vue'
 import { useConfigStore } from '../../../../stores/configStore'
 import { useDataStore } from '../../../../stores/dataStore'
 import { useWidgetStore } from '../../../../stores/widgetStore'
@@ -113,8 +113,12 @@ defineExpose({ open })
       </div>
 
       <div class="config-modal-footer">
-        <button class="btn-cancel" @click="cancel">取消</button>
-        <button class="btn-apply" @click="apply">应用</button>
+        <button class="btn-cancel" @click="cancel">
+          取消
+        </button>
+        <button class="btn-apply" @click="apply">
+          应用
+        </button>
       </div>
     </div>
   </WiDialog>

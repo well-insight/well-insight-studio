@@ -1,6 +1,6 @@
+import type { DatasourceSchema, FieldOperation, QueryRequest, QueryResponse } from '@well-insight/shared'
 import mysql from 'mysql2/promise'
 import pg from 'pg'
-import type { DatasourceSchema, FieldOperation, QueryRequest, QueryResponse } from '@well-insight/shared'
 import { buildQuery } from './query-builder'
 import { assertSelectOnly, setReadOnlySession, validateFieldOps, validateTableName } from './sql-guard'
 
@@ -311,7 +311,7 @@ function inferCSVFieldTypes(rows: string[][], fields: string[]): Record<string, 
   const types: Record<string, 'number' | 'string'> = {}
   for (let i = 0; i < fields.length; i++) {
     const sample = rows[0]?.[i]
-    types[fields[i]!] = sample !== undefined && !Number.isNaN(parseFloat(sample)) && String(parseFloat(sample)) === sample.trim() ? 'number' : 'string'
+    types[fields[i]!] = sample !== undefined && !Number.isNaN(Number.parseFloat(sample)) && String(Number.parseFloat(sample)) === sample.trim() ? 'number' : 'string'
   }
   return types
 }
@@ -353,7 +353,7 @@ export function executeCSVQuery(
   if (visibleFields.length === 0) return { fields: [], rows: [] }
 
   const parseFilter = (ops: FieldOperation) => {
-    const match = ops.filter.trim().match(/^(>=|<=|!=|>|<|=)\s*(.+)/)
+    const match = ops.filter.trim().match(/^(>=|<=|!=|[><=])\s*(.+)/)
     if (!match) return null
     return { operator: match[1]!, operand: match[2]!.replace(/["']/g, '') }
   }
@@ -366,10 +366,10 @@ export function executeCSVQuery(
       if (!parsed) continue
       const { operator, operand } = parsed
       const raw = row[f] ?? ''
-      const value = parseFloat(raw)
-      const isNum = !Number.isNaN(value) && operand !== '' && !Number.isNaN(parseFloat(operand))
+      const value = Number.parseFloat(raw)
+      const isNum = !Number.isNaN(value) && operand !== '' && !Number.isNaN(Number.parseFloat(operand))
       if (isNum) {
-        const opValue = parseFloat(operand)
+        const opValue = Number.parseFloat(operand)
         if (operator === '>' && !(value > opValue)) return false
         if (operator === '<' && !(value < opValue)) return false
         if (operator === '>=' && !(value >= opValue)) return false
@@ -392,9 +392,9 @@ export function executeCSVQuery(
       const idx = table.fields.findIndex(tf => tf.name === f)
       const type = table.fields[idx]?.type ?? 'string'
       rows.sort((a, b) => {
-        const va = a[f] ?? '', vb = b[f] ?? ''
+        const va = a[f] ?? ''; const vb = b[f] ?? ''
         if (type === 'number') {
-          const na = parseFloat(va), nb = parseFloat(vb)
+          const na = Number.parseFloat(va); const nb = Number.parseFloat(vb)
           return (na - nb) * dir
         }
         return va.localeCompare(vb) * dir
@@ -423,7 +423,7 @@ export function executeCSVQuery(
   }
 
   const toNumber = (v: string) => {
-    const n = parseFloat(v)
+    const n = Number.parseFloat(v)
     return Number.isNaN(n) ? 0 : n
   }
 

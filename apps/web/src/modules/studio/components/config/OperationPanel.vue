@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { WiInput, WiSelectButton } from '@well-insight/ui'
 import type { FieldOperation } from '@well-insight/shared'
+import { WiInput, WiSelectButton } from '@well-insight/ui'
+import { computed } from 'vue'
 import { useConfigStore } from '../../../../stores/configStore'
 
 const config = useConfigStore()
@@ -84,8 +84,12 @@ const hiddenModel = computed({
 
 <template>
   <div class="operation-panel">
-    <div class="panel-title">字段操作</div>
-    <div class="selected-label">{{ label }}</div>
+    <div class="panel-title">
+      字段操作
+    </div>
+    <div class="selected-label">
+      {{ label }}
+    </div>
 
     <div v-if="!hasSelection" class="no-selection">
       请勾选左侧字段进行配置
@@ -115,8 +119,12 @@ const hiddenModel = computed({
       <div class="op-group">
         <label>批量可见性</label>
         <div class="visibility-row">
-          <button class="op-btn" :class="{ active: !hiddenModel }" @click="hiddenModel = false">显示</button>
-          <button class="op-btn" :class="{ active: hiddenModel }" @click="hiddenModel = true">隐藏</button>
+          <button class="op-btn" :class="{ active: !hiddenModel }" @click="hiddenModel = false">
+            显示
+          </button>
+          <button class="op-btn" :class="{ active: hiddenModel }" @click="hiddenModel = true">
+            隐藏
+          </button>
         </div>
       </div>
     </template>

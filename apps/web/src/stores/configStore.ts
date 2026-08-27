@@ -1,8 +1,8 @@
-import { defineStore } from 'pinia'
 import type { FieldOperation, Widget } from '@well-insight/shared'
+import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { useDataStore } from './dataStore'
 import { isNumericField } from '../modules/studio/utils/sampleData'
+import { useDataStore } from './dataStore'
 
 export interface ConfigFormState {
   targetId: string | null

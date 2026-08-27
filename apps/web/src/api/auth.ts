@@ -2,6 +2,7 @@ import { apiRequest } from './client'
 
 export interface User {
   id: string
+  username: string
   email: string
   displayName: string
 }
@@ -14,17 +15,17 @@ export async function me(): Promise<{ user: User | null }> {
   return apiRequest<{ user: User | null }>('/api/auth/me')
 }
 
-export async function login(email: string, password: string): Promise<AuthResponse> {
+export async function login(identifier: string, password: string): Promise<AuthResponse> {
   return apiRequest<AuthResponse>('/api/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ identifier, password }),
   })
 }
 
-export async function register(email: string, password: string, displayName: string): Promise<AuthResponse> {
+export async function register(username: string, email: string, password: string, displayName?: string): Promise<AuthResponse> {
   return apiRequest<AuthResponse>('/api/auth/register', {
     method: 'POST',
-    body: JSON.stringify({ email, password, displayName }),
+    body: JSON.stringify({ username, email, password, displayName: displayName?.trim() || undefined }),
   })
 }
 

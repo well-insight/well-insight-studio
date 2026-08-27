@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { Widget } from '@well-insight/shared'
+import { computed } from 'vue'
 import { useDataStore } from '../../../../stores/dataStore'
 import { useWidgetData } from '../../composables/useWidgetData'
 
@@ -24,23 +24,33 @@ function formatCell(cell: unknown): string {
 </script>
 
 <template>
-  <div v-if="isLoading" class="widget-empty">加载数据中…</div>
+  <div v-if="isLoading" class="widget-empty">
+    加载数据中…
+  </div>
   <div v-else-if="rows.length" class="table-wrap">
     <table class="widget-table">
       <thead>
         <tr>
-          <th v-for="(h, i) in headers" :key="i">{{ h }}</th>
+          <th v-for="(h, i) in headers" :key="i">
+            {{ h }}
+          </th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="(row, ri) in rows" :key="ri">
-          <td v-for="(cell, ci) in row.slice(0, MAX_COLS)" :key="ci">{{ formatCell(cell) }}</td>
+          <td v-for="(cell, ci) in row.slice(0, MAX_COLS)" :key="ci">
+            {{ formatCell(cell) }}
+          </td>
         </tr>
       </tbody>
     </table>
-    <div v-if="totalRows > MAX_ROWS" class="table-note">显示前 {{ MAX_ROWS }} 条，共 {{ totalRows }} 条</div>
+    <div v-if="totalRows > MAX_ROWS" class="table-note">
+      显示前 {{ MAX_ROWS }} 条，共 {{ totalRows }} 条
+    </div>
   </div>
-  <div v-else class="widget-empty">无数据，双击配置字段</div>
+  <div v-else class="widget-empty">
+    无数据，双击配置字段
+  </div>
 </template>
 
 <style scoped>

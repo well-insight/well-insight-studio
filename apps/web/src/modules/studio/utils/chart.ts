@@ -27,7 +27,7 @@ export function groupByDim(data: ProcessedData): { categories: string[]; values:
   const groups = new Map<string, number>()
   for (const row of rows) {
     const key = String(row[dimIdx] ?? 'Unknown')
-    const val = parseFloat(String(row[measIdx])) || 0
+    const val = Number.parseFloat(String(row[measIdx])) || 0
     groups.set(key, (groups.get(key) ?? 0) + val)
   }
   const entries = [...groups.entries()].slice(0, 10)

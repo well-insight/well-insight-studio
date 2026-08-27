@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
-import { createDb } from './client'
 import { getConfig } from '../config/env'
+import { createDb } from './client'
 
 const { db, pool } = createDb(getConfig())
 await db.execute(sql`select 1`)

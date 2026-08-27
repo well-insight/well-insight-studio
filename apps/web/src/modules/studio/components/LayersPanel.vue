@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { ChevronUp, ChevronDown, Eye, EyeOff, Lock, Unlock } from '@lucide/vue'
+import { ChevronDown, ChevronUp, Eye, EyeOff, Lock, Unlock } from '@lucide/vue'
 import { WiButton, WiScrollbar } from '@well-insight/ui'
+import { computed } from 'vue'
 import { useWidgetStore, WIDGET_DEFAULTS } from '../../../stores/widgetStore'
 
 const store = useWidgetStore()
@@ -20,30 +20,32 @@ function isLast(id: string) {
 <template>
   <WiScrollbar class="layers-scroll" :native="false" trigger="hover" aria-label="画布图层">
     <div class="layers-panel">
-    <div v-if="store.widgets.length === 0" class="empty-tip">画布暂无组件</div>
+      <div v-if="store.widgets.length === 0" class="empty-tip">
+        画布暂无组件
+      </div>
 
-    <div
-      v-for="w in reversedWidgets"
-      :key="w.id"
-      class="layer-item"
-      :class="{ selected: store.selectedId === w.id, 'is-hidden': !w.visible }"
-      @click="store.selectWidget(w.id)"
-    >
-      <span class="layer-type">{{ WIDGET_DEFAULTS[w.type]?.label }}</span>
-      <span class="layer-name" :title="w.title">{{ w.title }}</span>
-      <span class="layer-actions" @click.stop>
-        <WiButton icon-only variant="ghost" size="small" :aria-label="'上移一层'" :disabled="isFirst(w.id)" @click="store.moveLayer(w.id, 1)"><ChevronUp :size="11" /></WiButton>
-        <WiButton icon-only variant="ghost" size="small" :aria-label="'下移一层'" :disabled="isLast(w.id)" @click="store.moveLayer(w.id, -1)"><ChevronDown :size="11" /></WiButton>
-        <WiButton icon-only variant="ghost" size="small" :aria-label="w.visible ? '隐藏' : '显示'" @click="store.toggleVisibility(w.id)">
-          <Eye v-if="w.visible" :size="11" />
-          <EyeOff v-else :size="11" />
-        </WiButton>
-        <WiButton icon-only variant="ghost" size="small" :aria-label="w.locked ? '解锁' : '锁定'" @click="store.toggleLock(w.id)">
-          <Unlock v-if="!w.locked" :size="11" />
-          <Lock v-else :size="11" />
-        </WiButton>
-      </span>
-    </div>
+      <div
+        v-for="w in reversedWidgets"
+        :key="w.id"
+        class="layer-item"
+        :class="{ selected: store.selectedId === w.id, 'is-hidden': !w.visible }"
+        @click="store.selectWidget(w.id)"
+      >
+        <span class="layer-type">{{ WIDGET_DEFAULTS[w.type]?.label }}</span>
+        <span class="layer-name" :title="w.title">{{ w.title }}</span>
+        <span class="layer-actions" @click.stop>
+          <WiButton icon-only variant="ghost" size="small" aria-label="上移一层" :disabled="isFirst(w.id)" @click="store.moveLayer(w.id, 1)"><ChevronUp :size="11" /></WiButton>
+          <WiButton icon-only variant="ghost" size="small" aria-label="下移一层" :disabled="isLast(w.id)" @click="store.moveLayer(w.id, -1)"><ChevronDown :size="11" /></WiButton>
+          <WiButton icon-only variant="ghost" size="small" :aria-label="w.visible ? '隐藏' : '显示'" @click="store.toggleVisibility(w.id)">
+            <Eye v-if="w.visible" :size="11" />
+            <EyeOff v-else :size="11" />
+          </WiButton>
+          <WiButton icon-only variant="ghost" size="small" :aria-label="w.locked ? '解锁' : '锁定'" @click="store.toggleLock(w.id)">
+            <Unlock v-if="!w.locked" :size="11" />
+            <Lock v-else :size="11" />
+          </WiButton>
+        </span>
+      </div>
     </div>
   </WiScrollbar>
 </template>

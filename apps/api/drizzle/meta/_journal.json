@@ -29,6 +29,20 @@
       "when": 1787557800000,
       "tag": "0003_add_auth_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787850000000,
+      "tag": "0004_add_username",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787851000000,
+      "tag": "0005_reset_legacy_auth_data",
+      "breakpoints": true
     }
   ]
 }

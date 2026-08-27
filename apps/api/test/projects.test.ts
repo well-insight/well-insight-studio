@@ -1,8 +1,6 @@
-import { describe, expect, it } from 'vitest'
-import { createApp } from '../src/app'
 import type { ProjectConfig } from '@well-insight/shared'
-import { projects } from '../src/db/schema/projects'
 import type { AppConfig } from '../src/config/env'
+import { describe, expect, it } from 'vitest'
 
 const testConfig: AppConfig = {
   NODE_ENV: 'test',
@@ -49,7 +47,7 @@ const sampleConfig: ProjectConfig = {
   canvas: { zoom: 1 },
 }
 
-describe('Projects API', () => {
+describe('projects API', () => {
   // 标记为有外部依赖的测试，当无 MySQL 时跳过
   it('is skipped when no MySQL', () => {
     // 实际 MySQL 测试将在运行时跳过；这里用占位避免空 test suite 报错

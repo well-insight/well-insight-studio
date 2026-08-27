@@ -1,11 +1,12 @@
-import { eq, isNull } from 'drizzle-orm'
 import type { AppConfig } from '../config/env'
-import { hashPassword } from '../services/auth'
-import { users } from './schema/users'
-import { projects } from './schema/projects'
 import type { createDb } from './client'
+import { eq, isNull } from 'drizzle-orm'
+import { hashPassword } from '../services/auth'
+import { projects } from './schema/projects'
+import { users } from './schema/users'
 
 const DEFAULT_ADMIN = {
+  username: 'admin',
   email: 'admin@well-insight.com',
   password: 'Aa@123456',
   displayName: '管理员',
@@ -19,6 +20,7 @@ export async function seedDefaultAdmin({ db }: ReturnType<typeof createDb>, conf
       adminId = crypto.randomUUID()
       await db.insert(users).values({
         id: adminId,
+        username: DEFAULT_ADMIN.username,
         email: DEFAULT_ADMIN.email,
         displayName: DEFAULT_ADMIN.displayName,
         passwordHash: await hashPassword(DEFAULT_ADMIN.password),

@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import type { FieldOperation, TableData } from '@well-insight/shared'
+import { describe, expect, it } from 'vitest'
 import { applyFieldOps } from '../fieldOps'
 
 const table: TableData = {
@@ -83,8 +83,8 @@ describe('applyFieldOps', () => {
       ['category', 'amount', 'order_id'],
     )
     const map = Object.fromEntries(result.rows.map(r => [r[0], [r[1], r[2]]]))
-    expect(map['Electronics']).toEqual([716.67, 3])
-    expect(map['Furniture']).toEqual([325, 2])
+    expect(map.Electronics).toEqual([716.67, 3])
+    expect(map.Furniture).toEqual([325, 2])
   })
 
   it('全局聚合：无分组字段时输出单行', () => {

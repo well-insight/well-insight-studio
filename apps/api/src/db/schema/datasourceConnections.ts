@@ -1,6 +1,5 @@
-import { json, timestamp, varchar } from 'drizzle-orm/mysql-core'
-import { mysqlTable } from 'drizzle-orm/mysql-core'
 import type { DatasourceSchema } from '@well-insight/shared'
+import { json, mysqlTable, timestamp, varchar  } from 'drizzle-orm/mysql-core'
 
 /**
  * 数据源连接表。

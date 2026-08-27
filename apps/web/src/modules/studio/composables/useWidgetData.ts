@@ -1,8 +1,8 @@
-import { computed, onMounted, ref, watch } from 'vue'
 import type { TableData, Widget } from '@well-insight/shared'
+import type { ProcessedData } from '../utils/fieldOps'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useDataStore } from '../../../stores/dataStore'
 import { resolveWidgetData, resolveWidgetDataAsync } from '../utils/widgetData'
-import type { ProcessedData } from '../utils/fieldOps'
 
 /**
  * 在组件中消费 widget 数据：

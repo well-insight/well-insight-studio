@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, ref, watchEffect } from 'vue'
 import type { Widget } from '@well-insight/shared'
+import { computed, ref, watchEffect } from 'vue'
 import { useConfigStore } from '../../../../stores/configStore'
 import { useDataStore } from '../../../../stores/dataStore'
 import { applyFieldOps } from '../../utils/fieldOps'
-import KpiWidget from '../widgets/KpiWidget.vue'
 import ChartWidget from '../widgets/ChartWidget.vue'
+import KpiWidget from '../widgets/KpiWidget.vue'
 import TableWidget from '../widgets/TableWidget.vue'
 
 const config = useConfigStore()
@@ -54,15 +54,25 @@ watchEffect(() => {
     <div class="preview-header">
       <span>实时预览</span>
       <div class="preview-tabs">
-        <button :class="{ active: previewType === 'bar' }" @click="previewType = 'bar'">柱状</button>
-        <button :class="{ active: previewType === 'table' }" @click="previewType = 'table'">表格</button>
-        <button :class="{ active: previewType === 'kpi' }" @click="previewType = 'kpi'">指标</button>
+        <button :class="{ active: previewType === 'bar' }" @click="previewType = 'bar'">
+          柱状
+        </button>
+        <button :class="{ active: previewType === 'table' }" @click="previewType = 'table'">
+          表格
+        </button>
+        <button :class="{ active: previewType === 'kpi' }" @click="previewType = 'kpi'">
+          指标
+        </button>
       </div>
     </div>
 
     <div class="preview-body">
-      <div v-if="isEmpty" class="preview-empty">所有字段已隐藏，请显示至少一个字段</div>
-      <div v-else-if="!hasData" class="preview-empty">过滤后无数据</div>
+      <div v-if="isEmpty" class="preview-empty">
+        所有字段已隐藏，请显示至少一个字段
+      </div>
+      <div v-else-if="!hasData" class="preview-empty">
+        过滤后无数据
+      </div>
       <div v-else class="preview-widget">
         <KpiWidget v-if="previewType === 'kpi'" :widget="previewWidget" />
         <ChartWidget v-else-if="previewType === 'bar'" :widget="previewWidget" />

@@ -17,6 +17,7 @@ export interface DatasourceSummary {
   name: string
   type: 'mysql' | 'postgres' | 'csv'
   connectionString: string | null
+  hasConnection: boolean
   schemaCache: Record<string, { fields: { name: string; type: 'number' | 'string' }[] }>
   createdAt: string
   updatedAt: string

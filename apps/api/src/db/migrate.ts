@@ -1,7 +1,7 @@
-import 'dotenv/config'
 import { migrate } from 'drizzle-orm/mysql2/migrator'
-import { createDb } from './client'
 import { getConfig } from '../config/env'
+import { createDb } from './client'
+import 'dotenv/config'
 
 const { db, pool } = createDb(getConfig())
 await migrate(db, { migrationsFolder: './drizzle' })

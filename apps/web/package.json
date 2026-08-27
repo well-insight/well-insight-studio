@@ -1,7 +1,7 @@
 {
   "name": "@well-insight/web",
-  "private": true,
   "type": "module",
+  "private": true,
   "scripts": {
     "predev": "node ../api/scripts/free-port.mjs 5181",
     "dev": "vite",

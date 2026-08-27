@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createApp } from '../src/app'
 
-describe('API documentation', () => {
+describe('aPI documentation', () => {
   it('serves OpenAPI JSON and a browser documentation page', async () => {
     const openApi = await createApp().request('/openapi.json')
     const docs = await createApp().request('/docs')
@@ -17,7 +17,7 @@ describe('API documentation', () => {
   })
 })
 
-describe('API routes', () => {
+describe('aPI routes', () => {
   it('returns the registered route list', async () => {
     const response = await createApp().request('/api/routes')
     const body = await response.json()
@@ -33,7 +33,7 @@ describe('API routes', () => {
   })
 })
 
-describe('GET /health', () => {
+describe('gET /health', () => {
   it('returns the API health status and request id', async () => {
     const response = await createApp().request('/health', {
       headers: { 'x-request-id': 'test-request' },
