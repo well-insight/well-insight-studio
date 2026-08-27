@@ -17,6 +17,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/datasets',
+      name: 'datasets',
+      component: () => import('../views/DatasetsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/present',
       name: 'present',
       component: () => import('../modules/studio/PresentView.vue'),

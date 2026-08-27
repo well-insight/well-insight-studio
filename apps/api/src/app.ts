@@ -8,6 +8,7 @@ import { errorHandler } from './middleware/error-handler'
 import { requestId } from './middleware/request-id'
 import { createAuthRoutes } from './routes/auth'
 import { createDatasourcesRoutes } from './routes/datasources'
+import { createDatasetsRoutes } from './routes/datasets'
 import { createDocsRoutes } from './routes/docs'
 import { createHealthRoutes } from './routes/health'
 import { createProjectsRoutes } from './routes/projects'
@@ -29,6 +30,7 @@ export function createApp(config?: AppConfig, dbFactory = createDb) {
   app.route('/api/auth', createAuthRoutes())
   app.route('/api/projects', createProjectsRoutes())
   app.route('/api/datasources', createDatasourcesRoutes())
+  app.route('/api/datasets', createDatasetsRoutes())
   app.route('/', createDocsRoutes())
 
   app.get('/api/routes', (context) => {
