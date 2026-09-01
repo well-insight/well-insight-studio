@@ -3,7 +3,43 @@ import type { ProcessedData } from './fieldOps'
 
 export type ChartKind = 'bar' | 'line' | 'pie'
 
-const FALLBACK_COLORS = ['#3b82f6', '#8b5cf6', '#f59e0b', '#22c55e', '#ef4444', '#ec4899', '#14b8a6', '#f97316']
+function cssVar(name: string): string {
+  if (typeof document === 'undefined') return ''
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+}
+
+function chartPalette(accent: string): string[] {
+  const tokens = [
+    accent,
+    cssVar('--wi-color-primary'),
+    cssVar('--wi-color-info'),
+    cssVar('--wi-color-success'),
+    cssVar('--wi-color-warning'),
+    cssVar('--wi-color-danger'),
+    cssVar('--wi-color-help'),
+  ].filter(Boolean)
+
+  return [...new Set(tokens)]
+}
+
+function chartTheme() {
+  const border = cssVar('--wi-color-border')
+  const muted = cssVar('--wi-color-text-muted')
+  const surface = cssVar('--wi-color-surface')
+  const text = cssVar('--wi-color-text')
+  const ground = cssVar('--wi-color-ground-background')
+
+  return {
+    axisLine: border,
+    axisLabel: muted,
+    splitLine: border ? `color-mix(in srgb, ${border} 35%, transparent)` : '',
+    tooltipBg: surface,
+    tooltipBorder: border,
+    tooltipText: text,
+    pieLabel: muted,
+    pieBorder: ground || surface,
+  }
+}
 
 /** 从处理后数据中挑选维度（首个非数值列）与指标（首个数值列） */
 export function pickDimAndMeas(data: ProcessedData): { dimIdx: number; measIdx: number } {
@@ -37,36 +73,37 @@ export function groupByDim(data: ProcessedData): { categories: string[]; values:
   }
 }
 
-const baseAxis = {
-  axisLine: { lineStyle: { color: '#3a4557' } },
-  axisLabel: { color: '#8a9bb5', fontSize: 10 },
-  splitLine: { lineStyle: { color: 'rgba(58, 69, 87, 0.35)' } },
-}
-
-/** 生成 ECharts option（暗色主题） */
+/** 生成 ECharts option（跟随 --wi-* 主题） */
 export function buildChartOption(type: ChartKind, data: ProcessedData, color: string): EChartsCoreOption {
   const { categories, values } = groupByDim(data)
   const { dimIdx, measIdx } = pickDimAndMeas(data)
   const dimName = data.displayFields[dimIdx] ?? ''
   const measName = data.displayFields[measIdx] ?? ''
+  const theme = chartTheme()
+
+  const baseAxis = {
+    axisLine: { lineStyle: { color: theme.axisLine } },
+    axisLabel: { color: theme.axisLabel, fontSize: 10 },
+    splitLine: { lineStyle: { color: theme.splitLine } },
+  }
 
   const tooltip = {
     trigger: type === 'pie' ? 'item' : 'axis',
-    backgroundColor: '#1a2130',
-    borderColor: '#2a3448',
-    textStyle: { color: '#e8edf5', fontSize: 11 },
+    backgroundColor: theme.tooltipBg,
+    borderColor: theme.tooltipBorder,
+    textStyle: { color: theme.tooltipText, fontSize: 11 },
   } as const
 
   if (type === 'pie') {
     return {
       tooltip,
-      color: [color, ...FALLBACK_COLORS.filter(c => c !== color)],
+      color: chartPalette(color),
       series: [{
         type: 'pie',
         radius: ['35%', '70%'],
         center: ['50%', '50%'],
-        label: { color: '#c6d0e0', fontSize: 10 },
-        itemStyle: { borderColor: '#0c111c', borderWidth: 1 },
+        label: { color: theme.pieLabel, fontSize: 10 },
+        itemStyle: { borderColor: theme.pieBorder, borderWidth: 1 },
         data: categories.map((name, i) => ({ name, value: values[i] })),
       }],
     }

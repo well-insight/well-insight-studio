@@ -1,23 +1,42 @@
 <script setup lang="ts">
-import type { TableColumn } from '@well-insight/ui'
+import type { TableColumn, TreeNode } from '@well-insight/ui'
 import type { Dataset, DatasetFieldType, DatasetFolder } from '../api/datasets'
 import {
   ArrowLeft,
-  ChevronDown,
-  ChevronRight,
   Database,
-  FilePlus2,
   Folder,
   FolderOpen,
   FolderPlus,
-  Pencil,
-  Plus,
-  RefreshCw,
+  Layers,
+  Table2,
   Trash2,
-  Upload,
 } from '@lucide/vue'
-import { message, WiButton, WiConfirmDialog, WiDialog, WiInput, WiScrollbar, WiSelect, WiTable, WiTag, WiTextarea } from '@well-insight/ui'
-import { computed, onMounted, ref } from 'vue'
+import {
+  message,
+  WiBreadcrumb,
+  WiButton,
+  WiCard,
+  WiConfirmDialog,
+  WiDialog,
+  WiDropdown,
+  WiFlex,
+  WiForm,
+  WiFormItem,
+  WiInput,
+  WiLayout,
+  WiLayoutContent,
+  WiLayoutHeader,
+  WiLayoutSider,
+  WiPagination,
+  WiScrollbar,
+  WiSelect,
+  WiSpace,
+  WiTable,
+  WiTag,
+  WiTextarea,
+  WiTree
+} from '@well-insight/ui'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   addDatasetRows,
@@ -30,15 +49,35 @@ import {
   listDatasets,
   updateDatasetFolder,
 } from '../api/datasets'
+import { Brand } from '../components'
+
 const router = useRouter()
+
+type ViewMode = 'catalog' | 'preview'
+
+interface CatalogRow extends Record<string, unknown> {
+  id: string
+  name: string
+  fields: number
+  rowCount: string
+  folder: string
+}
+
 const datasets = ref<Dataset[]>([])
 const folders = ref<DatasetFolder[]>([])
 const selectedId = ref<string | null>(null)
 const selectedFolderId = ref<string | null>(null)
-const expandedFolders = ref<Record<string, boolean>>({})
 const rows = ref<Record<string, unknown>[]>([])
 const loading = ref(false)
 const rowsLoading = ref(false)
+const viewMode = ref<ViewMode>('catalog')
+const keyword = ref('')
+const catalogPage = ref(1)
+const catalogPageSize = ref(10)
+const page = ref(1)
+const pageSize = ref(20)
+const totalRows = ref(0)
+
 const showCreate = ref(false)
 const showImport = ref(false)
 const showFolderDialog = ref(false)
@@ -53,24 +92,262 @@ const name = ref('')
 const csv = ref('')
 const fields = ref<{ name: string; fieldType: DatasetFieldType }[]>([{ name: '名称', fieldType: 'text' }])
 
+const fieldTypeOptions = [
+  { label: '文本', value: 'text' },
+  { label: '数字', value: 'number' },
+  { label: '时间', value: 'datetime' },
+]
+
+const rowActionItems = [
+  { value: 'view', label: '查看数据' },
+  { value: 'delete', label: '删除' },
+]
+
+const catalogStats = computed(() => {
+  const scoped = scopedDatasets.value
+  return [
+    {
+      key: 'datasets',
+      label: '数据集',
+      value: scoped.length.toLocaleString(),
+      hint: selectedFolder.value ? '当前目录' : '全部目录',
+      icon: Database,
+    },
+    {
+      key: 'fields',
+      label: '字段定义',
+      value: scoped.reduce((sum, item) => sum + item.fields.length, 0).toLocaleString(),
+      hint: '可复用结构',
+      icon: Layers,
+    },
+    {
+      key: 'rows',
+      label: '总记录',
+      value: scoped.reduce((sum, item) => sum + item.rowCount, 0).toLocaleString(),
+      hint: '可用于可视化',
+      icon: Table2,
+    },
+  ]
+})
+
 const selected = computed(() => datasets.value.find(item => item.id === selectedId.value) ?? null)
-const tableColumns = computed<TableColumn[]>(() => selected.value?.fields.map(field => ({
+
+const selectedFolder = computed(() =>
+  selectedFolderId.value ? folders.value.find(item => item.id === selectedFolderId.value) ?? null : null,
+)
+
+const ALL_TREE_KEY = 'all'
+
+function folderTreeKey(id: string) {
+  return `folder:${id}`
+}
+
+function datasetTreeKey(id: string) {
+  return `dataset:${id}`
+}
+
+function isFolderTreeKey(key: string) {
+  return key.startsWith('folder:')
+}
+
+function folderIdFromTreeKey(key: string) {
+  return key.slice('folder:'.length)
+}
+
+function datasetIdFromTreeKey(key: string) {
+  return key.slice('dataset:'.length)
+}
+
+const catalogTree = computed<TreeNode[]>(() => {
+  function folderNode(folder: DatasetFolder): TreeNode {
+    const children = [
+      ...childFolders(folder.id).map(folderNode),
+      ...datasetsInFolder(folder.id).map(datasetNode),
+    ]
+    return {
+      key: folderTreeKey(folder.id),
+      label: folder.name,
+      children: children.length ? children : undefined,
+      isLeaf: children.length === 0,
+    }
+  }
+
+  function datasetNode(dataset: Dataset): TreeNode {
+    return {
+      key: datasetTreeKey(dataset.id),
+      label: dataset.name,
+      isLeaf: true,
+    }
+  }
+
+  return [
+    { key: ALL_TREE_KEY, label: '全部数据集', isLeaf: true },
+    ...childFolders(null).map(folderNode),
+    ...datasetsInFolder(null).map(datasetNode),
+  ]
+})
+
+const selectedTreeKey = computed({
+  get(): string | null {
+    if (viewMode.value === 'preview' && selectedId.value) return datasetTreeKey(selectedId.value)
+    if (selectedFolderId.value) return folderTreeKey(selectedFolderId.value)
+    return ALL_TREE_KEY
+  },
+  set(key: string | null) {
+    if (!key) return
+    if (key === ALL_TREE_KEY) {
+      selectAll()
+      return
+    }
+    if (isFolderTreeKey(key)) {
+      const folder = folders.value.find(item => item.id === folderIdFromTreeKey(key))
+      if (folder) selectFolder(folder)
+      return
+    }
+    const dataset = datasets.value.find(item => item.id === datasetIdFromTreeKey(key))
+    if (dataset) void openDataset(dataset)
+  },
+})
+
+function treeNodeCount(node: TreeNode) {
+  if (node.key === ALL_TREE_KEY) return datasets.value.length
+  if (isFolderTreeKey(node.key)) return datasetsInFolder(folderIdFromTreeKey(node.key)).length
+  return undefined
+}
+
+const scopedDatasets = computed(() => {
+  if (selectedFolderId.value === null) return datasets.value
+  return datasets.value.filter(item => item.folderId === selectedFolderId.value)
+})
+
+const filteredDatasets = computed(() => {
+  const q = keyword.value.trim().toLowerCase()
+  if (!q) return scopedDatasets.value
+  return scopedDatasets.value.filter(item =>
+    item.name.toLowerCase().includes(q)
+    || (item.description?.toLowerCase().includes(q) ?? false),
+  )
+})
+
+const catalogColumns = computed<TableColumn[]>(() => {
+  const columns: TableColumn[] = [
+    { key: 'name', label: '名称', minWidth: 180 },
+    { key: 'fields', label: '字段', width: '6rem' },
+    { key: 'rowCount', label: '记录数', width: '7rem' },
+  ]
+  if (!selectedFolderId.value) {
+    columns.push({ key: 'folder', label: '目录', minWidth: 120 })
+  }
+  columns.push({ key: 'actions', label: '', width: '3rem', align: 'center' })
+  return columns
+})
+
+const catalogRows = computed<CatalogRow[]>(() => filteredDatasets.value.map(item => ({
+  id: item.id,
+  name: item.name,
+  fields: item.fields.length,
+  rowCount: item.rowCount.toLocaleString(),
+  folder: folderLabel(item.folderId),
+})))
+
+const paginatedCatalogRows = computed(() => {
+  const start = (catalogPage.value - 1) * catalogPageSize.value
+  return catalogRows.value.slice(start, start + catalogPageSize.value)
+})
+
+const previewColumns = computed<TableColumn[]>(() => selected.value?.fields.map(field => ({
   key: field.id,
   label: field.name,
   sortable: true,
   minWidth: 150,
 })) ?? [])
-const visibleFolders = computed(() => {
-  const result: { folder: DatasetFolder; level: number }[] = []
-  function visit(parentId: string | null, level: number) {
-    for (const folder of childFolders(parentId)) {
-      result.push({ folder, level })
-      if (expandedFolders.value[folder.id]) visit(folder.id, level + 1)
-    }
-  }
-  visit(null, 0)
-  return result
+
+const breadcrumbItems = computed(() => {
+  const items: { label: string; to?: string }[] = [
+    { label: '首页', to: '/' },
+    { label: '数据集' },
+  ]
+  if (selectedFolder.value) items.push({ label: selectedFolder.value.name })
+  if (viewMode.value === 'preview' && selected.value) items.push({ label: selected.value.name })
+  return items
 })
+
+const pageTitle = computed(() => {
+  if (viewMode.value === 'preview' && selected.value) return selected.value.name
+  if (selectedFolder.value) return selectedFolder.value.name
+  return '全部数据集'
+})
+
+const pageDescription = computed(() => {
+  if (viewMode.value === 'preview' && selected.value) {
+    return selected.value.description || '可供多个可视化项目复用的业务数据'
+  }
+  if (selectedFolder.value?.description) return selectedFolder.value.description
+  return '管理业务数据目录，为可视化项目准备干净的数据基础'
+})
+
+const catalogResultLabel = computed(() => {
+  const total = scopedDatasets.value.length
+  const filtered = filteredDatasets.value.length
+  if (keyword.value.trim()) return `找到 ${filtered} / ${total} 个数据集`
+  return `共 ${total} 个数据集`
+})
+
+const previewMetaTags = computed(() => {
+  if (!selected.value) return []
+  return [
+    { label: `${selected.value.fields.length} 个字段`, severity: 'info' as const },
+    { label: `${selected.value.rowCount.toLocaleString()} 条记录`, severity: 'secondary' as const },
+    { label: folderLabel(selected.value.folderId), severity: 'secondary' as const },
+  ]
+})
+
+const catalogPageRange = computed(() => {
+  const total = catalogRows.value.length
+  if (total === 0) return '暂无数据集'
+  const start = (catalogPage.value - 1) * catalogPageSize.value + 1
+  const end = Math.min(catalogPage.value * catalogPageSize.value, total)
+  return `显示 ${start}-${end}，共 ${total} 个`
+})
+
+const previewPageRange = computed(() => {
+  if (totalRows.value === 0) return '暂无记录'
+  const start = (page.value - 1) * pageSize.value + 1
+  const end = Math.min(page.value * pageSize.value, totalRows.value)
+  return `显示 ${start}-${end}，共 ${totalRows.value.toLocaleString()} 条`
+})
+
+const folderManageItems = [
+  { value: 'edit', label: '编辑目录' },
+  { value: 'delete', label: '删除目录' },
+]
+
+const previewMoreItems = [
+  { value: 'refresh', label: '刷新数据' },
+  { value: 'delete', label: '删除数据集' },
+]
+
+function folderLabel(folderId: string | null) {
+  if (!folderId) return '未分类'
+  return folders.value.find(item => item.id === folderId)?.name ?? '未知目录'
+}
+
+function onCatalogRowAction(id: string, action: string | undefined) {
+  if (action === 'view') openDatasetFromCatalog(id)
+  else if (action === 'delete') deleteDatasetFromCatalog(id)
+}
+
+function onFolderManageAction(action: string | undefined) {
+  if (!selectedFolder.value) return
+  if (action === 'edit') openEditFolder(selectedFolder.value)
+  else if (action === 'delete') requestDeleteFolder(selectedFolder.value)
+}
+
+function onPreviewMoreAction(action: string | undefined) {
+  if (!selected.value) return
+  if (action === 'refresh') void loadRows()
+  else if (action === 'delete') requestDeleteDataset(selected.value)
+}
 
 function datasetsInFolder(folderId: string | null) {
   return datasets.value.filter(item => item.folderId === folderId)
@@ -80,22 +357,20 @@ function childFolders(parentId: string | null) {
   return folders.value.filter(folder => folder.parentId === parentId)
 }
 
-function toggleFolder(folder: DatasetFolder) {
-  expandedFolders.value[folder.id] = !expandedFolders.value[folder.id]
-  selectedFolderId.value = folder.id
-  selectedId.value = null
-}
-
-
 function selectAll() {
   selectedFolderId.value = null
   selectedId.value = null
+  viewMode.value = 'catalog'
   rows.value = []
+  catalogPage.value = 1
 }
 
 function selectFolder(folder: DatasetFolder) {
   selectedFolderId.value = folder.id
   selectedId.value = null
+  viewMode.value = 'catalog'
+  rows.value = []
+  catalogPage.value = 1
 }
 
 function openCreateFolder() {
@@ -117,10 +392,17 @@ async function saveFolder() {
   if (!nameValue) return message.warn('请输入目录名称')
   try {
     if (editingFolder.value) {
-      await updateDatasetFolder(editingFolder.value.id, { name: nameValue, description: folderDescription.value.trim() || null })
+      await updateDatasetFolder(editingFolder.value.id, {
+        name: nameValue,
+        description: folderDescription.value.trim() || null,
+      })
       message.success('目录已更新')
     } else {
-      await createDatasetFolder({ name: nameValue, description: folderDescription.value.trim() || undefined, parentId: selectedFolderId.value })
+      await createDatasetFolder({
+        name: nameValue,
+        description: folderDescription.value.trim() || undefined,
+        parentId: selectedFolderId.value,
+      })
       message.success('目录已创建')
     }
     showFolderDialog.value = false
@@ -139,7 +421,10 @@ async function confirmDeleteFolder() {
   if (!folderToDelete.value) return
   try {
     await deleteDatasetFolder(folderToDelete.value.id)
-    if (selectedFolderId.value === folderToDelete.value.id) selectedFolderId.value = null
+    if (selectedFolderId.value === folderToDelete.value.id) {
+      selectedFolderId.value = null
+      viewMode.value = 'catalog'
+    }
     message.success('目录已删除')
     showDeleteFolderDialog.value = false
     await load()
@@ -157,9 +442,11 @@ async function load() {
     ])
     datasets.value = datasetList
     folders.value = folderList
-    folders.value.forEach(folder => { expandedFolders.value[folder.id] = true })
-    if (selectedId.value && !datasets.value.some(item => item.id === selectedId.value)) selectedId.value = null
-    if (!selectedId.value && datasets.value[0]) await openDataset(datasets.value[0])
+    if (selectedId.value && !datasets.value.some(item => item.id === selectedId.value)) {
+      selectedId.value = null
+      viewMode.value = 'catalog'
+      rows.value = []
+    }
   } catch (error) {
     message.error(error instanceof Error ? error.message : '加载数据集失败')
   } finally {
@@ -167,23 +454,62 @@ async function load() {
   }
 }
 
-async function openDataset(dataset: Dataset) {
-  selectedId.value = dataset.id
-  selectedFolderId.value = dataset.folderId
+async function loadRows() {
+  if (!selectedId.value) return
   rowsLoading.value = true
   try {
-    const result = await listDatasetRows(dataset.id, 1, 100)
+    const result = await listDatasetRows(selectedId.value, page.value, pageSize.value)
     rows.value = result.rows.map(row => ({ id: row.id, ...row.values }))
+    totalRows.value = result.total
   } catch (error) {
     message.error(error instanceof Error ? error.message : '加载数据失败')
     rows.value = []
+    totalRows.value = 0
   } finally {
     rowsLoading.value = false
   }
 }
 
+function datasetById(id: string) {
+  return datasets.value.find(item => item.id === id) ?? null
+}
+
+function openDatasetFromCatalog(id: string) {
+  const dataset = datasetById(id)
+  if (dataset) openDataset(dataset)
+}
+
+function deleteDatasetFromCatalog(id: string) {
+  const dataset = datasetById(id)
+  if (dataset) requestDeleteDataset(dataset)
+}
+
+async function openDataset(dataset: Dataset) {
+  selectedId.value = dataset.id
+  selectedFolderId.value = dataset.folderId
+  viewMode.value = 'preview'
+  page.value = 1
+  await loadRows()
+}
+
+function backToCatalog() {
+  viewMode.value = 'catalog'
+  selectedId.value = null
+  rows.value = []
+}
+
+function resetFilters() {
+  keyword.value = ''
+  catalogPage.value = 1
+}
+
 function addField() {
   fields.value.push({ name: `字段${fields.value.length + 1}`, fieldType: 'text' })
+}
+
+function removeField(index: number) {
+  if (fields.value.length <= 1) return
+  fields.value.splice(index, 1)
 }
 
 async function create() {
@@ -195,11 +521,11 @@ async function create() {
       fields: fields.value.filter(field => field.name.trim()),
     })
     name.value = ''
+    fields.value = [{ name: '名称', fieldType: 'text' }]
     showCreate.value = false
     message.success('数据集已创建')
     await load()
-    const created = datasets.value.find(item => item.id === dataset.id)
-    if (created) await openDataset(created)
+    await openDataset(dataset)
   } catch (error) {
     message.error(error instanceof Error ? error.message : '创建失败')
   }
@@ -209,12 +535,17 @@ async function importCsv() {
   if (!selected.value || !csv.value.trim()) return message.warn('请粘贴 CSV 内容')
   const lines = csv.value.trim().split(/\r?\n/).map(line => line.split(','))
   const headers = lines.shift() ?? []
-  const imported = lines.map(line => Object.fromEntries(headers.map((header, index) => [selected.value!.fields[index]?.id ?? header, line[index] ?? null])))
+  const imported = lines.map(line =>
+    Object.fromEntries(headers.map((header, index) => [
+      selected.value!.fields[index]?.id ?? header,
+      line[index] ?? null,
+    ])),
+  )
   try {
     await addDatasetRows(selected.value.id, imported)
     csv.value = ''
     message.success(`已导入 ${imported.length} 行`)
-    await openDataset(selected.value)
+    await loadRows()
     await load()
   } catch (error) {
     message.error(error instanceof Error ? error.message : '导入失败')
@@ -231,185 +562,694 @@ async function confirmDeleteDataset() {
   try {
     await deleteDataset(datasetToDelete.value.id)
     message.success('数据集已删除')
-    selectedId.value = null
-    rows.value = []
+    if (selectedId.value === datasetToDelete.value.id) {
+      selectedId.value = null
+      viewMode.value = 'catalog'
+      rows.value = []
+    }
+    showDeleteDatasetDialog.value = false
     await load()
   } catch (error) {
     message.error(error instanceof Error ? error.message : '删除失败')
   }
 }
 
+watch([page, pageSize], () => {
+  if (viewMode.value === 'preview' && selectedId.value) loadRows()
+})
+
+watch(keyword, () => {
+  catalogPage.value = 1
+})
+
+watch(filteredDatasets, (rows) => {
+  const maxPage = Math.max(1, Math.ceil(rows.length / catalogPageSize.value))
+  if (catalogPage.value > maxPage) catalogPage.value = maxPage
+})
+
+const collapsed = ref(false)
 
 onMounted(load)
 </script>
 
 <template>
-  <div class="datasets-page">
-    <header class="datasets-topbar">
-      <div class="topbar-left">
-        <WiButton text size="small" aria-label="返回首页" @click="router.push('/')">
-          <ArrowLeft :size="15" />
-        </WiButton>
-        <div class="page-identity">
-          <div class="page-icon">
-            <Database :size="17" />
-          </div><div><strong>数据集</strong><span>DATA CATALOG</span></div>
-        </div>
-      </div>
-      <div class="topbar-right">
-        <WiTag :value="`${datasets.length} 个独立数据集`" severity="info" /><WiButton size="small" @click="showCreate = true">
-          <Plus :size="14" />新建数据集
-        </WiButton>
-      </div>
-    </header>
-
-    <div class="datasets-workspace">
-      <aside class="catalog-sidebar">
-        <div class="sidebar-heading">
-          <div><span class="eyebrow">WORKSPACE</span><h2>目录</h2></div><div class="sidebar-actions">
-            <WiButton text size="small" aria-label="新建目录" @click="openCreateFolder">
-              <FolderPlus :size="15" />
-            </WiButton><WiButton text size="small" aria-label="新建数据集" @click="showCreate = true">
-              <FilePlus2 :size="15" />
-            </WiButton>
-          </div>
-        </div>
-        <div class="catalog-summary">
-          <Database :size="14" /><span>我的数据集</span><small>{{ datasets.length }}</small>
-        </div>
-        <WiScrollbar class="catalog-scroll" :native="false" trigger="hover" aria-label="数据集目录">
-          <nav class="catalog-tree">
-            <WiButton class="tree-item tree-root" :class="{ active: selectedFolderId === null && !selectedId }" variant="ghost" fluid native-type="button" @click="selectAll">
-              <FolderOpen :size="15" /><span>全部数据集</span><small>{{ datasets.length }}</small>
-            </WiButton>
-            <template v-for="entry in visibleFolders" :key="entry.folder.id">
-              <WiButton class="tree-item" :class="{ active: selectedFolderId === entry.folder.id && !selectedId }" variant="ghost" fluid native-type="button" :style="{ paddingLeft: `${14 + entry.level * 16}px` }" @click="selectFolder(entry.folder)">
-                <span class="tree-toggle" @click.stop="toggleFolder(entry.folder)"><ChevronDown v-if="expandedFolders[entry.folder.id]" :size="13" /><ChevronRight v-else :size="13" /></span><Folder :size="15" /><span>{{ entry.folder.name }}</span><small>{{ datasetsInFolder(entry.folder.id).length }}</small>
-              </WiButton>
-              <div class="tree-actions" :style="{ paddingLeft: `${14 + entry.level * 16}px` }">
-                <WiButton text icon-only size="small" aria-label="编辑目录" @click="openEditFolder(entry.folder)">
-                  <Pencil :size="12" />
-                </WiButton><WiButton text severity="danger" icon-only size="small" aria-label="删除目录" @click="requestDeleteFolder(entry.folder)">
-                  <Trash2 :size="12" />
-                </WiButton>
-              </div>
-              <template v-if="expandedFolders[entry.folder.id]">
-                <WiButton v-for="dataset in datasetsInFolder(entry.folder.id)" :key="dataset.id" class="tree-item tree-dataset" :style="{ paddingLeft: `${39 + entry.level * 16}px` }" :class="{ active: selectedId === dataset.id }" variant="ghost" fluid native-type="button" @click="openDataset(dataset)">
-                  <Database :size="14" /><span>{{ dataset.name }}</span>
-                </WiButton>
-              </template>
+  <WiFlex class="datasets-manage-page h-full w-full" vertical>
+    <WiLayout class="h-full min-h-0">
+      <WiLayoutHeader bordered>
+        <WiFlex class="w-full h-full" align="center" justify="space-between">
+          <WiSpace align="center">
+            <Brand />
+            <WiBreadcrumb :model="breadcrumbItems" />
+          </WiSpace>
+          <WiButton severity="secondary" text size="small" @click="router.push('/')">
+            <ArrowLeft :size="14" />
+            返回工作台
+          </WiButton>
+        </WiFlex>
+      </WiLayoutHeader>
+      <WiLayout has-sider>
+        <WiLayoutSider
+          v-model:collapsed="collapsed" bordered show-trigger="arrow-circle" :collapsed-width="20"
+          :width="260" :padding="16" class="datasets-page__sider min-h-0"
+          :content-style="{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', overflow: 'hidden' }"
+        >
+          <WiCard class="h-full w-full">
+            <template #header>
+              <WiSpace class="w-full" justify="space-between">
+                <span>数据目录</span>
+                <WiSpace>
+                  <WiButton text icon-only size="small" :icon="FolderPlus" aria-label="新建目录" @click="openCreateFolder" />
+                  <WiButton text icon-only size="small" icon="plus" aria-label="新建数据集" @click="showCreate = true" />
+                </WiSpace>
+              </WiSpace>
             </template>
-            <WiButton v-for="dataset in datasetsInFolder(null)" :key="dataset.id" class="tree-item tree-dataset" :class="{ active: selectedId === dataset.id }" variant="ghost" fluid native-type="button" @click="openDataset(dataset)">
-              <Database :size="14" /><span>{{ dataset.name }}</span>
-            </WiButton>
-            <div v-if="folders.length === 0 && datasets.length === 0" class="catalog-empty">
-              还没有数据集<br><small>点击右上角开始创建</small>
-            </div>
-          </nav>
-        </WiScrollbar>
-        <div class="sidebar-footer">
-          <span>数据基础</span><strong>{{ datasets.reduce((total, item) => total + item.rowCount, 0).toLocaleString() }} 条记录</strong>
-        </div>
-      </aside>
-
-      <main class="dataset-main">
-        <div class="dataset-toolbar">
-          <div class="dataset-title">
-            <div class="dataset-title-icon">
-              <Database :size="16" />
-            </div><div>
-              <h1>{{ selected?.name || '选择一个数据集' }}</h1><p v-if="selected">
-                {{ selected.description || '可供多个可视化项目复用的业务数据' }} · {{ selected.fields.length }} 个字段 · {{ selected.rowCount.toLocaleString() }} 条记录
-              </p><p v-else>
-                从左侧目录选择数据集，查看和管理数据记录
+            <WiScrollbar
+              class="datasets-page__tree-scroll"
+              :native="false"
+              trigger="hover"
+              aria-label="数据集目录"
+            >
+              <WiTree v-model="selectedTreeKey" :value="catalogTree" default-expand-all>
+                <template #default="{ node }">
+                  <WiSpace>
+                    <FolderOpen v-if="node.key === ALL_TREE_KEY" :size="15" aria-hidden="true" />
+                    <Folder v-else-if="isFolderTreeKey(node.key)" :size="15" aria-hidden="true" />
+                    <Database v-else :size="14" aria-hidden="true" />
+                    <span class="datasets-page__tree-name">{{ node.label }}</span>
+                    <small v-if="treeNodeCount(node) != null">{{ treeNodeCount(node) }}</small>
+                  </WiSpace>
+                </template>
+              </WiTree>
+              <p v-if="folders.length === 0 && datasets.length === 0" class="datasets-page__tree-empty">
+                还没有数据集，点击右上角创建。
               </p>
-            </div>
-          </div>
-          <div class="dataset-actions">
-            <WiButton text size="small" :disabled="!selected" @click="selected && openDataset(selected)">
-              <RefreshCw :size="14" />刷新
-            </WiButton><WiButton size="small" :disabled="!selected" @click="showImport = true">
-              <Upload :size="14" />导入数据
-            </WiButton><WiButton size="small" :disabled="!selected" @click="showCreate = true">
-              <Plus :size="14" />新增数据集
-            </WiButton><WiButton v-if="selected" text severity="danger" size="small" aria-label="删除当前数据集" @click="requestDeleteDataset(selected)">
-              <Trash2 :size="14" />
-            </WiButton>
-          </div>
-        </div>
-        <div class="table-container">
-          <div v-if="selected" class="table-caption">
-            <span>数据预览</span><small>显示最近 100 条记录 · 横向滚动查看更多字段</small>
-          </div>
-          <WiTable v-if="selected" :columns="tableColumns" :rows="rows" row-key="id" :loading="rowsLoading" loading-text="正在加载数据…" striped bordered row-hover empty-text="暂无记录" empty-description="导入 CSV 或新增记录后，数据会显示在这里" />
-          <div v-else class="dataset-empty">
-            <div class="empty-icon">
-              <Database :size="24" />
-            </div><h2>选择一个数据集</h2><p>从左侧目录选择数据集，开始查看数据表格</p><WiButton size="small" @click="showCreate = true">
-              <Plus :size="14" />创建数据集
-            </WiButton>
-          </div>
-        </div>
-      </main>
-    </div>
+            </WiScrollbar>
+          </WiCard>
+        </WiLayoutSider>
+        <WiLayout class="datasets-page__main min-h-0 min-w-0">
+          <WiLayoutContent
+            class="datasets-page__content min-h-0"
+            :content-style="{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }"
+          >
+            <WiCard class="datasets-page__workspace">
+              <template #header>
+                <div class="datasets-page__workspace-header">
+                  <WiFlex class="datasets-page__head" align="start" justify="space-between" wrap size="small">
+                    <div class="datasets-page__intro">
+                      <h1 class="datasets-page__title">
+                        {{ pageTitle }}
+                      </h1>
+                      <p class="datasets-page__desc">
+                        {{ pageDescription }}
+                      </p>
+                    </div>
 
-    <WiDialog v-model="showCreate" header="创建数据集" width="460px">
-      <section class="create-panel">
-        <div class="panel-header">
-          <span class="eyebrow">NEW DATASET</span>
-        </div><WiInput v-model="name" label="名称" placeholder="例如：销售明细" fluid /><div class="field-list">
-          <div class="field-list-heading">
-            <span>字段定义</span><WiButton text size="small" @click="addField">
-              <Plus :size="13" />添加字段
-            </WiButton>
-          </div><div v-for="(field, index) in fields" :key="index" class="field-row">
-            <WiInput v-model="field.name" placeholder="字段名" fluid /><WiSelect v-model="field.fieldType" :options="[{ label: '文本', value: 'text' }, { label: '数字', value: 'number' }, { label: '时间', value: 'datetime' }]" fluid />
+                    <WiSpace wrap class="datasets-page__actions" :size="8">
+                      <template v-if="viewMode === 'catalog'">
+                        <WiDropdown
+                          v-if="selectedFolder"
+                          :items="folderManageItems"
+                          @select="(item) => onFolderManageAction(item.value)"
+                        >
+                          <template #trigger>
+                            <WiButton severity="secondary" size="small" icon="more-vertical" label="目录管理" />
+                          </template>
+                        </WiDropdown>
+                        <WiButton icon="plus" label="新建数据集" size="small" @click="showCreate = true" />
+                      </template>
+                      <template v-else>
+                        <WiButton severity="secondary" label="返回列表" size="small" @click="backToCatalog" />
+                        <WiButton
+                          icon="upload"
+                          label="导入数据"
+                          size="small"
+                          :disabled="!selected"
+                          @click="showImport = true"
+                        />
+                        <WiDropdown
+                          v-if="selected"
+                          :items="previewMoreItems"
+                          @select="(item) => onPreviewMoreAction(item.value)"
+                        >
+                          <template #trigger>
+                            <WiButton severity="secondary" size="small" icon="more-vertical" aria-label="更多操作" />
+                          </template>
+                        </WiDropdown>
+                      </template>
+                    </WiSpace>
+                  </WiFlex>
+
+                  <WiFlex v-if="viewMode === 'catalog'" justify="space-between">
+                    <WiSpace>
+                      <WiTag v-for="stat in catalogStats" :key="stat.key">
+                        <component :is="stat.icon" :size="14" aria-hidden="true" />
+                        <span>{{ stat.label }}</span>
+                        <strong>{{ stat.value }}</strong>
+                      </WiTag>
+                    </WiSpace>
+                    
+
+                    <WiFlex
+                      v-if="viewMode === 'catalog'"
+                      align="center"
+                      justify="space-between"
+                      wrap
+                      size="small"
+                    >
+                      <WiInput
+                        v-model="keyword"
+                        placeholder="搜索名称或描述"
+                        clearable
+                        aria-label="搜索数据集"
+                      />
+                      <WiSpace :size="8" align="center">
+                        <span class="datasets-page__result-count">{{ catalogResultLabel }}</span>
+                        <WiButton
+                          v-if="keyword"
+                          severity="secondary"
+                          size="small"
+                          native-type="button"
+                          @click="resetFilters"
+                        >
+                          重置
+                        </WiButton>
+                      </WiSpace>
+                    </WiFlex>
+                  </WiFlex>
+
+                  <WiFlex v-if="viewMode === 'preview' && selected" justify="space-between">
+                    <WiSpace wrap :size="6">
+                      <WiTag
+                        v-for="tag in previewMetaTags"
+                        :key="tag.label"
+                        :value="tag.label"
+                        :severity="tag.severity"
+                      />
+                    </WiSpace>
+                  </WiFlex>
+                </div>
+              </template>
+
+              <WiScrollbar
+                v-if="viewMode === 'catalog'"
+                class="datasets-page__table-scroll"
+                :native="false"
+                trigger="hover"
+                aria-label="数据集列表"
+              >
+                <WiTable
+                  class="datasets-page__table-area h-full"
+                  :columns="catalogColumns"
+                  :rows="paginatedCatalogRows"
+                  row-key="id"
+                  :loading="loading"
+                  loading-text="正在加载数据集…"
+                  striped
+                  row-hover
+                  empty-text="暂无数据集"
+                  empty-description="创建目录或新建数据集，开始整理业务数据"
+                >
+                  <template #cell-name="{ row }">
+                    <button type="button" class="datasets-page__link" @click="openDatasetFromCatalog(String(row.id))">
+                      {{ row.name }}
+                    </button>
+                  </template>
+                  <template #cell-fields="{ row }">
+                    <WiTag :value="`${row.fields} 个`" severity="info" size="small" />
+                  </template>
+                  <template #cell-folder="{ row }">
+                    <WiTag :value="String(row.folder)" severity="secondary" size="small" />
+                  </template>
+                  <template #cell-actions="{ row }">
+                    <WiDropdown
+                      :items="rowActionItems"
+                      @select="(item) => onCatalogRowAction(String(row.id), item.value)"
+                    >
+                      <template #trigger>
+                        <WiButton severity="secondary" size="small" icon="more-vertical" aria-label="数据集操作" />
+                      </template>
+                    </WiDropdown>
+                  </template>
+                </WiTable>
+              </WiScrollbar>
+
+              <WiScrollbar
+                v-else-if="selected"
+                class="datasets-page__table-scroll"
+                :native="false"
+                trigger="hover"
+                aria-label="数据预览"
+              >
+                <WiTable
+                  class="datasets-page__table-area h-full"
+                  :columns="previewColumns"
+                  :rows="rows"
+                  row-key="id"
+                  :loading="rowsLoading"
+                  loading-text="正在加载数据…"
+                  striped
+                  row-hover
+                  empty-text="暂无记录"
+                  empty-description="导入 CSV 或新增记录后，数据会显示在这里"
+                />
+              </WiScrollbar>
+
+              <div v-else class="datasets-page__empty">
+                <Database :size="28" aria-hidden="true" />
+                <h2>选择一个数据集</h2>
+                <p>从左侧目录或列表中选择数据集，预览数据记录。</p>
+                <WiButton icon="plus" label="创建数据集" size="small" @click="showCreate = true" />
+              </div>
+
+              <template v-if="viewMode === 'catalog' ? catalogRows.length > 0 : !!selected" #footer>
+                <WiFlex class="w-full datasets-page__pager" align="center" justify="space-between" wrap size="small">
+                  <span class="datasets-page__pager-info">
+                    {{ viewMode === 'catalog' ? catalogPageRange : previewPageRange }}
+                  </span>
+                  <WiPagination
+                    v-if="viewMode === 'catalog'"
+                    v-model="catalogPage"
+                    v-model:page-size="catalogPageSize"
+                    :total-records="catalogRows.length"
+                    show-size-picker
+                  />
+                  <WiPagination
+                    v-else
+                    v-model="page"
+                    v-model:page-size="pageSize"
+                    :total-records="totalRows"
+                    show-size-picker
+                  />
+                </WiFlex>
+              </template>
+            </WiCard>
+          </WiLayoutContent>
+        </WiLayout>
+      </WiLayout>
+    </WiLayout>
+
+    <WiDialog v-model="showCreate" header="创建数据集" width="480px">
+      <WiForm class="datasets-page__dialog-form" @submit.prevent="create">
+        <WiFormItem label="名称" name="name" required>
+          <WiInput v-model="name" placeholder="例如：销售明细" fluid />
+        </WiFormItem>
+        <WiFormItem label="字段定义" name="fields">
+          <div class="datasets-page__field-list">
+            <div v-for="(field, index) in fields" :key="index" class="datasets-page__field-row">
+              <WiInput v-model="field.name" placeholder="字段名" fluid />
+              <WiSelect v-model="field.fieldType" :options="fieldTypeOptions" fluid />
+              <WiButton
+                v-if="fields.length > 1"
+                text
+                severity="danger"
+                size="small"
+                aria-label="删除字段"
+                @click="removeField(index)"
+              >
+                <Trash2 :size="14" />
+              </WiButton>
+            </div>
+            <WiButton icon="plus" label="添加字段" text size="small" @click="addField" />
           </div>
-        </div><div class="panel-actions">
-          <WiButton text @click="showCreate = false">
+        </WiFormItem>
+        <WiSpace class="datasets-page__dialog-actions">
+          <WiButton severity="secondary" native-type="button" @click="showCreate = false">
             取消
-          </WiButton><WiButton :loading="loading" @click="create">
+          </WiButton>
+          <WiButton native-type="submit" :loading="loading">
             创建数据集
           </WiButton>
-        </div>
-      </section>
+        </WiSpace>
+      </WiForm>
     </WiDialog>
+
     <WiDialog v-model="showImport" header="导入数据" width="520px">
-      <section class="create-panel import-panel">
-        <div class="panel-header">
-          <span class="eyebrow">IMPORT RECORDS</span>
-        </div><p class="import-hint">
+      <WiForm class="datasets-page__dialog-form" @submit.prevent="importCsv().then(() => { showImport = false })">
+        <p class="datasets-page__import-hint">
           当前数据集：{{ selected?.name }}。第一行填写字段名称，后续每行填写一条记录。
-        </p><WiTextarea v-model="csv" class="csv-input" placeholder="名称,金额,日期&#10;华东区域,12800,2026-08-01" :rows="8" fluid /><div class="panel-actions">
-          <WiButton text @click="showImport = false">
+        </p>
+        <WiFormItem label="CSV 内容" name="csv" required>
+          <WiTextarea v-model="csv" placeholder="名称,金额,日期&#10;华东区域,12800,2026-08-01" :rows="8" fluid />
+        </WiFormItem>
+        <WiSpace class="datasets-page__dialog-actions">
+          <WiButton severity="secondary" native-type="button" @click="showImport = false">
             取消
           </WiButton>
-          <WiButton :loading="rowsLoading" @click="importCsv().then(() => { showImport = false })">
-            <Upload :size="14" />开始导入
-          </WiButton>
-        </div>
-      </section>
+          <WiButton icon="upload" label="开始导入" native-type="submit" :loading="rowsLoading" />
+        </WiSpace>
+      </WiForm>
     </WiDialog>
+
     <WiDialog v-model="showFolderDialog" :header="editingFolder ? '编辑目录' : '新建目录'" width="420px">
-      <section class="create-panel">
-        <WiInput v-model="folderName" label="目录名称" placeholder="例如：销售数据" fluid />
-        <WiTextarea v-model="folderDescription" label="目录说明" placeholder="可选" :rows="3" fluid />
-        <div class="panel-actions">
-          <WiButton text @click="showFolderDialog = false">
+      <WiForm class="datasets-page__dialog-form" @submit.prevent="saveFolder">
+        <WiFormItem label="目录名称" name="folderName" required>
+          <WiInput v-model="folderName" placeholder="例如：销售数据" fluid />
+        </WiFormItem>
+        <WiFormItem label="目录说明" name="folderDescription">
+          <WiTextarea v-model="folderDescription" placeholder="可选" :rows="3" fluid />
+        </WiFormItem>
+        <WiSpace class="datasets-page__dialog-actions">
+          <WiButton severity="secondary" native-type="button" @click="showFolderDialog = false">
             取消
-          </WiButton><WiButton @click="saveFolder">
+          </WiButton>
+          <WiButton native-type="submit">
             保存
           </WiButton>
-        </div>
-      </section>
+        </WiSpace>
+      </WiForm>
     </WiDialog>
-    <WiConfirmDialog v-model="showDeleteFolderDialog" header="删除目录" type="warn" :message="`确定删除目录「${folderToDelete?.name ?? ''}」吗？只有空目录可以删除。`" accept-label="删除" reject-label="取消" accept-severity="danger" @accept="confirmDeleteFolder" />
-    <WiConfirmDialog v-model="showDeleteDatasetDialog" header="删除数据集" type="warn" :message="`确定删除数据集「${datasetToDelete?.name ?? ''}」吗？此操作不可恢复。`" accept-label="删除" reject-label="取消" accept-severity="danger" @accept="confirmDeleteDataset" />
-  </div>
+
+    <WiConfirmDialog
+      v-model="showDeleteFolderDialog"
+      header="删除目录"
+      type="warn"
+      :message="`确定删除目录「${folderToDelete?.name ?? ''}」吗？只有空目录可以删除。`"
+      accept-label="删除"
+      reject-label="取消"
+      accept-severity="danger"
+      @accept="confirmDeleteFolder"
+    />
+    <WiConfirmDialog
+      v-model="showDeleteDatasetDialog"
+      header="删除数据集"
+      type="warn"
+      :message="`确定删除数据集「${datasetToDelete?.name ?? ''}」吗？此操作不可恢复。`"
+      accept-label="删除"
+      reject-label="取消"
+      accept-severity="danger"
+      @accept="confirmDeleteDataset"
+    />
+  </WiFlex>
 </template>
 
+
 <style scoped>
-.datasets-page { --page-ground: var(--wi-color-ground-background, var(--wi-color-surface)); --page-surface: var(--wi-color-surface); --page-elevated: color-mix(in srgb, var(--wi-color-surface) 94%, var(--wi-color-primary)); --page-border: var(--wi-color-border); --page-text: var(--wi-color-text); --page-muted: var(--wi-color-text-muted); --page-primary: var(--wi-color-primary); display: flex; height: 100%; min-height: 0; flex-direction: column; overflow: hidden; color: var(--page-text); background: var(--page-ground); }
-.datasets-topbar { display: flex; height: 64px; flex: 0 0 auto; align-items: center; justify-content: space-between; padding: 0 24px; border-bottom: 1px solid var(--page-border); background: var(--page-surface); }.topbar-left,.topbar-right,.page-identity,.dataset-actions,.dataset-title { display: flex; align-items: center; }.topbar-left,.topbar-right { gap: 14px; }.page-identity { gap: 10px; }.page-icon,.dataset-title-icon,.empty-icon { display: grid; place-items: center; color: var(--page-primary); background: color-mix(in srgb, var(--page-primary) 12%, var(--page-surface)); }.page-icon { width: 30px; height: 30px; border-radius: 8px; }.page-identity strong { display: block; font-size: 14px; }.page-identity span,.eyebrow { color: var(--page-muted); font-size: 9px; letter-spacing: .14em; }.datasets-workspace { display: flex; min-height: 0; flex: 1; }.catalog-sidebar { display: flex; width: 258px; flex: 0 0 258px; min-height: 0; flex-direction: column; border-right: 1px solid var(--page-border); background: var(--page-surface); }.sidebar-heading { display: flex; align-items: center; justify-content: space-between; padding: 22px 18px 14px; }.sidebar-actions { display: flex; align-items: center; gap: 2px; }.sidebar-heading h2 { margin: 5px 0 0; font-size: 18px; font-weight: 600; }.catalog-summary { display: flex; align-items: center; gap: 8px; margin: 0 12px 8px; padding: 9px 10px; border-radius: 7px; color: var(--page-muted); background: var(--page-elevated); font-size: 11px; }.catalog-summary small,.tree-item small { margin-left: auto; color: var(--page-muted); font-size: 10px; }.catalog-scroll { min-height: 0; flex: 1; }.catalog-tree { padding: 4px 10px 18px; }.tree-item { display: flex; width: 100%; align-items: center; gap: 7px; min-height: 34px; padding: 6px 8px; border: 0; border-radius: 6px; color: var(--page-muted); background: transparent; text-align: left; font: inherit; font-size: 12px; cursor: pointer; }.tree-item:hover,.tree-item.active { color: var(--page-text); background: color-mix(in srgb, var(--page-primary) 10%, var(--page-surface)); }.tree-item.active { box-shadow: inset 2px 0 var(--page-primary); }.tree-item svg { flex: 0 0 auto; }.tree-actions { display: none; align-items: center; gap: 2px; margin-left: 4px; }.tree-item:hover .tree-actions,.tree-item.active .tree-actions { display: inline-flex; }.tree-actions :deep(.wi-button) { min-width: 22px; padding: 2px; color: var(--page-muted); }.tree-actions :deep(.wi-button:hover) { color: var(--page-primary); }.tree-root { color: var(--page-text); font-weight: 600; }.tree-toggle { display: grid; width: 13px; place-items: center; }.tree-dataset { padding-left: 39px; }.tree-dataset.active { color: var(--page-primary); }.catalog-empty { padding: 34px 14px; color: var(--page-muted); text-align: center; font-size: 12px; line-height: 1.8; }.sidebar-footer { display: flex; justify-content: space-between; margin: 12px; padding: 12px 4px 2px; border-top: 1px solid var(--page-border); color: var(--page-muted); font-size: 10px; }.sidebar-footer strong { color: var(--page-text); font-weight: 600; }.dataset-main { display: flex; min-width: 0; min-height: 0; flex: 1; flex-direction: column; }.dataset-toolbar { display: flex; min-height: 78px; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 18px; padding: 0 28px; border-bottom: 1px solid var(--page-border); background: var(--page-surface); }.dataset-title { min-width: 0; gap: 12px; }.dataset-title-icon { width: 34px; height: 34px; flex: 0 0 auto; border-radius: 9px; }.dataset-title h1 { overflow: hidden; margin: 0 0 5px; font-size: 16px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }.dataset-title p { overflow: hidden; margin: 0; color: var(--page-muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }.dataset-actions { flex: 0 0 auto; gap: 7px; }.table-container { min-width: 0; min-height: 0; flex: 1; overflow: auto; padding: 20px 28px 28px; }.table-caption { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; color: var(--page-text); font-size: 12px; }.table-caption small { color: var(--page-muted); font-size: 10px; }.dataset-empty { display: grid; min-height: 320px; place-items: center; align-content: center; gap: 8px; color: var(--page-muted); text-align: center; }.dataset-empty h2 { margin: 8px 0 0; color: var(--page-text); font-size: 16px; font-weight: 600; }.dataset-empty p { margin: 0 0 10px; font-size: 12px; }.empty-icon { width: 52px; height: 52px; border-radius: 14px; }.create-overlay { position: fixed; z-index: 20; inset: 0; display: grid; place-items: center; padding: 20px; background: color-mix(in srgb, var(--wi-color-text) 32%, transparent); }.create-panel { display: flex; width: min(460px, 100%); gap: 18px; padding: 24px; border: 1px solid var(--page-border); border-radius: 12px; background: var(--page-surface); box-shadow: var(--wi-shadow-lg, var(--wi-shadow-md)); flex-direction: column; }.panel-header { display: flex; align-items: flex-start; justify-content: space-between; }.panel-header h2 { margin: 5px 0 0; font-size: 20px; }.panel-header button { border: 0; color: var(--page-muted); background: transparent; font-size: 24px; cursor: pointer; }.import-hint { margin: -6px 0 0; color: var(--page-muted); font-size: 11px; line-height: 1.6; }.csv-input { width: 100%; min-height: 180px; box-sizing: border-box; resize: vertical; border: 1px solid var(--page-border); border-radius: 7px; color: var(--page-text); background: var(--page-ground); padding: 12px; font: inherit; font-size: 12px; line-height: 1.6; outline: none; }.csv-input:focus { border-color: var(--page-primary); }.field-list { display: flex; flex-direction: column; gap: 8px; }.field-list-heading,.panel-actions { display: flex; align-items: center; justify-content: space-between; }.field-list-heading { color: var(--page-text); font-size: 12px; }.field-row { display: grid; grid-template-columns: 1fr 100px; gap: 8px; }.field-row select { min-width: 0; border: 1px solid var(--page-border); border-radius: 6px; color: var(--page-text); background: var(--page-surface); padding: 0 8px; font: inherit; font-size: 11px; }.panel-actions { justify-content: flex-end; gap: 8px; padding-top: 4px; border-top: 1px solid var(--page-border); }
-@media (max-width: 760px) { .catalog-sidebar { width: 210px; flex-basis: 210px; }.datasets-topbar,.dataset-toolbar { padding-right: 14px; padding-left: 14px; }.dataset-toolbar { align-items: flex-start; flex-direction: column; padding-top: 14px; padding-bottom: 14px; }.dataset-actions { width: 100%; overflow-x: auto; }.table-container { padding: 16px 14px 24px; } }
+.datasets-manage-page {
+  min-height: 0;
+  overflow: hidden;
+  background: var(--wi-color-ground-background);
+}
+
+.datasets-page__sider {
+  min-height: 0;
+}
+
+.datasets-page__sider :deep(.wi-layout-sider__scroll) {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.datasets-page__sider :deep(.wi-card) {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.datasets-page__sider :deep(.wi-card__body) {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  padding: var(--wi-space-3);
+}
+
+.datasets-page__tree-scroll {
+  min-height: 0;
+  flex: 1;
+}
+
+.datasets-page__tree-scroll :deep(.wi-scrollbar__wrap),
+.datasets-page__tree-scroll :deep(.wi-scrollbar__view) {
+  height: 100%;
+  min-height: 100%;
+}
+
+.datasets-page__tree-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.datasets-page__tree-empty {
+  margin: var(--wi-space-6) var(--wi-space-3);
+  color: var(--wi-color-text-muted);
+  text-align: center;
+  font-size: var(--wi-font-size-sm);
+  line-height: 1.6;
+}
+
+.datasets-page__main {
+  min-width: 0;
+  min-height: 0;
+}
+
+.datasets-page__content {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  padding: var(--wi-space-4) var(--wi-space-5);
+  overflow: hidden;
+}
+
+.datasets-page__workspace {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.datasets-page__workspace :deep(.wi-card__header) {
+  padding: var(--wi-space-4);
+}
+
+.datasets-page__workspace :deep(.wi-card__body) {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.datasets-page__workspace :deep(.wi-card__footer) {
+  padding: var(--wi-space-3) var(--wi-space-4);
+  border-top: 1px solid var(--wi-color-border);
+}
+
+.datasets-page__workspace-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wi-space-3);
+}
+
+.datasets-page__head {
+  width: 100%;
+}
+
+.datasets-page__intro {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--wi-space-2);
+}
+
+.datasets-page__actions {
+  flex-shrink: 0;
+}
+
+.datasets-page__meta-tags {
+  margin-top: var(--wi-space-1);
+}
+
+.datasets-page__title {
+  margin: 0;
+  font-size: var(--wi-font-size-lg);
+  font-weight: 600;
+  color: var(--wi-color-text);
+  line-height: 1.3;
+}
+
+.datasets-page__desc {
+  margin: 0;
+  max-width: 40rem;
+  color: var(--wi-color-text-muted);
+  font-size: var(--wi-font-size-sm);
+  line-height: 1.55;
+}
+
+.datasets-page__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wi-space-2);
+  padding-top: var(--wi-space-1);
+  border-top: 1px solid color-mix(in srgb, var(--wi-color-border) 65%, transparent);
+}
+
+.datasets-page__metric {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wi-space-2);
+  padding: var(--wi-space-1) var(--wi-space-3);
+  border-radius: var(--wi-radius-md);
+  color: var(--wi-color-text-muted);
+  background: color-mix(in srgb, var(--wi-color-border) 22%, transparent);
+  font-size: var(--wi-font-size-sm);
+}
+
+.datasets-page__metric strong {
+  color: var(--wi-color-text);
+  font-weight: 600;
+}
+
+.datasets-page__toolbar {
+  width: 100%;
+  padding-top: var(--wi-space-1);
+  border-top: 1px solid color-mix(in srgb, var(--wi-color-border) 65%, transparent);
+}
+
+.datasets-page__search {
+  width: min(100%, 16rem);
+}
+
+.datasets-page__result-count {
+  color: var(--wi-color-text-muted);
+  font-size: var(--wi-font-size-sm);
+  white-space: nowrap;
+}
+
+.datasets-page__pager {
+  width: 100%;
+}
+
+.datasets-page__pager-info {
+  color: var(--wi-color-text-muted);
+  font-size: var(--wi-font-size-sm);
+}
+
+.datasets-page__table-scroll {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.datasets-page__table-scroll :deep(.wi-scrollbar__wrap),
+.datasets-page__table-scroll :deep(.wi-scrollbar__view) {
+  height: 100%;
+  min-height: 100%;
+}
+
+.datasets-page__table-area {
+  width: 100%;
+  border: none;
+}
+
+.datasets-page__table-area :deep(.wi-table-wrapper) {
+  border: 0;
+  border-radius: 0;
+}
+
+.datasets-page__table-area :deep(.wi-table__cell-inner) {
+  font-size: var(--wi-table-font-size);
+}
+
+.datasets-page__empty {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: var(--wi-space-2);
+  min-height: 260px;
+  padding: var(--wi-space-6);
+  color: var(--wi-color-text-muted);
+  text-align: center;
+}
+
+.datasets-page__link {
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  color: var(--wi-color-primary);
+  background: transparent;
+  font: inherit;
+  line-height: var(--wi-table-cell-line-height);
+  cursor: pointer;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.datasets-page__link:hover {
+  text-decoration: underline;
+}
+
+.datasets-page__empty h2 {
+  margin: var(--wi-space-2) 0 0;
+  color: var(--wi-color-text);
+  font-size: var(--wi-font-size-lg);
+  font-weight: 600;
+}
+
+.datasets-page__empty p {
+  margin: 0 0 var(--wi-space-2);
+  font-size: var(--wi-font-size-sm);
+}
+
+.datasets-page__dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wi-space-4);
+}
+
+.datasets-page__field-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wi-space-2);
+  width: 100%;
+}
+
+.datasets-page__field-row {
+  display: grid;
+  grid-template-columns: 1fr 7rem auto;
+  gap: var(--wi-space-2);
+  align-items: center;
+}
+
+.datasets-page__dialog-actions {
+  justify-content: flex-end;
+  padding-top: var(--wi-space-2);
+  border-top: 1px solid var(--wi-color-border);
+}
+
+.datasets-page__import-hint {
+  margin: 0;
+  color: var(--wi-color-text-muted);
+  font-size: var(--wi-font-size-sm);
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .datasets-page__content {
+    padding: var(--wi-space-3);
+  }
+
+  .datasets-page__head {
+    flex-direction: column;
+  }
+
+  .datasets-page__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .datasets-page__search {
+    width: 100%;
+  }
+}
 </style>
+

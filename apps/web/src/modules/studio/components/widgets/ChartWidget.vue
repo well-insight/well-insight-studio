@@ -74,7 +74,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   font-size: 10px;
-  color: var(--wi-text-secondary, #4a5a78);
+  color: var(--wi-color-text-muted);
   text-align: center;
 }
 </style>

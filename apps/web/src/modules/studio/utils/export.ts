@@ -1,9 +1,10 @@
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
+import { getExportBackgroundColor } from '../../../styles/color-utils'
 
 export async function exportElementToPNG(el: HTMLElement, filename: string): Promise<void> {
   const canvas = await html2canvas(el, {
-    backgroundColor: '#ffffff',
+    backgroundColor: getExportBackgroundColor(),
     scale: 2,
     useCORS: true,
   })
@@ -23,7 +24,7 @@ export async function exportElementsToPDF(elements: (HTMLElement | undefined)[],
     if (i > 0) pdf.addPage()
     const el = validElements[i]!
     const canvas = await html2canvas(el, {
-      backgroundColor: '#ffffff',
+      backgroundColor: getExportBackgroundColor(),
       scale: 2,
       useCORS: true,
     })

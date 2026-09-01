@@ -27,6 +27,7 @@ import { WiButton, WiInput } from '@well-insight/ui'
 - 危险：`severity="danger"` 或 `invalid` + `errorMessage`。
 - 清除：优先 `clearable`（Select 亦支持 `showClear` 别名）。
 - 宽度：表单字段 `fluid`；页面级宽度用 layout CSS + `max-width`。
+- **图标按钮**：`icon-only` 时必须用 `icon` / `:icon` 传入图标；默认插槽在 `iconOnly` 下不会渲染。带文字时用 `icon` + `label`，不要往默认插槽塞 Lucide 图标。
 
 ## 禁止
 

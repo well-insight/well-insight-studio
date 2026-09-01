@@ -138,18 +138,18 @@ defineExpose({ open })
   gap: 12px;
   flex-shrink: 0;
   padding-bottom: 4px;
-  border-bottom: 1px solid var(--wi-border-color, #1a212e);
+  border-bottom: 1px solid var(--wi-color-border);
 }
 .ds-selector {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  color: var(--wi-text-secondary, #8a9bb5);
+  color: var(--wi-color-text-muted);
 }
 .field-count {
   font-size: 10px;
-  color: var(--wi-text-secondary, #6a7b98);
+  color: var(--wi-color-text-muted);
   margin-left: auto;
 }
 .config-modal-columns {
@@ -160,11 +160,11 @@ defineExpose({ open })
   min-height: 0;
 }
 .column {
-  border: 1px solid var(--wi-border-color, #1a212e);
+  border: 1px solid var(--wi-color-border);
   border-radius: 6px;
   overflow: hidden;
   min-width: 0;
-  background: var(--wi-surface, #0a0f18);
+  background: var(--wi-color-surface);
 }
 .config-modal-footer {
   display: flex;
@@ -172,7 +172,7 @@ defineExpose({ open })
   gap: 8px;
   flex-shrink: 0;
   padding-top: 4px;
-  border-top: 1px solid var(--wi-border-color, #1a212e);
+  border-top: 1px solid var(--wi-color-border);
 }
 .btn-cancel,
 .btn-apply {
@@ -180,18 +180,18 @@ defineExpose({ open })
   padding: 5px 14px;
   border-radius: 5px;
   cursor: pointer;
-  border: 1px solid var(--wi-border-color, #2a3448);
+  border: 1px solid var(--wi-color-border);
 }
 .btn-cancel {
   background: transparent;
-  color: var(--wi-text-secondary, #8a9bb5);
+  color: var(--wi-color-text-muted);
 }
 .btn-cancel:hover {
-  color: var(--wi-text-color, #e8edf5);
+  color: var(--wi-color-text);
 }
 .btn-apply {
-  background: var(--wi-primary, #3b82f6);
-  border-color: var(--wi-primary, #3b82f6);
+  background: var(--wi-color-primary);
+  border-color: var(--wi-color-primary);
   color: white;
 }
 .btn-apply:hover {

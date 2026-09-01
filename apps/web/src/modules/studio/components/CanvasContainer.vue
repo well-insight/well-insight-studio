@@ -107,7 +107,7 @@ function onDrop(e: DragEvent) {
   flex: 1;
   min-height: 0;
   position: relative;
-  background: var(--wi-ground-background, #080b13);
+  background: var(--wi-color-ground-background);
 }
 .canvas-scrollbar {
   width: 100%;
@@ -124,8 +124,8 @@ function onDrop(e: DragEvent) {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  color: var(--wi-text-secondary, #8a9bb5);
-  background: color-mix(in srgb, var(--wi-ground-background, #080b13) 72%, transparent);
+  color: var(--wi-color-text-muted);
+  background: color-mix(in srgb, var(--wi-color-ground-background) 72%, transparent);
   pointer-events: all;
 }
 .canvas-loading span {
@@ -137,17 +137,14 @@ function onDrop(e: DragEvent) {
   height: 1600px;
   transform-origin: top left;
   background-image:
-    linear-gradient(var(--canvas-grid, rgba(58, 69, 87, 0.18)) 1px, transparent 1px),
-    linear-gradient(90deg, var(--canvas-grid, rgba(58, 69, 87, 0.18)) 1px, transparent 1px);
+    linear-gradient(var(--wi-color-canvas-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--wi-color-canvas-grid) 1px, transparent 1px);
   background-size: 40px 40px;
 }
-[data-theme="light"] .canvas-container {
-  --canvas-grid: rgba(58, 69, 87, 0.08);
-}
 .canvas-container.drag-over {
-  outline: 2px dashed var(--wi-primary, #3b82f6);
+  outline: 2px dashed var(--wi-color-primary);
   outline-offset: -4px;
-  background-color: rgba(59, 130, 246, 0.05);
+  background-color: var(--wi-color-primary-soft);
 }
 .canvas-empty {
   position: absolute;
@@ -162,10 +159,10 @@ function onDrop(e: DragEvent) {
 .hint {
   font-size: 14px;
   font-weight: 600;
-  color: var(--wi-text-secondary, #6a7b98);
+  color: var(--wi-color-text-muted);
 }
 .sub-hint {
   font-size: 11px;
-  color: var(--wi-text-secondary, #4a5a78);
+  color: var(--wi-color-text-muted);
 }
 </style>

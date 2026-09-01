@@ -68,9 +68,9 @@ function formatCell(cell: unknown): string {
 .widget-table th {
   text-align: left;
   padding: 3px 6px;
-  color: var(--wi-text-secondary, #8a9bb5);
+  color: var(--wi-color-text-muted);
   font-weight: 500;
-  border-bottom: 1px solid var(--wi-border-color, #1e2638);
+  border-bottom: 1px solid var(--wi-color-border);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -78,7 +78,7 @@ function formatCell(cell: unknown): string {
 }
 .widget-table td {
   padding: 3px 6px;
-  border-bottom: 1px solid var(--wi-border-color, rgba(30, 38, 56, 0.5));
+  border-bottom: 1px solid var(--wi-color-border);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -87,7 +87,7 @@ function formatCell(cell: unknown): string {
 .table-note {
   margin-top: auto;
   font-size: 8px;
-  color: var(--wi-text-secondary, #4a5a78);
+  color: var(--wi-color-text-muted);
   text-align: right;
   padding-top: 2px;
 }
@@ -97,7 +97,7 @@ function formatCell(cell: unknown): string {
   align-items: center;
   justify-content: center;
   font-size: 10px;
-  color: var(--wi-text-secondary, #4a5a78);
+  color: var(--wi-color-text-muted);
   text-align: center;
 }
 </style>

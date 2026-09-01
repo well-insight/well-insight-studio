@@ -117,8 +117,8 @@ async function submit() {
   place-items: center;
   font-weight: 800;
   font-size: 16px;
-  color: #fff;
-  background: linear-gradient(135deg, #3b82f6, #22d3ee);
+  color: var(--wi-color-on-emphasis);
+  background: var(--wi-color-brand-gradient);
 }
 .auth-brand h1 {
   margin: 0;

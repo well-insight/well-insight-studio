@@ -144,12 +144,12 @@ const hiddenModel = computed({
 .panel-title {
   font-size: 12px;
   font-weight: 600;
-  color: var(--wi-text-color, #e8edf5);
+  color: var(--wi-color-text);
   flex-shrink: 0;
 }
 .selected-label {
   font-size: 10px;
-  color: var(--wi-text-secondary, #6a7b98);
+  color: var(--wi-color-text-muted);
   flex-shrink: 0;
 }
 .no-selection {
@@ -158,7 +158,7 @@ const hiddenModel = computed({
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  color: var(--wi-text-secondary, #4a5a78);
+  color: var(--wi-color-text-muted);
   text-align: center;
 }
 .op-group {
@@ -168,7 +168,7 @@ const hiddenModel = computed({
 }
 .op-group label {
   font-size: 10px;
-  color: var(--wi-text-secondary, #8a9bb5);
+  color: var(--wi-color-text-muted);
 }
 .visibility-row {
   display: flex;
@@ -177,20 +177,20 @@ const hiddenModel = computed({
 .op-btn {
   flex: 1;
   background: transparent;
-  border: 1px solid var(--wi-border-color, #2a3448);
-  color: var(--wi-text-secondary, #8a9bb5);
+  border: 1px solid var(--wi-color-border);
+  color: var(--wi-color-text-muted);
   font-size: 10px;
   padding: 5px 0;
   border-radius: 4px;
   cursor: pointer;
 }
 .op-btn.active {
-  background: var(--wi-primary, #3b82f6);
-  border-color: var(--wi-primary, #3b82f6);
+  background: var(--wi-color-primary);
+  border-color: var(--wi-color-primary);
   color: white;
 }
 .op-btn:hover:not(.active) {
-  border-color: var(--wi-primary, #3b82f6);
-  color: var(--wi-text-color, #e8edf5);
+  border-color: var(--wi-color-primary);
+  color: var(--wi-color-text);
 }
 </style>

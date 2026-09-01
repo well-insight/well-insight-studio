@@ -155,8 +155,8 @@ function toggleFullscreen() {
 <style scoped>
 .present-view {
   min-height: 100vh;
-  background: var(--wi-ground-background, #f8fafc);
-  color: var(--wi-text-color, #1e293b);
+  background: var(--wi-color-ground-background);
+  color: var(--wi-color-text);
   display: flex;
   flex-direction: column;
 }
@@ -166,9 +166,9 @@ function toggleFullscreen() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--wi-border-color, #e2e8f0);
+  border-bottom: 1px solid var(--wi-color-border);
   flex-shrink: 0;
-  background: var(--wi-surface-elevated, #ffffff);
+  background: var(--wi-color-surface-elevated);
   backdrop-filter: blur(8px);
 }
 .brand {
@@ -184,13 +184,13 @@ function toggleFullscreen() {
   place-items: center;
   font-weight: 800;
   font-size: 12px;
-  color: #fff;
-  background: linear-gradient(135deg, #3b82f6, #22d3ee);
+  color: var(--wi-color-on-emphasis);
+  background: var(--wi-color-brand-gradient);
 }
 .brand-title {
   font-size: 16px;
   font-weight: 700;
-  color: var(--wi-text-color, #1e293b);
+  color: var(--wi-color-text);
 }
 .header-actions {
   display: flex;
@@ -209,27 +209,27 @@ function toggleFullscreen() {
   min-height: 100%;
 }
 .present-card {
-  background: var(--wi-surface-elevated, #ffffff);
-  border: 1px solid var(--wi-border-color, #e2e8f0);
+  background: var(--wi-color-surface-elevated);
+  border: 1px solid var(--wi-color-border);
   border-radius: 10px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--wi-shadow-sm);
 }
 .present-card:hover {
-  border-color: var(--wi-primary, #3b82f6);
-  box-shadow: var(--wi-shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.06));
+  border-color: var(--wi-color-primary);
+  box-shadow: var(--wi-shadow-sm);
 }
 .card-header {
   height: 34px;
   padding: 0 12px;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid var(--wi-border-color, #e2e8f0);
+  border-bottom: 1px solid var(--wi-color-border);
   border-left: 3px solid;
   flex-shrink: 0;
-  background: var(--wi-surface, #f8fafc);
+  background: var(--wi-color-surface);
 }
 .card-title {
   font-size: 12px;
@@ -237,7 +237,7 @@ function toggleFullscreen() {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--wi-text-color, #1e293b);
+  color: var(--wi-color-text);
 }
 .card-body {
   flex: 1;
@@ -253,12 +253,12 @@ function toggleFullscreen() {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  color: var(--wi-text-secondary, #64748b);
+  color: var(--wi-color-text-muted);
   font-size: 14px;
 }
 .present-error .sub {
   font-size: 12px;
-  color: var(--wi-text-secondary, #64748b);
+  color: var(--wi-color-text-muted);
 }
 .widget-unknown {
   height: 100%;
@@ -266,7 +266,7 @@ function toggleFullscreen() {
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  color: var(--wi-text-secondary, #64748b);
+  color: var(--wi-color-text-muted);
 }
 .spin {
   animation: spin 1s linear infinite;

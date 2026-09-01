@@ -1,5 +1,6 @@
 import type { Widget, WidgetType } from '@well-insight/shared'
 import { defineStore } from 'pinia'
+import { getWidgetColorPalette, readCssColor } from '../color-utils'
 
 const MAX_HISTORY = 50
 
@@ -11,10 +12,10 @@ export const WIDGET_DEFAULTS: Record<WidgetType, { label: string; width: number;
   table: { label: '表格', width: 280, height: 170 },
 }
 
-export const COLOR_PALETTE = [
-  '#3b82f6', '#8b5cf6', '#f59e0b', '#22c55e',
-  '#ef4444', '#ec4899', '#14b8a6', '#f97316',
-]
+function widgetColor(index: number): string {
+  const palette = getWidgetColorPalette()
+  return palette[index % palette.length] ?? readCssColor('--wi-color-primary')
+}
 
 interface Snapshot {
   widgets: Widget[]
@@ -96,7 +97,7 @@ export const useWidgetStore = defineStore('widget', {
         y: options.y ?? baseY,
         width: options.width ?? defaults.width,
         height: options.height ?? defaults.height,
-        color: options.color ?? COLOR_PALETTE[this.widgets.length % COLOR_PALETTE.length]!,
+        color: options.color ?? widgetColor(this.widgets.length),
         visible: options.visible ?? true,
         locked: options.locked ?? false,
         config: options.config ?? { fieldOps: {}, visibleFields: [] },

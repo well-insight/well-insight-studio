@@ -1,0 +1,44 @@
+/**
+ * Well Insight Studio — app-level semantic tokens.
+ * Extends @well-insight/ui theme; do not duplicate component token hex values here.
+ */
+:root {
+  --wi-color-ground-background: color-mix(in srgb, var(--wi-color-surface) 94%, var(--wi-color-text) 6%);
+  --wi-color-surface-elevated: var(--wi-color-surface);
+  --wi-color-surface-hover: color-mix(in srgb, var(--wi-color-primary) 6%, var(--wi-color-surface));
+  --wi-color-canvas-grid: color-mix(in srgb, var(--wi-color-border) 70%, transparent);
+  --wi-color-primary-soft: color-mix(in srgb, var(--wi-color-primary) 12%, transparent);
+  --wi-color-primary-glow: color-mix(in srgb, var(--wi-color-primary) 25%, transparent);
+  --wi-color-brand-gradient: linear-gradient(
+    135deg,
+    var(--wi-color-primary),
+    color-mix(in srgb, var(--wi-color-info) 55%, var(--wi-color-success))
+  );
+}
+
+[data-theme="dark"] {
+  --wi-color-ground-background: color-mix(in srgb, var(--wi-color-surface) 62%, black);
+  --wi-color-surface-elevated: color-mix(in srgb, var(--wi-color-surface) 90%, var(--wi-color-text) 10%);
+  --wi-color-surface-hover: color-mix(in srgb, var(--wi-color-primary) 10%, var(--wi-color-surface));
+  --wi-color-canvas-grid: color-mix(in srgb, var(--wi-color-border) 55%, transparent);
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  font-family: var(--wi-font-sans);
+  color: var(--wi-color-text);
+  background: var(--wi-color-ground-background);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}

@@ -92,7 +92,7 @@ const items = computed<KpiItem[]>(() => {
 }
 .kpi-label {
   font-size: 9px;
-  color: var(--wi-text-secondary, #8a9bb5);
+  color: var(--wi-color-text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -103,7 +103,7 @@ const items = computed<KpiItem[]>(() => {
   align-items: center;
   justify-content: center;
   font-size: 10px;
-  color: var(--wi-text-secondary, #4a5a78);
+  color: var(--wi-color-text-muted);
   text-align: center;
 }
 </style>

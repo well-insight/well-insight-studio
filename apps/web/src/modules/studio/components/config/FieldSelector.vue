@@ -94,7 +94,7 @@ function toggleVisibility(field: string, e: Event) {
   align-items: center;
   justify-content: space-between;
   padding: 8px 10px;
-  border-bottom: 1px solid var(--wi-border-color, #1a212e);
+  border-bottom: 1px solid var(--wi-color-border);
   font-size: 11px;
   font-weight: 600;
   flex-shrink: 0;
@@ -106,20 +106,20 @@ function toggleVisibility(field: string, e: Event) {
 }
 .selector-actions button {
   background: transparent;
-  border: 1px solid var(--wi-border-color, #2a3448);
-  color: var(--wi-text-secondary, #8a9bb5);
+  border: 1px solid var(--wi-color-border);
+  color: var(--wi-color-text-muted);
   font-size: 9px;
   padding: 1px 5px;
   border-radius: 3px;
   cursor: pointer;
 }
 .selector-actions button:hover {
-  border-color: var(--wi-primary, #3b82f6);
-  color: var(--wi-text-color, #e8edf5);
+  border-color: var(--wi-color-primary);
+  color: var(--wi-color-text);
 }
 .selected-count {
   font-size: 9px;
-  color: var(--wi-text-secondary, #4a5a78);
+  color: var(--wi-color-text-muted);
   margin-left: 2px;
 }
 .selector-body {
@@ -134,21 +134,21 @@ function toggleVisibility(field: string, e: Event) {
   padding: 5px 10px;
   font-size: 11px;
   cursor: pointer;
-  color: var(--wi-text-secondary, #a8b4c8);
+  color: var(--wi-color-text-muted);
   user-select: none;
 }
 .field-row:hover {
-  background: var(--wi-surface-hover, #141c2a);
+  background: var(--wi-color-surface-hover);
 }
 .field-row.selected {
-  background: rgba(59, 130, 246, 0.1);
-  color: var(--wi-text-color, #e8edf5);
+  background: var(--wi-color-primary-soft);
+  color: var(--wi-color-text);
 }
 .field-row.hidden {
   opacity: 0.4;
 }
 .type-icon {
-  color: var(--wi-primary, #3b82f6);
+  color: var(--wi-color-primary);
   flex-shrink: 0;
 }
 .field-name {
@@ -159,8 +159,8 @@ function toggleVisibility(field: string, e: Event) {
 }
 .field-type {
   font-size: 8px;
-  color: var(--wi-text-secondary, #4a5a78);
-  border: 1px solid var(--wi-border-color, #1e2638);
+  color: var(--wi-color-text-muted);
+  border: 1px solid var(--wi-color-border);
   padding: 0 3px;
   border-radius: 3px;
   flex-shrink: 0;
@@ -170,7 +170,7 @@ function toggleVisibility(field: string, e: Event) {
   border: none;
   padding: 2px;
   cursor: pointer;
-  color: var(--wi-text-secondary, #6a7b98);
+  color: var(--wi-color-text-muted);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -187,6 +187,6 @@ function toggleVisibility(field: string, e: Event) {
 }
 input[type='checkbox'] {
   cursor: pointer;
-  accent-color: var(--wi-primary, #3b82f6);
+  accent-color: var(--wi-color-primary);
 }
 </style>

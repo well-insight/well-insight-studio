@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { WidgetType } from '@well-insight/shared'
-import { BarChart3, ChartLine, ChartPie, LayoutGrid, Minus, Plus, Redo2, RefreshCw, Table2, Trash2, Undo2 } from '@lucide/vue'
+import { BarChart3, ChartLine, ChartPie, LayoutGrid, Redo2, Table2, Undo2 } from '@lucide/vue'
 import { WiButton, WiFlex, WiTag } from '@well-insight/ui'
 import { useWidgetStore, WIDGET_DEFAULTS } from '../../../styles/stores/widgetStore'
 
@@ -40,43 +40,29 @@ function clearCanvas() {
   <WiFlex class="canvas-toolbar" justify="space-between" align="center" :wrap="false" :size="4">
     <WiFlex class="toolbar-left" align="center" :wrap="false" :size="4">
       <span class="toolbar-title">画布</span>
-      <WiButton icon-only variant="ghost" size="small" aria-label="撤销 (Ctrl+Z)" :disabled="!store.canUndo" @click="store.undo()">
-        <Undo2 :size="13" />
-      </WiButton>
-      <WiButton icon-only variant="ghost" size="small" aria-label="重做 (Ctrl+Y)" :disabled="!store.canRedo" @click="store.redo()">
-        <Redo2 :size="13" />
-      </WiButton>
+      <WiButton :icon="Undo2" icon-only variant="ghost" size="small" aria-label="撤销 (Ctrl+Z)" :disabled="!store.canUndo" @click="store.undo()" />
+      <WiButton :icon="Redo2" icon-only variant="ghost" size="small" aria-label="重做 (Ctrl+Y)" :disabled="!store.canRedo" @click="store.redo()" />
       <span class="divider" />
       <WiButton
         v-for="btn in WIDGET_BUTTONS"
         :key="btn.type"
+        :icon="btn.icon"
+        :label="WIDGET_DEFAULTS[btn.type]?.label ?? btn.type"
         variant="ghost"
         size="small"
         :aria-label="`添加${WIDGET_DEFAULTS[btn.type]?.label ?? btn.type}`"
         @click="addWidget(btn.type)"
-      >
-        <component :is="btn.icon" :size="13" />
-        <span>{{ WIDGET_DEFAULTS[btn.type]?.label }}</span>
-      </WiButton>
+      />
       <span class="divider" />
-      <WiButton icon-only variant="ghost" size="small" aria-label="清空画布" :disabled="store.widgets.length === 0" @click="clearCanvas">
-        <Trash2 :size="13" />
-      </WiButton>
+      <WiButton icon="trash" icon-only variant="ghost" size="small" aria-label="清空画布" :disabled="store.widgets.length === 0" @click="clearCanvas" />
     </WiFlex>
     <WiFlex class="toolbar-right" align="center" :wrap="false" :size="4">
-      <WiButton variant="ghost" size="small" aria-label="刷新画布数据" :loading="loading" @click="emit('refresh')">
-        <RefreshCw :size="13" :class="{ spinning: loading }" />
-        <span>刷新</span>
-      </WiButton>
+      <WiButton icon="refresh" label="刷新" variant="ghost" size="small" aria-label="刷新画布数据" :loading="loading" @click="emit('refresh')" />
       <WiTag :value="`${store.widgets.length} 个组件`" severity="secondary" size="small" />
       <WiFlex class="zoom-control" align="center" :wrap="false" :size="2">
-        <WiButton icon-only variant="ghost" size="small" aria-label="缩小" @click="emit('zoom', -0.1)">
-          <Minus :size="13" />
-        </WiButton>
+        <WiButton icon="minus" icon-only variant="ghost" size="small" aria-label="缩小" @click="emit('zoom', -0.1)" />
         <span class="zoom-level">{{ Math.round(zoom * 100) }}%</span>
-        <WiButton icon-only variant="ghost" size="small" aria-label="放大" @click="emit('zoom', 0.1)">
-          <Plus :size="13" />
-        </WiButton>
+        <WiButton icon="plus" icon-only variant="ghost" size="small" aria-label="放大" @click="emit('zoom', 0.1)" />
       </WiFlex>
     </WiFlex>
   </WiFlex>
@@ -113,12 +99,6 @@ function clearCanvas() {
   flex-shrink: 0;
   margin: 0 3px;
   background: var(--wi-color-border);
-}
-.spinning {
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 .zoom-level {
   min-width: 36px;

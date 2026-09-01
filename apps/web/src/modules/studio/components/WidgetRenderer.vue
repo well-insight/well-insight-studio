@@ -115,19 +115,19 @@ async function onExportPNG() {
   position: absolute;
   display: flex;
   flex-direction: column;
-  background: var(--wi-surface, #0f1522);
-  border: 1px solid var(--wi-border-color, #1e2638);
+  background: var(--wi-color-surface);
+  border: 1px solid var(--wi-color-border);
   border-radius: 6px;
   overflow: hidden;
   cursor: grab;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .canvas-widget:hover {
-  border-color: var(--wi-primary, #3b82f6);
+  border-color: var(--wi-color-primary);
 }
 .canvas-widget.selected {
-  border-color: var(--wi-primary, #3b82f6);
-  box-shadow: 0 0 0 1px var(--wi-primary, #3b82f6), 0 4px 16px rgba(59, 130, 246, 0.25);
+  border-color: var(--wi-color-primary);
+  box-shadow: 0 0 0 1px var(--wi-color-primary), 0 4px 16px var(--wi-color-primary-glow);
 }
 .canvas-widget.is-hidden {
   opacity: 0.35;
@@ -140,7 +140,7 @@ async function onExportPNG() {
   align-items: center;
   justify-content: space-between;
   padding: 3px 6px;
-  border-bottom: 1px solid var(--wi-border-color, #1e2638);
+  border-bottom: 1px solid var(--wi-color-border);
   flex-shrink: 0;
   gap: 4px;
 }
@@ -157,8 +157,8 @@ async function onExportPNG() {
 .type-badge {
   font-size: 8px;
   font-weight: 400;
-  color: var(--wi-primary, #3b82f6);
-  background: rgba(59, 130, 246, 0.12);
+  color: var(--wi-color-primary);
+  background: var(--wi-color-primary-soft);
   padding: 0 4px;
   border-radius: 3px;
   flex-shrink: 0;
@@ -176,7 +176,7 @@ async function onExportPNG() {
 .widget-actions button {
   background: transparent;
   border: none;
-  color: var(--wi-text-secondary, #8a9bb5);
+  color: var(--wi-color-text-muted);
   width: 16px;
   height: 16px;
   display: flex;
@@ -187,11 +187,11 @@ async function onExportPNG() {
   padding: 0;
 }
 .widget-actions button:hover {
-  background: var(--wi-surface-hover, #1e2638);
-  color: var(--wi-text-color, #e8edf5);
+  background: var(--wi-color-surface-hover);
+  color: var(--wi-color-text);
 }
 .widget-actions button.danger:hover {
-  color: #ef4444;
+  color: var(--wi-color-danger);
 }
 .widget-body {
   flex: 1;
@@ -201,7 +201,7 @@ async function onExportPNG() {
   flex-direction: column;
 }
 .widget-unknown {
-  color: var(--wi-text-secondary, #4a5a78);
+  color: var(--wi-color-text-muted);
   font-size: 11px;
   text-align: center;
   margin: auto;
@@ -213,7 +213,7 @@ async function onExportPNG() {
   width: 12px;
   height: 12px;
   cursor: nwse-resize;
-  background: linear-gradient(135deg, transparent 50%, var(--wi-primary, #3b82f6) 50%);
+  background: linear-gradient(135deg, transparent 50%, var(--wi-color-primary) 50%);
   opacity: 0;
   transition: opacity 0.15s;
   border-bottom-right-radius: 6px;

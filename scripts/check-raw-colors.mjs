@@ -7,7 +7,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import path from 'node:path'
 
-const roots = process.argv.slice(2).length ? process.argv.slice(2) : ['src']
+const roots = process.argv.slice(2).length ? process.argv.slice(2) : ['apps/web/src', 'src']
 const IGNORE_DIRS = new Set(['node_modules', 'dist', 'coverage', 'design-tokens', '.git'])
 const EXT = new Set(['.vue', '.css', '.scss', '.ts', '.tsx', '.js', '.jsx'])
 
@@ -36,7 +36,9 @@ function walk(dir) {
     const text = readFileSync(full, 'utf8')
     const lines = text.split(/\r?\n/)
     lines.forEach((line, index) => {
-      if (ALLOW_LINE.test(line)) return
+      /** Skip ticket/id strings like '#1024' in object literals */
+    if (/['"]\#[0-9a-fA-F]+['"]/.test(line)) return
+    if (ALLOW_LINE.test(line)) return
       if (HEX.test(line) || RGB.test(line) || HSL.test(line)) {
         HEX.lastIndex = 0
         RGB.lastIndex = 0

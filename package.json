@@ -15,7 +15,8 @@
     "test:coverage": "pnpm -r test:coverage",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "check:colors": "node scripts/check-raw-colors.mjs apps/web/src src"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.3.0",

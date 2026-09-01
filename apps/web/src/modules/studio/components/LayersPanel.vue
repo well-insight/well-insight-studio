@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ChevronDown, ChevronUp, Eye, EyeOff, Lock, Unlock } from '@lucide/vue'
 import { WiButton, WiScrollbar } from '@well-insight/ui'
 import { computed } from 'vue'
 import { useWidgetStore, WIDGET_DEFAULTS } from '../../../styles/stores/widgetStore'
@@ -34,16 +33,24 @@ function isLast(id: string) {
         <span class="layer-type shrink-0 text-[10px] text-[var(--wi-color-primary)]">{{ WIDGET_DEFAULTS[w.type]?.label }}</span>
         <span class="layer-name min-w-0 flex-1 truncate text-[var(--wi-color-text)]" :title="w.title">{{ w.title }}</span>
         <span class="layer-actions hidden shrink-0 items-center gap-0.5" @click.stop>
-          <WiButton icon-only variant="ghost" size="small" aria-label="上移一层" :disabled="isFirst(w.id)" @click="store.moveLayer(w.id, 1)"><ChevronUp :size="11" /></WiButton>
-          <WiButton icon-only variant="ghost" size="small" aria-label="下移一层" :disabled="isLast(w.id)" @click="store.moveLayer(w.id, -1)"><ChevronDown :size="11" /></WiButton>
-          <WiButton icon-only variant="ghost" size="small" :aria-label="w.visible ? '隐藏' : '显示'" @click="store.toggleVisibility(w.id)">
-            <Eye v-if="w.visible" :size="11" />
-            <EyeOff v-else :size="11" />
-          </WiButton>
-          <WiButton icon-only variant="ghost" size="small" :aria-label="w.locked ? '解锁' : '锁定'" @click="store.toggleLock(w.id)">
-            <Unlock v-if="!w.locked" :size="11" />
-            <Lock v-else :size="11" />
-          </WiButton>
+          <WiButton icon="chevron-up" icon-only variant="ghost" size="small" aria-label="上移一层" :disabled="isFirst(w.id)" @click="store.moveLayer(w.id, 1)" />
+          <WiButton icon="chevron-down" icon-only variant="ghost" size="small" aria-label="下移一层" :disabled="isLast(w.id)" @click="store.moveLayer(w.id, -1)" />
+          <WiButton
+            :icon="w.visible ? 'eye' : 'eye-off'"
+            icon-only
+            variant="ghost"
+            size="small"
+            :aria-label="w.visible ? '隐藏' : '显示'"
+            @click="store.toggleVisibility(w.id)"
+          />
+          <WiButton
+            :icon="w.locked ? 'lock' : 'unlock'"
+            icon-only
+            variant="ghost"
+            size="small"
+            :aria-label="w.locked ? '解锁' : '锁定'"
+            @click="store.toggleLock(w.id)"
+          />
         </span>
       </div>
     </div>

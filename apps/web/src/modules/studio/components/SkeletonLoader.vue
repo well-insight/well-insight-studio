@@ -23,14 +23,14 @@ defineProps<{
 .skeleton-row {
   height: 10px;
   border-radius: 3px;
-  background: var(--wi-surface-hover, #141c2a);
+  background: var(--wi-color-surface-hover);
   overflow: hidden;
   position: relative;
 }
 .skeleton-block {
   height: 100%;
   border-radius: 3px;
-  background: linear-gradient(90deg, var(--wi-surface-hover, #141c2a) 0%, var(--wi-border-color, #2a3448) 50%, var(--wi-surface-hover, #141c2a) 100%);
+  background: linear-gradient(90deg, var(--wi-color-surface-hover) 0%, var(--wi-color-border) 50%, var(--wi-color-surface-hover) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite linear;
 }

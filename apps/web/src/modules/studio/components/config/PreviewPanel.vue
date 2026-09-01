@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Widget } from '@well-insight/shared'
 import { computed, ref, watchEffect } from 'vue'
+import { readCssColor } from '../../../../styles/color-utils'
 import { useConfigStore } from '../../../../styles/stores/configStore'
 import { useDataStore } from '../../../../styles/stores/dataStore'
 import { applyFieldOps } from '../../utils/fieldOps'
@@ -20,7 +21,7 @@ const previewWidget = computed<Widget>(() => ({
   y: 0,
   width: 300,
   height: 200,
-  color: '#3b82f6',
+  color: readCssColor('--wi-color-primary'),
   visible: true,
   locked: true,
   config: {
@@ -94,7 +95,7 @@ watchEffect(() => {
   align-items: center;
   justify-content: space-between;
   padding: 8px 10px;
-  border-bottom: 1px solid var(--wi-border-color, #1a212e);
+  border-bottom: 1px solid var(--wi-color-border);
   font-size: 12px;
   font-weight: 600;
   flex-shrink: 0;
@@ -105,16 +106,16 @@ watchEffect(() => {
 }
 .preview-tabs button {
   background: transparent;
-  border: 1px solid var(--wi-border-color, #2a3448);
-  color: var(--wi-text-secondary, #8a9bb5);
+  border: 1px solid var(--wi-color-border);
+  color: var(--wi-color-text-muted);
   font-size: 9px;
   padding: 2px 6px;
   border-radius: 3px;
   cursor: pointer;
 }
 .preview-tabs button.active {
-  background: var(--wi-primary, #3b82f6);
-  border-color: var(--wi-primary, #3b82f6);
+  background: var(--wi-color-primary);
+  border-color: var(--wi-color-primary);
   color: white;
 }
 .preview-body {
@@ -129,12 +130,12 @@ watchEffect(() => {
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  color: var(--wi-text-secondary, #4a5a78);
+  color: var(--wi-color-text-muted);
   text-align: center;
 }
 .preview-widget {
   height: 100%;
-  border: 1px dashed var(--wi-border-color, #2a3448);
+  border: 1px dashed var(--wi-color-border);
   border-radius: 6px;
   padding: 4px;
   overflow: hidden;
