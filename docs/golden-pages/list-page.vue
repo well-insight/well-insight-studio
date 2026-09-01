@@ -12,7 +12,6 @@ import {
   WiLayoutHeader,
   WiLayoutSider,
   WiMenu,
-  WiPagination,
   WiSelect,
   WiSpace,
   WiTable,
@@ -22,8 +21,6 @@ import { ref } from 'vue'
 
 const keyword = ref('')
 const status = ref<string | undefined>()
-const page = ref(1)
-const pageSize = ref(10)
 
 const statusOptions = [
   { label: '全部', value: '' },
@@ -31,14 +28,14 @@ const statusOptions = [
   { label: '停用', value: 'inactive' },
 ]
 
-const columns = [
-  { key: 'name', label: '名称' },
-  { key: 'status', label: '状态' },
-  { key: 'updatedAt', label: '更新时间' },
-  { key: 'actions', label: '操作', width: '8rem' },
+const headers = [
+  { text: '名称', value: 'name' },
+  { text: '状态', value: 'status' },
+  { text: '更新时间', value: 'updatedAt' },
+  { text: '操作', value: 'actions', width: 128 },
 ]
 
-const rows = [
+const items = [
   { id: '1', name: '示例项目 A', status: 'active', updatedAt: '2026-09-01' },
   { id: '2', name: '示例项目 B', status: 'inactive', updatedAt: '2026-08-28' },
 ]
@@ -79,22 +76,25 @@ const rows = [
         </header>
 
         <!-- 表格 -->
-        <WiTable :columns="columns" :rows="rows" row-key="id">
-          <template #cell-status="{ row }">
-            <WiTag :value="row.status === 'active' ? '启用' : '停用'" :severity="row.status === 'active' ? 'success' : 'secondary'" />
+        <WiTable
+          :headers="headers"
+          :items="items"
+          :rows-per-page="10"
+          alternating
+          border-cell
+          row-key="id"
+          aria-label="用户列表"
+        >
+          <template #item-status="{ status }">
+            <WiTag :value="status === 'active' ? '启用' : '停用'" :severity="status === 'active' ? 'success' : 'secondary'" />
           </template>
-          <template #cell-actions>
+          <template #item-actions>
             <WiSpace>
               <WiButton severity="secondary" size="small">编辑</WiButton>
               <WiButton severity="danger" size="small">删除</WiButton>
             </WiSpace>
           </template>
         </WiTable>
-
-        <!-- 分页 -->
-        <footer class="page-list__footer">
-          <WiPagination v-model="page" v-model:page-size="pageSize" :total-records="128" />
-        </footer>
       </WiLayoutContent>
     </WiLayout>
   </WiLayout>
@@ -139,11 +139,5 @@ const rows = [
   margin: 0;
   font-size: var(--wi-font-size-lg);
   color: var(--wi-color-text);
-}
-
-.page-list__footer {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: var(--wi-space-2);
 }
 </style>

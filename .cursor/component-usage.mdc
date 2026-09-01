@@ -17,7 +17,7 @@ import { WiButton, WiInput } from '@well-insight/ui'
 ## 必选模式
 
 - 表单：`WiForm` + `WiFormItem` + 字段组件；提交用 `@submit` + `type="submit"`。
-- 表格：`WiTable` 的 `columns` + `data` + `row-key`；单元格用 `#cell-{key}` 插槽。
+- 表格：`WiTable` 的 `headers` + `items` + `row-key`；单元格用 `#item-{value}` 插槽；分页优先用表格内置页脚（`server-options` + `server-items-length` 服务端模式）。
 - 浮层：详情/编辑 `WiDialog`；侧栏 `WiDrawer`；删除确认 `WiConfirmDialog`。
 - 反馈：操作结果 `WiToast` 或 `WiMessage`。
 

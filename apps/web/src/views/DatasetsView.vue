@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { TableColumn, TreeNode } from '@well-insight/ui'
+import type { TableHeader, TableServerOptions, TreeNode } from '@well-insight/ui'
 import type { Dataset, DatasetFieldType, DatasetFolder } from '../api/datasets'
 import {
   ArrowLeft,
@@ -27,7 +27,6 @@ import {
   WiLayoutContent,
   WiLayoutHeader,
   WiLayoutSider,
-  WiPagination,
   WiScrollbar,
   WiSelect,
   WiSpace,
@@ -72,10 +71,10 @@ const loading = ref(false)
 const rowsLoading = ref(false)
 const viewMode = ref<ViewMode>('catalog')
 const keyword = ref('')
-const catalogPage = ref(1)
-const catalogPageSize = ref(10)
-const page = ref(1)
-const pageSize = ref(20)
+const previewServerOptions = ref<TableServerOptions>({
+  page: 1,
+  rowsPerPage: 20,
+})
 const totalRows = ref(0)
 
 const showCreate = ref(false)
@@ -229,17 +228,17 @@ const filteredDatasets = computed(() => {
   )
 })
 
-const catalogColumns = computed<TableColumn[]>(() => {
-  const columns: TableColumn[] = [
-    { key: 'name', label: '名称', minWidth: 180 },
-    { key: 'fields', label: '字段', width: '6rem' },
-    { key: 'rowCount', label: '记录数', width: '7rem' },
+const catalogHeaders = computed<TableHeader[]>(() => {
+  const headers: TableHeader[] = [
+    { text: '名称', value: 'name' },
+    { text: '字段', value: 'fields', width: 96 },
+    { text: '记录数', value: 'rowCount', width: 112 },
   ]
   if (!selectedFolderId.value) {
-    columns.push({ key: 'folder', label: '目录', minWidth: 120 })
+    headers.push({ text: '目录', value: 'folder' })
   }
-  columns.push({ key: 'actions', label: '', width: '3rem', align: 'center' })
-  return columns
+  headers.push({ text: '', value: 'actions', width: 56 })
+  return headers
 })
 
 const catalogRows = computed<CatalogRow[]>(() => filteredDatasets.value.map(item => ({
@@ -250,16 +249,14 @@ const catalogRows = computed<CatalogRow[]>(() => filteredDatasets.value.map(item
   folder: folderLabel(item.folderId),
 })))
 
-const paginatedCatalogRows = computed(() => {
-  const start = (catalogPage.value - 1) * catalogPageSize.value
-  return catalogRows.value.slice(start, start + catalogPageSize.value)
-})
+const catalogTableKey = computed(
+  () => `${selectedFolderId.value ?? 'all'}:${keyword.value.trim()}`,
+)
 
-const previewColumns = computed<TableColumn[]>(() => selected.value?.fields.map(field => ({
-  key: field.id,
-  label: field.name,
-  sortable: true,
-  minWidth: 150,
+const previewHeaders = computed<TableHeader[]>(() => selected.value?.fields.map(field => ({
+  text: field.name,
+  value: field.id,
+  width: 150,
 })) ?? [])
 
 const breadcrumbItems = computed(() => {
@@ -302,21 +299,6 @@ const previewMetaTags = computed(() => {
   ]
 })
 
-const catalogPageRange = computed(() => {
-  const total = catalogRows.value.length
-  if (total === 0) return '暂无数据集'
-  const start = (catalogPage.value - 1) * catalogPageSize.value + 1
-  const end = Math.min(catalogPage.value * catalogPageSize.value, total)
-  return `显示 ${start}-${end}，共 ${total} 个`
-})
-
-const previewPageRange = computed(() => {
-  if (totalRows.value === 0) return '暂无记录'
-  const start = (page.value - 1) * pageSize.value + 1
-  const end = Math.min(page.value * pageSize.value, totalRows.value)
-  return `显示 ${start}-${end}，共 ${totalRows.value.toLocaleString()} 条`
-})
-
 const folderManageItems = [
   { value: 'edit', label: '编辑目录' },
   { value: 'delete', label: '删除目录' },
@@ -326,6 +308,10 @@ const previewMoreItems = [
   { value: 'refresh', label: '刷新数据' },
   { value: 'delete', label: '删除数据集' },
 ]
+
+function catalogRow(row: Record<string, unknown>): CatalogRow {
+  return row as CatalogRow
+}
 
 function folderLabel(folderId: string | null) {
   if (!folderId) return '未分类'
@@ -362,7 +348,6 @@ function selectAll() {
   selectedId.value = null
   viewMode.value = 'catalog'
   rows.value = []
-  catalogPage.value = 1
 }
 
 function selectFolder(folder: DatasetFolder) {
@@ -370,7 +355,6 @@ function selectFolder(folder: DatasetFolder) {
   selectedId.value = null
   viewMode.value = 'catalog'
   rows.value = []
-  catalogPage.value = 1
 }
 
 function openCreateFolder() {
@@ -458,7 +442,8 @@ async function loadRows() {
   if (!selectedId.value) return
   rowsLoading.value = true
   try {
-    const result = await listDatasetRows(selectedId.value, page.value, pageSize.value)
+    const { page, rowsPerPage } = previewServerOptions.value
+    const result = await listDatasetRows(selectedId.value, page, rowsPerPage)
     rows.value = result.rows.map(row => ({ id: row.id, ...row.values }))
     totalRows.value = result.total
   } catch (error) {
@@ -488,8 +473,10 @@ async function openDataset(dataset: Dataset) {
   selectedId.value = dataset.id
   selectedFolderId.value = dataset.folderId
   viewMode.value = 'preview'
-  page.value = 1
-  await loadRows()
+  previewServerOptions.value = {
+    page: 1,
+    rowsPerPage: previewServerOptions.value.rowsPerPage,
+  }
 }
 
 function backToCatalog() {
@@ -500,7 +487,6 @@ function backToCatalog() {
 
 function resetFilters() {
   keyword.value = ''
-  catalogPage.value = 1
 }
 
 function addField() {
@@ -574,18 +560,17 @@ async function confirmDeleteDataset() {
   }
 }
 
-watch([page, pageSize], () => {
-  if (viewMode.value === 'preview' && selectedId.value) loadRows()
-})
-
-watch(keyword, () => {
-  catalogPage.value = 1
-})
-
-watch(filteredDatasets, (rows) => {
-  const maxPage = Math.max(1, Math.ceil(rows.length / catalogPageSize.value))
-  if (catalogPage.value > maxPage) catalogPage.value = maxPage
-})
+watch(
+  () => [
+    viewMode.value,
+    selectedId.value,
+    previewServerOptions.value.page,
+    previewServerOptions.value.rowsPerPage,
+  ] as const,
+  () => {
+    if (viewMode.value === 'preview' && selectedId.value) void loadRows()
+  },
+)
 
 const collapsed = ref(false)
 
@@ -750,40 +735,41 @@ onMounted(load)
                 </div>
               </template>
 
-              <WiScrollbar
+              <div
                 v-if="viewMode === 'catalog'"
-                class="datasets-page__table-scroll"
-                :native="false"
-                trigger="hover"
-                aria-label="数据集列表"
+                class="datasets-page__table-host"
               >
                 <WiTable
-                  class="datasets-page__table-area h-full"
-                  :columns="catalogColumns"
-                  :rows="paginatedCatalogRows"
-                  row-key="id"
+                  :key="catalogTableKey"
+                  class="datasets-page__table-area"
+                  :headers="catalogHeaders"
+                  :items="catalogRows"
                   :loading="loading"
-                  loading-text="正在加载数据集…"
-                  striped
-                  row-hover
-                  empty-text="暂无数据集"
-                  empty-description="创建目录或新建数据集，开始整理业务数据"
+                  :rows-per-page="10"
+                  :rows-items="[10, 20, 50]"
+                  row-key="id"
+                  aria-label="数据集列表"
+                  alternating
+                  border-cell
+                  show-overflow-tooltip
+                  empty-message="暂无数据集"
+                  @click-row="(item) => openDatasetFromCatalog(String(item.id))"
                 >
-                  <template #cell-name="{ row }">
-                    <button type="button" class="datasets-page__link" @click="openDatasetFromCatalog(String(row.id))">
-                      {{ row.name }}
+                  <template #item-name="row">
+                    <button type="button" class="datasets-page__link" @click.stop="openDatasetFromCatalog(catalogRow(row).id)">
+                      {{ catalogRow(row).name }}
                     </button>
                   </template>
-                  <template #cell-fields="{ row }">
-                    <WiTag :value="`${row.fields} 个`" severity="info" size="small" />
+                  <template #item-fields="row">
+                    <WiTag :value="`${catalogRow(row).fields} 个`" severity="info" size="small" />
                   </template>
-                  <template #cell-folder="{ row }">
-                    <WiTag :value="String(row.folder)" severity="secondary" size="small" />
+                  <template #item-folder="row">
+                    <WiTag :value="catalogRow(row).folder" severity="secondary" size="small" />
                   </template>
-                  <template #cell-actions="{ row }">
+                  <template #item-actions="row">
                     <WiDropdown
                       :items="rowActionItems"
-                      @select="(item) => onCatalogRowAction(String(row.id), item.value)"
+                      @select="(item) => onCatalogRowAction(catalogRow(row).id, item.value)"
                     >
                       <template #trigger>
                         <WiButton severity="secondary" size="small" icon="more-vertical" aria-label="数据集操作" />
@@ -791,28 +777,28 @@ onMounted(load)
                     </WiDropdown>
                   </template>
                 </WiTable>
-              </WiScrollbar>
+              </div>
 
-              <WiScrollbar
+              <div
                 v-else-if="selected"
-                class="datasets-page__table-scroll"
-                :native="false"
-                trigger="hover"
-                aria-label="数据预览"
+                class="datasets-page__table-host"
               >
                 <WiTable
-                  class="datasets-page__table-area h-full"
-                  :columns="previewColumns"
-                  :rows="rows"
-                  row-key="id"
+                  v-model:server-options="previewServerOptions"
+                  class="datasets-page__table-area"
+                  :headers="previewHeaders"
+                  :items="rows"
+                  :server-items-length="totalRows"
                   :loading="rowsLoading"
-                  loading-text="正在加载数据…"
-                  striped
-                  row-hover
-                  empty-text="暂无记录"
-                  empty-description="导入 CSV 或新增记录后，数据会显示在这里"
+                  :rows-items="[20, 50, 100]"
+                  row-key="id"
+                  :aria-label="`${selected.name} 数据预览`"
+                  alternating
+                  border-cell
+                  show-overflow-tooltip
+                  empty-message="暂无记录"
                 />
-              </WiScrollbar>
+              </div>
 
               <div v-else class="datasets-page__empty">
                 <Database :size="28" aria-hidden="true" />
@@ -820,28 +806,6 @@ onMounted(load)
                 <p>从左侧目录或列表中选择数据集，预览数据记录。</p>
                 <WiButton icon="plus" label="创建数据集" size="small" @click="showCreate = true" />
               </div>
-
-              <template v-if="viewMode === 'catalog' ? catalogRows.length > 0 : !!selected" #footer>
-                <WiFlex class="w-full datasets-page__pager" align="center" justify="space-between" wrap size="small">
-                  <span class="datasets-page__pager-info">
-                    {{ viewMode === 'catalog' ? catalogPageRange : previewPageRange }}
-                  </span>
-                  <WiPagination
-                    v-if="viewMode === 'catalog'"
-                    v-model="catalogPage"
-                    v-model:page-size="catalogPageSize"
-                    :total-records="catalogRows.length"
-                    show-size-picker
-                  />
-                  <WiPagination
-                    v-else
-                    v-model="page"
-                    v-model:page-size="pageSize"
-                    :total-records="totalRows"
-                    show-size-picker
-                  />
-                </WiFlex>
-              </template>
             </WiCard>
           </WiLayoutContent>
         </WiLayout>
@@ -1036,8 +1000,7 @@ onMounted(load)
 }
 
 .datasets-page__workspace :deep(.wi-card__footer) {
-  padding: var(--wi-space-3) var(--wi-space-4);
-  border-top: 1px solid var(--wi-color-border);
+  display: none;
 }
 
 .datasets-page__workspace-header {
@@ -1122,40 +1085,29 @@ onMounted(load)
   white-space: nowrap;
 }
 
-.datasets-page__pager {
-  width: 100%;
-}
-
-.datasets-page__pager-info {
-  color: var(--wi-color-text-muted);
-  font-size: var(--wi-font-size-sm);
-}
-
-.datasets-page__table-scroll {
+.datasets-page__table-host {
   display: flex;
   min-height: 0;
   flex: 1;
   flex-direction: column;
 }
 
-.datasets-page__table-scroll :deep(.wi-scrollbar__wrap),
-.datasets-page__table-scroll :deep(.wi-scrollbar__view) {
-  height: 100%;
-  min-height: 100%;
-}
-
-.datasets-page__table-area {
-  width: 100%;
-  border: none;
-}
-
-.datasets-page__table-area :deep(.wi-table-wrapper) {
+.datasets-page__table-host :deep(.wi-table) {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
   border: 0;
   border-radius: 0;
 }
 
-.datasets-page__table-area :deep(.wi-table__cell-inner) {
-  font-size: var(--wi-table-font-size);
+.datasets-page__table-host :deep(.wi-table__scrollbar) {
+  min-height: 0;
+  flex: 1;
+}
+
+.datasets-page__table-area {
+  width: 100%;
 }
 
 .datasets-page__empty {
