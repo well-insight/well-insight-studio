@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { TableHeader, TableServerOptions, TreeNode } from '@well-insight/ui'
+import type { TableColumnDefinition, TableServerOptions, TreeNode } from '@well-insight/ui'
 import type { Dataset, DatasetFieldType, DatasetFolder } from '../api/datasets'
 import {
   ArrowLeft,
@@ -228,17 +228,17 @@ const filteredDatasets = computed(() => {
   )
 })
 
-const catalogHeaders = computed<TableHeader[]>(() => {
-  const headers: TableHeader[] = [
-    { text: '名称', value: 'name' },
-    { text: '字段', value: 'fields', width: 96 },
-    { text: '记录数', value: 'rowCount', width: 112 },
+const catalogColumns = computed<TableColumnDefinition[]>(() => {
+  const columns: TableColumnDefinition[] = [
+    { key: 'name', label: '名称' },
+    { key: 'fields', label: '字段', width: 96 },
+    { key: 'rowCount', label: '记录数', width: 112 },
   ]
   if (!selectedFolderId.value) {
-    headers.push({ text: '目录', value: 'folder' })
+    columns.push({ key: 'folder', label: '目录' })
   }
-  headers.push({ text: '', value: 'actions', width: 56 })
-  return headers
+  columns.push({ key: 'actions', label: '', width: 56 })
+  return columns
 })
 
 const catalogRows = computed<CatalogRow[]>(() => filteredDatasets.value.map(item => ({
@@ -253,9 +253,9 @@ const catalogTableKey = computed(
   () => `${selectedFolderId.value ?? 'all'}:${keyword.value.trim()}`,
 )
 
-const previewHeaders = computed<TableHeader[]>(() => selected.value?.fields.map(field => ({
-  text: field.name,
-  value: field.id,
+const previewColumns = computed<TableColumnDefinition[]>(() => selected.value?.fields.map(field => ({
+  key: field.id,
+  label: field.name,
   width: 150,
 })) ?? [])
 
@@ -742,31 +742,32 @@ onMounted(load)
                 <WiTable
                   :key="catalogTableKey"
                   class="datasets-page__table-area"
-                  :headers="catalogHeaders"
-                  :items="catalogRows"
+                  :columns="catalogColumns"
+                  :rows="catalogRows"
                   :loading="loading"
                   :rows-per-page="10"
                   :rows-items="[10, 20, 50]"
                   row-key="id"
                   aria-label="数据集列表"
-                  alternating
-                  border-cell
+                  striped
+                  bordered
                   show-overflow-tooltip
-                  empty-message="暂无数据集"
-                  @click-row="(item) => openDatasetFromCatalog(String(item.id))"
+                  empty-text="暂无数据集"
+                  paginator
+                  @row-click="({ row }) => openDatasetFromCatalog(String(row.id))"
                 >
-                  <template #item-name="row">
+                  <template #cell-name="{ row }">
                     <button type="button" class="datasets-page__link" @click.stop="openDatasetFromCatalog(catalogRow(row).id)">
                       {{ catalogRow(row).name }}
                     </button>
                   </template>
-                  <template #item-fields="row">
+                  <template #cell-fields="{ row }">
                     <WiTag :value="`${catalogRow(row).fields} 个`" severity="info" size="small" />
                   </template>
-                  <template #item-folder="row">
+                  <template #cell-folder="{ row }">
                     <WiTag :value="catalogRow(row).folder" severity="secondary" size="small" />
                   </template>
-                  <template #item-actions="row">
+                  <template #cell-actions="{ row }">
                     <WiDropdown
                       :items="rowActionItems"
                       @select="(item) => onCatalogRowAction(catalogRow(row).id, item.value)"
@@ -786,17 +787,18 @@ onMounted(load)
                 <WiTable
                   v-model:server-options="previewServerOptions"
                   class="datasets-page__table-area"
-                  :headers="previewHeaders"
-                  :items="rows"
+                  :columns="previewColumns"
+                  :rows="rows"
                   :server-items-length="totalRows"
                   :loading="rowsLoading"
                   :rows-items="[20, 50, 100]"
                   row-key="id"
                   :aria-label="`${selected.name} 数据预览`"
-                  alternating
-                  border-cell
+                  striped
+                  bordered
                   show-overflow-tooltip
-                  empty-message="暂无记录"
+                  empty-text="暂无记录"
+                  paginator
                 />
               </div>
 

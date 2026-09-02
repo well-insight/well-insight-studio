@@ -28,14 +28,14 @@ const statusOptions = [
   { label: '停用', value: 'inactive' },
 ]
 
-const headers = [
-  { text: '名称', value: 'name' },
-  { text: '状态', value: 'status' },
-  { text: '更新时间', value: 'updatedAt' },
-  { text: '操作', value: 'actions', width: 128 },
+const columns = [
+  { key: 'name', label: '名称' },
+  { key: 'status', label: '状态' },
+  { key: 'updatedAt', label: '更新时间' },
+  { key: 'actions', label: '操作', width: 128 },
 ]
 
-const items = [
+const rows = [
   { id: '1', name: '示例项目 A', status: 'active', updatedAt: '2026-09-01' },
   { id: '2', name: '示例项目 B', status: 'inactive', updatedAt: '2026-08-28' },
 ]
@@ -77,18 +77,18 @@ const items = [
 
         <!-- 表格 -->
         <WiTable
-          :headers="headers"
-          :items="items"
+          :columns="columns"
+          :rows="rows"
           :rows-per-page="10"
-          alternating
-          border-cell
+          striped
+          bordered
           row-key="id"
           aria-label="用户列表"
         >
-          <template #item-status="{ status }">
-            <WiTag :value="status === 'active' ? '启用' : '停用'" :severity="status === 'active' ? 'success' : 'secondary'" />
+          <template #cell-status="{ value }">
+            <WiTag :value="value === 'active' ? '启用' : '停用'" :severity="value === 'active' ? 'success' : 'secondary'" />
           </template>
-          <template #item-actions>
+          <template #cell-actions>
             <WiSpace>
               <WiButton severity="secondary" size="small">编辑</WiButton>
               <WiButton severity="danger" size="small">删除</WiButton>
