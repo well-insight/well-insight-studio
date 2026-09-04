@@ -1,43 +1,40 @@
-# Well Insight Studio
+# Wex Design Studio
 
 [English](./README.md) · [中文](./README.zh-CN.md)
 
-**Well Insight Studio** is an end-to-end platform for the full data lifecycle — from connecting sources to collecting, processing, analyzing, presenting, and visualizing data in one coherent product.
+**Wex Design Studio** is a monorepo scaffold for a visual design platform. Product requirements are not finalized yet; the repository currently ships an empty frontend page and a minimal API shell.
 
-The web application uses the locally checked-out **[@well-insight/ui](../well-insight-ui)** Vue 3 component library.
+The web app uses the npm package **[@wex-design/ui](https://www.npmjs.com/package/@wex-design/ui)** Vue 3 component library.
 
 | Resource        | Link                                                                                    |
 | --------------- | --------------------------------------------------------------------------------------- |
-| Source (GitHub) | [well-insight/well-insight-studio](https://github.com/well-insight/well-insight-studio) |
-| UI library      | [`../well-insight-ui`](../well-insight-ui) · [`@well-insight/ui`](../well-insight-ui)   |
+| Source (GitHub) | [wex-design/wex-design-studio](https://github.com/wex-design/wex-design-studio)         |
+| UI library      | [@wex-design/ui](https://www.npmjs.com/package/@wex-design/ui) · [Docs](https://wex-design.github.io/wex-design-ui/) |
 | Contributors    | [Development guide](./docs/DEVELOPMENT.md)                                              |
 
-## Platform scope
+## Repository layout
 
-| Stage                  | Focus                                            |
-| ---------------------- | ------------------------------------------------ |
-| **Data access**        | Connect and ingest from heterogeneous sources    |
-| **Data collection**    | Gather, schedule, and organize incoming datasets |
-| **Data processing**    | Transform, clean, and prepare data for use       |
-| **Data analysis**      | Explore metrics, trends, and insights            |
-| **Data presentation**  | Product UI for browsing and operating on results |
-| **Data visualization** | Charts, dashboards, and visual storytelling      |
-
-The application layer (`apps/web`, `apps/api`) implements these flows. The web app consumes the shared design system from the sibling local repository `../well-insight-ui`.
-
-## Repository layout (overview)
-
-| Path       | Role                     |
-| ---------- | ------------------------ |
-| `apps/web` | Platform web application |
-| `apps/api` | Platform API service     |
-
+| Path              | Role                     |
+| ----------------- | ------------------------ |
+| `apps/web`        | Platform web application |
+| `apps/api`        | Platform API service     |
 | `packages/shared` | Shared types across apps |
-| `docs/` | Internal contributor documentation |
+| `docs/`           | Internal contributor documentation |
+
+## Getting started
+
+```bash
+pnpm install
+pnpm dev
+```
+
+- Web: `http://localhost:5181`
+- API health: `http://localhost:3000/health`
+- API docs: `http://localhost:3000/docs`
 
 ## Contributing
 
-Day-to-day setup, scripts, API docs, database, commits, and releases are documented for maintainers in:
+Day-to-day setup, scripts, and commit conventions are documented for maintainers in:
 
 - **[Development guide](./docs/DEVELOPMENT.md)**
 - [Commit convention](./docs/COMMIT_CONVENTION.md)

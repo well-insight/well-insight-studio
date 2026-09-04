@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMotion, WiConfigProvider, WiMessage, WiToast, zhCN } from '@well-insight/ui'
+import { useMotion, WdConfigProvider, WdMessage, WdToast, zhCN } from '@wex-design/ui'
 import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 
@@ -11,13 +11,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <WiConfigProvider :locale="zhCN">
+  <WdConfigProvider :locale="zhCN">
     <div class="app-shell">
       <RouterView />
     </div>
-    <WiMessage placement="top" />
-    <WiToast position="bottom-right" />
-  </WiConfigProvider>
+    <WdMessage placement="top" />
+    <WdToast position="bottom-right" />
+  </WdConfigProvider>
 </template>
 
 <style>

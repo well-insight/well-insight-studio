@@ -2,25 +2,23 @@
 
 [English](./DEVELOPMENT.md) · [中文](./DEVELOPMENT.zh-CN.md)
 
-Internal documentation for contributors working in this monorepo. Public product overview: [root README](../README.md). The web app uses the local sibling dependency `../well-insight-ui`.
+Internal documentation for contributors working in this monorepo. Public overview: [root README](../README.md). The web app uses [@wex-design/ui](https://www.npmjs.com/package/@wex-design/ui) from npm.
 
 ## Workspace
 
-| Path       | Role                                            |
-| ---------- | ----------------------------------------------- |
-| `apps/web` | Platform web app (`http://localhost:5181`)      |
-| `apps/api` | Hono + TypeScript API (`http://localhost:3000`) |
+| Path              | Role                                       |
+| ----------------- | ------------------------------------------ |
+| `apps/web`        | Platform web app (`http://localhost:5181`) |
+| `apps/api`        | Hono + TypeScript API (`http://localhost:3000`) |
+| `packages/shared` | Shared types                               |
 
-| `packages/shared` | Shared types |
+## UI library
 
-## Local UI library
+Install `@wex-design/ui` via `pnpm install` in this repo (declared in `apps/web/package.json`).
 
-`apps/web` consumes the sibling repo `../well-insight-ui` in two ways:
-
-1. **Package link**: `"@well-insight/ui": "link:../../../well-insight-ui"` in `package.json` (local package, not the npm registry).
-2. **Source alias**: `vite.config.ts` / `tsconfig.json` map `@well-insight/ui` to `well-insight-ui/src` so component edits hot-reload without building the UI first.
-
-Keep `well-insight-ui` as a sibling of `well-design`, then run `pnpm install` in this repo.
+- Docs: https://wex-design.github.io/wex-design-ui/
+- Styles: `import '@wex-design/ui/styles.css'`
+- Plugin: `createWexDesign()` from `@wex-design/ui`
 
 ## Commands
 
@@ -39,15 +37,9 @@ pnpm build
 - Swagger-like UI: `http://localhost:3000/docs`
 - OpenAPI 3.0: `http://localhost:3000/openapi.json`
 
-## API database
+## Environment
 
-API uses Drizzle ORM + `mysql2`. Copy `apps/api/.env.example` to `apps/api/.env` and fill credentials. Do not commit `.env`.
-
-```bash
-pnpm --filter @well-insight/api db:generate
-pnpm --filter @well-insight/api db:migrate
-pnpm --filter @well-insight/api db:check
-```
+Copy `apps/api/.env.example` to `apps/api/.env` if you need to override defaults. Do not commit `.env`.
 
 ## Related docs
 

@@ -8,9 +8,9 @@
       "command": "npx",
       "args": ["-y", "@primevue/mcp"]
     },
-    "well-insight-ui": {
+    "wex-design-ui": {
       "command": "npx",
-      "args": ["-y", "@well-insight/ui-mcp"]
+      "args": ["-y", "@wex-design/ui-mcp"]
     }
   }
 }

@@ -1,17 +1,10 @@
 {
-  "name": "@well-insight/api",
+  "name": "@wex-design/api",
   "type": "module",
   "private": true,
   "scripts": {
     "predev": "node scripts/free-port.mjs 3000",
     "dev": "tsx watch src/server.ts",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx src/db/migrate.ts",
-    "db:check": "tsx src/db/check.ts",
-    "db:list-tables": "tsx src/db/list-tables.ts",
-    "db:reset": "tsx src/db/reset.ts",
-    "db:seed": "tsx src/db/seed-cli.ts",
-    "db:backup": "node scripts/backup-database.mjs",
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -19,24 +12,14 @@
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",
-    "@hono/zod-validator": "^0.9.0",
-    "bcrypt": "^6.0.0",
+    "@wex-design/shared": "workspace:*",
     "dotenv": "^17.4.2",
-    "drizzle-orm": "^0.45.2",
     "hono": "^4.13.2",
-    "jsonwebtoken": "^9.0.3",
-    "mysql2": "^3.23.3",
-    "pg": "^8.23.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260814.1",
-    "@types/bcrypt": "^6.0.0",
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/pg": "^8.23.1",
     "@vitest/coverage-v8": "^4.1.10",
-    "@well-insight/shared": "workspace:*",
-    "drizzle-kit": "^0.31.10",
     "tsx": "^4.23.12",
     "vitest": "^4.1.10"
   }

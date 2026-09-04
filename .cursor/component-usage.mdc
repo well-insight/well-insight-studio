@@ -1,5 +1,5 @@
 ---
-description: Well Insight 组件用法与选型（Vue 业务代码）
+description: Wex Design 组件用法与选型（Vue 业务代码）
 globs: src/**/*.vue
 alwaysApply: false
 ---
@@ -9,17 +9,17 @@ alwaysApply: false
 ## 引入
 
 ```ts
-import { WiButton, WiInput } from '@well-insight/ui'
-// 按需：import WiButton from '@well-insight/ui/button'
-//        import '@well-insight/ui/button/style'
+import { WdButton, WdInput } from '@wex-design/ui'
+// 按需：import { WdButton } from '@wex-design/ui/button'
+//        import '@wex-design/ui/button/style'
 ```
 
 ## 必选模式
 
-- 表单：`WiForm` + `WiFormItem` + 字段组件；提交用 `@submit` + `type="submit"`。
-- 表格：`WiTable` 的 `headers` + `items` + `row-key`；单元格用 `#item-{value}` 插槽；分页优先用表格内置页脚（`server-options` + `server-items-length` 服务端模式）。
-- 浮层：详情/编辑 `WiDialog`；侧栏 `WiDrawer`；删除确认 `WiConfirmDialog`。
-- 反馈：操作结果 `WiToast` 或 `WiMessage`。
+- 表单：`WdForm` + `WdFormItem` + 字段组件；提交用 `@submit` + `type="submit"`。
+- 表格：`WdTable` 的 `headers` + `items` + `row-key`；单元格用 `#item-{value}` 插槽；分页优先用表格内置页脚（`server-options` + `server-items-length` 服务端模式）。
+- 浮层：详情/编辑 `WdDialog`；侧栏 `WdDrawer`；删除确认 `WdConfirmDialog`。
+- 反馈：操作结果 `WdToast` 或 `WdMessage`。
 
 ## Props 约定
 
@@ -32,7 +32,7 @@ import { WiButton, WiInput } from '@well-insight/ui'
 ## 禁止
 
 - 同一页面混用其他 UI 库。
-- 用 `WiDropdown` 代替 Select 做枚举选择。
-- 手写 table/modal 替代 `WiTable` / `WiDialog`。
+- 用 `WdDropdown` 代替 Select 做枚举选择。
+- 手写 table/modal 替代 `WdTable` / `WdDialog`。
 
 完整清单：`docs/components.md`
